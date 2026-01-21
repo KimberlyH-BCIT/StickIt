@@ -26,5 +26,8 @@ namespace ELKH.Models
         //Relationship with Transaction
         public int FkTransactionId { get; set; }
         public Transaction Transaction { get; set; } = new Transaction();
+
+        //Delivery Relationship
+        public Delivery Delivery { get; set; } = new Delivery();
     }
 }

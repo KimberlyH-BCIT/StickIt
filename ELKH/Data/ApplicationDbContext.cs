@@ -21,6 +21,8 @@ namespace ELKH.Data
         public DbSet<OrderItem> OrderItems { get; set; }
         public DbSet<Transaction> Transactions { get; set; }
         public DbSet<Address> Addresses { get; set; }
+        public DbSet<Delivery> Deliveries { get; set; }
+        public DbSet<ProductRating> ProductRatings { get; set; }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
@@ -35,8 +37,12 @@ namespace ELKH.Data
                 .HasOne(t => t.Order)
                 .WithOne(t => t.Transaction)
                 .HasForeignKey<Order>(t => t.FkTransactionId);
-        }
 
+            modelBuilder.Entity<Order>()
+                .HasOne(o => o.Delivery)
+                .WithOne(d => d.Order)
+                .HasForeignKey<Delivery>(o => o.FkOrderId);
+        }
     }
 
 }

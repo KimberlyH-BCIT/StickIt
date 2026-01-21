@@ -31,5 +31,11 @@ namespace ELKH.Models
 
         //CartItem Relationship
         public ICollection<CartItem> CartItems { get; set; } = new List<CartItem>();
+
+        //OriderItem Relationship
+        public ICollection<OrderItem> OrderItems { get; set; } = new List<OrderItem>();
+
+        //Product Rating Relationship
+        public ICollection<ProductRating> ProductRatings { get; set; } = new List<ProductRating>();
     }
 }

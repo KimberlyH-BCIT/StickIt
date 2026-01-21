@@ -18,5 +18,8 @@ namespace ELKH.Models
         //Relationship with RegisiterUser
         public int FkRegisteredUserId { get; set; }
         public RegisteredUser RegisiteredUser { get; set; } = new RegisteredUser();
+
+        // Delivery Relationship
+        public ICollection<Delivery> Deliveries { get; set; } = new List<Delivery>();
     }
 }

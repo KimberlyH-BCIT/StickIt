@@ -19,12 +19,15 @@ namespace ELKH.Models
 
 
         //Relationship with Cart
-        public Cart Cart { get; set; }
+        public Cart Cart { get; set; } = new Cart();
 
         //Relationship with Order
         public ICollection<Order> Orders { get; set; } = new List<Order>();
 
         //Relationship with Address
         public ICollection<Address> Addresses { get; set; } = new List<Address>();
+
+        //Relationship With ProductRating
+        public ICollection<ProductRating> ProductRatings { get; set; } = new List<ProductRating>();
     }
 }

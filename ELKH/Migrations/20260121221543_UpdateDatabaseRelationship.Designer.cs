@@ -3,6 +3,7 @@ using System;
 using ELKH.Data;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 #nullable disable
@@ -10,9 +11,11 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace ELKH.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    partial class ApplicationDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260121221543_UpdateDatabaseRelationship")]
+    partial class UpdateDatabaseRelationship
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder.HasAnnotation("ProductVersion", "10.0.0");
@@ -119,35 +122,6 @@ namespace ELKH.Migrations
                     b.HasKey("PkCategoryId");
 
                     b.ToTable("Categories");
-                });
-
-            modelBuilder.Entity("ELKH.Models.Delivery", b =>
-                {
-                    b.Property<int>("DeliveryId")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("INTEGER");
-
-                    b.Property<int>("AddressPkAddressId")
-                        .HasColumnType("INTEGER");
-
-                    b.Property<string>("DeliveryStatus")
-                        .IsRequired()
-                        .HasColumnType("TEXT");
-
-                    b.Property<int>("FkAddressId")
-                        .HasColumnType("INTEGER");
-
-                    b.Property<int>("FkOrderId")
-                        .HasColumnType("INTEGER");
-
-                    b.HasKey("DeliveryId");
-
-                    b.HasIndex("AddressPkAddressId");
-
-                    b.HasIndex("FkOrderId")
-                        .IsUnique();
-
-                    b.ToTable("Deliveries");
                 });
 
             modelBuilder.Entity("ELKH.Models.Order", b =>
@@ -271,43 +245,6 @@ namespace ELKH.Migrations
                     b.HasIndex("ProductPkProductId");
 
                     b.ToTable("ProductImages");
-                });
-
-            modelBuilder.Entity("ELKH.Models.ProductRating", b =>
-                {
-                    b.Property<int>("PkRatingId")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("INTEGER");
-
-                    b.Property<string>("Description")
-                        .IsRequired()
-                        .HasColumnType("TEXT");
-
-                    b.Property<int>("FkProductId")
-                        .HasColumnType("INTEGER");
-
-                    b.Property<int>("FkRegisteredUserId")
-                        .HasColumnType("INTEGER");
-
-                    b.Property<int>("ProductsPkProductId")
-                        .HasColumnType("INTEGER");
-
-                    b.Property<DateTime>("RatedTime")
-                        .HasColumnType("TEXT");
-
-                    b.Property<int>("Rating")
-                        .HasColumnType("INTEGER");
-
-                    b.Property<int>("RegisteredUsersPkRegisteredUserId")
-                        .HasColumnType("INTEGER");
-
-                    b.HasKey("PkRatingId");
-
-                    b.HasIndex("ProductsPkProductId");
-
-                    b.HasIndex("RegisteredUsersPkRegisteredUserId");
-
-                    b.ToTable("ProductRatings");
                 });
 
             modelBuilder.Entity("ELKH.Models.RegisteredUser", b =>
@@ -591,25 +528,6 @@ namespace ELKH.Migrations
                     b.Navigation("Product");
                 });
 
-            modelBuilder.Entity("ELKH.Models.Delivery", b =>
-                {
-                    b.HasOne("ELKH.Models.Address", "Address")
-                        .WithMany("Deliveries")
-                        .HasForeignKey("AddressPkAddressId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.HasOne("ELKH.Models.Order", "Order")
-                        .WithOne("Delivery")
-                        .HasForeignKey("ELKH.Models.Delivery", "FkOrderId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.Navigation("Address");
-
-                    b.Navigation("Order");
-                });
-
             modelBuilder.Entity("ELKH.Models.Order", b =>
                 {
                     b.HasOne("ELKH.Models.Transaction", "Transaction")
@@ -670,25 +588,6 @@ namespace ELKH.Migrations
                     b.Navigation("Product");
                 });
 
-            modelBuilder.Entity("ELKH.Models.ProductRating", b =>
-                {
-                    b.HasOne("ELKH.Models.Product", "Products")
-                        .WithMany("ProductRatings")
-                        .HasForeignKey("ProductsPkProductId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.HasOne("ELKH.Models.RegisteredUser", "RegisteredUsers")
-                        .WithMany("ProductRatings")
-                        .HasForeignKey("RegisteredUsersPkRegisteredUserId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.Navigation("Products");
-
-                    b.Navigation("RegisteredUsers");
-                });
-
             modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityRoleClaim<string>", b =>
                 {
                     b.HasOne("Microsoft.AspNetCore.Identity.IdentityRole", null)
@@ -740,11 +639,6 @@ namespace ELKH.Migrations
                         .IsRequired();
                 });
 
-            modelBuilder.Entity("ELKH.Models.Address", b =>
-                {
-                    b.Navigation("Deliveries");
-                });
-
             modelBuilder.Entity("ELKH.Models.Cart", b =>
                 {
                     b.Navigation("CartItems");
@@ -757,9 +651,6 @@ namespace ELKH.Migrations
 
             modelBuilder.Entity("ELKH.Models.Order", b =>
                 {
-                    b.Navigation("Delivery")
-                        .IsRequired();
-
                     b.Navigation("OrderItems");
                 });
 
@@ -770,8 +661,6 @@ namespace ELKH.Migrations
                     b.Navigation("OrderItems");
 
                     b.Navigation("ProductImages");
-
-                    b.Navigation("ProductRatings");
                 });
 
             modelBuilder.Entity("ELKH.Models.RegisteredUser", b =>
@@ -782,8 +671,6 @@ namespace ELKH.Migrations
                         .IsRequired();
 
                     b.Navigation("Orders");
-
-                    b.Navigation("ProductRatings");
                 });
 
             modelBuilder.Entity("ELKH.Models.Transaction", b =>
