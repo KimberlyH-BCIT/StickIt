@@ -1,40 +1,37 @@
 ﻿using ELKH.Data;
 using ELKH.Models;
+using Microsoft.Extensions.Logging;
 
 namespace ELKH.Repositories;
 
-public class RegisteredUserProfileRepo(ApplicationDbContext context)
+/// <summary>
+/// Repository for user profile management.
+/// Inherits common CRUD operations from RepositoryBase.
+/// </summary>
+public class RegisteredUserProfileRepo : RepositoryBase<UserProfileModel, string>, IRegisteredUserProfileRepo
 {
-    public IEnumerable<UserProfileModel> GetAll()
-        => context.UserProfiles
-                  .OrderBy(u => u.PkEmail)
-                  .ToList();
+    public RegisteredUserProfileRepo(ApplicationDbContext context, ILogger<RegisteredUserProfileRepo> logger) 
+        : base(context, logger)
+    {
+    }
 
-    public UserProfileModel? GetById(string email)
-        => context.UserProfiles
-                  .FirstOrDefault(u => u.PkEmail == email);
+    // GetAll() and GetById() are inherited from base class
 
-    public void Add(UserProfileModel profile)
+    /// <summary>
+    /// Add a new user profile with duplicate prevention.
+    /// </summary>
+    public override void Add(UserProfileModel profile)
     {
         // Guard against duplicates
-        bool isAnyProfiles = context.UserProfiles
-                                    .Any(u => u.PkEmail == profile.PkEmail);
-        if (!isAnyProfiles)
+        bool exists = Context.UserProfiles.Any(u => u.PkEmail == profile.PkEmail);
+
+        if (!exists)
         {
-            try
-            {
-                context.UserProfiles.Add(profile);
-                context.SaveChanges();
-                Console.WriteLine($"UserProfile added successfully for: {profile.PkEmail}");
-            }
-            catch (Exception ex)
-            {
-                Console.WriteLine($"Error adding UserProfile for {profile.PkEmail}: {ex.Message}");
-            }
+            base.AddAndSave(profile);
         }
         else
         {
-            Console.WriteLine($"UserProfile NOT added — a profile already exists for: {profile.PkEmail}");
+            Logger.LogWarning("UserProfile NOT added — a profile already exists for: {Email}", profile.PkEmail);
         }
     }
 }

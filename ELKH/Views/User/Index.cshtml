@@ -1,0 +1,91 @@
+@model ELKH.ViewModels.UserDashboardVM
+
+@{
+    ViewData["Title"] = "Dashboard";
+}
+
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h2 class="mb-0">
+        @if (Model.Profile != null)
+        {
+            <span>Welcome back, @Model.Profile.FirstName!</span>
+        }
+        else
+        {
+            <span>Your Dashboard</span>
+        }
+    </h2>
+    <a class="btn btn-outline-secondary btn-sm" asp-action="EditProfile">Edit Profile</a>
+</div>
+
+@* ── Active Orders ────────────────────────────────────────────────── *@
+<section class="mb-5">
+    <div class="d-flex justify-content-between align-items-center mb-2">
+        <h4 class="mb-0">Active Orders</h4>
+        <a class="btn btn-sm btn-outline-primary" asp-controller="Order" asp-action="MyHistory">View All Orders</a>
+    </div>
+    <div id="active-orders-section" class="dashboard-section">
+        <partial name="_ActiveOrdersSection" model="Model.ActiveOrdersSection" />
+    </div>
+</section>
+
+@* ── Wishlist ─────────────────────────────────────────────────────── *@
+<section class="mb-5">
+    <div class="d-flex justify-content-between align-items-center mb-2">
+        <h4 class="mb-0">My Wishlist <span class="badge bg-secondary">@Model.WishListCount</span></h4>
+        <a class="btn btn-sm btn-outline-primary" asp-controller="Wishlist" asp-action="Index">View All</a>
+    </div>
+    <div id="wishlist-section" class="dashboard-section">
+        <partial name="_WishlistSection" model="Model.WishlistSection" />
+    </div>
+</section>
+
+@* ── Order History ────────────────────────────────────────────────── *@
+<section class="mb-4">
+    <h4 class="mb-2">Order History</h4>
+    <div id="order-history-section" class="dashboard-section">
+        <partial name="_OrderHistorySection" model="Model.OrderHistorySection" />
+    </div>
+</section>
+
+@section Scripts {
+<script>
+(function () {
+    var sectionActions = {
+        'wishlist-section':      '@Url.Action("WishlistSection", "User")',
+        'active-orders-section': '@Url.Action("ActiveOrdersSection", "User")',
+        'order-history-section': '@Url.Action("OrderHistorySection", "User")'
+    };
+
+    function loadSection(sectionId, page, sort) {
+        var container = document.getElementById(sectionId);
+        if (!container) return;
+        container.innerHTML = '<div class="text-center py-3"><div class="spinner-border spinner-border-sm" role="status"><span class="visually-hidden">Loading\u2026</span></div></div>';
+        fetch(sectionActions[sectionId] + '?page=' + page + '&sort=' + encodeURIComponent(sort), {
+            headers: { 'X-Requested-With': 'XMLHttpRequest' }
+        })
+        .then(function (r) { return r.ok ? r.text() : Promise.reject(r.status); })
+        .then(function (html) { container.innerHTML = html; })
+        .catch(function () { container.innerHTML = '<p class="text-danger small">Failed to load. Please refresh.</p>'; });
+    }
+
+    document.addEventListener('change', function (e) {
+        if (e.target.classList.contains('dashboard-sort-select')) {
+            var section = e.target.closest('.dashboard-section');
+            if (section) loadSection(section.id, 1, e.target.value);
+        }
+    });
+
+    document.addEventListener('click', function (e) {
+        var link = e.target.closest('.dashboard-page-link');
+        if (link) {
+            e.preventDefault();
+            var section = link.closest('.dashboard-section');
+            if (!section) return;
+            var sortEl = section.querySelector('.dashboard-sort-select');
+            loadSection(section.id, link.dataset.page, sortEl ? sortEl.value : 'date_desc');
+        }
+    });
+}());
+</script>
+}

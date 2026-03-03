@@ -1,0 +1,12 @@
+@{
+    ViewData["Title"] = "Checkout";
+}
+
+<h2>Checkout</h2>
+
+<p>Total: <strong><span class="price" data-price="@ViewBag.Total">@((ViewBag.Total ?? 0).ToString("C"))</span></strong></p>
+
+<form asp-action="PlaceOrder" method="post">
+    @Html.AntiForgeryToken()
+    <button class="btn btn-success">Place Order</button>
+</form>

@@ -30,6 +30,98 @@ a {
   border-bottom: 1px solid #e5e5e5;
 }
 
+/* ── Site header ────────────────────────────────────────────────────── */
+.site-header {
+  position: sticky;
+  top: 0;
+  z-index: 1030;
+}
+
+/* Top bar */
+.header-top {
+  font-size: .9rem;
+}
+
+/* Centered search wrapper — grows up to 560px, shrinks on mobile */
+.header-search-wrap {
+  width: 100%;
+  max-width: 560px;
+}
+
+/* Nav strip — single row, hamburger + evenly-spaced links */
+.header-nav {
+  padding-top: .25rem;
+  padding-bottom: .25rem;
+}
+
+/* Hamburger button — always visible, far left of nav strip */
+.nav-hamburger {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: none;
+  border: none;
+  padding: .25rem .35rem;
+  border-radius: .375rem;
+  color: #444;
+  cursor: pointer;
+  line-height: 1;
+  transition: color .15s ease, background-color .15s ease;
+}
+
+.nav-hamburger:hover,
+.nav-hamburger:focus {
+  color: #1b6ec2;
+  background-color: #f0f4ff;
+  outline: none;
+}
+
+/* Keep all nav links on one line regardless of viewport width */
+.header-nav .navbar-nav {
+  flex-wrap: nowrap;
+  white-space: nowrap;
+}
+
+/* Offcanvas sidebar nav items */
+#navOffcanvas .nav-link:hover,
+#navOffcanvas .nav-link:focus {
+  background-color: #f0f4ff;
+  color: #1b6ec2;
+}
+
+/* ── Cart icon ──────────────────────────────────────────────────────── */
+.cart-icon-link {
+  color: #444;
+  text-decoration: none;
+  padding: .25rem .35rem;
+  border-radius: .375rem;
+  transition: color .15s ease, background-color .15s ease;
+}
+
+.cart-icon-link:hover,
+.cart-icon-link:focus {
+  color: #1b6ec2;
+  background-color: #f0f4ff;
+  outline: none;
+}
+
+.cart-badge {
+  position: absolute;
+  top: -6px;
+  right: -8px;
+  min-width: 18px;
+  height: 18px;
+  padding: 0 4px;
+  border-radius: 9px;
+  background: #dc3545;
+  color: #fff;
+  font-size: .65rem;
+  font-weight: 700;
+  line-height: 18px;
+  text-align: center;
+  pointer-events: none;
+}
+
 .box-shadow {
   box-shadow: 0 .25rem .75rem rgba(0, 0, 0, .05);
 }
