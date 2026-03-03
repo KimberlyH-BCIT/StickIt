@@ -1,0 +1,70 @@
+using ELKH.Data;
+using ELKH.Models;
+using Microsoft.EntityFrameworkCore;
+
+namespace ELKH.Repositories;
+
+/*
+ OrderRepo
+ Table of Contents
+ 1. Fields & Constructor
+ 2. Read
+ 3. Write
+*/
+
+public class OrderRepo : IOrderRepo
+{
+    #region Fields & Constructor
+    private readonly ApplicationDbContext _context;
+
+    public OrderRepo(ApplicationDbContext context) => _context = context;
+    #endregion
+
+    #region Read
+    public async Task<OrderModel?> GetByIdAsync(int id) =>
+        await _context.Orders.FindAsync(id);
+
+    public async Task<OrderModel?> GetByIdWithItemsAsync(int id) =>
+        await _context.Orders
+            .Include(o => o.OrderItems)
+            .ThenInclude(i => i.Products)
+            .ThenInclude(p => p.ProductImages)
+            .Include(o => o.ContactDetail)
+            .Include(o => o.Transaction)
+            .FirstOrDefaultAsync(o => o.PkOrderId == id);
+
+    public async Task<IEnumerable<OrderModel>> GetByUserIdAsync(int registeredUserId) =>
+        await _context.Orders
+            .Include(o => o.OrderItems)
+            .ThenInclude(i => i.Products)
+            .Where(o => o.FkRegisteredUserId == registeredUserId)
+            .OrderByDescending(o => o.CreatedAt)
+            .ToListAsync();
+    #endregion
+
+    #region Write
+    public async Task<OrderModel> CreateAsync(OrderModel order)
+    {
+        _context.Orders.Add(order);
+        await _context.SaveChangesAsync();
+        return order;
+    }
+
+    public async Task<bool> UpdateStatusAsync(int orderId, string status)
+    {
+        try
+        {
+            var order = await _context.Orders.FindAsync(orderId);
+            if (order is null) return false;
+
+            order.OrderStatus = status;
+            await _context.SaveChangesAsync();
+            return true;
+        }
+        catch
+        {
+            return false;
+        }
+    }
+    #endregion
+}

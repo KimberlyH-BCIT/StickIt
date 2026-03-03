@@ -1,0 +1,32 @@
+@model ELKH.ViewModels.ContactDetailVM
+@{
+    ViewData["Title"] = "Delete Address";
+}
+
+<div class="row justify-content-center">
+    <div class="col-lg-5">
+        <div class="card border-danger shadow-sm">
+            <div class="card-header bg-danger text-white">
+                <h5 class="mb-0"><i class="bi bi-exclamation-triangle-fill me-2"></i>Confirm Delete</h5>
+            </div>
+            <div class="card-body p-4">
+                <p class="lead">Delete this address?</p>
+                <address class="text-muted">
+                    <strong>@Model.FirstName @Model.LastName</strong><br />
+                    @Model.Street<br />
+                    @Model.City, @Model.Province @Model.PostCode<br />
+                    @Model.Country
+                </address>
+                <div class="d-flex gap-2 mt-3">
+                    <form asp-action="DeleteAddress" asp-route-id="@Model.ContactId" method="post">
+                        @Html.AntiForgeryToken()
+                        <button type="submit" class="btn btn-danger">
+                            <i class="bi bi-trash me-1"></i>Delete
+                        </button>
+                    </form>
+                    <a asp-action="Addresses" class="btn btn-outline-secondary">Cancel</a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

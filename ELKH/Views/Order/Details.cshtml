@@ -1,4 +1,6 @@
-﻿@model List<OrderDetailsViewModel>
+﻿
+@model List<ELKH.ViewModels.OrderDetailsViewModel>
+
 
 @section title {
     <h3>Order Management</h3>
@@ -20,7 +22,7 @@
                 <td>@order.OrderId</td>
                 <td>@order.UserEmail</td>
                 <td>@order.DeliveryStatus</td>
-                <td><a asp-controller="Order" asp-action="edit" asp-route-id="@order.OrderId">Edit</a></td>
+                <td><a asp-controller="Order" asp-action="Details" asp-route-id="@order.OrderId">Details</a></td>
             </tr>
         }
     </tbody>

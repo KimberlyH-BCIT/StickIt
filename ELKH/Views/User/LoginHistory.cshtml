@@ -1,0 +1,82 @@
+@model IEnumerable<ELKH.ViewModels.UserLogVM>
+@{
+    ViewData["Title"] = "Login History";
+}
+
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h1 class="fw-bold mb-0"><i class="bi bi-clock-history me-2"></i>Login History</h1>
+    <a asp-action="Index" class="btn btn-outline-secondary btn-sm">
+        <i class="bi bi-arrow-left me-1"></i>Back to Account
+    </a>
+</div>
+
+@if (!Model.Any())
+{
+    <div class="text-center py-5 text-muted">
+        <i class="bi bi-clock display-1"></i>
+        <p class="fs-5 mt-3">No login history found.</p>
+    </div>
+}
+else
+{
+    <div class="card shadow-sm">
+        <div class="table-responsive">
+            <table class="table table-hover mb-0">
+                <thead class="table-light">
+                    <tr>
+                        <th>Login Time</th>
+                        <th>Logout Time</th>
+                        <th>Duration</th>
+                        <th>Status</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var log in Model)
+                    {
+                        var duration = log.LogOutTime.HasValue
+                            ? (log.LogOutTime.Value - log.LogInTime)
+                            : (DateTime.UtcNow - log.LogInTime);
+
+                        <tr>
+                            <td>@log.LogInTime.ToLocalTime().ToString("MMM d, yyyy h:mm tt")</td>
+                            <td>
+                                @if (log.LogOutTime.HasValue)
+                                {
+                                    @log.LogOutTime.Value.ToLocalTime().ToString("MMM d, yyyy h:mm tt")
+                                }
+                                else
+                                {
+                                    <span class="text-success small">Active now</span>
+                                }
+                            </td>
+                            <td class="text-muted small">
+                                @if (duration.TotalHours >= 1)
+                                {
+                                    @($"{(int)duration.TotalHours}h {duration.Minutes}m")
+                                }
+                                else
+                                {
+                                    @($"{duration.Minutes}m")
+                                }
+                            </td>
+                            <td>
+                                @if (!log.LogOutTime.HasValue)
+                                {
+                                    <span class="badge bg-success">Active</span>
+                                }
+                                else if (log.Abandoned)
+                                {
+                                    <span class="badge bg-warning text-dark" title="Session ended without logout">Abandoned</span>
+                                }
+                                else
+                                {
+                                    <span class="badge bg-secondary">Normal logout</span>
+                                }
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    </div>
+}

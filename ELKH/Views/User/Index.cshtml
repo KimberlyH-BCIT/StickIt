@@ -1,0 +1,102 @@
+@model ELKH.ViewModels.UserDashboardVM
+@{
+    ViewData["Title"] = "My Account";
+}
+
+<div class="row g-4">
+    <!-- Welcome panel -->
+    <div class="col-12">
+        <div class="card shadow-sm border-0 bg-dark text-white">
+            <div class="card-body p-4 d-flex justify-content-between align-items-center flex-wrap gap-3">
+                <div>
+                    <h2 class="fw-bold mb-1">
+                        Welcome back, @(Model.Profile?.FirstName ?? User.Identity?.Name?.Split('@')[0]) 👋
+                    </h2>
+                    <p class="text-white-50 mb-0">@User.Identity?.Name</p>
+                </div>
+                <a asp-action="EditProfile" class="btn btn-outline-light btn-sm">
+                    <i class="bi bi-pencil me-1"></i>Edit Profile
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <!-- Quick links -->
+    <div class="col-md-4">
+        <a asp-controller="Order" asp-action="History" class="text-decoration-none">
+            <div class="card shadow-sm border-0 h-100 text-center p-4">
+                <i class="bi bi-bag-check display-4 text-primary mb-3"></i>
+                <h5 class="fw-bold">My Orders</h5>
+                <p class="text-muted small">View and track your order history</p>
+            </div>
+        </a>
+    </div>
+    <div class="col-md-4">
+        <a asp-action="Addresses" class="text-decoration-none">
+            <div class="card shadow-sm border-0 h-100 text-center p-4">
+                <i class="bi bi-geo-alt display-4 text-success mb-3"></i>
+                <h5 class="fw-bold">Addresses</h5>
+                <p class="text-muted small">Manage your shipping addresses</p>
+            </div>
+        </a>
+    </div>
+    <div class="col-md-4">
+        <a asp-action="LoginHistory" class="text-decoration-none">
+            <div class="card shadow-sm border-0 h-100 text-center p-4">
+                <i class="bi bi-clock-history display-4 text-warning mb-3"></i>
+                <h5 class="fw-bold">Login History</h5>
+                <p class="text-muted small">Review your recent login activity</p>
+            </div>
+        </a>
+    </div>
+
+    <!-- Profile summary -->
+    @if (Model.Profile is not null)
+    {
+        <div class="col-md-6">
+            <div class="card shadow-sm">
+                <div class="card-header fw-bold"><i class="bi bi-person me-2"></i>Profile</div>
+                <div class="card-body">
+                    <dl class="row mb-0">
+                        <dt class="col-sm-4 text-muted">Name</dt>
+                        <dd class="col-sm-8">@Model.Profile.FirstName @Model.Profile.LastName</dd>
+                        <dt class="col-sm-4 text-muted">Email</dt>
+                        <dd class="col-sm-8">@Model.Profile.PkEmail</dd>
+                    </dl>
+                </div>
+                <div class="card-footer bg-white">
+                    <a asp-action="EditProfile" class="btn btn-sm btn-outline-primary">
+                        <i class="bi bi-pencil me-1"></i>Edit
+                    </a>
+                </div>
+            </div>
+        </div>
+    }
+    else
+    {
+        <div class="col-md-6">
+            <div class="card shadow-sm border-warning">
+                <div class="card-body text-center py-4">
+                    <i class="bi bi-person-exclamation fs-1 text-warning mb-2"></i>
+                    <p class="mb-2">Your profile is incomplete.</p>
+                    <a asp-action="EditProfile" class="btn btn-warning btn-sm">
+                        <i class="bi bi-pencil me-1"></i>Complete Profile
+                    </a>
+                </div>
+            </div>
+        </div>
+    }
+
+    <!-- Account settings link -->
+    <div class="col-md-6">
+        <div class="card shadow-sm">
+            <div class="card-header fw-bold"><i class="bi bi-gear me-2"></i>Account Settings</div>
+            <div class="card-body">
+                <p class="text-muted small mb-3">Change your password, email, or two-factor settings.</p>
+                <a asp-area="Identity" asp-page="/Account/Manage/Index" class="btn btn-outline-secondary btn-sm">
+                    <i class="bi bi-gear me-1"></i>Manage Identity
+                </a>
+            </div>
+        </div>
+    </div>
+</div>

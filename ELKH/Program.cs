@@ -27,6 +27,9 @@ builder.Services.AddControllersWithViews();
 builder.Services.AddScoped<RegisteredUserLogRepo>();
 builder.Services.AddScoped<RegisteredUserProfileRepo>();
 builder.Services.AddScoped<ContactDetailRepo>();
+builder.Services.AddScoped<ICartRepo, CartRepo>();
+
+
 
 var app = builder.Build();
 

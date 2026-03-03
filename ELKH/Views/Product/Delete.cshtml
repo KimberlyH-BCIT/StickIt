@@ -1,0 +1,35 @@
+@model ELKH.ViewModels.ProductVM
+@{
+    ViewData["Title"] = "Delete Product";
+}
+
+<div class="row justify-content-center">
+    <div class="col-lg-6">
+        <div class="card border-danger shadow-sm">
+            <div class="card-header bg-danger text-white">
+                <h5 class="mb-0"><i class="bi bi-exclamation-triangle-fill me-2"></i>Confirm Delete</h5>
+            </div>
+            <div class="card-body p-4">
+                <p class="lead">Are you sure you want to delete <strong>@Model.ProductName</strong>?</p>
+                <p class="text-muted small">This action cannot be undone.</p>
+
+                <table class="table table-sm">
+                    <tr><th>Name</th><td>@Model.ProductName</td></tr>
+                    <tr><th>Category</th><td>@Model.CategoryName</td></tr>
+                    <tr><th>Price</th><td>$@Model.Price.ToString("F2")</td></tr>
+                    <tr><th>Stock</th><td>@(Model.StockQuantity ?? 0)</td></tr>
+                </table>
+
+                <div class="d-flex gap-2 mt-3">
+                    <form asp-action="Delete" asp-route-id="@Model.ProductId" method="post">
+                        @Html.AntiForgeryToken()
+                        <button type="submit" class="btn btn-danger">
+                            <i class="bi bi-trash me-1"></i>Yes, Delete
+                        </button>
+                    </form>
+                    <a asp-action="Details" asp-route-id="@Model.ProductId" class="btn btn-outline-secondary">Cancel</a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
