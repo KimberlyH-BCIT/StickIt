@@ -1,0 +1,38 @@
+@model IEnumerable<ELKH.Models.OrderModel>
+
+@{
+    ViewData["Title"] = "Order History";
+}
+
+<h2>Your Orders</h2>
+
+@if (!Model.Any())
+{
+    <p>You have no previous orders.</p>
+}
+else
+{
+    <table class="table">
+        <thead>
+            <tr>
+                <th>Order #</th>
+                <th>Date</th>
+                <th>Total</th>
+                <th>Status</th>
+                <th></th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var o in Model)
+            {
+                <tr>
+                    <td>@o.PkOrderId</td>
+                    <td>@o.CreatedAt.ToString("g")</td>
+                    <td>@o.TotalAmount.ToString("C")</td>
+                    <td>@o.DeliveryStatus</td>
+                    <td><a class="btn btn-sm btn-primary" asp-action="Details" asp-route-id="@o.PkOrderId">Details</a></td>
+                </tr>
+            }
+        </tbody>
+    </table>
+}
