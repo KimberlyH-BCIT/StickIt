@@ -1,0 +1,68 @@
+@model IEnumerable<ELKH.ViewModels.UserLogVM>
+
+@{
+    ViewData["Title"] = "Account History";
+}
+
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h2 class="mb-0">Account History</h2>
+    <a class="btn btn-sm btn-outline-secondary" asp-action="EditProfile">&larr; Profile</a>
+</div>
+
+@if (!Model.Any())
+{
+    <p class="text-muted">No history recorded yet.</p>
+}
+else
+{
+    <div class="list-group">
+        @foreach (var entry in Model)
+        {
+            @if (entry.IsActivity)
+            {
+                var (icon, badgeClass) = entry.ActivityType switch
+                {
+                        "ProfileUpdated"    => ("✏️", "bg-primary"),
+                        "AddressAdded"      => ("📍", "bg-success"),
+                        "AddressUpdated"    => ("🔄", "bg-info text-dark"),
+                        "AddressDeleted"    => ("🗑️", "bg-danger"),
+                        "AddressDefaultSet" => ("⭐", "bg-warning text-dark"),
+                        _                  => ("📋", "bg-secondary")
+                };
+                <div class="list-group-item d-flex align-items-start gap-3 py-3">
+                    <span class="fs-5 mt-1" aria-hidden="true">@icon</span>
+                    <div class="flex-grow-1">
+                        <div class="d-flex justify-content-between align-items-center mb-1">
+                            <span class="badge @badgeClass">@entry.ActivityType</span>
+                            <small class="text-muted">@entry.LogInTime.ToLocalTime().ToString("d MMM yyyy, h:mm tt")</small>
+                        </div>
+                        <p class="mb-0 small">@entry.ActivityDetail</p>
+                    </div>
+                </div>
+            }
+            else
+            {
+                var (sessionBadge, sessionClass) = (entry.Abandoned, entry.LogOutTime) switch
+                {
+                        (true, _)    => ("Abandoned", "bg-warning text-dark"),
+                        (_, not null) => ("Logged out", "bg-success"),
+                        _            => ("Active",     "bg-info text-dark")
+                };
+                <div class="list-group-item py-3">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <span class="fw-semibold small">
+                            🔑 Login &mdash; @entry.LogInTime.ToLocalTime().ToString("d MMM yyyy, h:mm tt")
+                        </span>
+                        <span class="badge @sessionClass">@sessionBadge</span>
+                    </div>
+                    @if (entry.LogOutTime is not null)
+                    {
+                        <small class="text-muted">
+                            Logged out @entry.LogOutTime.Value.ToLocalTime().ToString("d MMM yyyy, h:mm tt")
+                        </small>
+                    }
+                </div>
+            }
+        }
+    </div>
+}
