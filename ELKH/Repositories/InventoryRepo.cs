@@ -66,7 +66,7 @@ namespace ELKH.Repositories
             }
 
             // Validate content type
-            var allowedContentTypes = new[] { "image/jpeg", "image/png", "image/gif", "image/webp" };
+            var allowedContentTypes = new[] { "image/jpeg", "image/jpg", "image/png", "image/gif", "image/webp" };
             if (!allowedContentTypes.Contains(vm.ProductImage.ContentType.ToLowerInvariant()))
             {
                 return false;
