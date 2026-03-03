@@ -1,0 +1,55 @@
+@model IEnumerable<ELKH.Models.ProductRatingModel>
+
+@using Microsoft.AspNetCore.Identity
+@inject SignInManager<IdentityUser> SignInManager
+
+<div>
+    <h4>Customer Reviews</h4>
+    @if (!Model.Any())
+    {
+        <p>No reviews yet.</p>
+    }
+    else
+    {
+        foreach (var r in Model.OrderByDescending(r => r.RatedTime))
+        {
+            if (!r.Approved)
+            {
+                // show only to moderators/admins
+                if (SignInManager.IsSignedIn(User) && (User.IsInRole("Moderator") || User.IsInRole("Admin")))
+                {
+                    <div class="border p-2 mb-2 bg-light">
+                        <strong>Rating: @r.Rating / 5</strong>
+                        <p>@r.Description</p>
+                        <small class="text-muted">@r.RatedTime.ToLocalTime().ToString("g")</small>
+                        <div class="mt-2">
+                            <form asp-controller="Rating" asp-action="Approve" method="post" class="d-inline">
+                                @Html.AntiForgeryToken()
+                                <input type="hidden" name="ratingId" value="@r.PkRatingId" />
+                                <button class="btn btn-sm btn-success">Approve</button>
+                            </form>
+                            <form asp-controller="Rating" asp-action="Flag" method="post" class="d-inline ms-2">
+                                @Html.AntiForgeryToken()
+                                <input type="hidden" name="ratingId" value="@r.PkRatingId" />
+                                <input type="hidden" name="note" value="Flagged by moderator" />
+                                <button class="btn btn-sm btn-warning">Flag</button>
+                            </form>
+                        </div>
+                    </div>
+                }
+            }
+            else
+            {
+                <div class="border p-2 mb-2">
+                    <strong>Rating: @r.Rating / 5</strong>
+                    <p>@r.Description</p>
+                    <small class="text-muted">@r.RatedTime.ToLocalTime().ToString("g")</small>
+                    @if (r.IsFlagged)
+                    {
+                        <div class="mt-1 text-warning">This review has been flagged for moderation.</div>
+                    }
+                </div>
+            }
+        }
+    }
+</div>
