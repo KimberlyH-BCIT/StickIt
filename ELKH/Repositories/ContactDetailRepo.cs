@@ -1,40 +1,47 @@
 using ELKH.Data;
 using ELKH.Models;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Logging;
 
 namespace ELKH.Repositories
 {
-    public class ContactDetailRepo
+    /// <summary>
+    /// Repository for contact detail (address) management.
+    /// Inherits common CRUD operations and adds custom logic for default address handling.
+    /// </summary>
+    public class ContactDetailRepo : RepositoryBase<ContactDetailModel, int>, IContactDetailRepo
     {
-        private readonly ApplicationDbContext _context;
-
-        public ContactDetailRepo(ApplicationDbContext context)
+        public ContactDetailRepo(ApplicationDbContext context, ILogger<ContactDetailRepo> logger) 
+            : base(context, logger)
         {
-            _context = context;
         }
 
+        /// <summary>
+        /// Get all contact details for a specific user, ordered by default status.
+        /// </summary>
         public async Task<IEnumerable<ContactDetailModel>> GetAllByUserIdAsync(int userId)
         {
-            return await _context.ContactDetails
+            return await Context.ContactDetails
                 .Where(c => c.FkRegisteredUserId == userId)
                 .OrderByDescending(c => c.IsDefault)
                 .ThenBy(c => c.PkContactId)
                 .ToListAsync();
         }
 
-        public async Task<ContactDetailModel?> GetByIdAsync(int contactId)
-        {
-            return await _context.ContactDetails
-                .FirstOrDefaultAsync(c => c.PkContactId == contactId);
-        }
-
+        /// <summary>
+        /// Get the default contact detail for a user.
+        /// </summary>
         public async Task<ContactDetailModel?> GetDefaultByUserIdAsync(int userId)
         {
-            return await _context.ContactDetails
+            return await Context.ContactDetails
                 .FirstOrDefaultAsync(c => c.FkRegisteredUserId == userId && c.IsDefault);
         }
 
-        public async Task<bool> AddAsync(ContactDetailModel contact)
+        /// <summary>
+        /// Add a new contact detail with default address logic.
+        /// If marked as default, unsets other defaults for the same user.
+        /// </summary>
+        public override async Task<bool> AddAsync(ContactDetailModel contact)
         {
             try
             {
@@ -44,23 +51,31 @@ namespace ELKH.Repositories
                     await UnsetOtherDefaultsAsync(contact.FkRegisteredUserId, contact.PkContactId);
                 }
 
-                _context.ContactDetails.Add(contact);
-                await _context.SaveChangesAsync();
+                Context.ContactDetails.Add(contact);
+                await Context.SaveChangesAsync();
+                Logger.LogInformation("Added contact detail for user {UserId}", contact.FkRegisteredUserId);
                 return true;
             }
-            catch
+            catch (Exception ex)
             {
+                Logger.LogError(ex, "Error adding contact detail for user {UserId}", contact.FkRegisteredUserId);
                 return false;
             }
         }
 
-        public async Task<bool> UpdateAsync(ContactDetailModel contact)
+        /// <summary>
+        /// Update an existing contact detail with default address logic.
+        /// </summary>
+        public override async Task<bool> UpdateAsync(ContactDetailModel contact)
         {
             try
             {
                 var existing = await GetByIdAsync(contact.PkContactId);
                 if (existing is null)
+                {
+                    Logger.LogWarning("Cannot update contact {ContactId} - not found", contact.PkContactId);
                     return false;
+                }
 
                 // If this is being set as default, unset other defaults for this user
                 if (contact.IsDefault && !existing.IsDefault)
@@ -78,36 +93,25 @@ namespace ELKH.Repositories
                 existing.Country = contact.Country;
                 existing.IsDefault = contact.IsDefault;
 
-                await _context.SaveChangesAsync();
+                await Context.SaveChangesAsync();
+                Logger.LogInformation("Updated contact detail {ContactId}", contact.PkContactId);
                 return true;
             }
-            catch
+            catch (Exception ex)
             {
+                Logger.LogError(ex, "Error updating contact detail {ContactId}", contact.PkContactId);
                 return false;
             }
         }
 
-        public async Task<bool> DeleteAsync(int contactId)
-        {
-            try
-            {
-                var contact = await GetByIdAsync(contactId);
-                if (contact is null)
-                    return false;
+        // DeleteAsync is inherited from base and works fine
 
-                _context.ContactDetails.Remove(contact);
-                await _context.SaveChangesAsync();
-                return true;
-            }
-            catch
-            {
-                return false;
-            }
-        }
-
+        /// <summary>
+        /// Unset the IsDefault flag on all other contact details for the specified user.
+        /// </summary>
         private async Task UnsetOtherDefaultsAsync(int userId, int exceptContactId)
         {
-            var otherDefaults = await _context.ContactDetails
+            var otherDefaults = await Context.ContactDetails
                 .Where(c => c.FkRegisteredUserId == userId 
                          && c.PkContactId != exceptContactId 
                          && c.IsDefault)
