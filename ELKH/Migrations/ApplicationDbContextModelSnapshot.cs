@@ -17,6 +17,57 @@ namespace ELKH.Migrations
 #pragma warning disable 612, 618
             modelBuilder.HasAnnotation("ProductVersion", "10.0.0");
 
+            modelBuilder.Entity("ELKH.Models.AuditEntryModel", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("INTEGER");
+
+                    b.Property<string>("Action")
+                        .IsRequired()
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("Actor")
+                        .IsRequired()
+                        .HasColumnType("TEXT");
+
+                    b.Property<int>("AffectedKeysCount")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<string>("Details")
+                        .IsRequired()
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("Reason")
+                        .IsRequired()
+                        .HasColumnType("TEXT");
+
+                    b.Property<DateTime>("Timestamp")
+                        .HasColumnType("TEXT");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("AuditEntries", (string)null);
+                });
+
+            modelBuilder.Entity("ELKH.Models.CachedFuzzyKeyModel", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("INTEGER");
+
+                    b.Property<string>("CacheKey")
+                        .IsRequired()
+                        .HasColumnType("TEXT");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("TEXT");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("CachedFuzzyKeys", (string)null);
+                });
+
             modelBuilder.Entity("ELKH.Models.CartModel", b =>
                 {
                     b.Property<int>("PkCartId")
@@ -29,17 +80,17 @@ namespace ELKH.Migrations
                     b.Property<int>("FkRegisteredUserId")
                         .HasColumnType("INTEGER");
 
-                    b.Property<int>("ProductPkProductId")
+                    b.Property<int>("Quantity")
                         .HasColumnType("INTEGER");
 
-                    b.Property<int>("RegisteredUserPkRegisteredUserId")
-                        .HasColumnType("INTEGER");
+                    b.Property<decimal>("TotalPrice")
+                        .HasColumnType("TEXT");
 
                     b.HasKey("PkCartId");
 
-                    b.HasIndex("ProductPkProductId");
+                    b.HasIndex("FkProductID");
 
-                    b.HasIndex("RegisteredUserPkRegisteredUserId");
+                    b.HasIndex("FkRegisteredUserId");
 
                     b.ToTable("Carts");
                 });
@@ -99,18 +150,51 @@ namespace ELKH.Migrations
                         .IsRequired()
                         .HasColumnType("TEXT");
 
-                    b.Property<int>("RegisiteredUserPkRegisteredUserId")
-                        .HasColumnType("INTEGER");
-
                     b.Property<string>("Street")
                         .IsRequired()
                         .HasColumnType("TEXT");
 
                     b.HasKey("PkContactId");
 
-                    b.HasIndex("RegisiteredUserPkRegisteredUserId");
+                    b.HasIndex("FkRegisteredUserId");
 
                     b.ToTable("ContactDetails");
+                });
+
+            modelBuilder.Entity("ELKH.Models.FuzzySuggestionModel", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("INTEGER");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("NameNormalized")
+                        .IsRequired()
+                        .HasColumnType("TEXT");
+
+                    b.Property<int>("PkProductId")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<decimal>("Price")
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("Thumbnail")
+                        .IsRequired()
+                        .HasColumnType("TEXT");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("NameNormalized");
+
+                    b.HasIndex("PkProductId");
+
+                    b.ToTable("FuzzySuggestions", (string)null);
                 });
 
             modelBuilder.Entity("ELKH.Models.OrderItemModel", b =>
@@ -125,10 +209,7 @@ namespace ELKH.Migrations
                     b.Property<int>("FkProductId")
                         .HasColumnType("INTEGER");
 
-                    b.Property<int>("OrdersPkOrderId")
-                        .HasColumnType("INTEGER");
-
-                    b.Property<int>("ProductsPkProductId")
+                    b.Property<int?>("ProductModelPkProductId")
                         .HasColumnType("INTEGER");
 
                     b.Property<int>("Quantity")
@@ -136,9 +217,11 @@ namespace ELKH.Migrations
 
                     b.HasKey("PkOrderItemId");
 
-                    b.HasIndex("OrdersPkOrderId");
+                    b.HasIndex("FkOrderId");
 
-                    b.HasIndex("ProductsPkProductId");
+                    b.HasIndex("FkProductId");
+
+                    b.HasIndex("ProductModelPkProductId");
 
                     b.ToTable("OrderItems");
                 });
@@ -149,10 +232,14 @@ namespace ELKH.Migrations
                         .ValueGeneratedOnAdd()
                         .HasColumnType("INTEGER");
 
-                    b.Property<int>("ContactDetailPkContactId")
+                    b.Property<int?>("ContactDetailModelPkContactId")
                         .HasColumnType("INTEGER");
 
                     b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("DeliveryStatus")
+                        .IsRequired()
                         .HasColumnType("TEXT");
 
                     b.Property<int>("FkContactId")
@@ -165,17 +252,16 @@ namespace ELKH.Migrations
                         .IsRequired()
                         .HasColumnType("TEXT");
 
-                    b.Property<int>("RegisteredUserPkRegisteredUserId")
-                        .HasColumnType("INTEGER");
-
                     b.Property<decimal>("TotalAmount")
                         .HasColumnType("TEXT");
 
                     b.HasKey("PkOrderId");
 
-                    b.HasIndex("ContactDetailPkContactId");
+                    b.HasIndex("ContactDetailModelPkContactId");
 
-                    b.HasIndex("RegisteredUserPkRegisteredUserId");
+                    b.HasIndex("FkContactId");
+
+                    b.HasIndex("FkRegisteredUserId");
 
                     b.ToTable("Orders");
                 });
@@ -229,17 +315,14 @@ namespace ELKH.Migrations
                         .ValueGeneratedOnAdd()
                         .HasColumnType("INTEGER");
 
-                    b.Property<int>("CategoryPkCategoryId")
-                        .HasColumnType("INTEGER");
-
                     b.Property<string>("Description")
                         .IsRequired()
                         .HasColumnType("TEXT");
 
-                    b.Property<int>("FkCategoryId")
-                        .HasColumnType("INTEGER");
+                    b.Property<decimal>("DiscountPercent")
+                        .HasColumnType("TEXT");
 
-                    b.Property<int>("FkWishListId")
+                    b.Property<int>("FkCategoryId")
                         .HasColumnType("INTEGER");
 
                     b.Property<bool>("IsActive")
@@ -249,20 +332,21 @@ namespace ELKH.Migrations
                         .IsRequired()
                         .HasColumnType("TEXT");
 
+                    b.Property<string>("NameNormalized")
+                        .IsRequired()
+                        .HasColumnType("TEXT");
+
                     b.Property<decimal>("Price")
                         .HasColumnType("TEXT");
 
                     b.Property<int?>("StockQuantity")
                         .HasColumnType("INTEGER");
 
-                    b.Property<int>("WishListPkWishListId")
-                        .HasColumnType("INTEGER");
-
                     b.HasKey("PkProductId");
 
-                    b.HasIndex("CategoryPkCategoryId");
+                    b.HasIndex("FkCategoryId");
 
-                    b.HasIndex("WishListPkWishListId");
+                    b.HasIndex("NameNormalized");
 
                     b.ToTable("Products");
                 });
@@ -273,9 +357,18 @@ namespace ELKH.Migrations
                         .ValueGeneratedOnAdd()
                         .HasColumnType("INTEGER");
 
+                    b.Property<bool>("Approved")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<DateTime?>("DeletedAt")
+                        .HasColumnType("TEXT");
+
                     b.Property<string>("Description")
                         .IsRequired()
                         .HasColumnType("TEXT");
+
+                    b.Property<int?>("FkOrderItemId")
+                        .HasColumnType("INTEGER");
 
                     b.Property<int>("FkProductId")
                         .HasColumnType("INTEGER");
@@ -283,8 +376,18 @@ namespace ELKH.Migrations
                     b.Property<int>("FkRegisteredUserId")
                         .HasColumnType("INTEGER");
 
-                    b.Property<int>("ProductsPkProductId")
+                    b.Property<bool>("IsDeleted")
                         .HasColumnType("INTEGER");
+
+                    b.Property<bool>("IsFlagged")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<DateTime?>("LastEditedAt")
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("ModeratorNote")
+                        .IsRequired()
+                        .HasColumnType("TEXT");
 
                     b.Property<DateTime>("RatedTime")
                         .HasColumnType("TEXT");
@@ -292,14 +395,11 @@ namespace ELKH.Migrations
                     b.Property<int>("Rating")
                         .HasColumnType("INTEGER");
 
-                    b.Property<int>("RegisteredUsersPkRegisteredUserId")
-                        .HasColumnType("INTEGER");
-
                     b.HasKey("PkRatingId");
 
-                    b.HasIndex("ProductsPkProductId");
+                    b.HasIndex("FkProductId");
 
-                    b.HasIndex("RegisteredUsersPkRegisteredUserId");
+                    b.HasIndex("FkRegisteredUserId");
 
                     b.ToTable("ProductRatings");
                 });
@@ -311,6 +411,14 @@ namespace ELKH.Migrations
                         .HasColumnType("INTEGER");
 
                     b.Property<string>("Email")
+                        .IsRequired()
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("PreferredCulture")
+                        .IsRequired()
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("PreferredCurrency")
                         .IsRequired()
                         .HasColumnType("TEXT");
 
@@ -328,10 +436,10 @@ namespace ELKH.Migrations
                     b.Property<decimal>("Amount")
                         .HasColumnType("TEXT");
 
-                    b.Property<int>("ContactDetailPkContactId")
+                    b.Property<int?>("ContactDetailModelPkContactId")
                         .HasColumnType("INTEGER");
 
-                    b.Property<decimal>("DeliberyFee")
+                    b.Property<decimal>("DeliveryFee")
                         .HasColumnType("TEXT");
 
                     b.Property<int>("FkContactId")
@@ -349,7 +457,9 @@ namespace ELKH.Migrations
 
                     b.HasKey("PkTransactionId");
 
-                    b.HasIndex("ContactDetailPkContactId");
+                    b.HasIndex("ContactDetailModelPkContactId");
+
+                    b.HasIndex("FkContactId");
 
                     b.HasIndex("FkOrderId")
                         .IsUnique();
@@ -365,6 +475,14 @@ namespace ELKH.Migrations
 
                     b.Property<bool>("Abandoned")
                         .HasColumnType("INTEGER");
+
+                    b.Property<string>("ActivityDetail")
+                        .HasMaxLength(500)
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("ActivityType")
+                        .HasMaxLength(100)
+                        .HasColumnType("TEXT");
 
                     b.Property<string>("FkEmail")
                         .IsRequired()
@@ -388,6 +506,13 @@ namespace ELKH.Migrations
                         .HasMaxLength(256)
                         .HasColumnType("TEXT");
 
+                    b.Property<byte[]>("AvatarData")
+                        .HasColumnType("BLOB");
+
+                    b.Property<string>("AvatarMimeType")
+                        .HasMaxLength(50)
+                        .HasColumnType("TEXT");
+
                     b.Property<string>("FirstName")
                         .IsRequired()
                         .HasMaxLength(100)
@@ -401,6 +526,30 @@ namespace ELKH.Migrations
                     b.HasKey("PkEmail");
 
                     b.ToTable("UserProfiles");
+                });
+
+            modelBuilder.Entity("ELKH.Models.WishListItemModel", b =>
+                {
+                    b.Property<int>("PkWishListItemId")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("INTEGER");
+
+                    b.Property<DateTime>("DateAdded")
+                        .HasColumnType("TEXT");
+
+                    b.Property<int>("FkProductId")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<int>("FkWishListId")
+                        .HasColumnType("INTEGER");
+
+                    b.HasKey("PkWishListItemId");
+
+                    b.HasIndex("FkProductId");
+
+                    b.HasIndex("FkWishListId");
+
+                    b.ToTable("WishListItems");
                 });
 
             modelBuilder.Entity("ELKH.Models.WishListModel", b =>
@@ -620,13 +769,13 @@ namespace ELKH.Migrations
                 {
                     b.HasOne("ELKH.Models.ProductModel", "Product")
                         .WithMany("Carts")
-                        .HasForeignKey("ProductPkProductId")
+                        .HasForeignKey("FkProductID")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
                     b.HasOne("ELKH.Models.RegisteredUserModel", "RegisteredUser")
                         .WithMany("Cart")
-                        .HasForeignKey("RegisteredUserPkRegisteredUserId")
+                        .HasForeignKey("FkRegisteredUserId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
@@ -637,45 +786,62 @@ namespace ELKH.Migrations
 
             modelBuilder.Entity("ELKH.Models.ContactDetailModel", b =>
                 {
-                    b.HasOne("ELKH.Models.RegisteredUserModel", "RegisiteredUser")
+                    b.HasOne("ELKH.Models.RegisteredUserModel", "RegisteredUser")
                         .WithMany("ContactDetails")
-                        .HasForeignKey("RegisiteredUserPkRegisteredUserId")
+                        .HasForeignKey("FkRegisteredUserId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
-                    b.Navigation("RegisiteredUser");
+                    b.Navigation("RegisteredUser");
+                });
+
+            modelBuilder.Entity("ELKH.Models.FuzzySuggestionModel", b =>
+                {
+                    b.HasOne("ELKH.Models.ProductModel", null)
+                        .WithMany("FuzzySuggestions")
+                        .HasForeignKey("PkProductId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
                 });
 
             modelBuilder.Entity("ELKH.Models.OrderItemModel", b =>
                 {
-                    b.HasOne("ELKH.Models.OrderModel", "Orders")
+                    b.HasOne("ELKH.Models.OrderModel", "Order")
                         .WithMany("OrderItems")
-                        .HasForeignKey("OrdersPkOrderId")
+                        .HasForeignKey("FkOrderId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
-                    b.HasOne("ELKH.Models.ProductModel", "Products")
-                        .WithMany("OrderItems")
-                        .HasForeignKey("ProductsPkProductId")
+                    b.HasOne("ELKH.Models.ProductModel", "Product")
+                        .WithMany()
+                        .HasForeignKey("FkProductId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
-                    b.Navigation("Orders");
+                    b.HasOne("ELKH.Models.ProductModel", null)
+                        .WithMany("OrderItems")
+                        .HasForeignKey("ProductModelPkProductId");
 
-                    b.Navigation("Products");
+                    b.Navigation("Order");
+
+                    b.Navigation("Product");
                 });
 
             modelBuilder.Entity("ELKH.Models.OrderModel", b =>
                 {
-                    b.HasOne("ELKH.Models.ContactDetailModel", "ContactDetail")
+                    b.HasOne("ELKH.Models.ContactDetailModel", null)
                         .WithMany("Orders")
-                        .HasForeignKey("ContactDetailPkContactId")
+                        .HasForeignKey("ContactDetailModelPkContactId");
+
+                    b.HasOne("ELKH.Models.ContactDetailModel", "ContactDetail")
+                        .WithMany()
+                        .HasForeignKey("FkContactId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
                     b.HasOne("ELKH.Models.RegisteredUserModel", "RegisteredUser")
                         .WithMany("Orders")
-                        .HasForeignKey("RegisteredUserPkRegisteredUserId")
+                        .HasForeignKey("FkRegisteredUserId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
@@ -687,7 +853,7 @@ namespace ELKH.Migrations
             modelBuilder.Entity("ELKH.Models.OrderStatusModel", b =>
                 {
                     b.HasOne("ELKH.Models.OrderModel", "Order")
-                        .WithOne("OrderStatuses")
+                        .WithOne("OrderStatusDetail")
                         .HasForeignKey("ELKH.Models.OrderStatusModel", "FkOrderId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
@@ -710,45 +876,41 @@ namespace ELKH.Migrations
                 {
                     b.HasOne("ELKH.Models.CategoryModel", "Category")
                         .WithMany("Products")
-                        .HasForeignKey("CategoryPkCategoryId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.HasOne("ELKH.Models.WishListModel", "WishList")
-                        .WithMany("Products")
-                        .HasForeignKey("WishListPkWishListId")
+                        .HasForeignKey("FkCategoryId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
                     b.Navigation("Category");
-
-                    b.Navigation("WishList");
                 });
 
             modelBuilder.Entity("ELKH.Models.ProductRatingModel", b =>
                 {
-                    b.HasOne("ELKH.Models.ProductModel", "Products")
+                    b.HasOne("ELKH.Models.ProductModel", "Product")
                         .WithMany("ProductRatings")
-                        .HasForeignKey("ProductsPkProductId")
+                        .HasForeignKey("FkProductId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
-                    b.HasOne("ELKH.Models.RegisteredUserModel", "RegisteredUsers")
+                    b.HasOne("ELKH.Models.RegisteredUserModel", "RegisteredUser")
                         .WithMany("ProductRatings")
-                        .HasForeignKey("RegisteredUsersPkRegisteredUserId")
+                        .HasForeignKey("FkRegisteredUserId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
-                    b.Navigation("Products");
+                    b.Navigation("Product");
 
-                    b.Navigation("RegisteredUsers");
+                    b.Navigation("RegisteredUser");
                 });
 
             modelBuilder.Entity("ELKH.Models.TransactionModel", b =>
                 {
-                    b.HasOne("ELKH.Models.ContactDetailModel", "ContactDetail")
+                    b.HasOne("ELKH.Models.ContactDetailModel", null)
                         .WithMany("Transactions")
-                        .HasForeignKey("ContactDetailPkContactId")
+                        .HasForeignKey("ContactDetailModelPkContactId");
+
+                    b.HasOne("ELKH.Models.ContactDetailModel", "ContactDetail")
+                        .WithMany()
+                        .HasForeignKey("FkContactId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
@@ -761,6 +923,25 @@ namespace ELKH.Migrations
                     b.Navigation("ContactDetail");
 
                     b.Navigation("Order");
+                });
+
+            modelBuilder.Entity("ELKH.Models.WishListItemModel", b =>
+                {
+                    b.HasOne("ELKH.Models.ProductModel", "Product")
+                        .WithMany("WishListItems")
+                        .HasForeignKey("FkProductId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("ELKH.Models.WishListModel", "WishList")
+                        .WithMany("WishListItems")
+                        .HasForeignKey("FkWishListId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Product");
+
+                    b.Navigation("WishList");
                 });
 
             modelBuilder.Entity("ELKH.Models.WishListModel", b =>
@@ -841,22 +1022,24 @@ namespace ELKH.Migrations
                 {
                     b.Navigation("OrderItems");
 
-                    b.Navigation("OrderStatuses")
-                        .IsRequired();
+                    b.Navigation("OrderStatusDetail");
 
-                    b.Navigation("Transaction")
-                        .IsRequired();
+                    b.Navigation("Transaction");
                 });
 
             modelBuilder.Entity("ELKH.Models.ProductModel", b =>
                 {
                     b.Navigation("Carts");
 
+                    b.Navigation("FuzzySuggestions");
+
                     b.Navigation("OrderItems");
 
                     b.Navigation("ProductImages");
 
                     b.Navigation("ProductRatings");
+
+                    b.Navigation("WishListItems");
                 });
 
             modelBuilder.Entity("ELKH.Models.RegisteredUserModel", b =>
@@ -869,13 +1052,12 @@ namespace ELKH.Migrations
 
                     b.Navigation("ProductRatings");
 
-                    b.Navigation("WishLists")
-                        .IsRequired();
+                    b.Navigation("WishLists");
                 });
 
             modelBuilder.Entity("ELKH.Models.WishListModel", b =>
                 {
-                    b.Navigation("Products");
+                    b.Navigation("WishListItems");
                 });
 #pragma warning restore 612, 618
         }

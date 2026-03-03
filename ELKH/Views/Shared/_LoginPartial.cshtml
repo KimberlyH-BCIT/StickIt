@@ -1,12 +1,18 @@
 ﻿@using Microsoft.AspNetCore.Identity
 @inject SignInManager<IdentityUser> SignInManager
 @inject UserManager<IdentityUser> UserManager
+@inject ELKH.Data.ApplicationDbContext _profileDb
 
 <ul class="navbar-nav">
 @if (SignInManager.IsSignedIn(User))
 {
+    var _greetEmail = User.Identity?.Name ?? string.Empty;
+    var _profile = !string.IsNullOrEmpty(_greetEmail) ? _profileDb.UserProfiles.Find(_greetEmail) : null;
+    var _displayName = (_profile is not null && !string.IsNullOrEmpty(_profile.FirstName))
+        ? _profile.FirstName
+        : _greetEmail;
     <li class="nav-item">
-        <a  class="nav-link text-dark" asp-area="Identity" asp-page="/Account/Manage/Index" title="Manage">Hello @User.Identity?.Name!</a>
+        <a class="nav-link text-dark" asp-area="Identity" asp-page="/Account/Manage/Index" title="Manage">Hello @_displayName!</a>
     </li>
     <li class="nav-item">
         <form  class="form-inline" asp-area="Identity" asp-page="/Account/Logout" asp-route-returnUrl="@Url.Action("Index", "Home", new { area = "" })">
