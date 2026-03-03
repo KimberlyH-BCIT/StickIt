@@ -1,0 +1,55 @@
+﻿@model ELKH.ViewModels.ManageRoleVM
+
+@{
+    ViewData["Title"] = "ManageUserRole";
+    Layout = "~/Views/Shared/_AdminLayout.cshtml";
+}
+<h1>Manage User Roles</h1>
+
+<div class="mb-3">
+    <a asp-controller="AdminRoleController"
+       asp-action="CreateRole"
+       class="btn btn-primary">
+        Create New Role
+    </a>
+
+    <a asp-controller="AdminRoleController"
+       asp-action="AssignRoles"
+       class="btn btn-secondary">
+        Assign New Role
+    </a>
+</div>
+
+<hr />
+
+<h3>Roles</h3>
+
+<table class="table table-bordered">
+    <thead>
+        <tr>
+            <th>Role Name</th>
+            <th>Action</th>
+        </tr>
+    </thead>
+    <tbody>
+        @foreach (var role in Model.Roles)
+        {
+            <tr>
+                <td>@role.RoleName</td>
+                <td>
+                    <a asp-controller="AdminRoleController"
+                       asp-action="DeleteRole"
+                       asp-route-roleId="@role.RoleId"
+                       class="btn btn-danger btn-sm">
+                        Delete
+                    </a>
+                </td>
+            </tr>
+        }
+    </tbody>
+</table>
+
+<div>
+    @Html.ActionLink("Edit", "Edit", new { /* id = Model.PrimaryKey */ }) |
+    <a asp-action="Index" , asp-controller="AdminRoleController">Back to List</a>
+</div>

@@ -2,7 +2,7 @@
 
 namespace ELKH.Models
 {
-    public class ProductRating
+    public class ProductRatingModel
     {
         [Key]
         public int PkRatingId { get; set; }
@@ -12,10 +12,10 @@ namespace ELKH.Models
 
         //Product Relationship
         public int FkProductId { get; set; }
-        public Product Products { get; set; } = new Product();
+        public ProductModel Products { get; set; } = new ProductModel();
 
         //Registered User Relationship
         public int FkRegisteredUserId { get; set; }
-        public RegisteredUser RegisteredUsers { get; set; } = new RegisteredUser();
+        public RegisteredUserModel RegisteredUsers { get; set; } = new RegisteredUserModel();
     }
 }

@@ -4,7 +4,7 @@ using System.ComponentModel.DataAnnotations.Schema;
 
 namespace ELKH.Models
 {
-    public class RegisteredUser
+    public class RegisteredUserModel
     {
         [Key]
         public int PkRegisteredUserId { get; set; }
@@ -13,18 +13,18 @@ namespace ELKH.Models
 
 
         //Relationship with Cart
-        public ICollection<Cart> Cart { get; set; } = new List<Cart>();
+        public ICollection<CartModel> Cart { get; set; } = new List<CartModel>();
 
         //Relationship with Order
-        public ICollection<Order> Orders { get; set; } = new List<Order>();
+        public ICollection<OrderModel> Orders { get; set; } = new List<OrderModel>();
 
         //Relationship with Contact Detail
-        public ICollection<ContactDetail> ContactDetails { get; set; } = new List<ContactDetail>();
+        public ICollection<ContactDetailModel> ContactDetails { get; set; } = new List<ContactDetailModel>();
 
         //Relationship With ProductRating
-        public ICollection<ProductRating> ProductRatings { get; set; } = new List<ProductRating>();
+        public ICollection<ProductRatingModel> ProductRatings { get; set; } = new List<ProductRatingModel>();
 
         //Relationship with WishList
-        public WishList WishLists { get; set; } = new WishList();
+        public WishListModel WishLists { get; set; } = new WishListModel();
     }
 }

@@ -2,16 +2,16 @@
 
 namespace ELKH.Models
 {
-    public class WishList
+    public class WishListModel
     {
         [Key]
         public int PkWishListId { get; set; }
 
         //Relationship with user
         public int FkUserId { get; set; }
-        public RegisteredUser RegisteredUser { get; set; } = new RegisteredUser();
+        public RegisteredUserModel RegisteredUser { get; set; } = new RegisteredUserModel();
 
         //Relationship with Product
-        public ICollection<Product> Products { get; set; } = new List<Product>();
+        public ICollection<ProductModel> Products { get; set; } = new List<ProductModel>();
     }
 }

@@ -3,7 +3,7 @@ using System.ComponentModel.DataAnnotations;
 
 namespace ELKH.Models
 {
-    public class Order
+    public class OrderModel
     {
         [Key]
         public int PkOrderId { get; set; }
@@ -21,19 +21,19 @@ namespace ELKH.Models
 
         //Relationship with User
         public int FkRegisteredUserId { get; set; }
-        public RegisteredUser RegisteredUser { get; set; } = new RegisteredUser();
+        public RegisteredUserModel RegisteredUser { get; set; } = new RegisteredUserModel();
 
         //Relationship with OrderItem
-        public ICollection<OrderItem> OrderItems { get; set; } = new List<OrderItem>();
+        public ICollection<OrderItemModel> OrderItems { get; set; } = new List<OrderItemModel>();
 
         //Relationship with Transaction
-        public Transaction Transaction { get; set; } = new Transaction();
+        public TransactionModel Transaction { get; set; } = new TransactionModel();
 
         //Order Status Relationship
-        public OrderStatus OrderStatuses { get; set; } = new OrderStatus();
+        public OrderStatusModel OrderStatuses { get; set; } = new OrderStatusModel();
 
         //ContactDetail Relationship
         public int FkContactId { get; set; }
-        public ContactDetail ContactDetail { get; set; } = new ContactDetail();
+        public ContactDetailModel ContactDetail { get; set; } = new ContactDetailModel();
     }
 }

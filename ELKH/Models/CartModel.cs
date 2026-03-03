@@ -3,7 +3,7 @@ using System.ComponentModel.DataAnnotations.Schema;
 
 namespace ELKH.Models
 {
-    public class Cart
+    public class CartModel
     {
         [Key]
         public int PkCartId { get; set; }
@@ -12,10 +12,10 @@ namespace ELKH.Models
 
         //Relationship with RegisteredUser table
         public int FkRegisteredUserId { get; set; }
-        public RegisteredUser RegisteredUser { get; set; } = new RegisteredUser();
+        public RegisteredUserModel RegisteredUser { get; set; } = new RegisteredUserModel();
 
         //Relationship with Product
         public int FkProductID { get; set; }
-        public Product Product { get; set; } =  new Product();
+        public ProductModel Product { get; set; } =  new ProductModel();
     }
 }

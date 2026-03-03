@@ -3,7 +3,7 @@ using System.ComponentModel.DataAnnotations;
 
 namespace ELKH.Models
 {
-    public class ProductImage
+    public class ProductImageModel
     {
         [Key]
         public int PkProductImageId { get; set; }
@@ -13,6 +13,6 @@ namespace ELKH.Models
 
         //Relationship with Product
         public int FkProductId { get; set; }
-        public required Product Product { get; set; } 
+        public ProductModel Product { get; set; } = new ProductModel();
     }
 }

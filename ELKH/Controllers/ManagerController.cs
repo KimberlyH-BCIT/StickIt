@@ -1,8 +1,10 @@
-﻿using Microsoft.AspNetCore.Http;
+﻿using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 
 namespace ELKH.Controllers
 {
+    [Authorize(Roles = "Manager")]
     public class ManagerController : Controller
     {
         // GET: ManagerController
@@ -10,74 +12,38 @@ namespace ELKH.Controllers
         {
             return View();
         }
-
-        // GET: ManagerController/Details/5
-        public ActionResult Details(int id)
+        public ActionResult ListOfProducts()
+        {
+            return View();
+        }
+        public ActionResult AddNewProduct()
         {
             return View();
         }
 
-        // GET: ManagerController/Create
-        public ActionResult Create()
+        public ActionResult ProductDetails(int id)
         {
             return View();
         }
 
-        // POST: ManagerController/Create
-        [HttpPost]
-        [ValidateAntiForgeryToken]
-        public ActionResult Create(IFormCollection collection)
+        public ActionResult UpdateProductDetails(int id)
         {
-            try
-            {
-                return RedirectToAction(nameof(Index));
-            }
-            catch
-            {
-                return View();
-            }
+            return View();
         }
-
-        // GET: ManagerController/Edit/5
-        public ActionResult Edit(int id)
+        public ActionResult DeleteProduct(int id)
         {
             return View();
         }
 
-        // POST: ManagerController/Edit/5
-        [HttpPost]
-        [ValidateAntiForgeryToken]
-        public ActionResult Edit(int id, IFormCollection collection)
-        {
-            try
-            {
-                return RedirectToAction(nameof(Index));
-            }
-            catch
-            {
-                return View();
-            }
-        }
-
-        // GET: ManagerController/Delete/5
-        public ActionResult Delete(int id)
+        public ActionResult ListOfStaffAccount()
         {
             return View();
         }
-
-        // POST: ManagerController/Delete/5
-        [HttpPost]
-        [ValidateAntiForgeryToken]
-        public ActionResult Delete(int id, IFormCollection collection)
+        public ActionResult AllTransactions()
         {
-            try
-            {
-                return RedirectToAction(nameof(Index));
-            }
-            catch
-            {
-                return View();
-            }
+            return View();
         }
     }
+
 }
+        

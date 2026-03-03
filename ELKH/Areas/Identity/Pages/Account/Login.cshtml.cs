@@ -1,4 +1,4 @@
-// Licensed to the .NET Foundation under one or more agreements.
+﻿// Licensed to the .NET Foundation under one or more agreements.
 // The .NET Foundation licenses this file to you under the MIT license.
 #nullable disable
 
@@ -21,11 +21,13 @@ namespace ELKH.Areas.Identity.Pages.Account
     {
         private readonly SignInManager<IdentityUser> _signInManager;
         private readonly ILogger<LoginModel> _logger;
+        private readonly UserManager<IdentityUser> _userManager;
 
         public LoginModel(SignInManager<IdentityUser> signInManager, ILogger<LoginModel> logger)
         {
             _signInManager = signInManager;
             _logger = logger;
+            _userManager = signInManager.UserManager;
         }
 
         /// <summary>
@@ -111,12 +113,37 @@ namespace ELKH.Areas.Identity.Pages.Account
             {
                 // This doesn't count login failures towards account lockout
                 // To enable password failures to trigger account lockout, set lockoutOnFailure: true
-                var result = await _signInManager.PasswordSignInAsync(Input.Email, Input.Password, Input.RememberMe, lockoutOnFailure: false);
+                var result = await _signInManager.PasswordSignInAsync(
+                    Input.Email, 
+                    Input.Password, 
+                    Input.RememberMe, 
+                    lockoutOnFailure: false);
+                
                 if (result.Succeeded)
                 {
                     _logger.LogInformation("User logged in.");
-                    return LocalRedirect(returnUrl);
+
+                    var user = await _userManager.FindByEmailAsync(Input.Email);
+
+                    //if (await _userManager.IsInRoleAsync(user, "Admin"))
+                    //{
+                    //    return RedirectToAction("Index", "Admin");
+                    //}
+
+                    //if (await _userManager.IsInRoleAsync(user, "Manager"))
+                    //{
+                    //    return RedirectToAction("Index", "Manager");
+                    //}
+
+                    //if (await _userManager.IsInRoleAsync(user, "Staff"))
+                    //{
+                    //    return RedirectToAction("Index", "Staff");
+                    //}
+
+                    // Default → Customer
+                    return RedirectToAction("Index", "Home");
                 }
+
                 if (result.RequiresTwoFactor)
                 {
                     return RedirectToPage("./LoginWith2fa", new { ReturnUrl = returnUrl, RememberMe = Input.RememberMe });

@@ -1,83 +1,61 @@
-﻿using Microsoft.AspNetCore.Http;
+﻿using ELKH.Repositories;
+using ELKH.ViewModels;
+using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 
 namespace ELKH.Controllers
 {
+    //[Authorize(Roles = "Admin")]
+    [Authorize]
     public class AdminController : Controller
+
     {
+        private readonly Role_repo _roleRepo;
+        private readonly UserRole_repo _userRoleRepo;
+
+        public AdminController(Role_repo roleRepo, UserRole_repo userRoleRepo)
+        {
+            _roleRepo = roleRepo;
+            _userRoleRepo = userRoleRepo;
+        }
         // GET: AdminController
         public ActionResult Index()
         {
             return View();
         }
+        public IActionResult ManageSales()
+        {
+            return View();
 
-        // GET: AdminController/Details/5
-        public ActionResult Details(int id)
+        }
+
+        public IActionResult ManageUserRole()
+        {
+            //var model = new RoleVM();
+            //model.Roles = _roleRepo.GetAllRoles();
+
+            //return View(model);
+            return View();
+
+        }
+        public IActionResult ListOfAllUsers()
         {
             return View();
         }
 
-        // GET: AdminController/Create
-        public ActionResult Create()
+
+        public IActionResult CustomerAccountDetails()
+        {
+            return View();
+
+        }
+
+        public IActionResult StaffAccountDetails()
         {
             return View();
         }
 
-        // POST: AdminController/Create
-        [HttpPost]
-        [ValidateAntiForgeryToken]
-        public ActionResult Create(IFormCollection collection)
-        {
-            try
-            {
-                return RedirectToAction(nameof(Index));
-            }
-            catch
-            {
-                return View();
-            }
-        }
 
-        // GET: AdminController/Edit/5
-        public ActionResult Edit(int id)
-        {
-            return View();
         }
-
-        // POST: AdminController/Edit/5
-        [HttpPost]
-        [ValidateAntiForgeryToken]
-        public ActionResult Edit(int id, IFormCollection collection)
-        {
-            try
-            {
-                return RedirectToAction(nameof(Index));
-            }
-            catch
-            {
-                return View();
-            }
-        }
-
-        // GET: AdminController/Delete/5
-        public ActionResult Delete(int id)
-        {
-            return View();
-        }
-
-        // POST: AdminController/Delete/5
-        [HttpPost]
-        [ValidateAntiForgeryToken]
-        public ActionResult Delete(int id, IFormCollection collection)
-        {
-            try
-            {
-                return RedirectToAction(nameof(Index));
-            }
-            catch
-            {
-                return View();
-            }
-        }
-    }
 }

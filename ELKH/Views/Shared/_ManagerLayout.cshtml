@@ -1,0 +1,76 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>@ViewData["Title"] - Admin Panel</title>
+
+    <link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.min.css" />
+    <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
+</head>
+
+<body class="bg-dark text-light">
+
+    <!-- Top Admin Bar -->
+    <nav class="navbar navbar-dark border-bottom" style="background-color:#0b5d5d;">
+        <div class="container-fluid">
+            <span class="navbar-brand fw-bold">Admin Dashboard</span>
+
+            <div class="d-flex align-items-center">
+                <span class="me-3">admin@email</span>
+                <a class="btn btn-outline-light btn-sm" asp-area="" asp-controller="Account" asp-action="Logout">
+                    Logout
+                </a>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Main Content -->
+    <div class="container py-4">
+
+        <!-- Action Buttons -->
+        <div class="row text-center mb-4">
+            <div class="col-md-4 mb-2">
+                <a asp-controller="Admin" asp-action="ManageUserRole"
+                   class="btn w-100 py-3 text-white"
+                   style="background-color:#0aa; border-radius:12px;">
+                    Manage Staff Roles
+                </a>
+            </div>
+
+            <div class="col-md-4 mb-2">
+                <a asp-controller="Admin" asp-action="ManageSales"
+                   class="btn w-100 py-3 text-white"
+                   style="background-color:#0aa; border-radius:12px;">
+                    Sales
+                </a>
+            </div>
+
+            <div class="col-md-4 mb-2">
+                <a asp-controller="Admin" asp-action="ListOfAllUsers"
+                   class="btn w-100 py-3 text-white"
+                   style="background-color:#0aa; border-radius:12px;">
+                    Manage User Account
+                </a>
+            </div>
+        </div>
+
+        <!-- Page Body -->
+        <div class="card bg-black text-light shadow-lg border-0">
+            <div class="card-body">
+                @RenderBody()
+            </div>
+        </div>
+
+    </div>
+
+    @* <!-- Footer -->
+    <footer class="text-center py-3 mt-4" style="background-color:#0b5d5d;">
+        <small>© 2026 ELKH · Contact Us</small>
+    </footer> *@
+
+    <script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
+    @RenderSection("Scripts", required: false)
+
+</body>
+</html>

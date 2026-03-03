@@ -2,7 +2,7 @@
 
 namespace ELKH.Models
 {
-    public class OrderItem
+    public class OrderItemModel
     {
         [Key]
         public int PkOrderItemId { get; set; }
@@ -11,10 +11,10 @@ namespace ELKH.Models
 
         //Relationship with Order
         public int FkOrderId { get; set; }
-        public Order Orders { get; set; } = new Order();
+        public OrderModel Orders { get; set; } = new OrderModel();
 
         //Relationship with Product
         public int FkProductId { get; set; }
-        public Product Products { get; set; } = new Product();
+        public ProductModel Products { get; set; } = new ProductModel();
     }
 }

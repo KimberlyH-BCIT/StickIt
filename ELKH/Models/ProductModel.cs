@@ -3,7 +3,7 @@ using System.ComponentModel.DataAnnotations;
 
 namespace ELKH.Models
 {
-    public class Product
+    public class ProductModel
     {
         //Product Columns
         [Key]
@@ -24,22 +24,22 @@ namespace ELKH.Models
         //Category Relationship
         //Foreign Key
         public int FkCategoryId { get; set; }
-        public Category Categorie { get; set; } = new Category();
+        public CategoryModel Category { get; set; } = new CategoryModel();
 
         //Product Image Relationship
-        public ICollection<ProductImage> ProductImages { get; set; } = new List<ProductImage>();
+        public ICollection<ProductImageModel> ProductImages { get; set; } = new List<ProductImageModel>();
 
         //Cart Relationship
-        public ICollection<Cart> Carts { get; set; } = new List<Cart>();
+        public ICollection<CartModel> Carts { get; set; } = new List<CartModel>();
 
         //OriderItem Relationship
-        public ICollection<OrderItem> OrderItems { get; set; } = new List<OrderItem>();
+        public ICollection<OrderItemModel> OrderItems { get; set; } = new List<OrderItemModel>();
 
         //Product Rating Relationship
-        public ICollection<ProductRating> ProductRatings { get; set; } = new List<ProductRating>();
+        public ICollection<ProductRatingModel> ProductRatings { get; set; } = new List<ProductRatingModel>();
 
         //WishList Relationship
         public int FkWishListId { get; set; }
-        public WishList WishList { get; set; } = new WishList();
+        public WishListModel WishList { get; set; } = new WishListModel();
     }
 }

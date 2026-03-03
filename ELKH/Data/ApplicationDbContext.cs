@@ -11,37 +11,39 @@ namespace ELKH.Data
         {
         }
 
-        public DbSet<Product> Products { get; set; }
-        public DbSet<Category> Categories { get; set; }
-        public DbSet<ProductImage> ProductImages { get; set; }
-        public DbSet<RegisteredUser> RegisteredUsers { get; set; }
-        public DbSet<Cart> Carts { get; set; }
-        public DbSet<Order> Orders { get; set; }
-        public DbSet<OrderItem> OrderItems { get; set; }
-        public DbSet<Transaction> Transactions { get; set; }
-        public DbSet<ContactDetail> ContactDetails { get; set; }
-        public DbSet<OrderStatus> OrderStatuses { get; set; }
-        public DbSet<ProductRating> ProductRatings { get; set; }
-        public DbSet<WishList> WishLists { get; set; }
+        public DbSet<ProductModel> Products { get; set; }
+        public DbSet<CategoryModel> Categories { get; set; }
+        public DbSet<ProductImageModel> ProductImages { get; set; }
+        public DbSet<RegisteredUserModel> RegisteredUsers { get; set; }
+        public DbSet<CartModel> Carts { get; set; }
+        public DbSet<OrderModel> Orders { get; set; }
+        public DbSet<OrderItemModel> OrderItems { get; set; }
+        public DbSet<TransactionModel> Transactions { get; set; }
+        public DbSet<ContactDetailModel> ContactDetails { get; set; }
+        public DbSet<OrderStatusModel> OrderStatuses { get; set; }
+        public DbSet<ProductRatingModel> ProductRatings { get; set; }
+        public DbSet<WishListModel> WishLists { get; set; }
+        public DbSet<UserLogModel> UserLogs { get; set; }
+        public DbSet<UserProfileModel> UserProfiles { get; set; }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
             base.OnModelCreating(modelBuilder);
 
-            modelBuilder.Entity<Order>()
+            modelBuilder.Entity<OrderModel>()
                 .HasOne(o => o.OrderStatuses)
                 .WithOne(d => d.Order)
-                .HasForeignKey<OrderStatus>(o => o.FkOrderId);
+                .HasForeignKey<OrderStatusModel>(o => o.FkOrderId);
 
-            modelBuilder.Entity<RegisteredUser>()
+            modelBuilder.Entity<RegisteredUserModel>()
                         .HasOne(r => r.WishLists)
                         .WithOne(w => w.RegisteredUser)
-                        .HasForeignKey<WishList>(w => w.FkUserId);
+                        .HasForeignKey<WishListModel>(w => w.FkUserId);
 
-            modelBuilder.Entity<Order>()
+            modelBuilder.Entity<OrderModel>()
                         .HasOne(o => o.Transaction)
                         .WithOne(t => t.Order)
-                        .HasForeignKey<Transaction>(t => t.FkOrderId);
+                        .HasForeignKey<TransactionModel>(t => t.FkOrderId);
 
         }
     }

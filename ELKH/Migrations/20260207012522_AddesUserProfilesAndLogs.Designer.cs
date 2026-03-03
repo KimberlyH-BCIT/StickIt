@@ -3,6 +3,7 @@ using System;
 using ELKH.Data;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 #nullable disable
@@ -10,9 +11,11 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace ELKH.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    partial class ApplicationDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260207012522_AddesUserProfilesAndLogs")]
+    partial class AddesUserProfilesAndLogs
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder.HasAnnotation("ProductVersion", "10.0.0");
@@ -32,14 +35,8 @@ namespace ELKH.Migrations
                     b.Property<int>("ProductPkProductId")
                         .HasColumnType("INTEGER");
 
-                    b.Property<int>("Quantity")
-                        .HasColumnType("INTEGER");
-
                     b.Property<int>("RegisteredUserPkRegisteredUserId")
                         .HasColumnType("INTEGER");
-
-                    b.Property<decimal>("TotalPrice")
-                        .HasColumnType("TEXT");
 
                     b.HasKey("PkCartId");
 
@@ -161,10 +158,6 @@ namespace ELKH.Migrations
                     b.Property<DateTime>("CreatedAt")
                         .HasColumnType("TEXT");
 
-                    b.Property<string>("DeliveryStatus")
-                        .IsRequired()
-                        .HasColumnType("TEXT");
-
                     b.Property<int>("FkContactId")
                         .HasColumnType("INTEGER");
 
@@ -262,7 +255,7 @@ namespace ELKH.Migrations
                     b.Property<decimal>("Price")
                         .HasColumnType("TEXT");
 
-                    b.Property<int>("StockQuantity")
+                    b.Property<int?>("StockQuantity")
                         .HasColumnType("INTEGER");
 
                     b.Property<int>("WishListPkWishListId")

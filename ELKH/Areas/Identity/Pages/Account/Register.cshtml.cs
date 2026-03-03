@@ -127,7 +127,7 @@ namespace ELKH.Areas.Identity.Pages.Account
                 if (result.Succeeded)
                 {
                     //Save the registered user into database with additional information
-                    var registeredUser = new RegisteredUser()
+                    var registeredUser = new RegisteredUserModel()
                     {
                         Email = Input.Email
                     };

@@ -1,10 +1,9 @@
-﻿using Microsoft.Build.Tasks.Deployment.Bootstrapper;
-using System.ComponentModel;
+﻿using System.ComponentModel;
 using System.ComponentModel.DataAnnotations;
 
 namespace ELKH.Models
 {
-    public class Category
+    public class CategoryModel
     {
         [Key]
         public int PkCategoryId { get; set; }
@@ -13,6 +12,6 @@ namespace ELKH.Models
         public string CategoryName { get; set; } = string.Empty;
 
         //Products list
-        public ICollection<Product> Products { get; set; } = new List<Product>();
+        public ICollection<ProductModel> Products { get; set; } = new List<ProductModel>();
     }
 }
