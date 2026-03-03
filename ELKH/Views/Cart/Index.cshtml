@@ -1,0 +1,46 @@
+@model IEnumerable<ELKH.Models.CartModel>
+
+@{
+    ViewData["Title"] = "Shopping Cart";
+}
+
+<h2>Your Cart</h2>
+
+@if (!Model.Any())
+{
+    <p>Your cart is empty.</p>
+}
+else
+{
+    <table class="table">
+        <thead>
+            <tr>
+                <th>Product</th>
+                <th>Quantity</th>
+                <th>Price</th>
+                <th>Total</th>
+                <th></th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var c in Model)
+            {
+                <tr>
+                    <td>@c.Product?.Name</td>
+                    <td>@c.Quantity</td>
+                    <td><span class="price" data-price="@(c.Product?.Price ?? 0)">@((c.Product?.Price ?? 0).ToString("C"))</span></td>
+                    <td><span class="price" data-price="@c.TotalPrice">@c.TotalPrice.ToString("C")</span></td>
+                    <td>
+                        <form asp-action="RemoveFromCart" method="post">
+                            @Html.AntiForgeryToken()
+                            <input type="hidden" name="cartId" value="@c.PkCartId" />
+                            <button class="btn btn-sm btn-danger">Remove</button>
+                        </form>
+                    </td>
+                </tr>
+            }
+        </tbody>
+    </table>
+
+    <a class="btn btn-primary" asp-action="Checkout">Proceed to Checkout</a>
+}
