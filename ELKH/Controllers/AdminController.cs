@@ -6,8 +6,7 @@ using Microsoft.AspNetCore.Mvc;
 
 namespace ELKH.Controllers
 {
-    //[Authorize(Roles = "Admin")]
-    [Authorize]
+    [Authorize(Roles = "Admin")]
     public class AdminController : Controller
 
     {

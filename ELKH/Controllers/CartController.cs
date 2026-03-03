@@ -1,3 +1,4 @@
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using ELKH.Models;
 using System.Collections.Generic;
@@ -5,6 +6,7 @@ using System.Linq;
 
 namespace ELKH.Controllers;
 
+[Authorize]
 public class CartController : Controller
 {
     private static List<ProductModel> _cartItems = new();
@@ -15,6 +17,7 @@ public class CartController : Controller
     }
 
     [HttpPost]
+    [ValidateAntiForgeryToken]
     public IActionResult AddToCart(int itemId, int quantity)
     {
         if (quantity <= 0) return BadRequest("Quantity must be positive.");
@@ -26,6 +29,7 @@ public class CartController : Controller
     }
 
     [HttpPost]
+    [ValidateAntiForgeryToken]
     public IActionResult RemoveFromCart(int itemId)
     {
         // Find product by id in cart

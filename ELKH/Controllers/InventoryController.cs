@@ -1,10 +1,12 @@
 ﻿using ELKH.Repositories;
 using ELKH.ViewModels;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore.Metadata.Internal;
 
 namespace ELKH.Controllers
 {
+    [Authorize]
     public class InventoryController : Controller
     {
         private readonly InventoryRepo _inventoryRepo;

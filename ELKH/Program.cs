@@ -59,7 +59,7 @@ app.UseStaticFiles();
 
 app.UseRouting();
 
-//app.UseAuthentication(); //-> Enable this when you want to require login for the entire app. Otherwise, you can use [Authorize] on specific controllers/actions as needed.
+app.UseAuthentication();
 app.UseAuthorization();
 
 app.MapStaticAssets();

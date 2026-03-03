@@ -346,6 +346,7 @@ namespace ELKH.Controllers
 
         // POST: User/SetDefaultAddress/5
         [HttpPost]
+        [ValidateAntiForgeryToken]
         public async Task<IActionResult> SetDefaultAddress(int id)
         {
             var userId = await GetCurrentUserIdAsync();

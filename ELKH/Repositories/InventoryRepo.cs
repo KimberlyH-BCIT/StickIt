@@ -57,6 +57,21 @@ namespace ELKH.Repositories
                 return false;
             }
 
+            // Validate file extension to prevent malicious uploads
+            var allowedExtensions = new[] { ".jpg", ".jpeg", ".png", ".gif", ".webp" };
+            var extension = Path.GetExtension(vm.ProductImage.FileName).ToLowerInvariant();
+            if (string.IsNullOrEmpty(extension) || !allowedExtensions.Contains(extension))
+            {
+                return false;
+            }
+
+            // Validate content type
+            var allowedContentTypes = new[] { "image/jpeg", "image/png", "image/gif", "image/webp" };
+            if (!allowedContentTypes.Contains(vm.ProductImage.ContentType.ToLowerInvariant()))
+            {
+                return false;
+            }
+
             var product = await _context.Products
                 .Include(p => p.ProductImages)
                 .FirstOrDefaultAsync(p => p.PkProductId == vm.FkProductId);

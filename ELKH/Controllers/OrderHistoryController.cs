@@ -1,9 +1,11 @@
 ﻿using ELKH.Repositories;
 using ELKH.ViewModels;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 namespace ELKH.Controllers
 {
+    [Authorize]
     public class OrderHistoryController : Controller
     {
         private readonly OrderHistoryManagementRepo _orderManagementRepo;
