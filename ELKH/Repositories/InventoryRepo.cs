@@ -16,7 +16,7 @@ namespace ELKH.Repositories
             _env = env;
         }
 
-        public async Task<IEnumerable<Product>> GetAllProduct()
+        public async Task<IEnumerable<ProductModel>> GetAllProduct()
         {
             return await _context.Products.ToListAsync();
         }
@@ -27,7 +27,27 @@ namespace ELKH.Repositories
             return await _context.ProductImages.Where(pi => pi.FkProductId == id)
                                                             .Select(pi => pi.ProductImageURL)
                                                             .ToListAsync();
+        }
 
+        public async Task<ProductVM> EditProductQuantity(int productId, int quantityAmount)
+        {
+            var products = await _context.Products.Where(p => p.PkProductId == productId)
+                                                  .FirstOrDefaultAsync();
+            products.StockQuantity = quantityAmount;
+
+            await _context.SaveChangesAsync();
+
+            var vm = new ProductVM
+            {
+                ProductId = products.PkProductId,
+                ProductName = products.Name,
+                Description = products.Description,
+                Price = products.Price,
+                StockQuantity = products.StockQuantity,
+                IsActive = products.IsActive
+            };
+
+            return vm;
         }
 
         public async Task<bool> AddProductImage(ProductImageVM vm)
@@ -67,7 +87,7 @@ namespace ELKH.Repositories
             }
 
             // Create DB record - set the required navigation property 'Product'
-            var image = new ProductImage
+            var image = new ProductImageModel
             {
                 ProductImageURL = "/images/" + fileName,
                 FkProductId = product.PkProductId,

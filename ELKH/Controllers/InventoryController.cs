@@ -27,6 +27,15 @@ namespace ELKH.Controllers
             return View(inventoryList);
         }
 
+        [HttpPost]
+        public async Task<IActionResult> EditProductAmount(int productId, int quantityId)
+        {
+            await _inventoryRepo.EditProductQuantity(productId, quantityId);
+
+            return RedirectToAction(nameof(Index));
+        }
+
+
         public async Task<IActionResult> ProductImages(int productId)
         {
             var productImages = await _inventoryRepo.GetProductImages(productId);
