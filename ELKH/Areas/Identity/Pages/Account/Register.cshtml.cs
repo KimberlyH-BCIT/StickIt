@@ -13,6 +13,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using ELKH.Data;
 using ELKH.Models;
+using ELKH.Repositories;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
@@ -33,6 +34,7 @@ namespace ELKH.Areas.Identity.Pages.Account
         private readonly ILogger<RegisterModel> _logger;
         private readonly IEmailSender _emailSender;
         private readonly ApplicationDbContext _context;
+        private readonly IContactDetailRepo _contactRepository;
 
         public RegisterModel(
             UserManager<IdentityUser> userManager,
@@ -40,7 +42,8 @@ namespace ELKH.Areas.Identity.Pages.Account
             SignInManager<IdentityUser> signInManager,
             ILogger<RegisterModel> logger,
             IEmailSender emailSender,
-            ApplicationDbContext context)
+            ApplicationDbContext context,
+            IContactDetailRepo contactRepository)
         {
             _userManager = userManager;
             _userStore = userStore;
@@ -49,6 +52,7 @@ namespace ELKH.Areas.Identity.Pages.Account
             _logger = logger;
             _emailSender = emailSender;
             _context = context;
+            _contactRepository = contactRepository;
         }
 
         /// <summary>
@@ -103,6 +107,47 @@ namespace ELKH.Areas.Identity.Pages.Account
             [Display(Name = "Confirm password")]
             [Compare("Password", ErrorMessage = "The password and confirmation password do not match.")]
             public string ConfirmPassword { get; set; }
+
+            [Required]
+            [MaxLength(100)]
+            [Display(Name = "First Name")]
+            public string FirstName { get; set; }
+
+            [Required]
+            [MaxLength(100)]
+            [Display(Name = "Last Name")]
+            public string LastName { get; set; }
+
+            [Required]
+            [Phone]
+            [DataType(DataType.PhoneNumber)]
+            [Display(Name = "Phone Number")]
+            public string PhoneNumber { get; set; }
+
+            [Required]
+            [MaxLength(200)]
+            [Display(Name = "Street Address")]
+            public string Street { get; set; }
+
+            [Required]
+            [MaxLength(100)]
+            [Display(Name = "City")]
+            public string City { get; set; }
+
+            [Required]
+            [MaxLength(100)]
+            [Display(Name = "Province/State")]
+            public string Province { get; set; }
+
+            [Required]
+            [MaxLength(20)]
+            [Display(Name = "Postal Code")]
+            public string PostCode { get; set; }
+
+            [Required]
+            [MaxLength(100)]
+            [Display(Name = "Country")]
+            public string Country { get; set; } = "Canada";
         }
 
 
@@ -131,8 +176,34 @@ namespace ELKH.Areas.Identity.Pages.Account
                     {
                         Email = Input.Email
                     };
-                        _context.RegisteredUsers.Add(registeredUser);
-                        _context.SaveChanges();
+                    _context.RegisteredUsers.Add(registeredUser);
+
+                    // Create the user profile immediately so the header greeting shows
+                    // the first name rather than the email address from the very first login.
+                    var profile = new UserProfileModel
+                    {
+                        PkEmail   = Input.Email,
+                        FirstName = Input.FirstName,
+                        LastName  = Input.LastName
+                    };
+                    _context.UserProfiles.Add(profile);
+
+                    await _context.SaveChangesAsync();
+
+                    var contact = new ContactDetailModel
+                    {
+                        FirstName = Input.FirstName,
+                        LastName = Input.LastName,
+                        PhoneNumber = Input.PhoneNumber,
+                        Street = Input.Street,
+                        City = Input.City,
+                        Province = Input.Province,
+                        PostCode = Input.PostCode,
+                        Country = Input.Country,
+                        IsDefault = true,
+                        FkRegisteredUserId = registeredUser.PkRegisteredUserId
+                    };
+                    await _contactRepository.AddAsync(contact);
 
                     _logger.LogInformation("User created a new account with password.");
 
