@@ -1,7 +1,7 @@
-﻿@model List<OrderDetailsViewModel>
+﻿@model List<OrderDetailsVM>
 
-@section title {
-    <h3>Order Management</h3>
+@section title{
+    <h3>Order Managemnt</h3>
 }
 
 <table>
@@ -14,15 +14,14 @@
         </tr>
     </thead>
     <tbody>
-        @foreach (var order in Model)
+        @foreach(var order in Model)
         {
             <tr>
                 <td>@order.OrderId</td>
                 <td>@order.UserEmail</td>
                 <td>@order.DeliveryStatus</td>
-                <td><a asp-controller="Order" asp-action="edit" asp-route-id="@order.OrderId">Edit</a></td>
+                <td><a asp-controller="OrderHistory" asp-action="OrderDetails"  asp-route-orderId="@order.OrderId">Detail</a></td>
             </tr>
         }
     </tbody>
 </table>
-

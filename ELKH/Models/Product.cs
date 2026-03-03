@@ -17,7 +17,7 @@ namespace ELKH.Models
         [DisplayFormat(DataFormatString = "{0:F2}")]
         public decimal Price { get; set; } = 0;
         [DisplayName("Stock Quantities")]
-        public int? StockQuantity { get; set; } = 0;
+        public int StockQuantity { get; set; } = 0;
         [DisplayName("Is Active")]
         public bool IsActive { get; set; } = false;
 

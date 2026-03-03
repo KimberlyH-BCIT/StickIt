@@ -1,0 +1,20 @@
+﻿@model InventoryVM
+
+<table>
+    <thead>
+        <tr>
+            <th>Images</th>
+            <th>Action</th>
+            <th><a>Add Image</a></th>
+        </tr>
+    </thead>
+    <tbody>
+        @foreach(var image in Model.ProductImage)
+        {
+            <tr>
+                <td><img src="@image" /></td>
+                <td><a>Edit</a></td>
+            </tr>
+        }
+    </tbody>
+</table>

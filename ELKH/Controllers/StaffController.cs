@@ -2,11 +2,11 @@
 
 namespace ELKH.Controllers
 {
-    public class StaffControler : Controller
+    public class StaffController : Controller
     {
         public IActionResult Index()
         {
-            return View();
+            return View("~/Views/Home/Index.cshtml");
         }
     }
 }
