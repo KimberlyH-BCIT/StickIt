@@ -21,7 +21,7 @@ namespace ELKH.ViewModels
         public decimal Price { get; set; }
 
         [Display(Name = "Stock Quantity")]
-        public int? StockQuantity { get; set; }
+        public int StockQuantity { get; set; }
 
         [Display(Name = "Is Active")]
         public bool IsActive { get; set; }

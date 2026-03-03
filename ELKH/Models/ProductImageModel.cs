@@ -7,8 +7,9 @@ namespace ELKH.Models
     {
         [Key]
         public int PkProductImageId { get; set; }
+
         [DisplayName("Product Image Link")]
-        public string? ProductImageURL { get; set; } = string.Empty;
+        public required string ProductImageURL { get; set; }
 
         //Relationship with Product
         public int FkProductId { get; set; }

@@ -1,0 +1,32 @@
+﻿@model OrderDetailsVM
+
+@section title{
+    <h3>Order Details</h3>
+    <h4>User: @Model.UserEmail</h4>
+    <h4>Order Id: @Model.OrderId</h4>
+    <h4>Transation Id: @Model.TransactionId</h4>
+}
+
+<table>
+    <thead>
+        <tr>
+            <th>SKU</th>
+            <th>Product Name</th>
+            <th>Quantity</th>
+            <th>Unit Price</th>
+            <th>Report</th>
+        </tr>
+    </thead>
+    <tbody>
+        @foreach(var item in Model.OrderItems)
+        {
+            <tr>
+                <td>@item.ProductId</td>
+                <td>@item.ProductName</td>
+                <td>@item.Quantity</td>
+                <td>@item.ProductPrice</td>
+                <td></td>
+            </tr>
+        }
+    </tbody>
+</table>
