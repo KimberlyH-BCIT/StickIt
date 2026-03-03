@@ -4,7 +4,7 @@ using Microsoft.AspNetCore.Mvc;
 
 namespace ELKH.Controllers
 {
-    //[Authorize(Roles = "Manager")]
+    [Authorize(Roles = "Manager")]
     public class ManagerController : Controller
     {
         // GET: ManagerController

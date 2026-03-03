@@ -3,36 +3,69 @@
 <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>@ViewData["Title"] - ELKH</title>
+    <link rel="icon" type="image/png" href="~/logo-stickit.png" />
+    <title>
+         STICK IT
+    </title>
     <script type="importmap"></script>
     <link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.min.css" />
     <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
     <link rel="stylesheet" href="~/ELKH.styles.css" asp-append-version="true" />
 </head>
 <body>
+    <div class="top-gradient-bar"></div>
     <header>
-        <nav class="navbar navbar-expand-sm navbar-toggleable-sm navbar-light bg-white border-bottom box-shadow mb-3">
-            <div class="container-fluid">
-                <a class="navbar-brand" asp-area="" asp-controller="Home" asp-action="Index">ELKH</a>
-                <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target=".navbar-collapse" aria-controls="navbarSupportedContent"
-                        aria-expanded="false" aria-label="Toggle navigation">
+        <nav class="navbar navbar-expand-lg kawaii-navbar shadow-sm">
+            <div class="container">
+                <a class="navbar-brand kawaii-brand"
+                   asp-area=""
+                   asp-controller="Home"
+                   asp-action="Index">
+                    <img src="~/welcome-sticker-removebg.png" class="navbar-logo" />
+                </a>
+
+                <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#mainNav">
                     <span class="navbar-toggler-icon"></span>
                 </button>
-                <div class="navbar-collapse collapse d-sm-inline-flex justify-content-between">
-                    <ul class="navbar-nav flex-grow-1">
-                        <li class="nav-item">
-                            <a class="nav-link text-dark" asp-area="" asp-controller="Home" asp-action="Index">Home</a>
-                        </li>
-                        <li class="nav-item">
-                            <a class="nav-link text-dark" asp-area="" asp-controller="Home" asp-action="Privacy">Privacy</a>
-                        </li>
+
+                <div class="collapse navbar-collapse" id="mainNav">
+                    <ul class="navbar-nav me-auto mb-2 mb-lg-0">
+
+                      
+
+                        @if (User.Identity != null && User.Identity.IsAuthenticated)
+                        {
+                            @if (User.IsInRole("Admin"))
+                            {
+                                <li class="nav-item">
+                                    <a class="nav-link kawaii-link"
+                                       asp-controller="Admin"
+                                       asp-action="Index">
+                                        Admin Dashboard
+                                    </a>
+                                </li>
+                            }
+
+                            @if (User.IsInRole("Manager"))
+                            {
+                                <li class="nav-item">
+                                    <a class="nav-link kawaii-link"
+                                       asp-controller="Manager"
+                                       asp-action="Index">
+                                        Manager Dashboard
+                                    </a>
+                                </li>
+                            }
+                        }
                     </ul>
+
                     <partial name="_LoginPartial" />
                 </div>
+
             </div>
         </nav>
     </header>
-    <div class="container">
+    <div class="container kawaii-container flex-grow-1">
         <div>
             @RenderSection("title",false)
         </div>
@@ -41,9 +74,13 @@
         </main>
     </div>
 
-    <footer class="border-top footer text-muted">
+    <footer class="kawaii-footer text-center mt-5">
         <div class="container">
-            &copy; 2026 - ELKH - <a asp-area="" asp-controller="Home" asp-action="Privacy">Privacy</a>
+            🌷 © 2026 - ELKH 🌷
+            <br />
+            <a asp-area="" asp-controller="Home" asp-action="Privacy" class="kawaii-link">
+                Privacy
+            </a>
         </div>
     </footer>
     <script src="~/lib/jquery/dist/jquery.min.js"></script>

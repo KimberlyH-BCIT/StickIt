@@ -1,8 +1,38 @@
-﻿
-@{
-    ViewData["Title"] = "Index";
-    Layout = "~/Views/Shared/_ManagerLayout.cshtml";
+﻿@{
+    ViewData["Title"] = "Manager Dashboard";
+    Layout = "~/Views/Shared/_Layout.cshtml";
 }
 
-<h1>Index</h1>
+<div class="container mt-4">
+
+    <!-- Top Buttons -->
+    <div class="row g-4">
+
+        <div class="col-md-4">
+            <a asp-controller="Product"
+               asp-action="Index"
+               class="btn btn-primary w-100 py-3 fw-semibold">
+                Manage Products
+            </a>
+        </div>
+
+        <div class="col-md-4">
+            <a asp-controller="AdminRole"
+               asp-action="ListRoles"
+               class="btn btn-primary w-100 py-3 fw-semibold">
+                Manage Staff Account
+            </a>
+        </div>
+
+        <div class="col-md-4">
+            <a asp-controller="Transaction"
+               asp-action="Index"
+               class="btn btn-primary w-100 py-3 fw-semibold">
+                Transactions
+            </a>
+        </div>
+
+    </div>
+
+</div>
 

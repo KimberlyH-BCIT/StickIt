@@ -2,56 +2,48 @@
 
 @{
     ViewData["Title"] = "Edit Role";
-    Layout = "~/Views/Shared/_AdminLayout.cshtml";
+    Layout = "~/Views/Shared/_Layout.cshtml";
 }
 
-<div class="card shadow-sm mx-auto" style="max-width:500px;">
-    <div class="card-body">
+<div class="d-flex justify-content-center mt-5">
+    <div class="card shadow-sm" style="width:700px;">
+        <div class="card-body p-5">
 
-        <h3 class="fw-bold mb-4 text-center">Edit Role</h3>
+            <h2 class="fw-bold text-center mb-4 text-primary">
+                Edit Role
+            </h2>
 
-        <form asp-controller="AdminRole"
-              asp-action="EditRole"
-              method="post">
+            <form asp-action="EditRole" method="post">
 
-            <input type="hidden" asp-for="RoleId" />
+                <input type="hidden" asp-for="RoleId" />
 
-            <div asp-validation-summary="ModelOnly"
-                 class="text-danger mb-3"></div>
+                <div asp-validation-summary="ModelOnly"
+                     class="text-danger mb-3 text-center"></div>
 
-            <div class="mb-4">
-                <label asp-for="RoleName"
-                       class="form-label fw-semibold"></label>
+                <div class="mb-4">
+                    <label asp-for="RoleName"
+                           class="form-label fw-semibold"></label>
 
-                <input asp-for="RoleName"
-                       class="form-control"
-                       placeholder="Enter role name" />
+                    <input asp-for="RoleName"
+                           class="form-control form-control-lg" />
 
-                <span asp-validation-for="RoleName"
-                      class="text-danger"></span>
-            </div>
+                    <span asp-validation-for="RoleName"
+                          class="text-danger"></span>
+                </div>
 
-            <div class="d-flex justify-content-between">
+                <div class="d-flex justify-content-between mt-4">
+                    <a asp-action="ListRoles"
+                       class="btn btn-outline-secondary px-4">
+                        Cancel
+                    </a>
 
-                <a asp-action="ListRoles"
-                   class="btn btn-outline-secondary">
-                    Cancel
-                </a>
+                    <button type="submit"
+                            class="btn btn-primary px-5">
+                        Save Changes
+                    </button>
+                </div>
 
-                <button type="submit"
-                        class="btn btn-primary">
-                    Save Changes
-                </button>
-
-            </div>
-
-        </form>
-
+            </form>
+        </div>
     </div>
 </div>
-
-@section Scripts {
-    @{
-        await Html.RenderPartialAsync("_ValidationScriptsPartial");
-    }
-}
