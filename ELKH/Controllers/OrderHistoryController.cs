@@ -28,7 +28,7 @@ namespace ELKH.Controllers
 
         public async Task<IActionResult> OrderDetails(int orderId)
         {
-            var userEmail = User.Identity.Name;
+            var userEmail = User.Identity?.Name;
             if(userEmail == null)
             {
                 TempData["Error"] = "Please Log In staff accout to check the details";
@@ -43,10 +43,10 @@ namespace ELKH.Controllers
                 TransactionId = details.Transaction.PkTransactionId,
                 OrderItems = details.OrderItems.Select(oi => new OrderItemVM
                 {
-                    ProductId = oi.Products.PkProductId,
+                    ProductId = oi.Product.PkProductId,
                     Quantity = oi.Quantity,
-                    ProductName = oi.Products.Name,
-                    ProductPrice = oi.Products.Price
+                    ProductName = oi.Product.Name,
+                    ProductPrice = oi.Product.Price
                 }).ToList()
             };
 

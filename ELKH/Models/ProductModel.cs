@@ -24,22 +24,22 @@ namespace ELKH.Models
         //Category Relationship
         //Foreign Key
         public int FkCategoryId { get; set; }
-        public CategoryModel Category { get; set; } = new CategoryModel();
+        public CategoryModel? Category { get; set; }
 
         //Product Image Relationship
-        public ICollection<ProductImageModel> ProductImages { get; set; } = new List<ProductImageModel>();
+        public ICollection<ProductImageModel>? ProductImages { get; set; }
 
         //Cart Relationship
-        public ICollection<CartModel> Carts { get; set; } = new List<CartModel>();
+        public ICollection<CartModel>? Carts { get; set; }
 
         //OriderItem Relationship
-        public ICollection<OrderItemModel> OrderItems { get; set; } = new List<OrderItemModel>();
+        public ICollection<OrderItemModel>? OrderItems { get; set; }
 
         //Product Rating Relationship
-        public ICollection<ProductRatingModel> ProductRatings { get; set; } = new List<ProductRatingModel>();
+        public ICollection<ProductRatingModel>? ProductRatings { get; set; }
 
         //WishList Relationship
-        public int FkWishListId { get; set; }
-        public WishListModel WishList { get; set; } = new WishListModel();
+        public int? FkWishListId { get; set; }
+        public WishListModel? WishList { get; set; }
     }
 }

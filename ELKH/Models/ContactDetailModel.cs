@@ -22,13 +22,13 @@ namespace ELKH.Models
         public bool IsDefault { get; set; } = true;
 
         //Relationship with RegisiterUser
-        public int FkRegisteredUserId { get; set; }
-        public RegisteredUserModel RegisiteredUser { get; set; } = new RegisteredUserModel();
+        public int? FkRegisteredUserId { get; set; }
+        public RegisteredUserModel? RegisteredUser { get; set; }
 
         //Relationship with Transaction
-        public ICollection<TransactionModel> Transactions { get; set; } = new List<TransactionModel>();
+        public ICollection<TransactionModel>? Transactions { get; set; }
 
         //Relationship with ORder
-        public ICollection<OrderModel> Orders { get; set; } = new List<OrderModel>();
+        public ICollection<OrderModel>? Orders { get; set; }
     }
 }

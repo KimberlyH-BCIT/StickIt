@@ -17,11 +17,11 @@ namespace ELKH.Models
 
         //Relationship with Order
         public int FkOrderId { get; set; }
-        public OrderModel Order { get; set; } = new OrderModel();
+        public OrderModel? Order { get; set; }
 
         //Relationship with ContactDetail
         public int FkContactId { get; set; }
-        public ContactDetailModel ContactDetail { get; set; } = new ContactDetailModel();
+        public ContactDetailModel? ContactDetail { get; set; }
 
     }
 }

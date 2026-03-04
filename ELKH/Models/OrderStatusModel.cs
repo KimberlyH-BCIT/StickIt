@@ -10,6 +10,6 @@ namespace ELKH.Models
 
         //Order Relationshiop
         public int FkOrderId { get; set; }
-        public OrderModel Order { get; set; } = new OrderModel();
+        public OrderModel? Order { get; set; }
     }
 }

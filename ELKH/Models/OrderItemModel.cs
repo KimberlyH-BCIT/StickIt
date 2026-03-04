@@ -11,10 +11,10 @@ namespace ELKH.Models
 
         //Relationship with Order
         public int FkOrderId { get; set; }
-        public OrderModel Orders { get; set; } = new OrderModel();
+        public OrderModel? Order { get; set; }
 
         //Relationship with Product
         public int FkProductId { get; set; }
-        public ProductModel Products { get; set; } = new ProductModel();
+        public ProductModel? Product { get; set; }
     }
 }

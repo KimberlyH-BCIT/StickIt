@@ -45,11 +45,18 @@ namespace ELKH.Data
                         .WithOne(t => t.Order)
                         .HasForeignKey<TransactionModel>(t => t.FkOrderId);
 
+
             modelBuilder.Entity<ProductModel>()
                 .HasOne(p => p.Category)
                 .WithMany(c => c.Products)
                 .HasForeignKey(p => p.FkCategoryId);
+            
+            modelBuilder.Entity<ProductModel>()
+                .HasOne(p => p.WishList)
+                .WithMany(w => w.Products)
+                .HasForeignKey(p => p.FkWishListId);
         }
+
     }
 
 }
