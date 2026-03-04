@@ -1,0 +1,44 @@
+﻿@model ProductImageVM;
+
+<form method="post" asp-action="AddImage" enctype="multipart/form-data">
+    <h3>Add Image Below</h3>
+    <input type="hidden" asp-for="FkProductId" />
+    <div id="dropZone" style="
+        border: 2px dashed #999;
+        padding: 40px;
+        text-align: center;
+        border-radius: 10px;
+        cursor: pointer;">
+
+        Drag & drop image here or click to select
+
+        <input type="file" asp-for="ProductImage" id="fileInput" style="display:none;" />
+    </div>
+    <input type="submit" />
+</form>
+
+<script>
+    const dropZone = document.getElementById("dropzone");
+    const fileInput = document.getElementById("fileInput")
+
+    dropZone.addEventListener("click", ()=>{
+        fileInput.click();
+    })
+
+    dropZone.addEventListener("dragover", (e) =>{
+        e.PreventDefault;
+        dropZone.style.background = "#f0f8ff";
+    });
+
+    dropZone.addEventListener("dragleave",()=>{
+        dropZone.style.background = "";
+    });
+
+    dropZone.addEventListener("drop",(e)=>{
+
+        e.preventDefault();
+        const files = e.dataTransfer.files;
+        fileInput.files = files;
+    });
+
+</script>

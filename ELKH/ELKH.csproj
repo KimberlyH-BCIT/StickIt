@@ -10,12 +10,16 @@
   <ItemGroup>
     <Compile Remove="Repostories\**" />
     <Compile Remove="View Models\**" />
+    <Compile Remove="Views\Manager\**" />
     <Content Remove="Repostories\**" />
     <Content Remove="View Models\**" />
+    <Content Remove="Views\Manager\**" />
     <EmbeddedResource Remove="Repostories\**" />
     <EmbeddedResource Remove="View Models\**" />
+    <EmbeddedResource Remove="Views\Manager\**" />
     <None Remove="Repostories\**" />
     <None Remove="View Models\**" />
+    <None Remove="Views\Manager\**" />
   </ItemGroup>
 
   <ItemGroup>
@@ -28,8 +32,5 @@
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
     </PackageReference>
     <PackageReference Include="Microsoft.VisualStudio.Web.CodeGeneration.Design" Version="10.0.2" />
-  </ItemGroup>
-  <ItemGroup>
-    <Folder Include="Views\Manager\" />
   </ItemGroup>
 </Project>

@@ -1,0 +1,29 @@
+﻿@model List<InventoryVM>
+
+@section title{
+    <h3>Inventory</h3>
+}
+
+<table>
+    <thead>
+        <tr>
+            <td>SKU</td>
+            <td>Name</td>
+            <td>Quantity</td>
+            <td>Active</td>
+            <td></td>
+        </tr>
+    </thead>
+    <tbody>
+        @foreach(var pro in Model)
+        {
+            <tr>
+                <td>@pro.PkProductId</td>
+                <td>@pro.ProductName</td>
+                <td>@pro.Quantity</td>
+                <td>@pro.IsActive</td>
+                <td><a asp-controller="Inventory" asp-action="ProductImages" asp-route-id="@pro.PkProductId">Edit</a></td>
+            </tr>
+        }
+    </tbody>
+</table>

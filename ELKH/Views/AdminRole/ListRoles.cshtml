@@ -1,42 +1,125 @@
 ﻿@model IEnumerable<ELKH.ViewModels.RoleVM>
 
 @{
-    ViewData["Title"] = "ListRoles";
-    Layout = "~/Views/Shared/_AdminLayout.cshtml";
+    ViewData["Title"] = "Manage Roles";
+    Layout = "~/Views/Shared/_Layout.cshtml";
 }
 
-<h1>ListRoles</h1>
+<div class="container mt-5">
 
-<p>
-    <a asp-action="Create">Create New</a>
-</p>
-<table class="table">
-    <thead>
-        <tr>
-            <th>
-                @Html.DisplayNameFor(model => model.RoleId)
-            </th>
-            <th>
-                @Html.DisplayNameFor(model => model.RoleName)
-            </th>
-            <th></th>
-        </tr>
-    </thead>
-    <tbody>
-@foreach (var item in Model) {
-        <tr>
-            <td>
-                @Html.DisplayFor(modelItem => item.RoleId)
-            </td>
-            <td>
-                @Html.DisplayFor(modelItem => item.RoleName)
-            </td>
-            <td>
-                @Html.ActionLink("Edit", "Edit", new { /* id=item.PrimaryKey */ }) |
-                @Html.ActionLink("Details", "Details", new { /* id=item.PrimaryKey */ }) |
-                @Html.ActionLink("Delete", "Delete", new { /* id=item.PrimaryKey */ })
-            </td>
-        </tr>
-}
-    </tbody>
-</table>
+    <!-- Alerts -->
+    @if (TempData["Success"] != null)
+    {
+        <div class="alert alert-success alert-dismissible fade show text-center" role="alert">
+            @TempData["Success"]
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
+    }
+
+    @if (TempData["Error"] != null)
+    {
+        <div class="alert alert-danger alert-dismissible fade show text-center" role="alert">
+            @TempData["Error"]
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
+    }
+
+    <!-- Title -->
+    <div class="text-center mb-4">
+        <h2 class="fw-bold text-primary">Manage Roles</h2>
+    </div>
+
+    <!-- Top Buttons -->
+    <div class="d-flex justify-content-center mb-4">
+        <div style="width:700px;">
+
+            <div class="d-flex justify-content-center gap-3">
+                <a asp-controller="AdminRole"
+                   asp-action="AssignRoles"
+                   class="btn btn-primary px-5">
+                    Assign User To Role
+                </a>
+
+                <a asp-controller="AdminRole"
+                   asp-action="CreateRole"
+                   class="btn btn-primary px-5">
+                    + Create New Role
+                </a>
+            </div>
+
+        </div>
+    </div>
+
+    <!-- Table -->
+    <div class="d-flex justify-content-center">
+        <div class="card shadow-sm" style="width:700px;">
+            <div class="card-body p-0">
+
+                <table class="table table-hover align-middle mb-0 text-center">
+
+                    <thead class="table-primary">
+                        <tr>
+                            <th class="text-start ps-4">Role Name</th>
+                            <th style="width:350px;">Actions</th>
+                        </tr>
+                    </thead>
+
+                    <tbody>
+                        @if (Model != null && Model.Any())
+                        {
+                            foreach (var item in Model)
+                            {
+                                <tr>
+                                    <td class="text-start ps-4 fw-semibold">
+                                        @item.RoleName
+                                    </td>
+
+                                    <td>
+                                        <div class="d-flex justify-content-center flex-wrap gap-2">
+
+                                            <a asp-action="RoleUsers"
+                                               asp-route-roleId="@item.RoleId"
+                                               class="btn btn-sm btn-outline-info">
+                                                Details
+                                            </a>
+
+                                            <a asp-action="EditRole"
+                                               asp-route-roleId="@item.RoleId"
+                                               class="btn btn-sm btn-outline-primary">
+                                                Edit
+                                            </a>
+
+                                            <a asp-action="AssignRoles"
+                                               asp-route-roleName="@item.RoleName"
+                                               class="btn btn-sm btn-outline-primary">
+                                                Assign User
+                                            </a>
+
+                                            <a asp-action="DeleteRole"
+                                               asp-route-roleId="@item.RoleId"
+                                               class="btn btn-sm btn-outline-danger">
+                                                Delete
+                                            </a>
+
+                                        </div>
+                                    </td>
+                                </tr>
+                            }
+                        }
+                        else
+                        {
+                            <tr>
+                                <td colspan="2" class="text-center p-4 text-muted">
+                                    No roles found.
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+
+                </table>
+
+            </div>
+        </div>
+    </div>
+
+</div>

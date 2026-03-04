@@ -2,7 +2,7 @@
 
 @{
     ViewData["Title"] = "ManageUserRole";
-    Layout = "~/Views/Shared/_AdminLayout.cshtml";
+    Layout = "~/Views/Shared/_Layout.cshtml";
 }
 <h1>Manage User Roles</h1>
 
@@ -28,7 +28,8 @@
     <thead>
         <tr>
             <th>Role Name</th>
-            <th>Action</th>
+            <th></th>
+            <th></th>
         </tr>
     </thead>
     <tbody>
@@ -42,6 +43,14 @@
                        asp-route-roleId="@role.RoleId"
                        class="btn btn-danger btn-sm">
                         Delete
+                    </a>
+                </td>
+                <td>
+                    <a asp-controller="AdminRoleController"
+                       asp-action="AssignRoles"
+                       asp-route-roleId="@role.RoleId"
+                       class="btn btn-danger btn-sm">
+                        Assign Users
                     </a>
                 </td>
             </tr>

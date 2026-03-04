@@ -118,31 +118,37 @@ namespace ELKH.Areas.Identity.Pages.Account
                     Input.Password, 
                     Input.RememberMe, 
                     lockoutOnFailure: false);
-                
+
+                //if (result.Succeeded)
+                //{
+                //    return Redirect("/Admin/Index");
+
+                //}
+
                 if (result.Succeeded)
                 {
-                    _logger.LogInformation("User logged in.");
-
                     var user = await _userManager.FindByEmailAsync(Input.Email);
 
-                    //if (await _userManager.IsInRoleAsync(user, "Admin"))
-                    //{
-                    //    return RedirectToAction("Index", "Admin");
-                    //}
+                    if (await _userManager.IsInRoleAsync(user, "Admin"))
+                    {
+                        return RedirectToAction("Index", "Admin");
+                    }
 
-                    //if (await _userManager.IsInRoleAsync(user, "Manager"))
-                    //{
-                    //    return RedirectToAction("Index", "Manager");
-                    //}
+                    if (await _userManager.IsInRoleAsync(user, "Manager"))
+                    {
+                        return RedirectToAction("Index", "Manager");
+                    }
 
-                    //if (await _userManager.IsInRoleAsync(user, "Staff"))
-                    //{
-                    //    return RedirectToAction("Index", "Staff");
-                    //}
-
-                    // Default → Customer
                     return RedirectToAction("Index", "Home");
                 }
+
+                //    if (await _userManager.IsInRoleAsync(user, "Staff"))
+                //    {
+                //        return RedirectToAction("Index", "Staff");
+                //    }
+
+                //     return RedirectToAction("Index", "Home");
+                //}
 
                 if (result.RequiresTwoFactor)
                 {

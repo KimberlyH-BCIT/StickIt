@@ -7,11 +7,10 @@ using System.Globalization;
 
 var builder = WebApplication.CreateBuilder(args);
 
-builder.Services.AddScoped<Role_repo>();
-builder.Services.AddScoped<UserRole_repo>();
 
-builder.Services.AddScoped<OrderManagementRepo>();
-
+builder.Services.AddScoped<OrderHistoryManagementRepo>();
+builder.Services.AddScoped<InventoryRepo>();
+builder.Services.AddScoped<IRole_repo, Role_repo>();
 
 // Add services to the container.
 var connectionString = builder.Configuration.GetConnectionString("DefaultConnection") ?? throw new InvalidOperationException("Connection string 'DefaultConnection' not found.");
@@ -20,7 +19,11 @@ builder.Services.AddDbContext<ApplicationDbContext>(options =>
 builder.Services.AddDatabaseDeveloperPageExceptionFilter();
 
 builder.Services.AddDefaultIdentity<IdentityUser>(options => options.SignIn.RequireConfirmedAccount = true)
+    .AddRoles<IdentityRole>()
     .AddEntityFrameworkStores<ApplicationDbContext>();
+
+// Register Razor Pages (project contains Razor Pages)
+builder.Services.AddRazorPages();
 builder.Services.AddControllersWithViews();
 
 // Register repositories for dependency injection
@@ -28,8 +31,7 @@ builder.Services.AddScoped<RegisteredUserLogRepo>();
 builder.Services.AddScoped<RegisteredUserProfileRepo>();
 builder.Services.AddScoped<ContactDetailRepo>();
 builder.Services.AddScoped<ICartRepo, CartRepo>();
-
-
+builder.Services.AddScoped<TransactionRepo>();
 
 var app = builder.Build();
 
@@ -56,6 +58,8 @@ else
 }
 
 app.UseHttpsRedirection();
+app.UseStaticFiles();
+
 app.UseRouting();
 
 //app.UseAuthentication(); //-> Enable this when you want to require login for the entire app. Otherwise, you can use [Authorize] on specific controllers/actions as needed.

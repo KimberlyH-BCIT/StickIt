@@ -1,11 +1,11 @@
-﻿@model IEnumerable<ELKH.ViewModels.RoleVM>
+﻿@model IEnumerable<ELKH.ViewModels.UserProfileVM>
 
 @{
-    ViewData["Title"] = "ListOfManageAllUsers";
-    Layout = "~/Views/Shared/_AdminLayout.cshtml";
+    ViewData["Title"] = "ListOfStaffAccount";
+    Layout = "~/Views/Shared/_Layout.cshtml";
 }
 
-<h1>ListOfManageAllUsers</h1>
+<h1>ListOfStaffAccount</h1>
 
 <p>
     <a asp-action="Create">Create New</a>
@@ -14,10 +14,13 @@
     <thead>
         <tr>
             <th>
-                @Html.DisplayNameFor(model => model.RoleId)
+                @Html.DisplayNameFor(model => model.PkEmail)
             </th>
             <th>
-                @Html.DisplayNameFor(model => model.RoleName)
+                @Html.DisplayNameFor(model => model.FirstName)
+            </th>
+            <th>
+                @Html.DisplayNameFor(model => model.LastName)
             </th>
             <th></th>
         </tr>
@@ -26,10 +29,13 @@
 @foreach (var item in Model) {
         <tr>
             <td>
-                @Html.DisplayFor(modelItem => item.RoleId)
+                @Html.DisplayFor(modelItem => item.PkEmail)
             </td>
             <td>
-                @Html.DisplayFor(modelItem => item.RoleName)
+                @Html.DisplayFor(modelItem => item.FirstName)
+            </td>
+            <td>
+                @Html.DisplayFor(modelItem => item.LastName)
             </td>
             <td>
                 @Html.ActionLink("Edit", "Edit", new { /* id=item.PrimaryKey */ }) |

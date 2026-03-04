@@ -39,11 +39,11 @@ namespace ELKH.Controllers
         {
             return View();
         }
-        public ActionResult AllTransactions()
+        public ActionResult ListAllTransactions()
         {
             return View();
         }
     }
 
 }
-        
+         

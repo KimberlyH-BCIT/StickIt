@@ -15,7 +15,7 @@ namespace ELKH.Migrations
         protected override void BuildModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
-            modelBuilder.HasAnnotation("ProductVersion", "10.0.0");
+            modelBuilder.HasAnnotation("ProductVersion", "10.0.2");
 
             modelBuilder.Entity("ELKH.Models.CartModel", b =>
                 {
@@ -32,8 +32,14 @@ namespace ELKH.Migrations
                     b.Property<int>("ProductPkProductId")
                         .HasColumnType("INTEGER");
 
+                    b.Property<int>("Quantity")
+                        .HasColumnType("INTEGER");
+
                     b.Property<int>("RegisteredUserPkRegisteredUserId")
                         .HasColumnType("INTEGER");
+
+                    b.Property<decimal>("TotalPrice")
+                        .HasColumnType("TEXT");
 
                     b.HasKey("PkCartId");
 
@@ -155,6 +161,10 @@ namespace ELKH.Migrations
                     b.Property<DateTime>("CreatedAt")
                         .HasColumnType("TEXT");
 
+                    b.Property<string>("DeliveryStatus")
+                        .IsRequired()
+                        .HasColumnType("TEXT");
+
                     b.Property<int>("FkContactId")
                         .HasColumnType("INTEGER");
 
@@ -211,6 +221,7 @@ namespace ELKH.Migrations
                         .HasColumnType("INTEGER");
 
                     b.Property<string>("ProductImageURL")
+                        .IsRequired()
                         .HasColumnType("TEXT");
 
                     b.Property<int>("ProductPkProductId")
@@ -252,7 +263,7 @@ namespace ELKH.Migrations
                     b.Property<decimal>("Price")
                         .HasColumnType("TEXT");
 
-                    b.Property<int?>("StockQuantity")
+                    b.Property<int>("StockQuantity")
                         .HasColumnType("INTEGER");
 
                     b.Property<int>("WishListPkWishListId")

@@ -1,121 +1,138 @@
-﻿    <!DOCTYPE html>
-    <html lang="en">
-    <head>
-        <meta charset="utf-8" />
-        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-        <title>@ViewData["Title"] - ELKH</title>
-        <script type="importmap"></script>
-        <link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.min.css" />
-        <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
-        <link rel="stylesheet" href="~/ELKH.styles.css" asp-append-version="true" />
-    </head>
-    <body>
-        <header class="sticky-top">
-            <nav class="navbar navbar-expand-lg navbar-dark" style="background:#111;">
-                <div class="container">
-                    <img src="~/images/StickIt_Logo.jpg" asp-append-version="true" alt="Stick-It" style="height:78px;" />
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <link rel="icon" type="image/png" href="~/logo-stickit.png" />
+    <title>@ViewData["Title"] - ELKH</title>
+    <script type="importmap"></script>
+    <link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.min.css" />
+    <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
+    <link rel="stylesheet" href="~/ELKH.styles.css" asp-append-version="true" />
+</head>
+<body>
+    <header class="sticky-top">
+        <nav class="navbar navbar-expand-lg navbar-dark" style="background:#111;">
+            <div class="container">
+                <img src="~/images/StickIt_Logo.jpg" asp-append-version="true" alt="Stick-It" style="height:78px;" />
 
-                    <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#mainNav"
-                            aria-controls="mainNav" aria-expanded="false" aria-label="Toggle navigation">
-                        <span class="navbar-toggler-icon"></span>
-                    </button>
+                <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#mainNav"
+                        aria-controls="mainNav" aria-expanded="false" aria-label="Toggle navigation">
+                    <span class="navbar-toggler-icon"></span>
+                </button>
 
-                    <div class="collapse navbar-collapse" id="mainNav">
-                        <ul class="navbar-nav me-auto mb-2 mb-lg-0">
-                            <li class="nav-item">
-                                <a class="nav-link text-black" asp-controller="Product" asp-action="Index">Stickers</a>
-                            </li>
-                            <li class="nav-item">
-                                <a class="nav-link text-black" asp-controller="Product" asp-action="Index">Labels</a>
-                            </li>
-                            <li class="nav-item">
-                                <a class="nav-link text-black" asp-controller="Product" asp-action="Index">Materials</a>
-                            </li>
-                        </ul>
+                <div class="collapse navbar-collapse" id="mainNav">
+                    <ul class="navbar-nav me-auto mb-2 mb-lg-0">
+                        <li class="nav-item">
+                            <a class="nav-link text-white" asp-controller="Product" asp-action="Index">Stickers</a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link text-white" asp-controller="Product" asp-action="Index">Labels</a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link text-white" asp-controller="Product" asp-action="Index">Materials</a>
+                        </li>
+                        @if (User.Identity != null && User.Identity.IsAuthenticated)
+                        {
+                            @if (User.IsInRole("Admin"))
+                            {
+                                <li class="nav-item">
+                                    <a class="nav-link text-white" asp-controller="Admin" asp-action="Index">Admin Dashboard</a>
+                                </li>
+                            }
+                            @if (User.IsInRole("Manager"))
+                            {
+                                <li class="nav-item">
+                                    <a class="nav-link text-white" asp-controller="Manager" asp-action="Index">Manager Dashboard</a>
+                                </li>
+                            }
+                        }
+                    </ul>
 
-                        <div class="d-flex align-items-center gap-3">
-                            <a class="nav-link text-white p-0" asp-controller="Cart" asp-action="Index">
-                                <i class="bi bi-cart3"></i>
-                            </a>
-                            <partial name="_LoginPartial" />
-                        </div>
-                    </div>
-                </div>
-            </nav>
-        </header>
-
-        <main role="main">
-            @RenderBody()
-        </main>
-
-        <footer style="background:#111;">
-            <div class="container py-5 text-white-50 small">
-                <div class="row g-4">
-
-                    <div class="col-6 col-lg-3">
-                        <div class="text-white fw-bold mb-2">Useful links</div>
-                        <ul class="list-unstyled mb-0">
-                            <li class="mb-2"><a class="text-white-50 text-decoration-none" asp-controller="Home" asp-action="Index">Home</a></li>
-                            <li class="mb-2"><a class="text-white-50 text-decoration-none" asp-controller="Product" asp-action="Index">All Products</a></li>
-                            <li class="mb-2"><a class="text-white-50 text-decoration-none" asp-controller="Cart" asp-action="Index">Cart</a></li>
-                            <li><a class="text-white-50 text-decoration-none" asp-controller="Order" asp-action="History">My Orders</a></li>
-                        </ul>
-                    </div>
-
-                    <div class="col-6 col-lg-3">
-                        <div class="text-white fw-bold mb-2">Support</div>
-                        <ul class="list-unstyled mb-0">
-                            <li class="mb-2"><a class="text-white-50 text-decoration-none" href="#">Contact</a></li>
-                            <li class="mb-2"><a class="text-white-50 text-decoration-none" href="#">FAQ</a></li>
-                            <li class="mb-2"><a class="text-white-50 text-decoration-none" href="#">Shipping</a></li>
-                            <li><a class="text-white-50 text-decoration-none" href="#">Returns</a></li>
-                        </ul>
-                    </div>
-
-                    <div class="col-6 col-lg-3">
-                        <div class="text-white fw-bold mb-2">Company</div>
-                        <ul class="list-unstyled mb-0">
-                            <li class="mb-2"><a class="text-white-50 text-decoration-none" href="#">About</a></li>
-                            <li class="mb-2"><a class="text-white-50 text-decoration-none" asp-controller="Home" asp-action="Privacy">Privacy</a></li>
-                            <li class="mb-2"><a class="text-white-50 text-decoration-none" href="#">Terms</a></li>
-                            <li><a class="text-white-50 text-decoration-none" href="#">Accessibility</a></li>
-                        </ul>
-                    </div>
-
-                    <div class="col-12 col-lg-3">
-                        <div class="text-white fw-bold mb-2">Stay connected</div>
-                        <div class="text-white-50 mb-3">Subscribe for product drops and updates.</div>
-
-                        <form class="d-flex gap-2 mb-3">
-                            <input class="form-control form-control-sm" type="email" placeholder="Email address" />
-                            <button class="btn btn-warning btn-sm fw-bold" type="button">Subscribe</button>
-                        </form>
-
-                        <div class="d-flex gap-3 fs-5">
-                            <a class="text-white-50" href="#"><i class="bi bi-instagram"></i></a>
-                            <a class="text-white-50" href="#"><i class="bi bi-facebook"></i></a>
-                            <a class="text-white-50" href="#"><i class="bi bi-youtube"></i></a>
-                            <a class="text-white-50" href="#"><i class="bi bi-tiktok"></i></a>
-                        </div>
-                    </div>
-
-                </div>
-
-                <hr class="border-secondary my-4" />
-
-                <div class="d-flex justify-content-between align-items-center flex-wrap gap-2">
-                    <div>© @DateTime.Now.Year - ELKH</div>
-                    <div class="d-flex gap-3">
-                        <a class="text-white-50 text-decoration-none" asp-controller="Home" asp-action="Privacy">Privacy</a>
-                        <a class="text-white-50 text-decoration-none" href="#">Terms</a>
+                    <div class="d-flex align-items-center gap-3">
+                        <a class="nav-link text-white p-0" asp-controller="Cart" asp-action="Index">
+                            <i class="bi bi-cart3"></i>
+                        </a>
+                        <partial name="_LoginPartial" />
                     </div>
                 </div>
             </div>
-        </footer>
+        </nav>
+    </header>
 
-        <script src="~/lib/jquery/dist/jquery.min.js"></script>
-        <script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
-        <script src="~/js/site.js" asp-append-version="true"></script>
-        @await RenderSectionAsync("Scripts", required: false)
-    </body>
-    </html>
+    <main role="main">
+        @RenderSection("title", false)
+        @RenderBody()
+    </main>
+
+    <footer style="background:#111;">
+        <div class="container py-5 text-white-50 small">
+            <div class="row g-4">
+
+                <div class="col-6 col-lg-3">
+                    <div class="text-white fw-bold mb-2">Useful links</div>
+                    <ul class="list-unstyled mb-0">
+                        <li class="mb-2"><a class="text-white-50 text-decoration-none" asp-controller="Home" asp-action="Index">Home</a></li>
+                        <li class="mb-2"><a class="text-white-50 text-decoration-none" asp-controller="Product" asp-action="Index">All Products</a></li>
+                        <li class="mb-2"><a class="text-white-50 text-decoration-none" asp-controller="Cart" asp-action="Index">Cart</a></li>
+                        <li><a class="text-white-50 text-decoration-none" asp-controller="Order" asp-action="History">My Orders</a></li>
+                    </ul>
+                </div>
+
+                <div class="col-6 col-lg-3">
+                    <div class="text-white fw-bold mb-2">Support</div>
+                    <ul class="list-unstyled mb-0">
+                        <li class="mb-2"><a class="text-white-50 text-decoration-none" href="#">Contact</a></li>
+                        <li class="mb-2"><a class="text-white-50 text-decoration-none" href="#">FAQ</a></li>
+                        <li class="mb-2"><a class="text-white-50 text-decoration-none" href="#">Shipping</a></li>
+                        <li><a class="text-white-50 text-decoration-none" href="#">Returns</a></li>
+                    </ul>
+                </div>
+
+                <div class="col-6 col-lg-3">
+                    <div class="text-white fw-bold mb-2">Company</div>
+                    <ul class="list-unstyled mb-0">
+                        <li class="mb-2"><a class="text-white-50 text-decoration-none" href="#">About</a></li>
+                        <li class="mb-2"><a class="text-white-50 text-decoration-none" asp-controller="Home" asp-action="Privacy">Privacy</a></li>
+                        <li class="mb-2"><a class="text-white-50 text-decoration-none" href="#">Terms</a></li>
+                        <li><a class="text-white-50 text-decoration-none" href="#">Accessibility</a></li>
+                    </ul>
+                </div>
+
+                <div class="col-12 col-lg-3">
+                    <div class="text-white fw-bold mb-2">Stay connected</div>
+                    <div class="text-white-50 mb-3">Subscribe for product drops and updates.</div>
+
+                    <form class="d-flex gap-2 mb-3">
+                        <input class="form-control form-control-sm" type="email" placeholder="Email address" />
+                        <button class="btn btn-warning btn-sm fw-bold" type="button">Subscribe</button>
+                    </form>
+
+                    <div class="d-flex gap-3 fs-5">
+                        <a class="text-white-50" href="#"><i class="bi bi-instagram"></i></a>
+                        <a class="text-white-50" href="#"><i class="bi bi-facebook"></i></a>
+                        <a class="text-white-50" href="#"><i class="bi bi-youtube"></i></a>
+                        <a class="text-white-50" href="#"><i class="bi bi-tiktok"></i></a>
+                    </div>
+                </div>
+
+            </div>
+
+            <hr class="border-secondary my-4" />
+
+            <div class="d-flex justify-content-between align-items-center flex-wrap gap-2">
+                <div>© @DateTime.Now.Year - ELKH</div>
+                <div class="d-flex gap-3">
+                    <a class="text-white-50 text-decoration-none" asp-controller="Home" asp-action="Privacy">Privacy</a>
+                    <a class="text-white-50 text-decoration-none" href="#">Terms</a>
+                </div>
+            </div>
+        </div>
+    </footer>
+
+    <script src="~/lib/jquery/dist/jquery.min.js"></script>
+    <script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="~/js/site.js" asp-append-version="true"></script>
+    @await RenderSectionAsync("Scripts", required: false)
+</body>
+</html>

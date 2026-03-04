@@ -13,18 +13,19 @@ namespace ELKH.Models
 
 
         //Relationship with Cart
-        public ICollection<CartModel> Cart { get; set; } = new List<CartModel>();
+        public ICollection<CartModel>? Cart { get; set; }
 
         //Relationship with Order
-        public ICollection<OrderModel> Orders { get; set; } = new List<OrderModel>();
+        public ICollection<OrderModel>? Orders { get; set; }
 
         //Relationship with Contact Detail
-        public ICollection<ContactDetailModel> ContactDetails { get; set; } = new List<ContactDetailModel>();
+        public ICollection<ContactDetailModel>? ContactDetails { get; set; }
 
         //Relationship With ProductRating
-        public ICollection<ProductRatingModel> ProductRatings { get; set; } = new List<ProductRatingModel>();
+        public ICollection<ProductRatingModel>? ProductRatings { get; set; }
 
         //Relationship with WishList
-        public WishListModel WishLists { get; set; } = new WishListModel();
+        public WishListModel? WishLists { get; set; }
+
     }
 }

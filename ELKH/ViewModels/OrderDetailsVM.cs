@@ -1,13 +1,12 @@
 ﻿
 namespace ELKH.ViewModels
 {
-    public class OrderDetailsViewModel
+    public class OrderDetailsVM
     {
         public int OrderId { get; set; }
         public string UserEmail { get; set; } = string.Empty;
         public string DeliveryStatus { get; set; } = string.Empty;
-        public string ProductName { get; set; } = string.Empty;
-        public int Quantity { get; set; } = 1;
-        public decimal UnitPrice { get; set; } = 0;
+        public int TransactionId { get; set; }
+        public List<OrderItemVM> OrderItems { get; set; } = new List<OrderItemVM>();
     }
 }
