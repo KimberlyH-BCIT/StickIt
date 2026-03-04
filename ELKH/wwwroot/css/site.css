@@ -1,31 +1,196 @@
+/* =====================================================
+   BASE SETTINGS
+===================================================== */
+
 html {
-  font-size: 14px;
+    font-size: 14px;
 }
 
 @media (min-width: 768px) {
-  html {
-    font-size: 16px;
-  }
+    html {
+        font-size: 16px;
+    }
 }
 
-.btn:focus, .btn:active:focus, .btn-link.nav-link:focus, .form-control:focus, .form-check-input:focus {
-  box-shadow: 0 0 0 0.1rem white, 0 0 0 0.25rem #258cfb;
-}
-
-html {
-  position: relative;
-  min-height: 100%;
+html, body {
+    height: 100%;
 }
 
 body {
-  margin-bottom: 60px;
+    display: flex;
+    flex-direction: column;
+    background: linear-gradient(to bottom, #dff6f5, #e8e4ff);
+    font-family: 'Nunito', sans-serif;
 }
 
-.form-floating > .form-control-plaintext::placeholder, .form-floating > .form-control::placeholder {
-  color: var(--bs-secondary-color);
-  text-align: end;
+.kawaii-container {
+    flex: 1;
+    background: white;
+    padding: 25px 30px;
+    border-radius: 25px;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.05);
 }
 
-.form-floating > .form-control-plaintext:focus::placeholder, .form-floating > .form-control:focus::placeholder {
-  text-align: start;
+
+/* =====================================================
+   NAVBAR
+===================================================== */
+
+.kawaii-navbar {
+    background-color: #ffffff;
+    border-radius: 20px;
+    margin: 15px;
+    padding: 10px 20px;
+}
+
+.navbar-logo {
+    height: 80px;
+    width: auto;
+}
+
+.kawaii-brand {
+    font-weight: bold;
+    font-size: 22px;
+    color: #a084dc !important;
+}
+
+.kawaii-link {
+    color: #6c63ff !important;
+    font-weight: 600;
+    border-radius: 20px;
+    padding: 6px 14px;
+    transition: 0.3s;
+}
+
+    .kawaii-link:hover {
+        background-color: #ffd6ec;
+        color: #ff6fa5 !important;
+    }
+
+
+/* =====================================================
+   HERO SECTION
+===================================================== */
+
+.hero-box {
+    padding: 30px 15px;
+    border-radius: 30px;
+    border: 3px solid #f8c8dc;
+    background: #ffffff;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 14px; 
+}
+
+    .hero-box h1,
+    .hero-box p {
+        margin: 0;
+    }
+
+.hero-image {
+    width: 200px;
+    height: auto;
+}
+
+.hero-title {
+    font-size: 40px;
+    font-weight: 800;
+    color: #6c63ff;
+}
+
+.brand-text {
+    color: #ff6fa5;
+}
+
+.hero-subtitle {
+    font-size: 20px;
+    color: #a084dc;
+}
+
+.hero-description {
+    font-size: 16px;
+    color: #555;
+    max-width: 600px;
+    text-align: center;
+}
+
+
+/* =====================================================
+   BUTTONS
+===================================================== */
+
+.kawaii-btn-purple {
+    background: #6c63ff;
+    color: white;
+    border-radius: 30px;
+    padding: 10px 25px;
+    font-weight: 600;
+    border: none;
+    transition: 0.3s;
+}
+
+    .kawaii-btn-purple:hover {
+        background: #574fd6;
+    }
+
+.kawaii-btn-pink {
+    background: #ff6fa5;
+    color: white;
+    border-radius: 30px;
+    padding: 10px 25px;
+    font-weight: 600;
+    border: none;
+    transition: 0.3s;
+}
+
+    .kawaii-btn-pink:hover {
+        background: #e85b92;
+    }
+
+
+/* =====================================================
+   FOOTER
+===================================================== */
+
+.kawaii-footer {
+    background: #ffffff;
+    padding: 20px;
+    border-radius: 20px;
+    margin: 20px;
+    box-shadow: 0 5px 20px rgba(0, 0, 0, 0.05);
+}
+
+
+/* =====================================================
+   DECORATIVE ELEMENTS
+===================================================== */
+
+.top-gradient-bar {
+    height: 8px;
+    background: linear-gradient(to right, #ffd6ec, #c8f2ef, #dcd6ff);
+}
+
+
+/* =====================================================
+   FORM IMPROVEMENTS (Bootstrap Fixes)
+===================================================== */
+
+.btn:focus,
+.btn:active:focus,
+.btn-link.nav-link:focus,
+.form-control:focus,
+.form-check-input:focus {
+    box-shadow: 0 0 0 0.1rem white, 0 0 0 0.25rem #258cfb;
+}
+
+.form-floating > .form-control-plaintext::placeholder,
+.form-floating > .form-control::placeholder {
+    color: var(--bs-secondary-color);
+    text-align: end;
+}
+
+.form-floating > .form-control-plaintext:focus::placeholder,
+.form-floating > .form-control:focus::placeholder {
+    text-align: start;
 }

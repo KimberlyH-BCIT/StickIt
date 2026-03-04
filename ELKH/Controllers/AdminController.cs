@@ -6,43 +6,35 @@ using Microsoft.AspNetCore.Mvc;
 
 namespace ELKH.Controllers
 {
-    //[Authorize(Roles = "Admin")]
-    [Authorize]
+    [Authorize(Roles = "Admin")]
     public class AdminController : Controller
-
     {
-        private readonly Role_repo _roleRepo;
-        private readonly UserRole_repo _userRoleRepo;
+        private readonly IRole_repo _roleRepo;
 
-        public AdminController(Role_repo roleRepo, UserRole_repo userRoleRepo)
+
+        public AdminController(IRole_repo roleRepo)
         {
             _roleRepo = roleRepo;
-            _userRoleRepo = userRoleRepo;
         }
         // GET: AdminController
         public ActionResult Index()
         {
             return View();
         }
-        public IActionResult ManageSales()
+        public IActionResult ListUsers()
         {
             return View();
-
         }
 
         public IActionResult ManageUserRole()
         {
-            //var model = new RoleVM();
-            //model.Roles = _roleRepo.GetAllRoles();
+            ManageRoleVM manageRoleVM = new ManageRoleVM();
+            
+            manageRoleVM.Roles = _roleRepo.GetAllRoles();
 
-            //return View(model);
-            return View();
+            return View(manageRoleVM);
+        }
 
-        }
-        public IActionResult ListOfAllUsers()
-        {
-            return View();
-        }
 
 
         public IActionResult CustomerAccountDetails()
@@ -56,6 +48,10 @@ namespace ELKH.Controllers
             return View();
         }
 
+        public IActionResult ManageSales()
+        {
+            return View();
 
         }
+    }
 }
