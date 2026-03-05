@@ -55,6 +55,51 @@ namespace ELKH.Data
                 .HasOne(p => p.WishList)
                 .WithMany(w => w.Products)
                 .HasForeignKey(p => p.FkWishListId);
+
+            modelBuilder.Entity<ProductModel>().HasData(
+                    new ProductModel
+                    {
+                        PkProductId = 1,
+                        Name = "Pikacu",
+                        Description = "Character from anime",
+                        Price = 2.99m,
+                        StockQuantity = 10,
+                        IsActive = true,
+                        FkCategoryId = 1
+                    },
+                    new ProductModel
+                    {
+                        PkProductId = 2,
+                        Name = "Random",
+                        Description = "Random",
+                        Price = 1.99m,
+                        StockQuantity = 80,
+                        IsActive = true,
+                        FkCategoryId = 1
+                    },
+                    new ProductModel
+                    {
+                        PkProductId = 3,
+                        Name = "Random2",
+                        Description = "Random2",
+                        Price = 4.99m,
+                        StockQuantity = 80,
+                        IsActive = true,
+                        FkCategoryId = 2
+                    }
+                );
+            modelBuilder.Entity<CategoryModel>().HasData(
+                    new CategoryModel
+                    {
+                        PkCategoryId = 1,
+                        CategoryName = "Carton"
+                    },
+                    new CategoryModel
+                    {
+                        PkCategoryId = 2,
+                        CategoryName = "Fake"
+                    }
+                );
         }
 
     }

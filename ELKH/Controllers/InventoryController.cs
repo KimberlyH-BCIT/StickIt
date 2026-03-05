@@ -12,6 +12,9 @@ namespace ELKH.Controllers
         {
             _inventoryRepo = inventoryRepo;
         }
+
+
+        //Pass
         public async Task<IActionResult> Index()
         {
             var products = await _inventoryRepo.GetAllProduct();
@@ -27,6 +30,7 @@ namespace ELKH.Controllers
             return View(inventoryList);
         }
 
+        //Pass
         [HttpPost]
         public async Task<IActionResult> EditProductAmount(int productId, int quantityId)
         {
@@ -35,14 +39,21 @@ namespace ELKH.Controllers
             return RedirectToAction(nameof(Index));
         }
 
-
+        //Pass
         public async Task<IActionResult> ProductImages(int productId)
         {
             var productImages = await _inventoryRepo.GetProductImages(productId);
 
-            return View(productImages);
+            var vm = new InventoryVM
+            {
+                PkProductId = productId,
+                ProductImage = productImages
+            };
+
+            return View(vm);
         }
 
+        //Pass
         public async Task<IActionResult> AddImage(int productId)
         {
             var vm = new ProductImageVM
@@ -53,6 +64,8 @@ namespace ELKH.Controllers
             return View(vm);
         }
 
+
+        //Test this after finish the image input setup
         [HttpPost]
         public async Task<IActionResult> AddImage(ProductImageVM vm)
         {
