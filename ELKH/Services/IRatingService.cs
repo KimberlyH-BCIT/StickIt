@@ -76,6 +76,13 @@ namespace ELKH.Services
         Task<List<Models.ProductRatingModel>> GetApprovedReviewsAsync(int productId, CancellationToken ct = default);
 
         /// <summary>
+        /// Returns a page of approved reviews enriched with reviewer profile data
+        /// (first name, avatar flag) together with pagination metadata and the
+        /// aggregate average rating computed across <em>all</em> approved reviews.
+        /// </summary>
+        Task<ViewModels.ReviewPageVM> GetPagedApprovedReviewsAsync(int productId, int page, CancellationToken ct = default);
+
+        /// <summary>
         /// Determines whether the user is eligible to submit a new rating for a product
         /// based on their purchase history and any existing ratings.
         /// </summary>

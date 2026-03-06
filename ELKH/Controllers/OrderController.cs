@@ -52,7 +52,7 @@ public class OrderController : AuthenticatedControllerBase
         if (authResult != null) return authResult;
 
         var orders = await _orderManagementRepo.GetUserOrdersAsync(email);
-        return View("History", orders);
+        return View("~/Views/OrderHistory/History.cshtml", new OrderHistoryVM { Orders = orders });
     }
 
     // Lists all orders ordered by creation date (admin history view)

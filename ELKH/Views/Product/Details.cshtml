@@ -1,7 +1,17 @@
 @model ELKH.ViewModels.ProductVM
+@using ELKH.Models
+@using ELKH.ViewModels
 
 @{
     ViewData["Title"] = Model.ProductName;
+    var reviewPage     = ViewBag.ReviewPage as ReviewPageVM ?? new ReviewPageVM();
+    var eligibleItems  = ViewBag.EligibleOrderItems as List<EligibleOrderItemVM>;
+    bool userAlreadyRated = ViewBag.UserAlreadyRated == true;
+    var userRating     = ViewBag.UserRating as ProductRatingModel;
+    int userRatingId   = ViewBag.UserRatingId is int rid ? rid : 0;
+    var effectivePrice = Model.DiscountPercent > 0
+        ? Model.Price * (1 - (Model.DiscountPercent / 100m))
+        : Model.Price;
 }
 
 <nav aria-label="breadcrumb" class="mb-4">
@@ -12,27 +22,77 @@
 </nav>
 
 <div class="row g-5">
+    <!-- Product image -->
     <div class="col-md-5">
-        <div class="card border-0 shadow-sm bg-light d-flex align-items-center justify-content-center"
+        <div class="card border-0 shadow-sm bg-light d-flex align-items-center justify-content-center overflow-hidden"
              style="min-height:350px;">
-            <i class="bi bi-image text-muted" style="font-size:5rem;"></i>
+            @if (!string.IsNullOrEmpty(Model.Thumbnail))
+            {
+                <img src="@Model.Thumbnail" alt="@Model.ProductName"
+                     class="img-fluid" style="max-height:400px;object-fit:contain;" />
+            }
+            else
+            {
+                <i class="bi bi-image text-muted" style="font-size:5rem;"></i>
+            }
+        </div>
     </div>
-</div>
+
+    <!-- Product info -->
     <div class="col-md-7">
-        <span class="badge bg-secondary mb-2">@Model.CategoryName</span>
+        <div class="mb-2 d-flex align-items-center gap-2 flex-wrap">
+            <span class="badge bg-secondary">@Model.CategoryName</span>
+            @if (Model.DiscountPercent > 0)
+            {
+                <span class="badge bg-danger"><i class="bi bi-tag-fill me-1"></i>On Sale</span>
+            }
+        </div>
         <h1 class="fw-bold">@Model.ProductName</h1>
-        <p class="fs-3 fw-bold text-dark">$@Model.Price.ToString("F2")</p>
+
+        <!-- Price -->
+        @if (Model.DiscountPercent > 0)
+        {
+            <div class="mb-1 d-flex align-items-center gap-2">
+                <span class="text-decoration-line-through text-muted fs-5">@Model.Price.ToString("C")</span>
+                <span class="badge bg-danger fs-6">-@Model.DiscountPercent.ToString("0")% off</span>
+            </div>
+            <p class="fs-3 fw-bold text-danger"><span id="effective-price">@effectivePrice.ToString("C")</span></p>
+        }
+        else
+        {
+            <p class="fs-3 fw-bold text-dark"><span id="effective-price">@Model.Price.ToString("C")</span></p>
+        }
+
+        <!-- Average rating & review count -->
+        @if (reviewPage.AverageRating > 0)
+        {
+            <div class="mb-2 d-flex align-items-center gap-1">
+                @for (int i = 1; i <= 5; i++)
+                {
+                    <i class="bi @(i <= Math.Round(reviewPage.AverageRating) ? "bi-star-fill" : "bi-star") text-warning"></i>
+                }
+                <small class="text-muted ms-1">
+                    @reviewPage.AverageRating.ToString("F1") — @reviewPage.TotalCount @(reviewPage.TotalCount == 1 ? "review" : "reviews")
+                </small>
+            </div>
+        }
+        else
+        {
+            <p class="text-muted small mb-2">No reviews yet</p>
+        }
+
         <p class="text-muted mb-4">@Model.Description</p>
 
+        <!-- Stock & Add to Cart -->
         @if (Model.IsActive && Model.StockQuantity > 0)
-    {
+        {
             <p class="text-success mb-3">
                 <i class="bi bi-check-circle-fill me-1"></i>
                 In stock — @Model.StockQuantity available
-        </p>
-            <form asp-controller="Cart" asp-action="Add" method="post" class="d-flex gap-3 align-items-center">
+            </p>
+            <form asp-controller="Cart" asp-action="AddToCart" method="post" class="d-flex gap-3 align-items-center mb-3">
                 @Html.AntiForgeryToken()
-                <input type="hidden" name="productId" value="@Model.ProductId" />
+                <input type="hidden" name="itemId" value="@Model.ProductId" />
                 <div class="input-group" style="width:120px;">
                     <span class="input-group-text">Qty</span>
                     <input type="number" name="quantity" value="1" min="1"
@@ -42,16 +102,36 @@
                     <i class="bi bi-cart-plus me-2"></i>Add to Cart
                 </button>
             </form>
-    }
-    else
-    {
+        }
+        else
+        {
             <p class="text-danger mb-3">
                 <i class="bi bi-x-circle-fill me-1"></i>Out of stock
             </p>
-            <button class="btn btn-secondary btn-lg" disabled>Unavailable</button>
-    }
-</div>
+            <button class="btn btn-secondary btn-lg mb-3" disabled>Unavailable</button>
+        }
 
+        <!-- Wishlist button -->
+        @if (User.Identity?.IsAuthenticated == true)
+        {
+            <form asp-controller="Wishlist" asp-action="AddAjax" method="post"
+                  class="add-to-wishlist-form d-inline" data-product-id="@Model.ProductId">
+                @Html.AntiForgeryToken()
+                <input type="hidden" name="productId" value="@Model.ProductId" />
+                <button type="submit" class="btn btn-outline-secondary add-to-wishlist-button">
+                    <i class="bi bi-heart me-1"></i>Add to Wishlist
+                </button>
+            </form>
+        }
+        else
+        {
+            <button type="button" class="btn btn-outline-secondary"
+                    data-bs-toggle="modal" data-bs-target="#wishlistSignInModal">
+                <i class="bi bi-heart me-1"></i>Add to Wishlist
+            </button>
+        }
+
+        <!-- Admin / Manager controls -->
         @if (User.IsInRole("Manager") || User.IsInRole("Admin"))
         {
             <div class="mt-4 pt-3 border-top d-flex gap-2">
@@ -61,29 +141,249 @@
                 <a asp-action="Delete" asp-route-id="@Model.ProductId" class="btn btn-outline-danger btn-sm">
                     <i class="bi bi-trash me-1"></i>Delete
                 </a>
-</div>
+            </div>
         }
-</div>
+    </div>
 </div>
 
-<div class="mt-5">
+<!-- Reviews & Ratings -->
+<div class="mt-5 pt-4 border-top">
+
+    <!-- Section header with aggregate stats -->
+    <div class="d-flex align-items-center gap-3 mb-4 flex-wrap">
+        <h3 class="mb-0">Customer Reviews</h3>
+        @if (reviewPage.TotalCount > 0)
+        {
+            <div class="d-flex align-items-center gap-1">
+                @for (int i = 1; i <= 5; i++)
+                {
+                    <i class="bi @(i <= Math.Round(reviewPage.AverageRating) ? "bi-star-fill" : "bi-star") text-warning"></i>
+                }
+                <span class="ms-1 text-muted">
+                    @reviewPage.AverageRating.ToString("F1") &middot; @reviewPage.TotalCount @(reviewPage.TotalCount == 1 ? "review" : "reviews")
+                </span>
+            </div>
+        }
+    </div>
+
+    <!-- Review cards -->
+    @if (!reviewPage.Reviews.Any())
+    {
+        <p class="text-muted">No reviews yet. Be the first to leave a review!</p>
+    }
+    else
+    {
+        <div class="d-flex flex-column gap-3 mb-4">
+            @foreach (var review in reviewPage.Reviews)
+            {
+                <div class="card shadow-sm">
+                    <div class="card-body">
+                        <!-- Reviewer identity row -->
+                        <div class="d-flex align-items-center gap-3 mb-2">
+                            @if (review.HasAvatar)
+                            {
+                                <img src="@Url.Action("Avatar", "User", new { id = review.ReviewerUserId })"
+                                     alt="@review.ReviewerFirstName"
+                                     class="rounded-circle" style="width:40px;height:40px;object-fit:cover;" />
+                            }
+                            else
+                            {
+                                <div class="rounded-circle bg-secondary d-flex align-items-center justify-content-center text-white fw-bold"
+                                     style="width:40px;height:40px;flex-shrink:0;">
+                                    @review.ReviewerFirstName.Substring(0, 1).ToUpper()
+                                </div>
+                            }
+                            <div>
+                                <div class="fw-semibold">@review.ReviewerFirstName</div>
+                                <div class="d-flex gap-1">
+                                    @for (int i = 1; i <= 5; i++)
+                                    {
+                                        <i class="bi @(i <= review.Rating ? "bi-star-fill" : "bi-star") text-warning small"></i>
+                                    }
+                                </div>
+                            </div>
+                            <div class="ms-auto text-end">
+                                <small class="text-muted d-block">Posted @review.CreatedAt.ToString("MMM d, yyyy")</small>
+                                @if (review.LastEditedAt.HasValue)
+                                {
+                                    <small class="text-muted d-block">Edited @review.LastEditedAt.Value.ToString("MMM d, yyyy")</small>
+                                }
+                            </div>
+                        </div>
+                        @if (!string.IsNullOrEmpty(review.Description))
+                        {
+                            <p class="mb-0 text-body">@review.Description</p>
+                        }
+                    </div>
+                </div>
+            }
+        </div>
+
+        <!-- Pagination -->
+        @if (reviewPage.TotalPages > 1)
+        {
+            <nav aria-label="Review pages" class="mb-4">
+                <ul class="pagination pagination-sm justify-content-center">
+                    <li class="page-item @(reviewPage.CurrentPage == 1 ? "disabled" : "")">
+                        <a class="page-link"
+                           asp-action="Details" asp-route-id="@Model.ProductId"
+                           asp-route-reviewPage="@(reviewPage.CurrentPage - 1)">#&laquo;</a>
+                    </li>
+                    @for (int pg = 1; pg <= reviewPage.TotalPages; pg++)
+                    {
+                        <li class="page-item @(pg == reviewPage.CurrentPage ? "active" : "")">
+                            <a class="page-link"
+                               asp-action="Details" asp-route-id="@Model.ProductId"
+                               asp-route-reviewPage="@pg">@pg</a>
+                        </li>
+                    }
+                    <li class="page-item @(reviewPage.CurrentPage == reviewPage.TotalPages ? "disabled" : "")">
+                        <a class="page-link"
+                           asp-action="Details" asp-route-id="@Model.ProductId"
+                           asp-route-reviewPage="@(reviewPage.CurrentPage + 1)">&raquo;</a>
+                    </li>
+                </ul>
+            </nav>
+        }
+    }
+
+    <!-- Rating / review form -->
+    @if (User.Identity?.IsAuthenticated == true)
+    {
+        <div class="mt-3">
+            @if (userAlreadyRated && userRating != null)
+            {
+                <!-- Edit existing review -->
+                <div class="card border-primary shadow-sm">
+                    <div class="card-header bg-primary text-white">
+                        <h5 class="mb-0"><i class="bi bi-pencil-square me-2"></i>Your Review</h5>
+                    </div>
+                    <div class="card-body">
+                        <form asp-action="EditRating" method="post">
+                            @Html.AntiForgeryToken()
+                            <input type="hidden" name="ratingId" value="@userRatingId" />
+                            <div class="mb-3">
+                                <label class="form-label fw-semibold">Your Rating <span class="text-danger">*</span></label>
+                                <div class="d-flex gap-3 flex-wrap">
+                                    @for (int i = 1; i <= 5; i++)
+                                    {
+                                        <div class="form-check form-check-inline">
+                                            <input class="form-check-input review-star-input" type="radio" name="rating"
+                                                   id="edit-star-@i" value="@i"
+                                                   @(userRating.Rating == i ? "checked" : "") required />
+                                            <label class="form-check-label" for="edit-star-@i">@i ★</label>
+                                        </div>
+                                    }
+                                </div>
+                            </div>
+                            <div class="mb-3">
+                                <label for="edit-description" class="form-label fw-semibold">
+                                    Comment <span class="text-muted fw-normal">(optional)</span>
+                                </label>
+                                <textarea id="edit-description" name="description" class="form-control" rows="3"
+                                          maxlength="2000">@userRating.Description</textarea>
+                            </div>
+                            <button type="submit" class="btn btn-primary">
+                                <i class="bi bi-save me-1"></i>Update Review
+                            </button>
+                        </form>
+                        <form asp-action="DeleteRating" method="post" class="mt-2">
+                            @Html.AntiForgeryToken()
+                            <input type="hidden" name="ratingId" value="@userRatingId" />
+                            <button type="submit" class="btn btn-outline-danger btn-sm"
+                                    onclick="return confirm('Delete your review?')">
+                                <i class="bi bi-trash me-1"></i>Delete Review
+                            </button>
+                        </form>
+                    </div>
+                </div>
+            }
+            else if (eligibleItems != null && eligibleItems.Any())
+            {
+                <!-- New review form -->
+                <div class="card border-success shadow-sm">
+                    <div class="card-header bg-success text-white">
+                        <h5 class="mb-0"><i class="bi bi-star me-2"></i>Leave a Review</h5>
+                    </div>
+                    <div class="card-body">
+                        <form asp-action="CreateRating" method="post" id="new-review-form">
+                            @Html.AntiForgeryToken()
+                            <input type="hidden" name="productId" value="@Model.ProductId" />
+                            <div class="mb-3">
+                                <label for="orderItemId" class="form-label fw-semibold">Purchase</label>
+                                <select id="orderItemId" name="orderItemId" class="form-select" required>
+                                    @foreach (var item in eligibleItems)
+                                    {
+                                        <option value="@item.Id">@item.Label</option>
+                                    }
+                                </select>
+                            </div>
+                            <div class="mb-3">
+                                <label class="form-label fw-semibold">Rating <span class="text-danger">*</span></label>
+                                <div class="d-flex gap-3 flex-wrap">
+                                    @for (int i = 1; i <= 5; i++)
+                                    {
+                                        <div class="form-check form-check-inline">
+                                            <input class="form-check-input review-star-input" type="radio" name="rating"
+                                                   id="new-star-@i" value="@i" required />
+                                            <label class="form-check-label" for="new-star-@i">@i ★</label>
+                                        </div>
+                                    }
+                                </div>
+                            </div>
+                            <div class="mb-3">
+                                <label for="new-description" class="form-label fw-semibold">
+                                    Comment <span class="text-muted fw-normal">(optional — select a rating first)</span>
+                                </label>
+                                <textarea id="new-description" name="description" class="form-control" rows="3"
+                                          maxlength="2000" placeholder="Select a star rating above to enable comments..."
+                                          disabled></textarea>
+                            </div>
+                            <button type="submit" class="btn btn-success">
+                                <i class="bi bi-send me-1"></i>Submit Review
+                            </button>
+                        </form>
+                    </div>
+                </div>
+            }
+            else
+            {
+                <p class="text-muted">
+                    <i class="bi bi-info-circle me-1"></i>
+                    Reviews are available after your order has been shipped.
+                </p>
+            }
+        </div>
+    }
+    else
+    {
+        <p class="text-muted mt-3">
+            <a asp-area="Identity" asp-page="/Account/Login"
+               asp-route-returnUrl="@Url.Action("Details", "Product", new { id = Model.ProductId })">Sign in</a>
+            to leave a review.
+        </p>
+    }
+</div>
+
+<div class="mt-4">
     <a asp-action="Index" class="btn btn-outline-secondary">
         <i class="bi bi-arrow-left me-1"></i>Back to Shop
     </a>
+</div>
 
-    @section Scripts {
+@section Scripts {
     <script>
-        // Poll price every 10 seconds to reflect real-time changes
         const productId = @Model.ProductId;
         async function pollPrice() {
             try {
-                const res = await fetch('@Url.Action("GetPrice","Product")?id=' + productId);
+                const res = await fetch('@Url.Action("GetPrice", "Product")?id=' + productId);
                 if (!res.ok) return;
                 const json = await res.json();
                 const effective = json.effective;
                 const locale = window.appCulture || undefined;
                 const currency = window.appCurrency || 'CAD';
-                document.getElementById('effective-price').textContent = new Intl.NumberFormat(locale, { style: 'currency', currency }).format(effective);
+                document.getElementById('effective-price').textContent =
+                    new Intl.NumberFormat(locale, { style: 'currency', currency }).format(effective);
             } catch { }
         }
         setInterval(pollPrice, 10000);

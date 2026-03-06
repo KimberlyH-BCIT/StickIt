@@ -291,13 +291,76 @@ namespace ELKH.Services
         }
 
         /// <inheritdoc/>
+        public async Task<ViewModels.ReviewPageVM> GetPagedApprovedReviewsAsync(int productId, int page, CancellationToken ct = default)
+        {
+            const int pageSize = ViewModels.ReviewPageVM.PageSize;
+
+            var baseQuery = _db.ProductRatings
+                .Where(r => r.FkProductId == productId && r.Approved && !r.IsDeleted);
+
+            var totalCount   = await baseQuery.CountAsync(ct);
+            var totalPages   = (int)Math.Ceiling(totalCount / (double)pageSize);
+            var currentPage  = Math.Clamp(page, 1, Math.Max(1, totalPages));
+            var averageRating = totalCount > 0
+                ? await baseQuery.AverageAsync(r => (double)r.Rating, ct)
+                : 0.0;
+
+            var ratings = await baseQuery
+                .OrderByDescending(r => r.RatedTime)
+                .Include(r => r.RegisteredUser)
+                .Skip((currentPage - 1) * pageSize)
+                .Take(pageSize)
+                .ToListAsync(ct);
+
+            // Batch-load all reviewer profiles for this page in one query.
+            var emails = ratings
+                .Select(r => r.RegisteredUser.Email)
+                .Distinct()
+                .ToList();
+
+            var profiles = await _db.UserProfiles
+                .Where(p => emails.Contains(p.PkEmail))
+                .Select(p => new { p.PkEmail, p.FirstName, HasAvatar = p.AvatarData != null })
+                .ToDictionaryAsync(p => p.PkEmail, ct);
+
+            var reviews = ratings.Select(r =>
+            {
+                profiles.TryGetValue(r.RegisteredUser.Email, out var profile);
+                return new ViewModels.ReviewDisplayVM
+                {
+                    RatingId          = r.PkRatingId,
+                    Rating            = r.Rating,
+                    Description       = r.Description,
+                    CreatedAt         = r.RatedTime,
+                    LastEditedAt      = r.LastEditedAt,
+                    ReviewerFirstName = profile?.FirstName ?? "Customer",
+                    HasAvatar         = profile?.HasAvatar ?? false,
+                    ReviewerUserId    = r.FkRegisteredUserId
+                };
+            }).ToList();
+
+            return new ViewModels.ReviewPageVM
+            {
+                Reviews       = reviews,
+                TotalCount    = totalCount,
+                TotalPages    = totalPages,
+                CurrentPage   = currentPage,
+                AverageRating = averageRating
+            };
+        }
+
+        /// <inheritdoc/>
         public async Task<ViewModels.RatingEligibilityVM> GetRatingEligibilityAsync(int productId, int userId, CancellationToken ct = default)
         {
             // Load all order items for this user+product combination, including the parent order
             // so we can display the purchase date as the dropdown label.
+            // Only orders that have been shipped or delivered unlock review eligibility.
             var userOrderItems = await _db.OrderItems
                 .Include(oi => oi.Order)
-                .Where(oi => oi.FkProductId == productId && oi.Order.FkRegisteredUserId == userId)
+                .Where(oi => oi.FkProductId == productId
+                          && oi.Order.FkRegisteredUserId == userId
+                          && (oi.Order.DeliveryStatus == "Shipped"
+                           || oi.Order.DeliveryStatus == "Delivered"))
                 .ToListAsync(ct);
 
             var orderItemIds = userOrderItems.Select(oi => oi.PkOrderItemId).ToList();

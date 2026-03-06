@@ -39,6 +39,7 @@ namespace ELKH.Areas.Identity.Pages.Account
     {
         private readonly SignInManager<IdentityUser> _signInManager;
         private readonly UserManager<IdentityUser> _userManager;
+        private readonly RoleManager<IdentityRole> _roleManager;
         private readonly IUserStore<IdentityUser> _userStore;
         private readonly IUserEmailStore<IdentityUser> _emailStore;
         private readonly ILogger<RegisterModel> _logger;
@@ -48,6 +49,7 @@ namespace ELKH.Areas.Identity.Pages.Account
 
         public RegisterModel(
             UserManager<IdentityUser> userManager,
+            RoleManager<IdentityRole> roleManager,
             IUserStore<IdentityUser> userStore,
             SignInManager<IdentityUser> signInManager,
             ILogger<RegisterModel> logger,
@@ -56,6 +58,7 @@ namespace ELKH.Areas.Identity.Pages.Account
             IContactDetailRepo contactRepository)
         {
             _userManager = userManager;
+            _roleManager = roleManager;
             _userStore = userStore;
             _emailStore = GetEmailStore();
             _signInManager = signInManager;
@@ -225,6 +228,12 @@ namespace ELKH.Areas.Identity.Pages.Account
                         FkRegisteredUserId = registeredUser.PkRegisteredUserId
                     };
                     await _contactRepository.AddAsync(contact);
+
+                    // Assign the Customer role to every new registrant.
+                    const string customerRole = "Customer";
+                    if (!await _roleManager.RoleExistsAsync(customerRole))
+                        await _roleManager.CreateAsync(new IdentityRole(customerRole));
+                    await _userManager.AddToRoleAsync(user, customerRole);
 
                     _logger.LogInformation("User created a new account with password.");
 

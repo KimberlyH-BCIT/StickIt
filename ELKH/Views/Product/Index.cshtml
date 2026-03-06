@@ -60,15 +60,26 @@
                             <button type="submit" class="btn btn-sm btn-primary w-100">Add to Cart</button>
                         </form>
 
-                        <form asp-controller="Wishlist" asp-action="AddAjax" method="post"
-                              class="add-to-wishlist-form" data-product-id="@p.ProductId">
-                            @Html.AntiForgeryToken()
-                            <input type="hidden" name="productId" value="@p.ProductId" />
-                            <button type="submit"
-                                    class="btn btn-sm btn-outline-secondary w-100 add-to-wishlist-button">
+                        @if (User.Identity?.IsAuthenticated == true)
+                        {
+                            <form asp-controller="Wishlist" asp-action="AddAjax" method="post"
+                                  class="add-to-wishlist-form" data-product-id="@p.ProductId">
+                                @Html.AntiForgeryToken()
+                                <input type="hidden" name="productId" value="@p.ProductId" />
+                                <button type="submit"
+                                        class="btn btn-sm btn-outline-secondary w-100 add-to-wishlist-button">
+                                    ♡&nbsp;Wishlist
+                                </button>
+                            </form>
+                        }
+                        else
+                        {
+                            <button type="button"
+                                    class="btn btn-sm btn-outline-secondary w-100"
+                                    data-bs-toggle="modal" data-bs-target="#wishlistSignInModal">
                                 ♡&nbsp;Wishlist
                             </button>
-                        </form>
+                        }
                             }
                     </div>
 

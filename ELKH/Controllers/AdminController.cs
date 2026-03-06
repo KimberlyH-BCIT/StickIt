@@ -5,6 +5,7 @@ using ELKH.Services;
 using ELKH.ViewModels;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Caching.Memory;
@@ -47,32 +48,66 @@ namespace ELKH.Controllers
         private readonly IMemoryCache _cache;
         private readonly ILogger<AdminController> _logger;
         private readonly IFuzzyReindexService _reindexService;
+        private readonly UserManager<IdentityUser> _userManager;
 
         public AdminController(
             IRole_repo roleRepo,
             ApplicationDbContext context,
             IMemoryCache cache,
             ILogger<AdminController> logger,
-            IFuzzyReindexService reindexService)
+            IFuzzyReindexService reindexService,
+            UserManager<IdentityUser> userManager)
         {
             _roleRepo = roleRepo;
             _context = context;
             _cache = cache;
             _logger = logger;
             _reindexService = reindexService;
+            _userManager = userManager;
         }
 
-        /// <summary>Renders the admin dashboard landing page.</summary>
-        // GET: AdminController
-        public ActionResult Index()
+        /// <summary>Renders the admin dashboard with live order counts and stock-level statistics.</summary>
+        public async Task<IActionResult> Index()
         {
-            return View();
+            // Define rolling time windows used by the order-volume KPI cards.
+            var now      = DateTime.UtcNow;
+            var weekAgo  = now.AddDays(-7);
+            var monthAgo = now.AddDays(-30);
+
+            var vm = new SalesVM
+            {
+                // Count orders placed within each rolling window.
+                WeeklyTotalOrders  = await _context.Orders.CountAsync(o => o.CreatedAt >= weekAgo),
+                MonthlyTotalOrders = await _context.Orders.CountAsync(o => o.CreatedAt >= monthAgo),
+
+                // Split inventory into well-stocked (> 100 units) vs low-stock (≤ 100 units) buckets.
+                StockUpCount       = await _context.Products.CountAsync(p => p.StockQuantity > 100),
+                StockDownCount     = await _context.Products.CountAsync(p => p.StockQuantity <= 100),
+            };
+            return View(vm);
         }
 
-        /// <summary>Renders the user account listing page (shell view — data loaded client-side).</summary>
-        public IActionResult ListUsers()
+        /// <summary>
+        /// Renders the user listing page with every Identity user and their assigned roles.
+        /// Roles are fetched per-user via UserManager because ASP.NET Core Identity does not
+        /// expose a single query that returns both users and roles; the list is small enough
+        /// that the extra round-trips are acceptable.
+        /// </summary>
+        public async Task<IActionResult> ListUsers()
         {
-            return View();
+            var users  = _userManager.Users.ToList();
+            var vmList = new List<UserListVM>();
+            foreach (var u in users)
+            {
+                var roles = await _userManager.GetRolesAsync(u);
+                vmList.Add(new UserListVM
+                {
+                    Id    = u.Id,
+                    Email = u.Email ?? string.Empty,
+                    Roles = roles.ToList()
+                });
+            }
+            return View(vmList);
         }
 
         /// <summary>
@@ -117,6 +152,7 @@ namespace ELKH.Controllers
         /// <param name="payload">JSON payload with optional 'reason' field for audit trail</param>
         /// <returns>JSON result with success status</returns>
         [HttpPost]
+        [ValidateAntiForgeryToken]
         public async Task<IActionResult> ReindexFTS([FromBody] ReindexPayload? payload)
         {
             string reason = payload?.Reason ?? string.Empty;
@@ -235,19 +271,19 @@ WHERE PkProductId NOT IN (SELECT rowid FROM ProductFTS);
         /// Clear the fuzzy search cache with audit trail.
         /// Requires a reason for auditability and compliance.
         /// </summary>
-        /// <param name="payload">JSON payload with required 'reason' field</param>
-        /// <returns>JSON result with number of cache entries cleared</returns>
+        /// <param name="payload">JSON payload containing the required <c>Reason</c> field.</param>
+        /// <returns>JSON result with the number of cache entries cleared.</returns>
         [HttpPost]
-        public IActionResult ClearFuzzyCache([FromBody] dynamic payload)
+        [ValidateAntiForgeryToken]
+        public IActionResult ClearFuzzyCache([FromBody] ClearCachePayload payload)
         {
             // Step 1: Validate reason is provided (required for audit trail)
-            string reason = string.Empty;
-            try { reason = (string)payload?.reason ?? string.Empty; } catch { }
-
-            if (string.IsNullOrWhiteSpace(reason))
+            if (string.IsNullOrWhiteSpace(payload?.Reason))
             {
                 return BadRequest(new { success = false, message = "Reason is required" });
             }
+
+            var reason = payload.Reason;
 
             // Step 2: Load persisted cache keys and clear them
             var keys = _context.Set<CachedFuzzyKeyModel>().ToList();
@@ -302,6 +338,16 @@ WHERE PkProductId NOT IN (SELECT rowid FROM ProductFTS);
     /// Typed payload for the ReindexFTS action.
     /// </summary>
     public sealed class ReindexPayload
+    {
+        public string? Reason { get; set; }
+    }
+
+    /// <summary>
+    /// Typed payload for the ClearFuzzyCache action.
+    /// Using a concrete type rather than <c>dynamic</c> enables model-binding validation
+    /// and makes the expected JSON shape explicit in the API contract.
+    /// </summary>
+    public sealed class ClearCachePayload
     {
         public string? Reason { get; set; }
     }

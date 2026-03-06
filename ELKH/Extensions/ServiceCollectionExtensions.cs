@@ -39,7 +39,8 @@ namespace ELKH.Extensions
             services.AddScoped<IProductService, ProductService>();
             services.AddScoped<ICartService, CartService>();
             services.AddScoped<IWishlistService, WishlistService>();
-            
+            services.AddScoped<IOrderEmailService, OrderEmailService>();
+
             return services;
         }
 
@@ -48,6 +49,7 @@ namespace ELKH.Extensions
         /// </summary>
         public static IServiceCollection AddRepositories(this IServiceCollection services)
         {
+            services.AddScoped<IRole_repo, Role_repo>();
             services.AddScoped<IOrderManagementRepo, OrderManagementRepo>();
             services.AddScoped<IRegisteredUserLogRepo, RegisteredUserLogRepo>();
             services.AddScoped<IRegisteredUserProfileRepo, RegisteredUserProfileRepo>();

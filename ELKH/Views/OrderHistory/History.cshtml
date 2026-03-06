@@ -52,6 +52,7 @@ else
                                 "Paid" => "bg-success",
                                 "Processing" => "bg-info text-dark",
                                 "Shipped" => "bg-primary",
+                                "Delivered" => "bg-success",
                                 "Cancelled" => "bg-danger",
                                 _ => "bg-secondary"
                             };
@@ -62,9 +63,24 @@ else
                                 <td>$@order.TotalAmount.ToString("F2")</td>
                                 <td><span class="badge @statusBadge">@order.OrderStatus</span></td>
                                 <td><span class="text-muted small">@order.DeliveryStatus</span></td>
-                                <td>
-                                    <a asp-action="Details" asp-route-id="@order.PkOrderId"
+                                <td class="d-flex gap-1 flex-wrap">
+                                    <a asp-controller="Order" asp-action="Details" asp-route-id="@order.PkOrderId"
                                        class="btn btn-sm btn-outline-dark">View</a>
+                                    @foreach (var item in order.OrderItems)
+                                    {
+                                        if (item.Product is not null)
+                                        {
+                                            <form asp-controller="Cart" asp-action="AddToCart" method="post">
+                                                @Html.AntiForgeryToken()
+                                                <input type="hidden" name="itemId"   value="@item.FkProductId" />
+                                                <input type="hidden" name="quantity" value="1" />
+                                                <button type="submit" class="btn btn-sm btn-outline-secondary"
+                                                        title="Buy @item.Product.Name again">
+                                                    <i class="bi bi-arrow-repeat me-1"></i>@item.Product.Name
+                                                </button>
+                                            </form>
+                                        }
+                                    }
                                 </td>
                 </tr>
             }

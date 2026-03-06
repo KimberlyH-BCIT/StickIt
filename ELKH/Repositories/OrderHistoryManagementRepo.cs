@@ -48,6 +48,56 @@ namespace ELKH.Repositories
                     .ThenInclude(oi => oi.Product)
                 .FirstOrDefaultAsync();
         }
+
+        /// <summary>
+        /// Returns a single order by primary key for admin viewing, with full detail:
+        /// transaction, order items, each item's product, and the registered user.
+        /// No email scoping is applied — this is intentionally an admin-only query.
+        /// Returns <c>null</c> when no order with <paramref name="orderId"/> exists.
+        /// </summary>
+        /// <param name="orderId">Primary key of the order to retrieve.</param>
+        public async Task<OrderModel?> GetByIdAsync(int orderId)
+        {
+            return await _context.Orders
+                .Where(o => o.PkOrderId == orderId)
+                .Include(o => o.RegisteredUser)
+                .Include(o => o.Transaction)
+                .Include(o => o.OrderItems)
+                    .ThenInclude(oi => oi.Product)
+                .FirstOrDefaultAsync();
+        }
+
+        /// <summary>
+        /// Updates the delivery status of an order and returns the full order (with
+        /// <see cref="OrderModel.RegisteredUser"/> included) so the caller can send a
+        /// status-change notification email without issuing a second query.
+        /// Returns <c>null</c> when no order with <paramref name="orderId"/> exists.
+        /// </summary>
+        /// <param name="orderId">Primary key of the order to update.</param>
+        /// <param name="deliveryStatus">The new delivery status value (e.g. "Shipped", "Delivered").</param>
+        public async Task<OrderModel?> UpdateDeliveryStatusAsync(int orderId, string deliveryStatus)
+        {
+            var order = await _context.Orders
+                .Include(o => o.RegisteredUser)
+                .FirstOrDefaultAsync(o => o.PkOrderId == orderId);
+
+            if (order is null) return null;
+
+            order.DeliveryStatus = deliveryStatus;
+
+            // Mirror a human-readable OrderStatus so the customer-facing history badge stays
+            // in sync with the delivery state set by staff. Only update for customer-visible
+            // milestones (Shipped / Delivered); all other transitions leave OrderStatus unchanged.
+            order.OrderStatus = deliveryStatus switch
+            {
+                "Shipped"   => "Shipped",
+                "Delivered" => "Delivered",
+                _           => order.OrderStatus
+            };
+
+            await _context.SaveChangesAsync();
+            return order;
+        }
     }
 }
 

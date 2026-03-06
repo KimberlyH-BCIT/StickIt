@@ -62,7 +62,8 @@ namespace ELKH.Repositories
 
         /// <summary>
         /// Saves an uploaded product image to <c>wwwroot/images</c> and records its URL in the database.
-        /// Returns <c>false</c> when the VM, file, or target product is missing.
+        /// Returns <c>false</c> when the VM, file, target product is missing, the MIME type is not an
+        /// allowed image format, or the file exceeds the 10 MB size limit.
         /// </summary>
         public async Task<bool> AddProductImage(ProductImageVM vm)
         {
@@ -70,6 +71,25 @@ namespace ELKH.Repositories
             {
                 return false;
             }
+
+            // Validate MIME type against the safe-list before touching the filesystem.
+            // SVG is intentionally excluded: it supports inline <script> tags and can
+            // carry XSS payloads when rendered in a browser.
+            var allowedTypes = new HashSet<string>(StringComparer.OrdinalIgnoreCase)
+            {
+                "image/jpeg",
+                "image/png",
+                "image/gif",
+                "image/webp"
+            };
+
+            if (!allowedTypes.Contains(vm.ProductImage.ContentType))
+                return false;
+
+            // Cap uploads at 10 MB to prevent denial-of-service via large file writes.
+            const long maxBytes = 10 * 1024 * 1024;
+            if (vm.ProductImage.Length > maxBytes)
+                return false;
 
             var product = await _context.Products
                 .Include(p => p.ProductImages)

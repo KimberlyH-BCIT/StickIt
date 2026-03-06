@@ -351,11 +351,12 @@ function initWishlistAjax() {
             const prevCount = getCurrentWishlistCount();
             if (prevCount !== null) updateWishlistCount(prevCount + 1);
 
+            let succeeded = false;
             try {
                 const res  = await fetch(form.action, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/x-www-form-urlencoded; charset=UTF-8' },
-                    body: `_RequestVerificationToken=${encodeURIComponent(token)}&productId=${encodeURIComponent(productId)}`
+                    body: `__RequestVerificationToken=${encodeURIComponent(token)}&productId=${encodeURIComponent(productId)}`
                 });
                 const json = await res.json();
 
@@ -364,6 +365,7 @@ function initWishlistAjax() {
                     if (prevCount !== null) updateWishlistCount(prevCount);
                     showTempMessage('warning', json.message || 'Failed to add to wishlist');
                 } else {
+                    succeeded = true;
                     showTempMessage('success', json.message || 'Added to wishlist');
                     // Prefer the server's authoritative count over the local estimate.
                     if (typeof json.count !== 'undefined') updateWishlistCount(json.count);
@@ -373,7 +375,16 @@ function initWishlistAjax() {
                 showTempMessage('danger', 'Network error');
             } finally {
                 button.disabled = false;
-                button.innerHTML = previousText;
+                if (succeeded) {
+                    // Swap to filled-heart "Wishlisted" state and lock the button
+                    // so it cannot be submitted again (item is already in the wishlist).
+                    button.innerHTML = '♥&nbsp;Wishlisted';
+                    button.classList.remove('btn-outline-secondary');
+                    button.classList.add('btn-secondary');
+                    button.disabled = true;
+                } else {
+                    button.innerHTML = previousText;
+                }
             }
         });
     });
@@ -396,7 +407,7 @@ function initWishlistAjax() {
                 const res  = await fetch(form.action, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/x-www-form-urlencoded; charset=UTF-8' },
-                    body: `_RequestVerificationToken=${encodeURIComponent(token)}&productId=${encodeURIComponent(productId)}`
+                    body: `__RequestVerificationToken=${encodeURIComponent(token)}&productId=${encodeURIComponent(productId)}`
                 });
                 const json = await res.json();
 
