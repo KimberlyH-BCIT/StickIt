@@ -1,4 +1,4 @@
-﻿using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations;
 
 namespace ELKH.Models
 {
@@ -9,12 +9,12 @@ namespace ELKH.Models
 
         public int Quantity { get; set; } = 1;
 
-        //Relationship with Order
+        // Relationship with Order
         public int FkOrderId { get; set; }
-        public OrderModel Orders { get; set; } = new OrderModel();
+        public OrderModel? Orders { get; set; }       // removed = new OrderModel()
 
-        //Relationship with Product
+        // Relationship with Product
         public int FkProductId { get; set; }
-        public ProductModel Products { get; set; } = new ProductModel();
+        public ProductModel? Products { get; set; }   // removed = new ProductModel()
     }
 }

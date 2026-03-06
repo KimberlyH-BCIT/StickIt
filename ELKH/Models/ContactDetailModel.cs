@@ -6,7 +6,7 @@ namespace ELKH.Models
     {
         [Key]
         public int PkContactId { get; set; }
-        [Display(Name ="First Name")]
+        [Display(Name = "First Name")]
         public string FirstName { get; set; } = string.Empty;
         [Display(Name = "Last Name")]
         public string LastName { get; set; } = string.Empty;
@@ -15,10 +15,10 @@ namespace ELKH.Models
         public string Street { get; set; } = string.Empty;
         public string City { get; set; } = string.Empty;
         public string Province { get; set; } = string.Empty;
-        [Display(Name ="Postcode")]
+        [Display(Name = "Postcode")]
         public string PostCode { get; set; } = string.Empty;
         public string Country { get; set; } = "Canada";
-        [Display(Name ="Is Default Address")]
+        [Display(Name = "Is Default Address")]
         public bool IsDefault { get; set; } = true;
 
         //Relationship with RegisiterUser
@@ -30,5 +30,6 @@ namespace ELKH.Models
 
         //Relationship with ORder
         public ICollection<OrderModel> Orders { get; set; } = new List<OrderModel>();
+        public string UserId { get; internal set; }
     }
 }

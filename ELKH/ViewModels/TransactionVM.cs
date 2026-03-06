@@ -4,7 +4,11 @@ using System.ComponentModel.DataAnnotations;
 namespace ELKH.ViewModels
 {
     public class TransactionVM
-        {
+    {
+        public int PkTransactionID { get; set; }
+        public int PkOrderId { get; set; }
+        public decimal TotalAmount { get; set; }
+        public string FirstName { get; set; }
          public int PkTransactionId { get; set; }
         [Display(Name = "Transaction Status")]
         public string TransactionStatus { get; set; } = string.Empty;

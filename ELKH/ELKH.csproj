@@ -1,7 +1,7 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk.Web">
 
   <PropertyGroup>
-    <TargetFramework>net10.0</TargetFramework>
+    <TargetFramework>net8.0</TargetFramework>
     <Nullable>enable</Nullable>
     <ImplicitUsings>enable</ImplicitUsings>
     <UserSecretsId>aspnet-ELKH-b32582b7-e53b-4481-ba17-11a5c3c1aa56</UserSecretsId>
@@ -10,23 +10,43 @@
   <ItemGroup>
     <Compile Remove="Repostories\**" />
     <Compile Remove="View Models\**" />
+    <Compile Remove="Views\Manager\**" />
     <Content Remove="Repostories\**" />
     <Content Remove="View Models\**" />
+    <Content Remove="Views\Manager\**" />
     <EmbeddedResource Remove="Repostories\**" />
     <EmbeddedResource Remove="View Models\**" />
+    <EmbeddedResource Remove="Views\Manager\**" />
     <None Remove="Repostories\**" />
     <None Remove="View Models\**" />
+    <None Remove="Views\Manager\**" />
   </ItemGroup>
 
   <ItemGroup>
-    <PackageReference Include="Microsoft.AspNetCore.Diagnostics.EntityFrameworkCore" Version="10.0.0" />
-    <PackageReference Include="Microsoft.AspNetCore.Identity.EntityFrameworkCore" Version="10.0.0" />
-    <PackageReference Include="Microsoft.AspNetCore.Identity.UI" Version="10.0.0" />
-    <PackageReference Include="Microsoft.EntityFrameworkCore.Sqlite" Version="10.0.0" />
-    <PackageReference Include="Microsoft.EntityFrameworkCore.Tools" Version="10.0.0">
+   <PackageReference Include="Microsoft.AspNetCore.Diagnostics.EntityFrameworkCore" Version="8.0.0" />
+<PackageReference Include="Microsoft.AspNetCore.Identity.EntityFrameworkCore" Version="8.0.0" />
+<PackageReference Include="Microsoft.AspNetCore.Identity.UI" Version="8.0.0" />
+<PackageReference Include="Microsoft.EntityFrameworkCore.Sqlite" Version="8.0.0" />
+<PackageReference Include="Microsoft.EntityFrameworkCore.Tools" Version="8.0.0">
       <PrivateAssets>all</PrivateAssets>
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
     </PackageReference>
-    <PackageReference Include="Microsoft.VisualStudio.Web.CodeGeneration.Design" Version="10.0.2" />
+    <PackageReference Include="Microsoft.VisualStudio.Web.CodeGeneration.Design" Version="8.0.23" />
   </ItemGroup>
+
+  <ItemGroup>
+    <Folder Include="wwwroot\images\" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Content Include="Views\Manager\AddNewProduct.cshtml" />
+    <Content Include="Views\Manager\DeleteProduct.cshtml" />
+    <Content Include="Views\Manager\Index.cshtml" />
+    <Content Include="Views\Manager\ListAllTransactions.cshtml" />
+    <Content Include="Views\Manager\ListOfProducts.cshtml" />
+    <Content Include="Views\Manager\ListOfStaffAccount.cshtml" />
+    <Content Include="Views\Manager\ProductDetails.cshtml" />
+    <Content Include="Views\Manager\UpdateProductDetails.cshtml" />
+  </ItemGroup>
+
 </Project>

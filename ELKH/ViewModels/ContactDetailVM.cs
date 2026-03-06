@@ -49,5 +49,8 @@ namespace ELKH.ViewModels
 
         [Display(Name = "Set as Default Address")]
         public bool IsDefault { get; set; } = false;
+
+        public string? UserId { get; set; }
     }
 }
+

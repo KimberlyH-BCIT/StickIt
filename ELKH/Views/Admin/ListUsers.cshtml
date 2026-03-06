@@ -1,8 +1,149 @@
-﻿
+﻿@model List<UserListVM>
+
 @{
-    ViewData["Title"] = "ListUsers";
+    ViewData["Title"] = "List Users";
     Layout = "~/Views/Shared/_Layout.cshtml";
 }
 
-<h1>ListOfAllUsers</h1>
+<div class="mt-4">
 
+    <!-- Header -->
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2 class="fw-bold text-primary">All Users</h2>
+
+        <a asp-action="Index" class="btn btn-outline-primary rounded-pill px-4">
+            Back to Dashboard
+        </a>
+    </div>
+
+    <!-- Search + Filter Card -->
+    <div class="card shadow-sm border-0 mb-4 rounded-4">
+        <div class="card-body">
+
+            <!-- Search -->
+            <form method="get" class="mb-4">
+                <div class="d-flex justify-content-center">
+                    <div class="input-group w-50">
+                        <input type="text"
+                               name="search"
+                               value="@ViewBag.Search"
+                               class="form-control rounded-start-pill"
+                               placeholder="Search by Email or Role..." />
+
+                        <button type="submit" class="btn btn-primary rounded-end-pill px-4">
+                            Search
+                        </button>
+                    </div>
+                </div>
+            </form>
+
+            <!-- Role Filters -->
+            @{
+                var roles = new[] { "All", "Customer", "Manager", "Staff", "Admin" };
+            }
+
+            <div class="d-flex justify-content-center flex-wrap gap-2 mt-3">
+                @foreach (var role in roles)
+                {
+                    <a asp-action="ListUsers"
+                       asp-route-roleFilter="@role"
+                       class="btn btn-sm rounded-pill px-4
+               @(ViewBag.RoleFilter == role ? "btn-primary" : "btn-outline-primary")">
+                        @role
+                    </a>
+                }
+            </div>
+
+        </div>
+    </div>
+
+    <!-- Users Table Card -->
+    <div class="card shadow-sm border-0 rounded-4">
+        <div class="card-body p-0">
+
+            <div class="table-responsive">
+                <table class="table table-hover align-middle mb-0">
+
+                    <thead class="table-light">
+                        <tr>
+                            <th class="ps-4">Id</th>
+                            <th>Email</th>
+                            <th>Roles</th>
+                            <th class="text-center"></th>
+                        </tr>
+                    </thead>
+
+                    <tbody>
+                        @if (Model.Any())
+                        {
+                            @foreach (var user in Model)
+                            {
+                                <tr>
+                                    <td class="ps-4">@user.Id</td>
+
+                                    <td>@user.Email</td>
+
+                                    <td>
+                                        @if (user.Roles.Any())
+                                        {
+                                            foreach (var role in user.Roles)
+                                            {
+                                                <span class="badge role-badge @($"role-{role.ToLower()}") me-1">
+                                                    @role
+                                                </span>
+                                            }
+                                        }
+                                        else
+                                        {
+                                            <span class="text-muted">No Roles</span>
+                                        }
+                                    </td>
+
+                                    <td class="text-center">
+                                        <a asp-controller="Admin"
+                                           asp-action="AccountDetails"
+                                           asp-route-id="@user.Id"
+                                           class="btn btn-sm btn-outline-primary rounded-pill px-3">
+                                            Details
+                                        </a>
+                                    </td>
+                                </tr>
+                            }
+                        }
+                        else
+                        {
+                            <tr>
+                                <td colspan="4" class="text-center text-muted py-4">
+                                    No users found.
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+
+                </table>
+            </div>
+
+        </div>
+    </div>
+
+    <!-- Pagination -->
+    <nav class="mt-4">
+        <ul class="pagination justify-content-center">
+
+            @for (int i = 1; i <= ViewBag.TotalPages; i++)
+            {
+                <li class="page-item @(ViewBag.CurrentPage == i ? "active" : "")">
+                    <a class="page-link rounded-pill mx-1"
+                       asp-action="ListUsers"
+                       asp-route-page="@i"
+                       asp-route-search="@ViewBag.Search"
+                       asp-route-roleFilter="@ViewBag.RoleFilter">
+                        @i
+                    </a>
+                </li>
+            }
+
+        </ul>
+    </nav>
+
+</div>

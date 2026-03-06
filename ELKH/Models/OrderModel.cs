@@ -1,4 +1,4 @@
-﻿using System.ComponentModel;
+using System.ComponentModel;
 using System.ComponentModel.DataAnnotations;
 
 namespace ELKH.Models
@@ -7,6 +7,7 @@ namespace ELKH.Models
     {
         [Key]
         public int PkOrderId { get; set; }
+
         [Display(Name = "Order Status")]
         public string OrderStatus { get; set; } = string.Empty;
 
@@ -16,24 +17,24 @@ namespace ELKH.Models
         [Display(Name = "Created At")]
         public DateTime CreatedAt { get; set; } = DateTime.Now;
 
-        [Display(Name ="Delivery Status")]
+        [Display(Name = "Delivery Status")]
         public string DeliveryStatus { get; set; } = string.Empty;
 
-        //Relationship with User
+        // Relationship with User
         public int FkRegisteredUserId { get; set; }
-        public RegisteredUserModel RegisteredUser { get; set; } = new RegisteredUserModel();
+        public RegisteredUserModel? RegisteredUser { get; set; }     // removed = new()
 
-        //Relationship with OrderItem
+        // Relationship with OrderItem
         public ICollection<OrderItemModel> OrderItems { get; set; } = new List<OrderItemModel>();
 
-        //Relationship with Transaction
-        public TransactionModel Transaction { get; set; } = new TransactionModel();
+        // Relationship with Transaction
+        public TransactionModel? Transaction { get; set; }           // removed = new()
 
-        //Order Status Relationship
-        public OrderStatusModel OrderStatuses { get; set; } = new OrderStatusModel();
+        // Order Status Relationship
+        public OrderStatusModel? OrderStatuses { get; set; }         // removed = new()
 
-        //ContactDetail Relationship
+        // ContactDetail Relationship
         public int FkContactId { get; set; }
-        public ContactDetailModel ContactDetail { get; set; } = new ContactDetailModel();
+        public ContactDetailModel? ContactDetail { get; set; }       // removed = new()
     }
 }

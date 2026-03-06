@@ -1,12 +1,19 @@
-﻿using Microsoft.AspNetCore.Mvc;
+﻿using ELKH.Repositories;
+using Microsoft.AspNetCore.Mvc;
 
 namespace ELKH.Controllers
 {
     public class TransactionController : Controller
     {
-        public IActionResult Index()
+        private readonly TransactionRepo _repo;
+        public TransactionController(TransactionRepo repo)
         {
-            return View();
+            _repo = repo;
+        }
+        public async Task<IActionResult> Index()
+        {
+            var transactions = await _repo.GetAllTransactions();
+            return View(transactions);
         }
     }
 }

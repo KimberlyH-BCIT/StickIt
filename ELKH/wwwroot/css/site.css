@@ -173,7 +173,7 @@ body {
 
 
 /* =====================================================
-   FORM IMPROVEMENTS (Bootstrap Fixes)
+   FORM IMPROVEMENTS 
 ===================================================== */
 
 .btn:focus,
@@ -193,4 +193,46 @@ body {
 .form-floating > .form-control-plaintext:focus::placeholder,
 .form-floating > .form-control:focus::placeholder {
     text-align: start;
+}
+
+/* =====================================================
+     Role Badges 
+===================================================== */
+
+.role-badge {
+    padding: 6px 14px;
+    border-radius: 20px;
+    font-weight: 600;
+    background-color: transparent;
+    border: 2px solid;
+}
+
+/* Admin - Blue */
+.role-admin {
+    border-color: #4a90e2;
+    color: #4a90e2;
+}
+
+/* Manager - Soft Green */
+.role-manager {
+    border-color: #66c2a5;
+    color: #66c2a5;
+}
+
+/* Staff - Soft Brown */
+.role-staff {
+    border-color: #a67c52;
+    color: #a67c52;
+}
+
+/* Customer - Dark Pink */
+.role-customer {
+    border-color: #e85b92;
+    color: #e85b92;
+}
+
+/* Guest - Light Pink */
+.role-guest {
+    border-color: #f8a5c2;
+    color: #f8a5c2;
 }

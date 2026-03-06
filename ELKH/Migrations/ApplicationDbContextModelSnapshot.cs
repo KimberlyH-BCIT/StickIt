@@ -15,7 +15,7 @@ namespace ELKH.Migrations
         protected override void BuildModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
-            modelBuilder.HasAnnotation("ProductVersion", "10.0.2");
+            modelBuilder.HasAnnotation("ProductVersion", "8.0.23");
 
             modelBuilder.Entity("ELKH.Models.CartModel", b =>
                 {
@@ -109,6 +109,10 @@ namespace ELKH.Migrations
                         .HasColumnType("INTEGER");
 
                     b.Property<string>("Street")
+                        .IsRequired()
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("UserId")
                         .IsRequired()
                         .HasColumnType("TEXT");
 
@@ -221,6 +225,7 @@ namespace ELKH.Migrations
                         .HasColumnType("INTEGER");
 
                     b.Property<string>("ProductImageURL")
+                        .IsRequired()
                         .HasColumnType("TEXT");
 
                     b.Property<int>("ProductPkProductId")
@@ -237,9 +242,6 @@ namespace ELKH.Migrations
                 {
                     b.Property<int>("PkProductId")
                         .ValueGeneratedOnAdd()
-                        .HasColumnType("INTEGER");
-
-                    b.Property<int>("CategoryPkCategoryId")
                         .HasColumnType("INTEGER");
 
                     b.Property<string>("Description")
@@ -262,7 +264,7 @@ namespace ELKH.Migrations
                     b.Property<decimal>("Price")
                         .HasColumnType("TEXT");
 
-                    b.Property<int?>("StockQuantity")
+                    b.Property<int>("StockQuantity")
                         .HasColumnType("INTEGER");
 
                     b.Property<int>("WishListPkWishListId")
@@ -270,7 +272,7 @@ namespace ELKH.Migrations
 
                     b.HasKey("PkProductId");
 
-                    b.HasIndex("CategoryPkCategoryId");
+                    b.HasIndex("FkCategoryId");
 
                     b.HasIndex("WishListPkWishListId");
 
@@ -720,7 +722,7 @@ namespace ELKH.Migrations
                 {
                     b.HasOne("ELKH.Models.CategoryModel", "Category")
                         .WithMany("Products")
-                        .HasForeignKey("CategoryPkCategoryId")
+                        .HasForeignKey("FkCategoryId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
@@ -879,8 +881,7 @@ namespace ELKH.Migrations
 
                     b.Navigation("ProductRatings");
 
-                    b.Navigation("WishLists")
-                        .IsRequired();
+                    b.Navigation("WishLists");
                 });
 
             modelBuilder.Entity("ELKH.Models.WishListModel", b =>

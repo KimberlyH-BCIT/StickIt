@@ -1,67 +1,72 @@
-﻿@model ELKH.ViewModels.ProductVM
+@model ELKH.ViewModels.ProductVM
 
 @{
-    ViewData["Title"] = "ProductDetails";
+    ViewData["Title"] = "Product Details";
     Layout = "~/Views/Shared/_Layout.cshtml";
 }
 
-<h1>ProductDetails</h1>
+<div class="d-flex justify-content-center mt-5">
+    <div class="card shadow-sm border-0 rounded-4" style="width:650px;">
+        <div class="card-body p-5">
 
-<div>
-    <h4>ProductVM</h4>
-    <hr />
-    <dl class="row">
-        <dt class = "col-sm-2">
-            @Html.DisplayNameFor(model => model.ProductId)
-        </dt>
-        <dd class = "col-sm-10">
-            @Html.DisplayFor(model => model.ProductId)
-        </dd>
-        <dt class = "col-sm-2">
-            @Html.DisplayNameFor(model => model.ProductName)
-        </dt>
-        <dd class = "col-sm-10">
-            @Html.DisplayFor(model => model.ProductName)
-        </dd>
-        <dt class = "col-sm-2">
-            @Html.DisplayNameFor(model => model.Description)
-        </dt>
-        <dd class = "col-sm-10">
-            @Html.DisplayFor(model => model.Description)
-        </dd>
-        <dt class = "col-sm-2">
-            @Html.DisplayNameFor(model => model.Price)
-        </dt>
-        <dd class = "col-sm-10">
-            @Html.DisplayFor(model => model.Price)
-        </dd>
-        <dt class = "col-sm-2">
-            @Html.DisplayNameFor(model => model.StockQuantity)
-        </dt>
-        <dd class = "col-sm-10">
-            @Html.DisplayFor(model => model.StockQuantity)
-        </dd>
-        <dt class = "col-sm-2">
-            @Html.DisplayNameFor(model => model.IsActive)
-        </dt>
-        <dd class = "col-sm-10">
-            @Html.DisplayFor(model => model.IsActive)
-        </dd>
-        <dt class = "col-sm-2">
-            @Html.DisplayNameFor(model => model.CategoryId)
-        </dt>
-        <dd class = "col-sm-10">
-            @Html.DisplayFor(model => model.CategoryId)
-        </dd>
-        <dt class = "col-sm-2">
-            @Html.DisplayNameFor(model => model.CategoryName)
-        </dt>
-        <dd class = "col-sm-10">
-            @Html.DisplayFor(model => model.CategoryName)
-        </dd>
-    </dl>
-</div>
-<div>
-    @Html.ActionLink("Edit", "Edit", new { /* id = Model.PrimaryKey */ }) |
-    <a asp-action="Index">Back to List</a>
+            <h2 class="fw-bold text-primary text-center mb-4">Product Details</h2>
+
+            <dl class="row mb-4">
+                <dt class="col-sm-4 text-muted">Product Name</dt>
+                <dd class="col-sm-8 fw-semibold">@Model.ProductName</dd>
+
+                <dt class="col-sm-4 text-muted">Description</dt>
+                <dd class="col-sm-8">@Model.Description</dd>
+
+                <dt class="col-sm-4 text-muted">Price</dt>
+                <dd class="col-sm-8 text-success fw-semibold">$@Model.Price.ToString("N2")</dd>
+
+                <dt class="col-sm-4 text-muted">Stock Quantity</dt>
+                <dd class="col-sm-8">
+                    @if (Model.StockQuantity <= 5)
+                    {
+                        <span class="badge bg-danger">@Model.StockQuantity — Low Stock</span>
+                    }
+                    else if (Model.StockQuantity <= 20)
+                    {
+                        <span class="badge bg-warning text-dark">@Model.StockQuantity — Medium</span>
+                    }
+                    else
+                    {
+                        <span class="badge bg-success">@Model.StockQuantity — In Stock</span>
+                    }
+                </dd>
+
+                <dt class="col-sm-4 text-muted">Category</dt>
+                <dd class="col-sm-8">
+                    <span class="badge bg-secondary bg-opacity-10 text-secondary">@Model.CategoryName</span>
+                </dd>
+
+                <dt class="col-sm-4 text-muted">Status</dt>
+                <dd class="col-sm-8">
+                    @if (Model.IsActive)
+                    {
+                        <span class="badge bg-success">Active</span>
+                    }
+                    else
+                    {
+                        <span class="badge bg-secondary">Inactive</span>
+                    }
+                </dd>
+            </dl>
+
+            <div class="d-flex justify-content-between">
+                <a asp-action="ListOfProducts" class="btn btn-outline-secondary px-4">← Back</a>
+                <div class="d-flex gap-2">
+                    <a asp-action="UpdateProductDetails"
+                       asp-route-id="@Model.ProductId"
+                       class="btn btn-primary px-4">Edit</a>
+                    <a asp-action="DeleteProduct"
+                       asp-route-id="@Model.ProductId"
+                       class="btn btn-outline-danger px-4">Delete</a>
+                </div>
+            </div>
+
+        </div>
+    </div>
 </div>
