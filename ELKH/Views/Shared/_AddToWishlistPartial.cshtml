@@ -1,7 +1,20 @@
 @model ELKH.Models.ProductModel
 
-<form method="post" asp-controller="Wishlist" asp-action="AddAjax" class="add-to-wishlist-form" data-product-id="@Model.PkProductId">
-    @Html.AntiForgeryToken()
-    <input type="hidden" name="productId" value="@Model.PkProductId" />
-    <button type="submit" class="btn btn-sm btn-outline-primary add-to-wishlist-button">Add to Wishlist</button>
-</form>
+@if (User.Identity?.IsAuthenticated == true)
+{
+    <form method="post" asp-controller="Wishlist" asp-action="AddAjax"
+          class="add-to-wishlist-form" data-product-id="@Model.PkProductId">
+        @Html.AntiForgeryToken()
+        <input type="hidden" name="productId" value="@Model.PkProductId" />
+        <button type="submit" class="btn btn-sm btn-outline-primary add-to-wishlist-button">
+            <i class="bi bi-heart me-1"></i>Add to Wishlist
+        </button>
+    </form>
+}
+else
+{
+    <button type="button" class="btn btn-sm btn-outline-primary"
+            data-bs-toggle="modal" data-bs-target="#wishlistSignInModal">
+        <i class="bi bi-heart me-1"></i>Add to Wishlist
+    </button>
+}

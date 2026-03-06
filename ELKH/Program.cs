@@ -33,6 +33,16 @@ builder.Services.AddHealthChecks();
 builder.Services.AddControllersWithViews();
 builder.Services.AddRazorPages();
 
+// Configure antiforgery to also accept the validation token from the X-CSRF-TOKEN request
+// header. This enables JSON AJAX endpoints (which cannot submit form-encoded token fields)
+// to participate in full CSRF protection alongside standard form-based flows.
+// The JavaScript in _Layout.cshtml reads the token from the csrf-token <meta> tag and
+// attaches it as this header on every state-changing fetch() call.
+builder.Services.AddAntiforgery(options =>
+{
+    options.HeaderName = "X-CSRF-TOKEN";
+});
+
 // -- Response Compression (reduces bandwidth by ~70%)
 // Compresses text-based responses (HTML, CSS, JS, JSON) using gzip/brotli.
 // Enabled for HTTPS to improve performance on slow connections.
@@ -166,6 +176,18 @@ try
 
             // Seed demo products (no-op if products already exist)
             await DbSeeder.SeedProductsAsync(db);
+
+            // Seed 50 demo customer accounts (no-op if any @home.com users exist)
+            var userMgr = scope.ServiceProvider.GetRequiredService<UserManager<IdentityUser>>();
+            var webEnv  = scope.ServiceProvider.GetRequiredService<Microsoft.AspNetCore.Hosting.IWebHostEnvironment>();
+            await DbSeeder.SeedCustomersAsync(db, userMgr, webEnv.WebRootPath);
+
+            // Seed default admin role and test admin account (no-op if already exists).
+            // Credentials are read from config — set Seed:AdminEmail and Seed:AdminPass
+            // via user-secrets in development or environment variables in production.
+            var roleMgr = scope.ServiceProvider.GetRequiredService<RoleManager<IdentityRole>>();
+            await DbSeeder.SeedAdminAsync(userMgr, roleMgr, config);
+
             logger.LogInformation("Database seeding complete.");
         }
         catch (Exception ex)
@@ -211,6 +233,36 @@ else
 }
 
 app.UseHttpsRedirection();
+
+// ─── Security headers ────────────────────────────────────────────────────────
+// Applied before static files so even asset responses carry the headers.
+//
+//  X-Content-Type-Options: nosniff
+//      Prevents browsers from MIME-sniffing a response away from the declared
+//      Content-Type (e.g. treating a text/plain upload as text/html).
+//
+//  X-Frame-Options: SAMEORIGIN
+//      Blocks the application from being embedded in a cross-origin <iframe>,
+//      mitigating clickjacking attacks. SAMEORIGIN permits same-site embedding
+//      (e.g. admin sub-pages within the same domain) while blocking external frames.
+//
+//  Referrer-Policy: strict-origin-when-cross-origin
+//      Sends the full URL as referrer for same-origin requests, but only the
+//      origin (no path/query) for cross-origin requests, preventing sensitive
+//      URL parameters (order IDs, tokens) from leaking to third-party sites.
+//
+//  X-Permitted-Cross-Domain-Policies: none
+//      Stops Adobe Flash and Acrobat from loading data from this domain.
+//      Included for defence-in-depth even though Flash is retired.
+app.Use(async (context, next) =>
+{
+    context.Response.Headers.Append("X-Content-Type-Options",          "nosniff");
+    context.Response.Headers.Append("X-Frame-Options",                 "SAMEORIGIN");
+    context.Response.Headers.Append("Referrer-Policy",                 "strict-origin-when-cross-origin");
+    context.Response.Headers.Append("X-Permitted-Cross-Domain-Policies", "none");
+    await next();
+});
+
 app.UseStaticFiles();
 
 // Extension method configures the standard middleware stack in correct order:

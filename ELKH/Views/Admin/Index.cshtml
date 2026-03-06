@@ -1,9 +1,59 @@
+@model ELKH.ViewModels.SalesVM
 @{
     ViewData["Title"] = "Admin Dashboard";
     Layout = "~/Views/Shared/_Layout.cshtml";
 }
 
 <h2 class="mb-4">Admin Dashboard</h2>
+
+<div class="row g-3 mb-4">
+    <div class="col-sm-6 col-xl-3">
+        <div class="card border-0 shadow-sm h-100">
+            <div class="card-body d-flex align-items-center gap-3">
+                <div class="fs-1 text-primary">📦</div>
+                <div>
+                    <div class="text-muted small">Weekly Orders</div>
+                    <div class="fs-3 fw-bold">@Model.WeeklyTotalOrders</div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-sm-6 col-xl-3">
+        <div class="card border-0 shadow-sm h-100">
+            <div class="card-body d-flex align-items-center gap-3">
+                <div class="fs-1 text-success">📈</div>
+                <div>
+                    <div class="text-muted small">Monthly Orders</div>
+                    <div class="fs-3 fw-bold">@Model.MonthlyTotalOrders</div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-sm-6 col-xl-3">
+        <div class="card border-0 shadow-sm h-100">
+            <div class="card-body d-flex align-items-center gap-3">
+                <div class="fs-1 text-success">🟢</div>
+                <div>
+                    <div class="text-muted small">Well Stocked</div>
+                    <div class="fs-3 fw-bold">@Model.StockUpCount</div>
+                    <div class="text-muted" style="font-size:.75rem">products &gt; 100 units</div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-sm-6 col-xl-3">
+        <div class="card border-0 shadow-sm h-100">
+            <div class="card-body d-flex align-items-center gap-3">
+                <div class="fs-1 text-warning">🔴</div>
+                <div>
+                    <div class="text-muted small">Low Stock</div>
+                    <div class="fs-3 fw-bold">@Model.StockDownCount</div>
+                    <div class="text-muted" style="font-size:.75rem">products ≤ 100 units</div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
 
 <div class="row g-4 mb-4">
     <div class="col-md-4">
@@ -58,6 +108,19 @@
 </div>
 
 <script>
+    // ─── Admin dashboard scripts ─────────────────────────────────────────────────
+    // Three independent async handlers wired to the admin tool buttons:
+    //   1. #clear-fuzzy-cache  – POST to /Admin/ClearFuzzyCache with audit reason
+    //   2. loadStats()         – GET /Admin/CacheStats + GET /Admin/ReindexHealth
+    //   3. #reindex-fts        – POST to /Admin/ReindexFTS with audit reason
+
+    // Read the per-request antiforgery token written by _Layout.cshtml.
+    // Every state-changing POST attaches this as X-CSRF-TOKEN so ASP.NET Core's
+    // [ValidateAntiForgeryToken] attribute can verify the request origin.
+    const csrfToken = document.querySelector('meta[name="csrf-token"]')?.content ?? '';
+
+    // ─── 1. Clear fuzzy-search cache ─────────────────────────────────────────────
+    // Requires a non-empty reason field so the action is always audit-logged.
     document.getElementById('clear-fuzzy-cache')?.addEventListener('click', async function(){
         const reasonInput = document.getElementById('clear-reason');
         if (!reasonInput || !reasonInput.value.trim()) { alert('Please provide a reason for clearing the cache.'); return; }
@@ -67,7 +130,7 @@
         btn.textContent = 'Clearing...';
         try {
             const reason = document.getElementById('clear-reason').value;
-            const res = await fetch('@Url.Action("ClearFuzzyCache","Admin")', { method: 'POST', headers: { 'X-Requested-With':'XMLHttpRequest', 'Content-Type':'application/json' }, body: JSON.stringify({ reason }) });
+            const res = await fetch('@Url.Action("ClearFuzzyCache","Admin")', { method: 'POST', headers: { 'X-Requested-With':'XMLHttpRequest', 'Content-Type':'application/json', 'X-CSRF-TOKEN': csrfToken }, body: JSON.stringify({ reason }) });
             const json = await res.json();
             if (json.success) {
                 document.getElementById('clear-result').innerHTML = '<div class="alert alert-success">Cache cleared</div>';
@@ -79,7 +142,13 @@
         } finally { btn.disabled = false; btn.textContent = 'Clear Fuzzy Cache'; }
     });
 
-    // load cache stats
+    // ─── 2. Cache & reindex stats ────────────────────────────────────────────────
+    // loadStats() performs two sequential fetches and updates three separate DOM regions:
+    //   - #cache-stats      ← populated from /Admin/CacheStats
+    //   - #reindex-status   ← populated from /Admin/ReindexHealth (lastRun, lastDuration)
+    //   - #reindex-metrics  ← populated from /Admin/ReindexHealth (suggestionCount, runCount)
+    // Errors in the secondary ReindexHealth call are silently ignored so a background
+    // service restart never breaks the primary cache stats display.
     async function loadStats(){
         const container = document.getElementById('cache-stats');
         const refreshBtn = document.getElementById('refresh-stats');
@@ -127,6 +196,9 @@
     healthEl.id = 'reindex-health';
     document.getElementById('cache-stats')?.insertAdjacentElement('afterend', healthEl);
 
+    // ─── 3. Trigger FTS reindex ───────────────────────────────────────────────────
+    // Requires a non-empty reason field (validated by the server) so every manual
+    // reindex is traceable in the audit log. On success, stats are refreshed in-place.
     document.getElementById('reindex-fts')?.addEventListener('click', async function(){
         const reasonInput = document.getElementById('reindex-reason');
         if (!reasonInput || !reasonInput.value.trim()) { alert('Please provide a reason for reindexing.'); return; }
@@ -135,7 +207,7 @@
         btn.disabled = true;
         btn.textContent = 'Reindexing...';
         try {
-            const res = await fetch('@Url.Action("ReindexFTS","Admin")', { method: 'POST', headers: { 'X-Requested-With':'XMLHttpRequest', 'Content-Type':'application/json' }, body: JSON.stringify({ reason: reasonInput.value }) });
+            const res = await fetch('@Url.Action("ReindexFTS","Admin")', { method: 'POST', headers: { 'X-Requested-With':'XMLHttpRequest', 'Content-Type':'application/json', 'X-CSRF-TOKEN': csrfToken }, body: JSON.stringify({ reason: reasonInput.value }) });
             const json = await res.json();
             if (json.success) {
                 document.getElementById('clear-result').innerHTML = '<div class="alert alert-success">Reindex completed</div>';

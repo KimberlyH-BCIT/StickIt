@@ -9,6 +9,31 @@ using System.Data;
 
 namespace ELKH.Controllers
 {
+    /// <summary>
+    /// Admin controller for ASP.NET Core Identity role management.
+    /// Provides CRUD operations for roles and role-assignment for individual users.
+    /// </summary>
+    /// <remarks>
+    /// TABLE OF CONTENTS
+    /// ================================================================================
+    /// 1. Constructor &amp; Dependencies
+    /// 2. Role Listing
+    ///    - ListRoles()                          // GET: All roles
+    /// 3. Role Creation
+    ///    - CreateRole() GET                     // GET: New role form
+    ///    - CreateRole() POST                    // POST: Persist new role
+    /// 4. Role Editing
+    ///    - EditRole(roleId) GET                 // GET: Edit role form
+    ///    - EditRole(model) POST                 // POST: Persist role name change
+    /// 5. Role Assignment
+    ///    - AssignRoles(roleName) GET            // GET: Assignment form (optionally pre-filtered)
+    ///    - AssignRoles(model) POST              // POST: Assign role to a user by email
+    /// ================================================================================
+    ///
+    /// All endpoints require the Admin role.
+    /// Role mutations delegate directly to <see cref="RoleManager{TRole}"/> so that
+    /// Identity's own validation and concurrency handling are exercised.
+    /// </remarks>
     [Authorize(Roles = "Admin")]
     public class AdminRoleController : Controller
     {
@@ -23,7 +48,11 @@ namespace ELKH.Controllers
             _roleManager = roleManager;
         }
 
-        // ================= LIST =================
+        // =====================================================================
+        // Role Listing
+        // =====================================================================
+
+        /// <summary>Displays all application roles with their IDs and names.</summary>
         public IActionResult ListRoles()
         {
             var roles = _roleManager.Roles
@@ -37,12 +66,17 @@ namespace ELKH.Controllers
             return View(roles);
         }
 
-        // ================= CREATE =================
+        // =====================================================================
+        // Role Creation
+        // =====================================================================
+
+        /// <summary>Renders the form for creating a new role.</summary>
         public IActionResult CreateRole()
         {
             return View();
         }
 
+        /// <summary>Persists the new role to the Identity store. Re-displays the form with errors on failure.</summary>
         [HttpPost]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> CreateRole(RoleVM model)
@@ -64,7 +98,14 @@ namespace ELKH.Controllers
             return View(model);
         }
 
-        // ================= EDIT =================
+        // =====================================================================
+        // Role Editing
+        // =====================================================================
+
+        /// <summary>
+        /// Renders the edit form for an existing role.
+        /// Returns <see cref="NotFoundResult"/> when no role with <paramref name="roleId"/> exists.
+        /// </summary>
         public async Task<IActionResult> EditRole(string roleId)
         {
             var role = await _roleManager.FindByIdAsync(roleId);
@@ -82,6 +123,7 @@ namespace ELKH.Controllers
             return View(model);
         }
 
+        /// <summary>Persists a role-name change to the Identity store. Re-displays the form with errors on failure.</summary>
         [HttpPost]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> EditRole(RoleVM model)
@@ -111,7 +153,15 @@ namespace ELKH.Controllers
             return View(model);
         }
 
-        // ================= ASSIGN ROLES =================
+        // =====================================================================
+        // Role Assignment
+        // =====================================================================
+
+        /// <summary>
+        /// Renders the role-assignment form.
+        /// When <paramref name="roleName"/> is supplied the form is pre-filtered to that role
+        /// and the role field is locked so the caller cannot switch it.
+        /// </summary>
         public IActionResult AssignRoles(string? roleName)
         {
             ModelState.Clear();
@@ -135,6 +185,11 @@ namespace ELKH.Controllers
 
             return View(assignRoleVM);
         }
+        /// <summary>
+        /// Assigns a role to the user identified by <c>model.Email</c>.
+        /// Validates that the user exists, the role is selected, and the user is not
+        /// already a member before calling <see cref="UserManager{TUser}.AddToRoleAsync"/>.
+        /// </summary>
         [HttpPost]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> AssignRoles(AssignRoleVM model)
@@ -190,6 +245,10 @@ namespace ELKH.Controllers
             TempData["Error"] = "Failed to assign role.";
             return RedirectToAction("ListRoles");
         }
+        /// <summary>
+        /// Repopulates the role drop-down on the assignment form after a validation failure.
+        /// Extracted to avoid duplicating the role-list query across multiple early-return paths.
+        /// </summary>
         private async Task ReloadRoles(AssignRoleVM model)
         {
             model.Roles = _roleManager.Roles

@@ -2,9 +2,19 @@
 <html lang="en">
 <head>
     @using Microsoft.AspNetCore.Identity
+    @using Microsoft.AspNetCore.Antiforgery
     @inject SignInManager<IdentityUser> SignInManager
+    @inject IAntiforgery AntiforgeryService
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    @{
+        // Generate and store a per-request antiforgery token. The token is written into
+        // a <meta> tag so client-side JavaScript can read it and attach it as the
+        // X-CSRF-TOKEN request header on every state-changing fetch() call. This
+        // complements the standard form-field token used by Razor form tag helpers.
+        var csrfToken = AntiforgeryService.GetAndStoreTokens(Context).RequestToken;
+    }
+    <meta name="csrf-token" content="@csrfToken" />
     <link rel="icon" type="image/png" href="~/logo-stickit.png" />
     <title>@ViewData["Title"] - ELKH</title>
     <script type="importmap"></script>
@@ -22,14 +32,6 @@
             <div class="d-flex align-items-center flex-wrap gap-2">
                 <partial name="_LoginPartial" />
                 <partial name="_CartIconPartial" />
-                @if (User.IsInRole("Admin"))
-                {
-                    <a class="btn btn-sm btn-outline-secondary" asp-controller="Admin" asp-action="Index">Admin Dashboard</a>
-                }
-                @if (User.IsInRole("Manager"))
-                {
-                    <a class="btn btn-sm btn-outline-secondary" asp-controller="Manager" asp-action="Index">Manager Dashboard</a>
-                }
             </div>
         </div>
     </div>
@@ -68,29 +70,49 @@
                         <path fill-rule="evenodd" d="M2.5 12a.5.5 0 0 1 .5-.5h10a.5.5 0 0 1 0 1H3a.5.5 0 0 1-.5-.5zm0-4a.5.5 0 0 1 .5-.5h10a.5.5 0 0 1 0 1H3a.5.5 0 0 1-.5-.5zm0-4a.5.5 0 0 1 .5-.5h10a.5.5 0 0 1 0 1H3a.5.5 0 0 1-.5-.5z"/>
                     </svg>
                 </button>
-                <ul class="navbar-nav flex-row flex-grow-1 justify-content-evenly mb-0">
-                    <li class="nav-item">
-                        <a class="nav-link text-dark" asp-area="" asp-controller="Home" asp-action="Index">Home</a>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link text-dark" asp-area="" asp-controller="Product" asp-action="Index">Products</a>
-                    </li>
-                    @if (SignInManager.IsSignedIn(User))
-                    {
+                @if (User.IsInRole("Admin"))
+                {
+                    <ul class="navbar-nav flex-row flex-grow-1 justify-content-evenly mb-0">
                         <li class="nav-item">
-                            <a class="nav-link text-dark" asp-area="" asp-controller="Wishlist" asp-action="Index">Wishlist</a>
+                            <a class="nav-link text-dark fw-semibold" asp-controller="Admin" asp-action="Index">Home</a>
                         </li>
                         <li class="nav-item">
-                            <a class="nav-link text-dark" asp-area="" asp-controller="Order" asp-action="MyHistory">My Orders</a>
+                            <a class="nav-link text-dark" asp-controller="Home" asp-action="Index">View as Customer</a>
                         </li>
                         <li class="nav-item">
-                            <a class="nav-link text-dark" asp-area="" asp-controller="User" asp-action="MyRatings">My Ratings</a>
+                            <a class="nav-link text-dark" asp-controller="Manager" asp-action="Index">View as Manager</a>
                         </li>
                         <li class="nav-item">
-                            <a class="nav-link text-dark" asp-area="" asp-controller="User" asp-action="EditProfile">My Profile</a>
+                            <a class="nav-link text-dark" asp-controller="Staff" asp-action="Index">View as Staff</a>
                         </li>
-                    }
-                </ul>
+                    </ul>
+                }
+                else
+                {
+                    <ul class="navbar-nav flex-row flex-grow-1 justify-content-evenly mb-0">
+                        <li class="nav-item">
+                            <a class="nav-link text-dark" asp-area="" asp-controller="Home" asp-action="Index">Home</a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link text-dark" asp-area="" asp-controller="Product" asp-action="Index">Products</a>
+                        </li>
+                        @if (SignInManager.IsSignedIn(User))
+                        {
+                            <li class="nav-item">
+                                <a class="nav-link text-dark" asp-area="" asp-controller="Wishlist" asp-action="Index">Wishlist</a>
+                            </li>
+                            <li class="nav-item">
+                                <a class="nav-link text-dark" asp-area="" asp-controller="Order" asp-action="MyHistory">My Orders</a>
+                            </li>
+                            <li class="nav-item">
+                                <a class="nav-link text-dark" asp-area="" asp-controller="User" asp-action="MyRatings">My Ratings</a>
+                            </li>
+                            <li class="nav-item">
+                                <a class="nav-link text-dark" asp-area="" asp-controller="User" asp-action="EditProfile">My Profile</a>
+                            </li>
+                        }
+                    </ul>
+                }
             </div>
         </nav>
 
@@ -104,29 +126,47 @@
         </div>
         <div class="offcanvas-body p-0">
             <ul class="navbar-nav flex-column">
-                <li class="nav-item border-bottom">
-                    <a class="nav-link text-dark px-3 py-2" asp-area="" asp-controller="Home" asp-action="Index">Home</a>
-                </li>
-                <li class="nav-item border-bottom">
-                    <a class="nav-link text-dark px-3 py-2" asp-area="" asp-controller="Product" asp-action="Index">Products</a>
-                </li>
-                <li class="nav-item border-bottom">
-                    <a class="nav-link text-dark px-3 py-2" asp-area="" asp-controller="Home" asp-action="Privacy">Privacy</a>
-                </li>
-                @if (SignInManager.IsSignedIn(User))
+                @if (User.IsInRole("Admin"))
                 {
                     <li class="nav-item border-bottom">
-                        <a class="nav-link text-dark px-3 py-2" asp-area="" asp-controller="Wishlist" asp-action="Index">Wishlist</a>
+                        <a class="nav-link text-dark px-3 py-2 fw-semibold" asp-controller="Admin" asp-action="Index">Home</a>
                     </li>
                     <li class="nav-item border-bottom">
-                        <a class="nav-link text-dark px-3 py-2" asp-area="" asp-controller="Order" asp-action="MyHistory">My Orders</a>
+                        <a class="nav-link text-dark px-3 py-2" asp-controller="Home" asp-action="Index">View as Customer</a>
                     </li>
                     <li class="nav-item border-bottom">
-                        <a class="nav-link text-dark px-3 py-2" asp-area="" asp-controller="User" asp-action="MyRatings">My Ratings</a>
+                        <a class="nav-link text-dark px-3 py-2" asp-controller="Manager" asp-action="Index">View as Manager</a>
                     </li>
                     <li class="nav-item border-bottom">
-                        <a class="nav-link text-dark px-3 py-2" asp-area="" asp-controller="User" asp-action="EditProfile">My Profile</a>
+                        <a class="nav-link text-dark px-3 py-2" asp-controller="Staff" asp-action="Index">View as Staff</a>
                     </li>
+                }
+                else
+                {
+                    <li class="nav-item border-bottom">
+                        <a class="nav-link text-dark px-3 py-2" asp-area="" asp-controller="Home" asp-action="Index">Home</a>
+                    </li>
+                    <li class="nav-item border-bottom">
+                        <a class="nav-link text-dark px-3 py-2" asp-area="" asp-controller="Product" asp-action="Index">Products</a>
+                    </li>
+                    <li class="nav-item border-bottom">
+                        <a class="nav-link text-dark px-3 py-2" asp-area="" asp-controller="Home" asp-action="Privacy">Privacy</a>
+                    </li>
+                    @if (SignInManager.IsSignedIn(User))
+                    {
+                        <li class="nav-item border-bottom">
+                            <a class="nav-link text-dark px-3 py-2" asp-area="" asp-controller="Wishlist" asp-action="Index">Wishlist</a>
+                        </li>
+                        <li class="nav-item border-bottom">
+                            <a class="nav-link text-dark px-3 py-2" asp-area="" asp-controller="Order" asp-action="MyHistory">My Orders</a>
+                        </li>
+                        <li class="nav-item border-bottom">
+                            <a class="nav-link text-dark px-3 py-2" asp-area="" asp-controller="User" asp-action="MyRatings">My Ratings</a>
+                        </li>
+                        <li class="nav-item border-bottom">
+                            <a class="nav-link text-dark px-3 py-2" asp-area="" asp-controller="User" asp-action="EditProfile">My Profile</a>
+                        </li>
+                    }
                 }
             </ul>
         </div>
@@ -136,6 +176,12 @@
             @RenderSection("title",false)
         </div>
         @{
+            // TempData["Message"] uses the application-wide "level, text" convention.
+            // Controllers write this value through the SetSuccessMessage / SetWarningMessage /
+            // SetErrorMessage helpers in AuthenticatedControllerBase (or directly as raw strings
+            // in controllers that do not inherit from it, e.g. OrderHistoryController).
+            // Format:  "<level>, <display text>"  — e.g. "success, Order placed successfully"
+            // The level token is compared case-insensitively and mapped to a Bootstrap alert class.
             var raw = TempData["Message"] as string;
             if (!string.IsNullOrEmpty(raw))
             {
@@ -226,6 +272,36 @@
             </div>
         </div>
     </footer>
+
+    <!-- Wishlist sign-in prompt (shared across all pages; shown when a guest clicks any wishlist button) -->
+    <div class="modal fade" id="wishlistSignInModal" tabindex="-1"
+         aria-labelledby="wishlistSignInModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="wishlistSignInModalLabel">
+                        <i class="bi bi-heart me-2"></i>Save to Wishlist
+                    </h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <p class="mb-0">Sign in to save items to your wishlist and access them any time.</p>
+                </div>
+                <div class="modal-footer justify-content-start gap-2">
+                    <a asp-area="Identity" asp-page="/Account/Login"
+                       asp-route-returnUrl="@(Context.Request.Path + Context.Request.QueryString)"
+                       class="btn btn-dark">
+                        <i class="bi bi-box-arrow-in-right me-1"></i>Sign In
+                    </a>
+                    <a asp-area="Identity" asp-page="/Account/Register"
+                       asp-route-returnUrl="@(Context.Request.Path + Context.Request.QueryString)"
+                       class="btn btn-outline-secondary">
+                        <i class="bi bi-person-plus me-1"></i>Create an Account
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
 
     <script src="~/lib/jquery/dist/jquery.min.js"></script>
     <script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>

@@ -63,12 +63,16 @@ namespace ELKH.Repositories
 
         /// <summary>
         /// Get orders belonging to a specific user by email, ordered newest first.
+        /// Eagerly loads OrderItems and their Products so the history view can
+        /// display item counts and render "Buy it again" buttons.
         /// </summary>
         public async Task<IEnumerable<OrderModel>> GetUserOrdersAsync(string userEmail)
         {
             return await Context.Orders
                 .AsNoTracking()
                 .Where(o => o.RegisteredUser.Email == userEmail)
+                .Include(o => o.OrderItems)
+                    .ThenInclude(oi => oi.Product)
                 .OrderByDescending(o => o.CreatedAt)
                 .ToListAsync();
         }

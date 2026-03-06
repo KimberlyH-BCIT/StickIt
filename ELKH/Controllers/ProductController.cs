@@ -120,7 +120,7 @@ namespace ELKH.Controllers
         /// <c>TempData</c> message if no product with <paramref name="id"/> exists.
         /// </returns>
         // GET: Product/Details
-        public async Task<IActionResult> Details(int id)
+        public async Task<IActionResult> Details(int id, int reviewPage = 1)
         {
             var vm = await _productService.GetByIdAsync(id);
             if (vm == null)
@@ -129,8 +129,9 @@ namespace ELKH.Controllers
                 return RedirectToAction(nameof(Index));
             }
 
-            // Load only moderation-approved reviews for public display.
-            ViewBag.Reviews = await _ratingService.GetApprovedReviewsAsync(id);
+            // Paged, profile-enriched reviews — also carries AverageRating and TotalCount
+            // so the product header can display accurate aggregate stats.
+            ViewBag.ReviewPage = await _ratingService.GetPagedApprovedReviewsAsync(id, reviewPage);
 
             // Rating eligibility is only relevant for authenticated users.
             // Unauthenticated visitors can read reviews but cannot submit or edit one.

@@ -2,6 +2,7 @@
 using ELKH.Repositories;
 using ELKH.Services;
 using ELKH.ViewModels;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 namespace ELKH.Controllers
@@ -200,6 +201,22 @@ namespace ELKH.Controllers
             if (authResult != null) return authResult;
 
             var profile = _profileRepository.GetById(email);
+            if (profile?.AvatarData is null || string.IsNullOrEmpty(profile.AvatarMimeType))
+                return NotFound();
+
+            return File(profile.AvatarData, profile.AvatarMimeType);
+        }
+
+        // GET: User/Avatar/{id} — serves any registered user's avatar without requiring auth.
+        // Keyed by RegisteredUser PK (integer) to avoid exposing email addresses in URLs.
+        [HttpGet]
+        [AllowAnonymous]
+        public async Task<IActionResult> Avatar(int id)
+        {
+            var user = await UserService.GetByIdAsync(id);
+            if (user is null) return NotFound();
+
+            var profile = _profileRepository.GetById(user.Email);
             if (profile?.AvatarData is null || string.IsNullOrEmpty(profile.AvatarMimeType))
                 return NotFound();
 

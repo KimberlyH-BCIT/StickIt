@@ -32,8 +32,15 @@ namespace ELKH.Services
         public async Task<WishlistResult> AddAsync(string userEmail, int productId)
         {
             var user = await _userService.GetByEmailAsync(userEmail);
+
+            // Lazily provision a RegisteredUserModel for accounts that were created
+            // outside the standard registration flow (e.g. the seeded admin account).
             if (user is null)
-                return new WishlistResult { Success = false, Message = "User not found" };
+            {
+                user = new RegisteredUserModel { Email = userEmail };
+                _db.RegisteredUsers.Add(user);
+                await _db.SaveChangesAsync();
+            }
 
             var product = await _db.Products.FindAsync(productId);
             if (product is null)
