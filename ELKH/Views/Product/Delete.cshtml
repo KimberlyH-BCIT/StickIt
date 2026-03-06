@@ -17,7 +17,7 @@
                     <tr><th>Name</th><td>@Model.ProductName</td></tr>
                     <tr><th>Category</th><td>@Model.CategoryName</td></tr>
                     <tr><th>Price</th><td>$@Model.Price.ToString("F2")</td></tr>
-                    <tr><th>Stock</th><td>@(Model.StockQuantity ?? 0)</td></tr>
+                    <tr><th>Stock</th><td>@Model.StockQuantity</td></tr>
                 </table>
 
                 <div class="d-flex gap-2 mt-3">

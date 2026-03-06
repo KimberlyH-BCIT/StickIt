@@ -11,14 +11,14 @@
 <div class="container py-4">
 
     @if (TempData["Message"] is string msg)
-    {
+{
         var parts = msg.Split(',', 2);
         var alertType = parts[0].Trim() == "success" ? "alert-success" : "alert-warning";
         <div class="alert @alertType alert-dismissible fade show" role="alert">
             @parts[^1].Trim()
             <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
         </div>
-    }
+}
 
     @if (Model.IsEmpty)
     {
@@ -29,8 +29,8 @@
             {
                 <a asp-controller="Product" asp-action="Index" class="btn btn-dark mt-2">Shop Stickers</a>
             }
-            else
-            {
+else
+{
                 <p class="text-muted">
                     <a asp-area="Identity" asp-page="/Account/Login">Log in</a> to start shopping.
                 </p>
@@ -46,19 +46,19 @@
                     <div class="card-body p-0">
                         <table class="table table-borderless mb-0">
                             <thead class="table-light">
-                                <tr>
-                                    <th>Product</th>
+            <tr>
+                <th>Product</th>
                                     <th class="text-center">Price</th>
                                     <th class="text-center">Qty</th>
                                     <th class="text-end">Total</th>
-                                    <th></th>
-                                </tr>
-                            </thead>
-                            <tbody>
+                <th></th>
+            </tr>
+        </thead>
+        <tbody>
                                 @foreach (var item in Model.Items)
-                                {
+            {
                                     <tr class="align-middle">
-                                        <td>
+                    <td>
                                             <div class="d-flex align-items-center gap-3">
                                                 @if (!string.IsNullOrEmpty(item.ImageUrl))
                                                 {
@@ -87,17 +87,17 @@
                                         <td class="text-end fw-bold">$@item.LineTotal.ToString("F2")</td>
                                         <td class="text-end">
                                             <form asp-controller="Cart" asp-action="Remove" method="post">
-                                                @Html.AntiForgeryToken()
+                            @Html.AntiForgeryToken()
                                                 <input type="hidden" name="cartId" value="@item.CartItemId" />
                                                 <button type="submit" class="btn btn-sm btn-outline-danger" title="Remove">
                                                     <i class="bi bi-trash"></i>
                                                 </button>
-                                            </form>
-                                        </td>
-                                    </tr>
-                                }
-                            </tbody>
-                        </table>
+                        </form>
+                    </td>
+                </tr>
+            }
+        </tbody>
+    </table>
                     </div>
                 </div>
 
@@ -152,5 +152,5 @@
                 </div>
             </div>
         </div>
-    }
+}
 </div>

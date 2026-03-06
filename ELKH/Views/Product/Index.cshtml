@@ -1,76 +1,136 @@
 @model IEnumerable<ELKH.ViewModels.ProductVM>
+
 @{
-    ViewData["Title"] = "Shop";
+    ViewData["Title"] = "Products";
+    var products = Model.ToList();
+    const int pageSize = 15;
 }
 
-<div class="d-flex justify-content-between align-items-center mb-4">
-    <h1 class="fw-bold mb-0">🏷️ All Products</h1>
-    @if (User.IsInRole("Manager") || User.IsInRole("Admin"))
+<h2 class="mb-4">Products</h2>
+
+<style>
+    .product-card {
+        cursor: pointer;
+        transition: transform .15s ease, box-shadow .15s ease;
+    }
+    .product-card:hover {
+        transform: translateY(-3px);
+        box-shadow: 0 .5rem 1rem rgba(0,0,0,.12) !important;
+    }
+</style>
+
+<div class="row row-cols-1 row-cols-sm-2 row-cols-md-3 row-cols-lg-5 g-3" id="productGrid">
+    @for (int i = 0; i < products.Count; i++)
     {
-        <a asp-action="Create" class="btn btn-success">
-            <i class="bi bi-plus-circle me-1"></i>Add Product
-        </a>
+        var p = products[i];
+        <div class="col product-card-col@(i >= pageSize ? " extra-product d-none" : "")">
+            <div class="card h-100 shadow-sm product-card"
+                 data-href="@Url.Action("Details", "Product", new { id = p.ProductId })">
+                <div class="card-body d-flex flex-column p-3">
+
+                    @* Product name — single line, truncated *@
+                    <h6 class="card-title text-truncate mb-2 fw-semibold"
+                        title="@p.ProductName">@p.ProductName</h6>
+
+                    @* Price *@
+                    <div class="mb-3">
+                        @if (p.DiscountPercent > 0)
+                        {
+                            var effective = p.Price * (1 - p.DiscountPercent / 100m);
+                            <div>
+                                <span class="text-muted text-decoration-line-through small price"
+                                      data-price="@p.Price">@p.Price.ToString("C")</span>
+                                <span class="badge bg-danger ms-1">@p.DiscountPercent%&nbsp;off</span>
+                            </div>
+                            <span class="fw-bold text-success price"
+                                  data-price="@effective">@effective.ToString("C")</span>
+                        }
+                        else
+                        {
+                            <span class="fw-semibold price" data-price="@p.Price">@p.Price.ToString("C")</span>
+                        }
+                    </div>
+
+                    @* Action buttons — stop click from bubbling to card *@
+                    <div class="mt-auto d-flex flex-column gap-2">
+                        <form asp-controller="Cart" asp-action="AddToCart" method="post">
+                            @Html.AntiForgeryToken()
+                            <input type="hidden" name="itemId" value="@p.ProductId" />
+                            <input type="hidden" name="quantity" value="1" />
+                            <button type="submit" class="btn btn-sm btn-primary w-100">Add to Cart</button>
+                        </form>
+
+                        <form asp-controller="Wishlist" asp-action="AddAjax" method="post"
+                              class="add-to-wishlist-form" data-product-id="@p.ProductId">
+                            @Html.AntiForgeryToken()
+                            <input type="hidden" name="productId" value="@p.ProductId" />
+                            <button type="submit"
+                                    class="btn btn-sm btn-outline-secondary w-100 add-to-wishlist-button">
+                                ♡&nbsp;Wishlist
+                            </button>
+                        </form>
+                            }
+                    </div>
+
+                </div>
+            </div>
+        </div>
     }
 </div>
 
-@if (!Model.Any())
+@if (products.Count > pageSize)
 {
-    <div class="text-center py-5 text-muted">
-        <i class="bi bi-box-seam display-1"></i>
-        <p class="fs-5 mt-3">No products available yet. Check back soon!</p>
+    <div class="text-center mt-4" id="showMoreContainer">
+        <button class="btn btn-outline-primary px-5" id="showMoreBtn" onclick="showMoreProducts()">
+            Show More
+        </button>
     </div>
 }
-else
-{
-    <div class="row row-cols-1 row-cols-sm-2 row-cols-md-3 row-cols-lg-4 g-4">
-        @foreach (var p in Model)
-        {
-            <div class="col">
-                <div class="card h-100 shadow-sm border-0">
-                    <div class="bg-light d-flex align-items-center justify-content-center" style="height:200px;">
-                        <i class="bi bi-image text-muted display-4"></i>
-                    </div>
-                    <div class="card-body d-flex flex-column">
-                        <span class="badge bg-secondary mb-2 align-self-start">@p.CategoryName</span>
-                        <h6 class="card-title fw-bold">@p.ProductName</h6>
-                        <p class="card-text text-muted small flex-grow-1">
-                            @(p.Description.Length > 80 ? p.Description[..80] + "…" : p.Description)
-                        </p>
-                        <div class="d-flex justify-content-between align-items-center mt-2">
-                            <span class="fw-bold fs-5">$@p.Price.ToString("F2")</span>
-                            @if (p.IsActive && (p.StockQuantity ?? 0) > 0)
-                            {
-                                <span class="badge bg-success-subtle text-success border border-success-subtle small">
-                                    In Stock (@p.StockQuantity)
-                                </span>
-                            }
-                            else
-                            {
-                                <span class="badge bg-danger-subtle text-danger border border-danger-subtle small">Out of Stock</span>
-                            }
-                        </div>
-                    </div>
-                    <div class="card-footer bg-white border-top-0 pt-0 pb-3 px-3">
-                        <div class="d-flex gap-2">
-                            <a asp-action="Details" asp-route-id="@p.ProductId"
-                               class="btn btn-outline-dark btn-sm flex-grow-1">
-                                <i class="bi bi-eye me-1"></i>View
-                            </a>
-                            @if (p.IsActive && (p.StockQuantity ?? 0) > 0)
-                            {
-                                <form asp-controller="Cart" asp-action="Add" method="post">
-                                    @Html.AntiForgeryToken()
-                                    <input type="hidden" name="productId" value="@p.ProductId" />
-                                    <input type="hidden" name="quantity" value="1" />
-                                    <button type="submit" class="btn btn-dark btn-sm" title="Add to Cart">
-                                        <i class="bi bi-cart-plus"></i>
-                                    </button>
-                                </form>
-                            }
-                        </div>
-                    </div>
-                </div>
-            </div>
-        }
-    </div>
+
+@section Scripts {
+    <script>
+        (function () {
+            // Navigate to product details when clicking the card body,
+            // but let form submissions and button clicks proceed normally.
+            document.querySelectorAll('.product-card').forEach(function (card) {
+                card.addEventListener('click', function (e) {
+                    if (!e.target.closest('form') && !e.target.closest('button') && !e.target.closest('a')) {
+                        window.location.href = card.dataset.href;
+                    }
+                });
+            });
+
+            var step = @pageSize;
+
+            window.showMoreProducts = function () {
+                var hidden = document.querySelectorAll('.extra-product.d-none');
+                var toShow = Array.prototype.slice.call(hidden, 0, step);
+                toShow.forEach(function (el) { el.classList.remove('d-none'); });
+
+                if (document.querySelectorAll('.extra-product.d-none').length === 0) {
+                    var container = document.getElementById('showMoreContainer');
+                    if (container) container.style.display = 'none';
+                }
+            };
+        })();
+    </script>
+}
+    <script>
+        (function () {
+            var shown = @pageSize;
+            var step  = @pageSize;
+
+            window.showMoreProducts = function () {
+                var hidden = document.querySelectorAll('.extra-product.d-none');
+                var toShow = Array.prototype.slice.call(hidden, 0, step);
+                toShow.forEach(function (el) { el.classList.remove('d-none'); });
+                shown += toShow.length;
+
+                if (document.querySelectorAll('.extra-product.d-none').length === 0) {
+                    var container = document.getElementById('showMoreContainer');
+                    if (container) container.style.display = 'none';
+                }
+            };
+        })();
+    </script>
 }

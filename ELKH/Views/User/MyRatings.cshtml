@@ -1,0 +1,119 @@
+@model ELKH.ViewModels.MyRatingsVM
+
+@{
+    ViewData["Title"] = "My Ratings";
+
+    string SortLink(string key) =>
+        Url.Action("MyRatings", "User", new { sort = key }) ?? "#";
+
+    string BtnClass(string key) =>
+        Model.CurrentSort == key
+            ? "btn btn-sm btn-primary"
+            : "btn btn-sm btn-outline-secondary";
+
+    string Stars(int rating)
+    {
+        var filled = new string('★', rating);
+        var empty  = new string('☆', 5 - rating);
+        return filled + empty;
+    }
+}
+
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h2 class="mb-0">My Ratings</h2>
+    <a class="btn btn-sm btn-outline-secondary" asp-action="Index">&larr; Dashboard</a>
+</div>
+
+@* ── Sort controls ─────────────────────────────────────────────────── *@
+<div class="card mb-4">
+    <div class="card-body py-2">
+        <div class="d-flex align-items-center flex-wrap gap-2">
+            <span class="text-muted small me-1">Sort by:</span>
+
+            <a href="@SortLink("purchase_desc")" class="@BtnClass("purchase_desc")">
+                Purchase Date <span aria-hidden="true">↓</span>
+            </a>
+            <a href="@SortLink("purchase_asc")" class="@BtnClass("purchase_asc")">
+                Purchase Date <span aria-hidden="true">↑</span>
+            </a>
+            <a href="@SortLink("name_asc")" class="@BtnClass("name_asc")">
+                Product A &rarr; Z
+            </a>
+            <a href="@SortLink("name_desc")" class="@BtnClass("name_desc")">
+                Product Z &rarr; A
+            </a>
+            <a href="@SortLink("rating_high")" class="@BtnClass("rating_high")">
+                Highest Rating
+            </a>
+            <a href="@SortLink("rating_low")" class="@BtnClass("rating_low")">
+                Lowest Rating
+            </a>
+        </div>
+    </div>
+</div>
+
+@* ── Ratings list ──────────────────────────────────────────────────── *@
+@if (!Model.Ratings.Any())
+{
+    <div class="card">
+        <div class="card-body text-muted text-center py-5">
+            <p class="mb-1">You haven&rsquo;t submitted any ratings yet.</p>
+            <a class="btn btn-sm btn-outline-primary mt-2" asp-controller="Product" asp-action="Index">
+                Browse Products
+            </a>
+        </div>
+    </div>
+}
+else
+{
+    <div class="d-flex flex-column gap-3">
+        @foreach (var r in Model.Ratings)
+        {
+            <div class="card">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-start flex-wrap gap-2">
+
+                        @* Left: product name + stars + review *@
+                        <div class="flex-grow-1">
+                            <a class="fw-semibold text-decoration-none"
+                               asp-controller="Product" asp-action="Details" asp-route-id="@r.ProductId">
+                                @r.ProductName
+                            </a>
+                            <div class="text-warning fs-5 lh-1 my-1" aria-label="@r.Rating out of 5 stars">
+                                @Stars(r.Rating)
+                            </div>
+                            @if (!string.IsNullOrWhiteSpace(r.Description))
+                            {
+                                <p class="mb-0 text-muted small">@r.Description</p>
+                            }
+                        </div>
+
+                        @* Right: dates + status badge *@
+                        <div class="text-end text-muted small flex-shrink-0">
+                            @if (r.PurchaseDate.HasValue)
+                            {
+                                <div>Purchased: @r.PurchaseDate.Value.ToString("MMM d, yyyy")</div>
+                            }
+                            <div>Rated: @r.RatedTime.ToString("MMM d, yyyy")</div>
+                            <div class="mt-1">
+                                @if (r.IsFlagged)
+                                {
+                                    <span class="badge bg-warning text-dark">Flagged</span>
+                                }
+                                else if (r.Approved)
+                                {
+                                    <span class="badge bg-success">Approved</span>
+                                }
+                                else
+                                {
+                                    <span class="badge bg-secondary">Pending</span>
+                                }
+                            </div>
+                        </div>
+
+                    </div>
+                </div>
+            </div>
+        }
+    </div>
+}

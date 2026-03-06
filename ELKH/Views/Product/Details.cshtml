@@ -1,4 +1,5 @@
 @model ELKH.ViewModels.ProductVM
+
 @{
     ViewData["Title"] = Model.ProductName;
 }
@@ -15,20 +16,20 @@
         <div class="card border-0 shadow-sm bg-light d-flex align-items-center justify-content-center"
              style="min-height:350px;">
             <i class="bi bi-image text-muted" style="font-size:5rem;"></i>
-        </div>
     </div>
+</div>
     <div class="col-md-7">
         <span class="badge bg-secondary mb-2">@Model.CategoryName</span>
         <h1 class="fw-bold">@Model.ProductName</h1>
         <p class="fs-3 fw-bold text-dark">$@Model.Price.ToString("F2")</p>
         <p class="text-muted mb-4">@Model.Description</p>
 
-        @if (Model.IsActive && (Model.StockQuantity ?? 0) > 0)
-        {
+        @if (Model.IsActive && Model.StockQuantity > 0)
+    {
             <p class="text-success mb-3">
                 <i class="bi bi-check-circle-fill me-1"></i>
                 In stock — @Model.StockQuantity available
-            </p>
+        </p>
             <form asp-controller="Cart" asp-action="Add" method="post" class="d-flex gap-3 align-items-center">
                 @Html.AntiForgeryToken()
                 <input type="hidden" name="productId" value="@Model.ProductId" />
@@ -41,14 +42,15 @@
                     <i class="bi bi-cart-plus me-2"></i>Add to Cart
                 </button>
             </form>
-        }
-        else
-        {
+    }
+    else
+    {
             <p class="text-danger mb-3">
                 <i class="bi bi-x-circle-fill me-1"></i>Out of stock
             </p>
             <button class="btn btn-secondary btn-lg" disabled>Unavailable</button>
-        }
+    }
+</div>
 
         @if (User.IsInRole("Manager") || User.IsInRole("Admin"))
         {
@@ -59,13 +61,31 @@
                 <a asp-action="Delete" asp-route-id="@Model.ProductId" class="btn btn-outline-danger btn-sm">
                     <i class="bi bi-trash me-1"></i>Delete
                 </a>
-            </div>
+</div>
         }
-    </div>
+</div>
 </div>
 
 <div class="mt-5">
     <a asp-action="Index" class="btn btn-outline-secondary">
         <i class="bi bi-arrow-left me-1"></i>Back to Shop
     </a>
-</div>
+
+    @section Scripts {
+    <script>
+        // Poll price every 10 seconds to reflect real-time changes
+        const productId = @Model.ProductId;
+        async function pollPrice() {
+            try {
+                const res = await fetch('@Url.Action("GetPrice","Product")?id=' + productId);
+                if (!res.ok) return;
+                const json = await res.json();
+                const effective = json.effective;
+                const locale = window.appCulture || undefined;
+                const currency = window.appCurrency || 'CAD';
+                document.getElementById('effective-price').textContent = new Intl.NumberFormat(locale, { style: 'currency', currency }).format(effective);
+            } catch { }
+        }
+        setInterval(pollPrice, 10000);
+    </script>
+}

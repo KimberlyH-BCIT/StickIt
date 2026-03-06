@@ -1,6 +1,8 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
+    @using Microsoft.AspNetCore.Identity
+    @inject SignInManager<IdentityUser> SignInManager
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <link rel="icon" type="image/png" href="~/logo-stickit.png" />
@@ -11,59 +13,154 @@
     <link rel="stylesheet" href="~/ELKH.styles.css" asp-append-version="true" />
 </head>
 <body>
-    <header class="sticky-top">
-        <nav class="navbar navbar-expand-lg navbar-dark" style="background:#111;">
-            <div class="container">
-                <img src="~/images/StickIt_Logo.jpg" asp-append-version="true" alt="Stick-It" style="height:78px;" />
+<header class="site-header bg-white box-shadow mb-3">
 
-                <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#mainNav"
-                        aria-controls="mainNav" aria-expanded="false" aria-label="Toggle navigation">
-                    <span class="navbar-toggler-icon"></span>
-                </button>
+    @* ① Top bar: brand + login greeting *@
+    <div class="header-top border-bottom py-2">
+        <div class="container-fluid d-flex align-items-center justify-content-between flex-wrap gap-2">
+            <a class="navbar-brand mb-0 h1" asp-area="" asp-controller="Home" asp-action="Index">ELKH</a>
+            <div class="d-flex align-items-center flex-wrap gap-2">
+                <partial name="_LoginPartial" />
+                <partial name="_CartIconPartial" />
+                @if (User.IsInRole("Admin"))
+                {
+                    <a class="btn btn-sm btn-outline-secondary" asp-controller="Admin" asp-action="Index">Admin Dashboard</a>
+                }
+                @if (User.IsInRole("Manager"))
+                {
+                    <a class="btn btn-sm btn-outline-secondary" asp-controller="Manager" asp-action="Index">Manager Dashboard</a>
+                }
+            </div>
+        </div>
+    </div>
 
-                <div class="collapse navbar-collapse" id="mainNav">
-                    <ul class="navbar-nav me-auto mb-2 mb-lg-0">
-                        <li class="nav-item">
-                            <a class="nav-link text-white" asp-controller="Product" asp-action="Index">Stickers</a>
-                        </li>
-                        <li class="nav-item">
-                            <a class="nav-link text-white" asp-controller="Product" asp-action="Index">Labels</a>
-                        </li>
-                        <li class="nav-item">
-                            <a class="nav-link text-white" asp-controller="Product" asp-action="Index">Materials</a>
-                        </li>
-                        @if (User.Identity != null && User.Identity.IsAuthenticated)
-                        {
-                            @if (User.IsInRole("Admin"))
-                            {
-                                <li class="nav-item">
-                                    <a class="nav-link text-white" asp-controller="Admin" asp-action="Index">Admin Dashboard</a>
-                                </li>
-                            }
-                            @if (User.IsInRole("Manager"))
-                            {
-                                <li class="nav-item">
-                                    <a class="nav-link text-white" asp-controller="Manager" asp-action="Index">Manager Dashboard</a>
-                                </li>
-                            }
-                        }
-                    </ul>
-
-                    <div class="d-flex align-items-center gap-3">
-                        <a class="nav-link text-white p-0" asp-controller="Cart" asp-action="Index">
-                            <i class="bi bi-cart3"></i>
-                        </a>
-                        <partial name="_LoginPartial" />
-                    </div>
+        @* ② Search bar centered *@
+        <div class="header-search py-2">
+            <div class="container-fluid d-flex justify-content-center">
+                <div class="header-search-wrap position-relative">
+                    <form asp-controller="Product" asp-action="Index" method="get" class="d-flex" role="search">
+                        <input id="productNameInput"
+                               type="search"
+                               name="q"
+                               class="form-control"
+                               placeholder="Search products…"
+                               autocomplete="off"
+                               aria-label="Search products" />
+                        <button type="submit" class="btn btn-outline-secondary ms-2">Search</button>
+                    </form>
+                    <div id="productNameSuggestions"
+                         class="list-group position-absolute w-100 shadow-sm"
+                         style="z-index:1050;display:none;"></div>
                 </div>
             </div>
+        </div>
+
+        @* ③ Nav strip — sits at the bottom of the header, separated by border-top *@
+        <nav class="header-nav border-top">
+            <div class="container-fluid d-flex align-items-center">
+                <button class="nav-hamburger flex-shrink-0 me-2"
+                        type="button"
+                        data-bs-toggle="offcanvas"
+                        data-bs-target="#navOffcanvas"
+                        aria-controls="navOffcanvas"
+                        aria-label="Open navigation menu">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" fill="currentColor" viewBox="0 0 16 16" aria-hidden="true">
+                        <path fill-rule="evenodd" d="M2.5 12a.5.5 0 0 1 .5-.5h10a.5.5 0 0 1 0 1H3a.5.5 0 0 1-.5-.5zm0-4a.5.5 0 0 1 .5-.5h10a.5.5 0 0 1 0 1H3a.5.5 0 0 1-.5-.5zm0-4a.5.5 0 0 1 .5-.5h10a.5.5 0 0 1 0 1H3a.5.5 0 0 1-.5-.5z"/>
+                    </svg>
+                </button>
+                <ul class="navbar-nav flex-row flex-grow-1 justify-content-evenly mb-0">
+                    <li class="nav-item">
+                        <a class="nav-link text-dark" asp-area="" asp-controller="Home" asp-action="Index">Home</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link text-dark" asp-area="" asp-controller="Product" asp-action="Index">Products</a>
+                    </li>
+                    @if (SignInManager.IsSignedIn(User))
+                    {
+                        <li class="nav-item">
+                            <a class="nav-link text-dark" asp-area="" asp-controller="Wishlist" asp-action="Index">Wishlist</a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link text-dark" asp-area="" asp-controller="Order" asp-action="MyHistory">My Orders</a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link text-dark" asp-area="" asp-controller="User" asp-action="MyRatings">My Ratings</a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link text-dark" asp-area="" asp-controller="User" asp-action="EditProfile">My Profile</a>
+                        </li>
+                    }
+                </ul>
+            </div>
         </nav>
+
     </header>
 
-    <main role="main">
-        @RenderSection("title", false)
-        @RenderBody()
-    </main>
+    @* Off-canvas sidebar — opened by the hamburger button in the nav strip *@
+    <div class="offcanvas offcanvas-start" tabindex="-1" id="navOffcanvas" aria-labelledby="navOffcanvasTitle">
+        <div class="offcanvas-header border-bottom">
+            <a class="navbar-brand mb-0 h1" asp-area="" asp-controller="Home" asp-action="Index" id="navOffcanvasTitle">ELKH</a>
+            <button type="button" class="btn-close" data-bs-dismiss="offcanvas" aria-label="Close"></button>
+        </div>
+        <div class="offcanvas-body p-0">
+            <ul class="navbar-nav flex-column">
+                <li class="nav-item border-bottom">
+                    <a class="nav-link text-dark px-3 py-2" asp-area="" asp-controller="Home" asp-action="Index">Home</a>
+                </li>
+                <li class="nav-item border-bottom">
+                    <a class="nav-link text-dark px-3 py-2" asp-area="" asp-controller="Product" asp-action="Index">Products</a>
+                </li>
+                <li class="nav-item border-bottom">
+                    <a class="nav-link text-dark px-3 py-2" asp-area="" asp-controller="Home" asp-action="Privacy">Privacy</a>
+                </li>
+                @if (SignInManager.IsSignedIn(User))
+                {
+                    <li class="nav-item border-bottom">
+                        <a class="nav-link text-dark px-3 py-2" asp-area="" asp-controller="Wishlist" asp-action="Index">Wishlist</a>
+                    </li>
+                    <li class="nav-item border-bottom">
+                        <a class="nav-link text-dark px-3 py-2" asp-area="" asp-controller="Order" asp-action="MyHistory">My Orders</a>
+                    </li>
+                    <li class="nav-item border-bottom">
+                        <a class="nav-link text-dark px-3 py-2" asp-area="" asp-controller="User" asp-action="MyRatings">My Ratings</a>
+                    </li>
+                    <li class="nav-item border-bottom">
+                        <a class="nav-link text-dark px-3 py-2" asp-area="" asp-controller="User" asp-action="EditProfile">My Profile</a>
+                    </li>
+                }
+            </ul>
+        </div>
+    </div>
+    <div class="container">
+        <div>
+            @RenderSection("title",false)
+        </div>
+        @{
+            var raw = TempData["Message"] as string;
+            if (!string.IsNullOrEmpty(raw))
+            {
+                var parts = raw.Split(',', 2);
+                var level = parts.Length > 0 ? parts[0].Trim().ToLower() : "info";
+                var text = parts.Length > 1 ? parts[1].Trim() : string.Empty;
+                var alertClass = "alert-secondary";
+                if (level == "success") { alertClass = "alert-success"; }
+                else if (level == "danger" || level == "error") { alertClass = "alert-danger"; }
+                else if (level == "warning") { alertClass = "alert-warning"; }
+                else if (level == "info") { alertClass = "alert-info"; }
+        <div class="row">
+            <div class="col-12">
+                <div class="alert @alertClass alert-dismissible fade show" role="alert">
+                    @text
+                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                </div>
+            </div>
+        </div>
+            }
+        }
+        <main role="main" class="pb-3">
+            @RenderBody()
+        </main>
+    </div>
 
     <footer style="background:#111;">
         <div class="container py-5 text-white-50 small">
@@ -133,6 +230,7 @@
     <script src="~/lib/jquery/dist/jquery.min.js"></script>
     <script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
     <script src="~/js/site.js" asp-append-version="true"></script>
+    @await Html.PartialAsync("_ValidationScriptsPartial")
     @await RenderSectionAsync("Scripts", required: false)
 </body>
 </html>

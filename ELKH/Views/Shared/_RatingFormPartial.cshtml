@@ -1,0 +1,74 @@
+@model int
+
+@using Microsoft.AspNetCore.Identity
+@inject SignInManager<IdentityUser> SignInManager
+
+@if (SignInManager.IsSignedIn(User))
+{
+    var userAlreadyRated = ViewBag.UserAlreadyRated as bool? ?? false;
+    var existingRatingId = ViewBag.UserRatingId as int? ?? 0;
+
+    if (userAlreadyRated)
+    {
+        <p>You have already rated this order item. You can edit or delete your rating.</p>
+        <form asp-controller="Product" asp-action="EditRating" method="post" class="mb-3">
+            @Html.AntiForgeryToken()
+            <input type="hidden" name="ratingId" value="@existingRatingId" />
+            <div class="mb-3">
+                <label class="form-label">Update Rating</label>
+                <select name="rating" class="form-select" required>
+                    <option value="5">5 - Excellent</option>
+                    <option value="4">4 - Good</option>
+                    <option value="3">3 - Fair</option>
+                    <option value="2">2 - Poor</option>
+                    <option value="1">1 - Terrible</option>
+                </select>
+            </div>
+            <div class="mb-3">
+                <label class="form-label">Comment (optional)</label>
+                <textarea name="description" class="form-control" rows="3"></textarea>
+            </div>
+            <button class="btn btn-primary" type="submit">Update Rating</button>
+        </form>
+        <form asp-controller="Product" asp-action="DeleteRating" method="post">
+            @Html.AntiForgeryToken()
+            <input type="hidden" name="ratingId" value="@existingRatingId" />
+            <button class="btn btn-outline-danger">Delete Rating</button>
+        </form>
+    }
+    else
+    {
+        var eligible = ViewBag.EligibleOrderItems as IEnumerable<dynamic> ?? Enumerable.Empty<dynamic>();
+        if (!eligible.Any())
+        {
+            <p class="text-muted">You have no eligible purchases to rate for this product.</p>
+        }
+        else
+        {
+        <form asp-controller="Product" asp-action="CreateRating" method="post">
+            @Html.AntiForgeryToken()
+            <input type="hidden" name="productId" value="@Model" />
+            <input type="hidden" name="orderItemId" id="orderItemIdField" value="" />
+        <div class="mb-3">
+            <label class="form-label">Rating</label>
+            <select name="rating" class="form-select" required>
+                <option value="5">5 - Excellent</option>
+                <option value="4">4 - Good</option>
+                <option value="3">3 - Fair</option>
+                <option value="2">2 - Poor</option>
+                <option value="1">1 - Terrible</option>
+            </select>
+        </div>
+        <div class="mb-3">
+            <label class="form-label">Comment (optional)</label>
+            <textarea name="description" class="form-control" rows="3"></textarea>
+        </div>
+            <button class="btn btn-primary" type="submit" id="submit-rating">Submit Rating</button>
+        </form>
+        }
+    }
+}
+else
+{
+    <p><a asp-area="Identity" asp-page="/Account/Login">Sign in</a> to rate this product.</p>
+}

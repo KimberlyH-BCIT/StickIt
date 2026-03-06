@@ -2,151 +2,166 @@ using System.Security.Claims;
 using ELKH.Data;
 using ELKH.Models;
 using ELKH.Repositories;
+using ELKH.Services;
 using ELKH.ViewModels;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using System.Threading.Tasks;
 using System.Linq;
 
 namespace ELKH.Controllers;
 
-[Authorize]
-public class CartController : Controller
+/// <summary>
+/// Shopping cart management controller for authenticated users.
+/// Handles cart operations (add, remove, checkout) and order placement with inventory management.
+/// </summary>
+/// <remarks>
+/// All endpoints require authentication (inherited from AuthenticatedControllerBase).
+///
+/// Cart operations:
+/// - GET /Cart - Display current user's cart items
+/// - POST /Cart/AddToCart - Add product to cart with quantity validation
+/// - POST /Cart/BuyNow - Quick purchase (add to cart and redirect to checkout)
+/// - POST /Cart/RemoveFromCart - Remove item from cart
+///
+/// Checkout operations:
+/// - GET /Cart/Checkout - Display checkout page with cart summary and total
+/// - POST /Cart/PlaceOrder - Process order, decrement inventory, clear cart
+///
+/// Business logic delegation:
+/// - All cart operations delegated to ICartService for separation of concerns
+/// - Controller focuses on HTTP concerns (validation, authorization, result shaping)
+/// - Service layer handles business rules (inventory checks, price calculations)
+///
+/// Security:
+/// - User email retrieved from authenticated context via AuthenticatedControllerBase
+/// - All operations scoped to current user's cart
+/// - Anti-forgery tokens required for all POST operations
+/// </remarks>
+public class CartController : AuthenticatedControllerBase
 {
-    private readonly ICartRepo _cartRepo;
-    private readonly ApplicationDbContext _db;
+    // Dependency: cart service implements domain logic for cart management and ordering.
+    private readonly ICartService _cartService;
 
-    public CartController(ICartRepo cartRepo, ApplicationDbContext db)
+    public CartController(ICartService cartService, IUserService userService)
+        : base(userService)
     {
-        _cartRepo = cartRepo;
-        _db = db;
+        _cartService = cartService;
     }
 
-    // GET: /Cart/Index
-    [HttpGet]
+    // ---------------------------------------------------------------------
+    // Viewing endpoints
+    // ---------------------------------------------------------------------
+    // GET: /Cart
     public async Task<IActionResult> Index()
     {
-        var registeredUserId = await GetOrCreateRegisteredUserIdAsync();
-        if (registeredUserId == null)
-            return RedirectToPage("/Account/Login", new { area = "Identity" });
+        var authResult = RequireAuthenticatedUser(out var email);
+        if (authResult != null) return authResult;
 
-        var cartItems = await _cartRepo.GetByUserIdAsync(registeredUserId.Value);
-
-        var vm = new CartVM
-        {
-            Items = cartItems.Select(c => new CartItemVM
-            {
-                CartItemId = c.PkCartId,
-                ProductId = c.FkProductID,
-                ProductName = c.Product?.Name ?? string.Empty,
-                ImageUrl = c.Product?.ProductImages?.FirstOrDefault()?.ProductImageURL,
-                UnitPrice = c.Product?.Price ?? 0m,
-                Quantity = c.Quantity,
-                LineTotal = (c.Product?.Price ?? 0m) * c.Quantity
-                
-            }).ToList()
-        };
-        
-        
-        vm.Tax = vm.Subtotal * 0.12m;
-        vm.ShippingCost = vm.Subtotal >= 50m ? 0m : 7.99m;
-        vm.Total = vm.Subtotal + vm.Tax + vm.ShippingCost;
-
-        return View(vm);
+        // Delegate retrieval to the cart service and render the view with model data.
+        var items = await _cartService.GetCartItemsAsync(email);
+        return View(items);
     }
 
-    // POST: /Cart/Add
+    // ---------------------------------------------------------------------
+    // Cart modification endpoints (mutating operations)
+    // ---------------------------------------------------------------------
+    // POST: /Cart/AddToCart
     [HttpPost]
     [ValidateAntiForgeryToken]
-    public async Task<IActionResult> Add(int productId, int quantity = 1)
+    public async Task<IActionResult> AddToCart(int itemId, int quantity)
     {
-        if (quantity < 1) quantity = 1;
+        // Validate input early to avoid unnecessary work.
+        if (quantity <= 0) return BadRequest("Quantity must be positive.");
 
-        var registeredUserId = await GetOrCreateRegisteredUserIdAsync();
-        if (registeredUserId == null)
-            return RedirectToPage("/Account/Login", new { area = "Identity" });
+        var authResult = RequireAuthenticatedUser(out var email);
+        if (authResult != null) return authResult;
 
-        var existing = await _cartRepo.GetByUserAndProductAsync(registeredUserId.Value, productId);
-        if (existing != null)
+        // Service performs the actual add-to-cart business logic including inventory checks.
+        await _cartService.AddToCartAsync(email, itemId, quantity);
+        return RedirectToAction(nameof(Index));
+    }
+
+    // POST: /Cart/BuyNow
+    [HttpPost]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> BuyNow(int itemId, int quantity)
+    {
+        var authResult = RequireAuthenticatedUser(out var email);
+        if (authResult != null) return authResult;
+
+        var orderId = await _cartService.BuyNowAsync(email, itemId, quantity);
+        switch (orderId)
         {
-            existing.Quantity += quantity;
-            await _cartRepo.UpdateAsync(existing);
+            case -2:
+                SetWarningMessage("Please add a delivery address before purchasing.");
+                return RedirectToAction("Addresses", "User");
+            case -1:
+                SetWarningMessage("This item is currently out of stock.");
+                return RedirectToAction("Details", "Product", new { id = itemId });
+            case 0:
+                SetWarningMessage("Unable to complete purchase. Please try again.");
+                return RedirectToAction("Details", "Product", new { id = itemId });
+            default:
+                SetSuccessMessage("Order placed successfully!");
+                return RedirectToAction("Details", "Order", new { id = orderId });
         }
-        else
+    }
+
+    // POST: /Cart/RemoveFromCart
+    [HttpPost]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> RemoveFromCart(int cartId)
+    {
+        var authResult = RequireAuthenticatedUser(out var email);
+        if (authResult != null) return authResult;
+
+        // Removal is delegated to the service which enforces ownership and consistency checks.
+        await _cartService.RemoveFromCartAsync(email, cartId);
+        return RedirectToAction(nameof(Index));
+    }
+
+    // ---------------------------------------------------------------------
+    // Checkout and ordering endpoints
+    // ---------------------------------------------------------------------
+    // GET: /Cart/Checkout
+    public async Task<IActionResult> Checkout()
+    {
+        var authResult = RequireAuthenticatedUser(out var email);
+        if (authResult != null) return authResult;
+
+        // Gather items and compute totals for the checkout view. Keep presentation concerns here
+        // while the service remains responsible for pricing/business calculations.
+        var items = await _cartService.GetCartItemsAsync(email);
+        var total = items.Sum(i => i.TotalPrice);
+        ViewBag.Total = total;
+        ViewBag.Items = items;
+        return View();
+    }
+
+    // POST: /Cart/PlaceOrder
+    [HttpPost]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> PlaceOrder()
+    {
+        var authResult = RequireAuthenticatedUser(out var email);
+        if (authResult != null) return authResult;
+
+        var orderId = await _cartService.PlaceOrderAsync(email);
+        switch (orderId)
         {
-            var cart = new CartModel
-            {
-                FkRegisteredUserId = registeredUserId.Value,
-                FkProductID = productId,
-                Quantity = quantity,
-                TotalPrice = 0m
-            };
-
-            await _cartRepo.AddAsync(cart);
+            case -2:
+                SetWarningMessage("Please add a delivery address to your account before placing an order.");
+                return RedirectToAction("Addresses", "User");
+            case -1:
+                SetWarningMessage("One or more items in your cart are out of stock. Please update your cart.");
+                return RedirectToAction(nameof(Index));
+            case 0:
+                return RedirectToAction(nameof(Index));
+            default:
+                SetSuccessMessage("Order placed successfully");
+                return RedirectToAction("Details", "Order", new { id = orderId });
         }
-
-        return RedirectToAction(nameof(Index));
-    }
-
-    // POST: /Cart/Update
-    [HttpPost]
-    [ValidateAntiForgeryToken]
-    public async Task<IActionResult> Update(int cartId, int quantity)
-    {
-        if (quantity < 1) quantity = 1;
-
-        var registeredUserId = await GetOrCreateRegisteredUserIdAsync();
-        if (registeredUserId == null)
-            return RedirectToPage("/Account/Login", new { area = "Identity" });
-
-        var cartItems = await _cartRepo.GetByUserIdAsync(registeredUserId.Value);
-        var item = cartItems.FirstOrDefault(x => x.PkCartId == cartId);
-
-        if (item != null)
-        {
-            item.Quantity = quantity;
-            await _cartRepo.UpdateAsync(item);
-        }
-
-        return RedirectToAction(nameof(Index));
-    }
-
-    // POST: /Cart/Remove
-    [HttpPost]
-    [ValidateAntiForgeryToken]
-    public async Task<IActionResult> Remove(int cartId)
-    {
-        await _cartRepo.RemoveAsync(cartId);
-        return RedirectToAction(nameof(Index));
-    }
-
-    // POST: /Cart/Clear
-    [HttpPost]
-    [ValidateAntiForgeryToken]
-    public async Task<IActionResult> Clear()
-    {
-        var registeredUserId = await GetOrCreateRegisteredUserIdAsync();
-        if (registeredUserId == null)
-            return RedirectToPage("/Account/Login", new { area = "Identity" });
-
-        await _cartRepo.ClearByUserIdAsync(registeredUserId.Value);
-        return RedirectToAction(nameof(Index));
-    }
-
-    
-    private async Task<int?> GetOrCreateRegisteredUserIdAsync()
-    {
-        // Map the current Identity user to your RegisteredUsers table via email.
-        var email = User.FindFirstValue(ClaimTypes.Email) ?? User.Identity?.Name;
-        if (string.IsNullOrWhiteSpace(email)) return null;
-
-        var registeredUser = await _db.RegisteredUsers.FirstOrDefaultAsync(u => u.Email == email);
-        if (registeredUser != null) return registeredUser.PkRegisteredUserId;
-
-        // Create a RegisteredUser row on first use.
-        registeredUser = new RegisteredUserModel { Email = email };
-        _db.RegisteredUsers.Add(registeredUser);
-        await _db.SaveChangesAsync();
-        return registeredUser.PkRegisteredUserId;
     }
 }

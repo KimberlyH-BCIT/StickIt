@@ -44,8 +44,8 @@
                     @foreach (var item in order.OrderItems)
                     {
                         <div class="d-flex justify-content-between mb-1">
-                            <span>@(item.Products?.Name ?? "Product") <span class="text-muted">× @item.Quantity</span></span>
-                            <span>$@((item.Products?.Price ?? 0) * item.Quantity).ToString("F2")</span>
+                            <span>@(item.Product?.Name ?? "Product") <span class="text-muted">× @item.Quantity</span></span>
+                            <span>$@((item.Product?.Price ?? 0) * item.Quantity).ToString("F2")</span>
                         </div>
                     }
                     <hr />
