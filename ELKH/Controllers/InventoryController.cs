@@ -67,10 +67,10 @@ namespace ELKH.Controllers
         }
 
         //Pass
-        public async Task<IActionResult> AddImage(int productId)
+        public async Task<IActionResult> AddImage(int Id)
         {
             var vm = new ImageModel();
-            ViewBag.ProductId = productId;
+            ViewBag.ProductId = Id;
 
             return View(vm);
         }
@@ -89,9 +89,9 @@ namespace ELKH.Controllers
 
             if (addImageRepo)
             {
-                return RedirectToAction(nameof(ProductImages));
+                return RedirectToAction("ProductImages", new {id = productId});
             }
-            return RedirectToAction("ProductImage", new { Id = productId });
+            return View("Index");
         }
     }
 }
