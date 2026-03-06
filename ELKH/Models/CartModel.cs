@@ -16,6 +16,7 @@ namespace ELKH.Models
 
         //Relationship with Product
         public int FkProductID { get; set; }
-        public ProductModel? Product { get; set; } =  new ProductModel();
+        public ProductModel? Product { get; set; }
     }
 }
+    

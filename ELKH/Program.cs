@@ -1,4 +1,5 @@
 using ELKH.Data;
+using ELKH.Models;
 using ELKH.Repositories;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Localization;
@@ -15,6 +16,10 @@ builder.Services.AddScoped<InventoryRepo>();
 var connectionString = builder.Configuration.GetConnectionString("DefaultConnection") ?? throw new InvalidOperationException("Connection string 'DefaultConnection' not found.");
 builder.Services.AddDbContext<ApplicationDbContext>(options =>
     options.UseSqlite(connectionString));
+
+builder.Services.AddDbContext<ImageStoreContext>(options =>
+    options.UseSqlite(builder.Configuration.GetConnectionString("ImageStoreConnection")));
+
 builder.Services.AddDatabaseDeveloperPageExceptionFilter();
 
 builder.Services.AddDefaultIdentity<IdentityUser>(options => options.SignIn.RequireConfirmedAccount = true)

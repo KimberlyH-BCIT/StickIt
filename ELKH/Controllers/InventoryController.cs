@@ -1,4 +1,6 @@
-﻿using ELKH.Repositories;
+﻿using System.Linq;
+using ELKH.Models;
+using ELKH.Repositories;
 using ELKH.ViewModels;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore.Metadata.Internal;
@@ -8,6 +10,7 @@ namespace ELKH.Controllers
     public class InventoryController : Controller
     {
         private readonly InventoryRepo _inventoryRepo;
+        
         public InventoryController(InventoryRepo inventoryRepo)
         {
             _inventoryRepo = inventoryRepo;
@@ -40,47 +43,55 @@ namespace ELKH.Controllers
         }
 
         //Pass
-        public async Task<IActionResult> ProductImages(int productId)
+        public async Task<IActionResult> ProductImages(int Id)
         {
-            var productImages = await _inventoryRepo.GetProductImages(productId);
 
-            var vm = new InventoryVM
+            ViewBag.ProductId = Id;
+            // GetProductImages likely returns List<ImageModel>
+            var productImages = await _inventoryRepo.GetProductImages(Id);
+
+            if (productImages == null)
             {
-                PkProductId = productId,
-                ProductImage = productImages
-            };
+                return NotFound();
+            }
 
-            return View(vm);
+            // Map each ImageModel to ProductImageVM
+            var vmList = productImages.Select(pi => new ProductImageVM
+            {
+                FileName = pi.FileName,
+                Description = pi.Description,
+                ImageData = pi.ImageData
+            }).ToList();
+
+            return View(vmList);
         }
 
         //Pass
         public async Task<IActionResult> AddImage(int productId)
         {
-            var vm = new ProductImageVM
-            {
-                FkProductId = productId
-            };
+            var vm = new ImageModel();
+            ViewBag.ProductId = productId;
 
             return View(vm);
         }
 
 
-        //Test this after finish the image input setup
+        //Pass
         [HttpPost]
-        public async Task<IActionResult> AddImage(ProductImageVM vm)
+        public async Task<IActionResult> AddImage(int productId, IFormFile file)
         {
             if (!ModelState.IsValid)
             {
-                return View(vm);
+                return View("AddImage");
             }
 
-            var addImageRepo = await _inventoryRepo.AddProductImage(vm);
+            var addImageRepo = await _inventoryRepo.UploadImage(productId,file);
 
-            if(addImageRepo)
+            if (addImageRepo)
             {
                 return RedirectToAction(nameof(ProductImages));
             }
-            return View(vm);
+            return RedirectToAction("ProductImage", new { Id = productId });
         }
     }
 }

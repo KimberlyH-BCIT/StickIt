@@ -22,7 +22,7 @@
                 <td>@pro.ProductName</td>
                 <td>@pro.Quantity</td>
                 <td>@pro.IsActive</td>
-                <td><a asp-controller="Inventory" asp-action="ProductImages" asp-route-productId="@pro.PkProductId">Edit Product Image</a></td>
+                <td><a asp-controller="Inventory" asp-action="ProductImages" asp-route-Id="@pro.PkProductId">Edit Product Image</a></td>
                 <td>
                     <label for="@pro.PkProductId">Edit Quantity</label>
                     <input type="checkbox" class="editQuantity" data-id="@pro.PkProductId" />

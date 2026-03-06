@@ -27,7 +27,7 @@ namespace ELKH.Models
         public CategoryModel? Category { get; set; }
 
         //Product Image Relationship
-        public ICollection<ProductImageModel>? ProductImages { get; set; }
+        public ICollection<ImageModel>? ProductImages { get; set; }
 
         //Cart Relationship
         public ICollection<CartModel>? Carts { get; set; }

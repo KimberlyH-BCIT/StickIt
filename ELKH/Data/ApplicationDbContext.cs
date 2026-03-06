@@ -13,7 +13,7 @@ namespace ELKH.Data
 
         public DbSet<ProductModel> Products { get; set; }
         public DbSet<CategoryModel> Categories { get; set; }
-        public DbSet<ProductImageModel> ProductImages { get; set; }
+        public DbSet<ImageModel> ProductImages { get; set; }
         public DbSet<RegisteredUserModel> RegisteredUsers { get; set; }
         public DbSet<CartModel> Carts { get; set; }
         public DbSet<OrderModel> Orders { get; set; }
@@ -30,10 +30,14 @@ namespace ELKH.Data
         {
             base.OnModelCreating(modelBuilder);
 
-            modelBuilder.Entity<OrderModel>()
-                .HasOne(o => o.OrderStatuses)
-                .WithOne(d => d.Order)
-                .HasForeignKey<OrderStatusModel>(o => o.FkOrderId);
+            // NOTE: The one-to-one configuration for Order <-> OrderStatus caused design-time
+            // errors when creating the ImageStoreContext. If you need this relationship,
+            // re-add configuration ensuring the dependent side is explicit and navigation
+            // properties are nullable (no default instantiation in model classes).
+            modelBuilder.Entity<OrderStatusModel>()
+                .HasOne(os => os.Order)
+                .WithOne(o => o.OrderStatuses)
+                .HasForeignKey<OrderStatusModel>(os => os.FkOrderId);
 
             modelBuilder.Entity<RegisteredUserModel>()
                         .HasOne(r => r.WishLists)

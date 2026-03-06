@@ -21,19 +21,19 @@ namespace ELKH.Models
 
         //Relationship with User
         public int FkRegisteredUserId { get; set; }
-        public RegisteredUserModel RegisteredUser { get; set; } = new RegisteredUserModel();
+        public RegisteredUserModel? RegisteredUser { get; set; }
 
         //Relationship with OrderItem
         public ICollection<OrderItemModel> OrderItems { get; set; } = new List<OrderItemModel>();
 
         //Relationship with Transaction
-        public TransactionModel Transaction { get; set; } = new TransactionModel();
+        public TransactionModel? Transaction { get; set; }
 
         //Order Status Relationship
-        public OrderStatusModel OrderStatuses { get; set; } = new OrderStatusModel();
+        public OrderStatusModel? OrderStatuses { get; set; }
 
         //ContactDetail Relationship
         public int FkContactId { get; set; }
-        public ContactDetailModel ContactDetail { get; set; } = new ContactDetailModel();
+        public ContactDetailModel? ContactDetail { get; set; }
     }
 }
