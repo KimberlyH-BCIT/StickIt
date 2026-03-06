@@ -4,6 +4,10 @@ using Microsoft.AspNetCore.Mvc;
 
 namespace ELKH.Controllers
 {
+    /// <summary>
+    /// Handles the application's public landing page and global error display.
+    /// No authentication is required for any action in this controller.
+    /// </summary>
     public class HomeController : Controller
     {
         public IActionResult Index()

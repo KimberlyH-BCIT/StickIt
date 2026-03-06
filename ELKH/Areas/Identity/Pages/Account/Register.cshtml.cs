@@ -13,6 +13,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using ELKH.Data;
 using ELKH.Models;
+using ELKH.Repositories;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
@@ -24,31 +25,47 @@ using Microsoft.Extensions.Logging;
 
 namespace ELKH.Areas.Identity.Pages.Account
 {
+    /// <summary>
+    /// Razor Page model for new user registration.
+    /// Extends the scaffolded Identity registration flow to create three additional
+    /// records on successful sign-up:
+    /// <list type="bullet">
+    ///   <item><see cref="RegisteredUserModel"/> — links the Identity user to application data.</item>
+    ///   <item><see cref="UserProfileModel"/> — stores first/last name for the profile header.</item>
+    ///   <item><see cref="ContactDetailModel"/> — stores the shipping address supplied during registration.</item>
+    /// </list>
+    /// </summary>
     public class RegisterModel : PageModel
     {
         private readonly SignInManager<IdentityUser> _signInManager;
         private readonly UserManager<IdentityUser> _userManager;
+        private readonly RoleManager<IdentityRole> _roleManager;
         private readonly IUserStore<IdentityUser> _userStore;
         private readonly IUserEmailStore<IdentityUser> _emailStore;
         private readonly ILogger<RegisterModel> _logger;
         private readonly IEmailSender _emailSender;
         private readonly ApplicationDbContext _context;
+        private readonly IContactDetailRepo _contactRepository;
 
         public RegisterModel(
             UserManager<IdentityUser> userManager,
+            RoleManager<IdentityRole> roleManager,
             IUserStore<IdentityUser> userStore,
             SignInManager<IdentityUser> signInManager,
             ILogger<RegisterModel> logger,
             IEmailSender emailSender,
-            ApplicationDbContext context)
+            ApplicationDbContext context,
+            IContactDetailRepo contactRepository)
         {
             _userManager = userManager;
+            _roleManager = roleManager;
             _userStore = userStore;
             _emailStore = GetEmailStore();
             _signInManager = signInManager;
             _logger = logger;
             _emailSender = emailSender;
             _context = context;
+            _contactRepository = contactRepository;
         }
 
         /// <summary>
@@ -103,15 +120,67 @@ namespace ELKH.Areas.Identity.Pages.Account
             [Display(Name = "Confirm password")]
             [Compare("Password", ErrorMessage = "The password and confirmation password do not match.")]
             public string ConfirmPassword { get; set; }
+
+            [Required]
+            [MaxLength(100)]
+            [Display(Name = "First Name")]
+            public string FirstName { get; set; }
+
+            [Required]
+            [MaxLength(100)]
+            [Display(Name = "Last Name")]
+            public string LastName { get; set; }
+
+            [Required]
+            [Phone]
+            [DataType(DataType.PhoneNumber)]
+            [Display(Name = "Phone Number")]
+            public string PhoneNumber { get; set; }
+
+            [Required]
+            [MaxLength(200)]
+            [Display(Name = "Street Address")]
+            public string Street { get; set; }
+
+            [Required]
+            [MaxLength(100)]
+            [Display(Name = "City")]
+            public string City { get; set; }
+
+            [Required]
+            [MaxLength(100)]
+            [Display(Name = "Province/State")]
+            public string Province { get; set; }
+
+            [Required]
+            [MaxLength(20)]
+            [Display(Name = "Postal Code")]
+            public string PostCode { get; set; }
+
+            [Required]
+            [MaxLength(100)]
+            [Display(Name = "Country")]
+            public string Country { get; set; } = "Canada";
         }
 
 
+        /// <summary>Populates external login providers and stores the return URL for the view.</summary>
         public async Task OnGetAsync(string returnUrl = null)
         {
             ReturnUrl = returnUrl;
             ExternalLogins = (await _signInManager.GetExternalAuthenticationSchemesAsync()).ToList();
         }
 
+        /// <summary>
+        /// Handles the registration form submission.
+        /// On success, performs these steps in order:
+        /// 1. Creates the ASP.NET Core Identity user (<see cref="IdentityUser"/>).
+        /// 2. Persists a <see cref="RegisteredUserModel"/> to link the identity to app data.
+        /// 3. Creates a <see cref="UserProfileModel"/> so the name shows on first login.
+        /// 4. Creates the default <see cref="ContactDetailModel"/> from the address fields.
+        /// 5. Sends an email-confirmation link; redirects to confirmation page or signs in directly
+        ///    depending on <c>RequireConfirmedAccount</c> setting.
+        /// </summary>
         public async Task<IActionResult> OnPostAsync(string returnUrl = null)
         {
             returnUrl ??= Url.Content("~/");
@@ -131,8 +200,40 @@ namespace ELKH.Areas.Identity.Pages.Account
                     {
                         Email = Input.Email
                     };
-                        _context.RegisteredUsers.Add(registeredUser);
-                        _context.SaveChanges();
+                    _context.RegisteredUsers.Add(registeredUser);
+
+                    // Create the user profile immediately so the header greeting shows
+                    // the first name rather than the email address from the very first login.
+                    var profile = new UserProfileModel
+                    {
+                        PkEmail   = Input.Email,
+                        FirstName = Input.FirstName,
+                        LastName  = Input.LastName
+                    };
+                    _context.UserProfiles.Add(profile);
+
+                    await _context.SaveChangesAsync();
+
+                    var contact = new ContactDetailModel
+                    {
+                        FirstName = Input.FirstName,
+                        LastName = Input.LastName,
+                        PhoneNumber = Input.PhoneNumber,
+                        Street = Input.Street,
+                        City = Input.City,
+                        Province = Input.Province,
+                        PostCode = Input.PostCode,
+                        Country = Input.Country,
+                        IsDefault = true,
+                        FkRegisteredUserId = registeredUser.PkRegisteredUserId
+                    };
+                    await _contactRepository.AddAsync(contact);
+
+                    // Assign the Customer role to every new registrant.
+                    const string customerRole = "Customer";
+                    if (!await _roleManager.RoleExistsAsync(customerRole))
+                        await _roleManager.CreateAsync(new IdentityRole(customerRole));
+                    await _userManager.AddToRoleAsync(user, customerRole);
 
                     _logger.LogInformation("User created a new account with password.");
 

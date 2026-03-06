@@ -1,0 +1,148 @@
+@model ELKH.ViewModels.UserProfilePageVM
+
+@{
+    ViewData["Title"] = "My Profile";
+}
+
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h2 class="mb-0">My Profile</h2>
+    <a class="btn btn-sm btn-outline-secondary" asp-action="Index">&larr; Dashboard</a>
+</div>
+
+@* ── Profile Picture ───────────────────────────────────────────────── *@
+<div class="card mb-4">
+    <div class="card-header">
+        <h5 class="mb-0">Profile Picture</h5>
+    </div>
+    <div class="card-body">
+        <div class="d-flex align-items-center gap-4 flex-wrap">
+            <div>
+                @if (Model.Profile.HasAvatar)
+                {
+                    <img src="@Url.Action("GetAvatar", "User")"
+                         alt="Profile picture"
+                         class="rounded-circle border"
+                         style="width:96px;height:96px;object-fit:cover;" />
+                }
+                else
+                {
+                    <div class="rounded-circle border bg-secondary d-flex align-items-center justify-content-center text-white"
+                         style="width:96px;height:96px;font-size:2.5rem;">
+                        <span>&#128100;</span>
+                    </div>
+                }
+            </div>
+            <div class="flex-grow-1">
+                <form asp-action="UploadAvatar" method="post" enctype="multipart/form-data">
+                    @Html.AntiForgeryToken()
+                    <div class="mb-2">
+                        <label asp-for="AvatarFile" class="form-label small text-muted">
+                            Upload a new picture (JPEG, PNG, GIF or WebP &mdash; max&nbsp;10&nbsp;MB)
+                        </label>
+                        <input asp-for="AvatarFile" type="file" class="form-control form-control-sm"
+                               accept="image/jpeg,image/png,image/gif,image/webp" />
+                    </div>
+                    <button type="submit" class="btn btn-sm btn-primary">Upload</button>
+                </form>
+            </div>
+            @if (Model.Profile.HasAvatar)
+            {
+                <form asp-action="RemoveAvatar" method="post" class="mb-0">
+                    @Html.AntiForgeryToken()
+                    <button type="submit" class="btn btn-sm btn-outline-danger"
+                            onclick="return confirm('Remove your profile picture?')">Remove</button>
+                </form>
+            }
+        </div>
+    </div>
+</div>
+
+@* ── Account Information ───────────────────────────────────────────── *@
+<div class="card mb-4">
+    <div class="card-header">
+        <h5 class="mb-0">Account Information</h5>
+    </div>
+    <div class="card-body">
+        <form asp-action="EditProfile" method="post">
+            @Html.AntiForgeryToken()
+            <div asp-validation-summary="ModelOnly" class="text-danger mb-3" role="alert"></div>
+
+            <div class="mb-3">
+                <span class="form-label text-muted small">Email</span>
+                <p class="mb-0">@Model.Profile.PkEmail</p>
+            </div>
+
+            <div class="row">
+                <div class="col-md-6 mb-3">
+                    <label asp-for="Profile.FirstName" class="form-label"></label>
+                    <input asp-for="Profile.FirstName" class="form-control" />
+                    <span asp-validation-for="Profile.FirstName" class="text-danger"></span>
+                </div>
+                <div class="col-md-6 mb-3">
+                    <label asp-for="Profile.LastName" class="form-label"></label>
+                    <input asp-for="Profile.LastName" class="form-control" />
+                    <span asp-validation-for="Profile.LastName" class="text-danger"></span>
+                </div>
+            </div>
+
+            <button type="submit" class="btn btn-primary">Save Changes</button>
+        </form>
+    </div>
+</div>
+
+@* ── Contact Details ───────────────────────────────────────────────── *@
+<div class="card">
+    <div class="card-header d-flex justify-content-between align-items-center">
+        <h5 class="mb-0">Contact Details</h5>
+        <a class="btn btn-sm btn-outline-primary" asp-action="AddAddress">+ Add Address</a>
+    </div>
+    <div class="card-body">
+        @if (!Model.Addresses.Any())
+        {
+            <p class="text-muted mb-0">
+                No addresses saved yet. <a asp-action="AddAddress">Add one now.</a>
+            </p>
+        }
+        else
+        {
+            <div class="row g-3">
+                @foreach (var address in Model.Addresses)
+                {
+                    <div class="col-md-6">
+                        <div class="card h-100 @(address.IsDefault ? "border-primary" : "")">
+                            <div class="card-body">
+                                @if (address.IsDefault)
+                                {
+                                    <span class="badge bg-primary mb-2">Default</span>
+                                }
+                                <p class="mb-1 fw-semibold">@address.FirstName @address.LastName</p>
+                                <p class="mb-1 small text-muted">@address.PhoneNumber</p>
+                                <p class="mb-0 small">@address.Street</p>
+                                <p class="mb-0 small">@address.City, @address.Province @address.PostCode</p>
+                                <p class="mb-3 small">@address.Country</p>
+                                <div class="d-flex gap-2 flex-wrap">
+                                    <a class="btn btn-sm btn-outline-secondary"
+                                       asp-action="EditAddress" asp-route-id="@address.ContactId">Edit</a>
+                                    <a class="btn btn-sm btn-outline-danger"
+                                       asp-action="DeleteAddress" asp-route-id="@address.ContactId">Delete</a>
+                                    @if (!address.IsDefault)
+                                    {
+                                        <form asp-action="SetDefaultAddress" asp-route-id="@address.ContactId"
+                                              method="post" class="mb-0">
+                                            @Html.AntiForgeryToken()
+                                            <button type="submit" class="btn btn-sm btn-outline-primary">Set Default</button>
+                                        </form>
+                                    }
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                }
+            </div>
+        }
+    </div>
+</div>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}

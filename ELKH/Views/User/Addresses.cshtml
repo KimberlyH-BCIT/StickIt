@@ -1,0 +1,67 @@
+@model IEnumerable<ELKH.ViewModels.ContactDetailVM>
+@{
+    ViewData["Title"] = "My Addresses";
+}
+
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h1 class="fw-bold mb-0"><i class="bi bi-geo-alt me-2"></i>My Addresses</h1>
+    <a asp-action="AddAddress" class="btn btn-success">
+        <i class="bi bi-plus-circle me-1"></i>Add Address
+    </a>
+</div>
+
+@if (!Model.Any())
+{
+    <div class="text-center py-5 text-muted">
+        <i class="bi bi-geo-alt display-1"></i>
+        <p class="fs-5 mt-3">No addresses saved yet.</p>
+        <a asp-action="AddAddress" class="btn btn-dark mt-2">Add Your First Address</a>
+    </div>
+}
+else
+{
+    <div class="row g-3">
+        @foreach (var addr in Model)
+        {
+            <div class="col-md-6">
+                <div class="card shadow-sm @(addr.IsDefault ? "border-dark" : "")">
+                    @if (addr.IsDefault)
+                    {
+                        <div class="card-header bg-dark text-white py-2 small fw-semibold">
+                            <i class="bi bi-star-fill me-1"></i>Default Address
+                        </div>
+                    }
+                    <div class="card-body">
+                        <p class="fw-bold mb-1">@addr.FirstName @addr.LastName</p>
+                        <p class="text-muted small mb-1">@addr.PhoneNumber</p>
+                        <address class="text-muted small mb-0">
+                            @addr.Street<br />
+                            @addr.City, @addr.Province @addr.PostCode<br />
+                            @addr.Country
+                        </address>
+                    </div>
+                    <div class="card-footer bg-white d-flex gap-2 flex-wrap">
+                        <a asp-action="EditAddress" asp-route-id="@addr.ContactId"
+                           class="btn btn-sm btn-outline-primary">
+                            <i class="bi bi-pencil me-1"></i>Edit
+                        </a>
+                        @if (!addr.IsDefault)
+                        {
+                            <form asp-action="SetDefaultAddress" method="post">
+                                @Html.AntiForgeryToken()
+                                <input type="hidden" name="id" value="@addr.ContactId" />
+                                <button type="submit" class="btn btn-sm btn-outline-secondary">
+                                    <i class="bi bi-star me-1"></i>Set Default
+                                </button>
+                            </form>
+                        }
+                        <a asp-action="DeleteAddress" asp-route-id="@addr.ContactId"
+                           class="btn btn-sm btn-outline-danger ms-auto">
+                            <i class="bi bi-trash me-1"></i>Delete
+                        </a>
+                    </div>
+                </div>
+            </div>
+        }
+    </div>
+}
