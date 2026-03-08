@@ -1,11 +1,13 @@
 using Microsoft.AspNetCore.Mvc;
 using ELKH.ViewModels;
-using System.Collections.Generic;
 using System.Security.Claims;
 using ELKH.Data;
 using ELKH.Repositories;
 using Microsoft.EntityFrameworkCore;
 using System.Linq;
+using ELKH.Models;
+using ELKH.Services;
+using Microsoft.Extensions.Options;
 
 namespace ELKH.Controllers;
 
@@ -36,35 +38,38 @@ public class CheckoutController : Controller
 {
     private readonly ApplicationDbContext _db;
     private readonly ICartRepo _cartRepo;
-    private readonly IWebHostEnvironment _env;
+    private readonly PayPalOptions _pp;
 
-    public CheckoutController(ApplicationDbContext db, ICartRepo cartRepo, IWebHostEnvironment env)
+    public CheckoutController(ApplicationDbContext db, ICartRepo cartRepo, IOptions<PayPalOptions> pp)
     {
         _db = db;
         _cartRepo = cartRepo;
-        _env = env;
-
-        // Hard stop: the payment flow is a stub. Refuse to serve any environment
-        // other than Development so this can never reach real users by accident.
-        // Remove this guard (and wire up a real payment provider) before production.
-        if (!_env.IsDevelopment())
-            throw new InvalidOperationException(
-                "CheckoutController: payment processing is not integrated. " +
-                "Wire up a real payment gateway before deploying outside Development.");
+        _pp = pp.Value;
     }
 
     [HttpGet]
     public async Task<IActionResult> Index()
     {
+        List<CartModel> cartItems;
+
         var email = User.FindFirstValue(ClaimTypes.Email) ?? User.Identity?.Name;
+
         if (string.IsNullOrWhiteSpace(email))
-            return RedirectToPage("/Account/Login", new { area = "Identity" });
-
-        var regUser = await _db.RegisteredUsers.FirstOrDefaultAsync(u => u.Email == email);
-        if (regUser == null)
-            return RedirectToAction("Index", "Cart");
-
-        var cartItems = await _cartRepo.GetByUserIdAsync(regUser.PkRegisteredUserId);
+        {
+            cartItems = new List<CartModel>();
+        }
+        else
+        {
+            var regUser = await _db.RegisteredUsers.FirstOrDefaultAsync(u => u.Email == email);
+            if (regUser == null)
+            {
+                cartItems = new List<CartModel>();
+            }
+            else
+            {
+                cartItems = (await _cartRepo.GetByUserIdAsync(regUser.PkRegisteredUserId)).ToList();
+            }
+        }
 
         var checkoutVM = new CheckoutVM
         {
@@ -87,35 +92,37 @@ public class CheckoutController : Controller
 
         checkoutVM.Total = checkoutVM.Subtotal + checkoutVM.Tax + checkoutVM.ShippingCost;
 
+        // PayPal client id 
+        ViewBag.PayPalClientId = _pp.ClientId;
+
         return View(checkoutVM);
     }
 
+    // POST: Shipping form, A PayPal approve+capture
     [HttpPost]
     [ValidateAntiForgeryToken]
-    public IActionResult ProcessPayment(CheckoutVM vm)
+    public IActionResult Finalize(CheckoutVM vm, string paypalOrderId)
     {
-        if (!ModelState.IsValid) return View("Index", vm);
-
-        // STUB: Payment gateway integration is not yet implemented.
-        // Replace this flag with a real payment provider call (e.g. Stripe, PayPal)
-        // that returns success/failure before this goes to production.
-        bool paymentSuccess = true;
-
-        if (paymentSuccess)
+        if (!ModelState.IsValid)
         {
-            return RedirectToAction(nameof(Complete));
-        }
-        else
-        {
-            ModelState.AddModelError("", "Payment failed.");
+            ViewBag.PayPalClientId = _pp.ClientId;
             return View("Index", vm);
         }
+
+        if (string.IsNullOrWhiteSpace(paypalOrderId))
+        {
+            ModelState.AddModelError("", "PayPal payment is required.");
+            ViewBag.PayPalClientId = _pp.ClientId;
+            return View("Index", vm);
+        }
+
+        return RedirectToAction(nameof(Complete), new { orderId = paypalOrderId });
     }
 
-    public IActionResult Complete()
+    [HttpGet]
+    public IActionResult Complete(string orderId)
     {
-        // STUB: Replace with the real order ID returned by the payment/order pipeline.
-        ViewBag.OrderId = "ORDER-12345-MOCK";
+        ViewBag.OrderId = string.IsNullOrWhiteSpace(orderId) ? "ORDER-12345-MOCK" : orderId;
         return View();
     }
 }

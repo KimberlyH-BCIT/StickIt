@@ -1,0 +1,29 @@
+@{
+    ViewData["Title"] = "Shipping & Delivery";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+
+<div class="container py-5">
+    <h1 class="fw-bold mb-3">Shipping & Delivery</h1>
+
+    <div class="alert alert-warning rounded-4">
+        <strong>All sales are final.</strong> No refunds.
+    </div>
+
+    <div class="card shadow-sm rounded-4 border-0">
+        <div class="card-body p-4">
+            <h5 class="fw-bold mb-2">Processing Time</h5>
+            <p class="text-muted mb-4">Most orders are processed within 1–3 business days.</p>
+
+            <h5 class="fw-bold mb-2">Delivery Time</h5>
+            <p class="text-muted mb-4">Delivery time depends on your location and carrier.</p>
+
+            <h5 class="fw-bold mb-2">Tracking</h5>
+            <p class="text-muted mb-0">You will receive an email confirmation and shipping details once your order ships.</p>
+        </div>
+    </div>
+
+    <div class="mt-4">
+        <a asp-controller="Checkout" asp-action="Index" class="btn stickit-btn">Back to Checkout</a>
+    </div>
+</div>
