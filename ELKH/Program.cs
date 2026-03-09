@@ -1,18 +1,24 @@
 using ELKH.Data;
 using ELKH.Extensions;
+using ELKH.Models;
+using ELKH.Repositories;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 
 var builder = WebApplication.CreateBuilder(args);
 
-// -- Service registrations
+builder.Services.AddScoped<OrderHistoryManagementRepo>();
+builder.Services.AddScoped<InventoryRepo>();
 
-// -- Database and Identity
-// SQLite database with Entity Framework Core. Connection string is required
-// and will throw if missing to fail fast during startup.
-var connectionString = builder.Configuration.GetConnectionString("DefaultConnection")
-    ?? throw new InvalidOperationException("Connection string 'DefaultConnection' not found.");
-builder.Services.AddDbContext<ApplicationDbContext>(options => options.UseSqlite(connectionString));
+
+// Add services to the container.
+var connectionString = builder.Configuration.GetConnectionString("DefaultConnection") ?? throw new InvalidOperationException("Connection string 'DefaultConnection' not found.");
+builder.Services.AddDbContext<ApplicationDbContext>(options =>
+    options.UseSqlite(connectionString));
+
+builder.Services.AddDbContext<ImageStoreContext>(options =>
+    options.UseSqlite(builder.Configuration.GetConnectionString("ImageStoreConnection")));
+
 builder.Services.AddDatabaseDeveloperPageExceptionFilter();
 
 // ASP.NET Core Identity with email confirmation requirement.
@@ -72,6 +78,11 @@ builder.Services.AddOutputCachingPolicies(); // Extension method - see ServiceCo
 // Includes: CacheOptions, SearchOptions, EmailOptions, ModerationOptions
 builder.Services.AddApplicationOptions(builder.Configuration); // Extension method - see ServiceCollectionExtensions.cs
 
+// Register repositories for dependency injection
+builder.Services.AddScoped<RegisteredUserLogRepo>();
+builder.Services.AddScoped<RegisteredUserProfileRepo>();
+builder.Services.AddScoped<ContactDetailRepo>();
+builder.Services.AddScoped<TransactionRepo>();
 // -- Application Services (using extension methods for cleaner organization)
 // All service registrations are grouped by functionality in extension methods.
 // See Extensions/ServiceCollectionExtensions.cs for implementation details.
@@ -233,6 +244,9 @@ else
 }
 
 app.UseHttpsRedirection();
+app.UseStaticFiles();
+
+app.UseRouting();
 
 // ─── Security headers ────────────────────────────────────────────────────────
 // Applied before static files so even asset responses carry the headers.

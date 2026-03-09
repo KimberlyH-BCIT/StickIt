@@ -44,5 +44,7 @@
   <ItemGroup>
     <None Remove="e2e\**\*" />
     <None Remove="tests\**\*" />
+    <Folder Include="wwwroot\images\" />
   </ItemGroup>
+
 </Project>

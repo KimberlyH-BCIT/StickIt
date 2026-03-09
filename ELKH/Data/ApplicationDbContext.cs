@@ -23,7 +23,8 @@ namespace ELKH.Data
 
         public DbSet<ProductModel> Products { get; set; }
         public DbSet<CategoryModel> Categories { get; set; }
-        public DbSet<ProductImageModel> ProductImages { get; set; }
+        public DbSet<ImageModel> ProductImages { get; set; }
+        public DbSet<ProductImageModel> ProductImage { get; set; }
         public DbSet<RegisteredUserModel> RegisteredUsers { get; set; }
         public DbSet<CartModel> Carts { get; set; }
         public DbSet<OrderModel> Orders { get; set; }
@@ -48,7 +49,7 @@ namespace ELKH.Data
 
             // One-to-one: Order <-> OrderStatus (each order has a single status record)
             modelBuilder.Entity<OrderModel>()
-                .HasOne(o => o.OrderStatusDetail)
+                .HasOne(o => o.OrderStatuses)
                 .WithOne(d => d.Order)
                 .HasForeignKey<OrderStatusModel>(o => o.FkOrderId);
 
@@ -152,7 +153,7 @@ modelBuilder.Entity<OrderItemModel>()
     .HasForeignKey(oi => oi.FkProductId);
 
 modelBuilder.Entity<ProductRatingModel>()
-    .HasOne(r => r.Product)
+    .HasOne(r => r.Products)
     .WithMany(p => p.ProductRatings)
     .HasForeignKey(r => r.FkProductId);
 
@@ -166,6 +167,7 @@ modelBuilder.Entity<TransactionModel>()
     .WithMany()
     .HasForeignKey(t => t.FkContactId);
         }
+
     }
 
 }

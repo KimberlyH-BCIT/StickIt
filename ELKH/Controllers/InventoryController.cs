@@ -1,4 +1,6 @@
-﻿using ELKH.Repositories;
+﻿using System.Linq;
+using ELKH.Models;
+using ELKH.Repositories;
 using ELKH.ViewModels;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -10,20 +12,18 @@ namespace ELKH.Controllers
     /// Admin controller for inventory management: listing products, adjusting stock
     /// quantities, and managing product images.
     /// </summary>
-    [Authorize(Roles = "Admin")]
+    //[Authorize(Roles = "Admin")]
     public class InventoryController : Controller
     {
         private readonly InventoryRepo _inventoryRepo;
-
+        
         public InventoryController(InventoryRepo inventoryRepo)
         {
             _inventoryRepo = inventoryRepo;
         }
 
-        /// <summary>
-        /// GET: /Inventory
-        /// Lists all products with their current stock quantities and active status.
-        /// </summary>
+
+        //Pass
         public async Task<IActionResult> Index()
         {
             var products = await _inventoryRepo.GetAllProduct();
@@ -32,73 +32,72 @@ namespace ELKH.Controllers
             {
                 PkProductId = p.PkProductId,
                 ProductName = p.Name,
-                Quantity    = p.StockQuantity ?? 0,
-                IsActive    = p.IsActive
+                Quantity = p.StockQuantity,
+                IsActive = p.IsActive
             }).ToList();
 
             return View(inventoryList);
         }
 
-        /// <summary>
-        /// POST: /Inventory/EditProductAmount
-        /// Updates the stock quantity for a single product and redirects to the inventory listing.
-        /// </summary>
-        /// <param name="productId">Primary key of the product to update.</param>
-        /// <param name="quantity">New stock quantity to set.</param>
+        //Pass
         [HttpPost]
-        public async Task<IActionResult> EditProductAmount(int productId, int quantity)
+        public async Task<IActionResult> EditProductAmount(int productId, int quantityId)
         {
-            await _inventoryRepo.EditProductQuantity(productId, quantity);
+            await _inventoryRepo.EditProductQuantity(productId, quantityId);
 
             return RedirectToAction(nameof(Index));
         }
 
-        /// <summary>
-        /// GET: /Inventory/ProductImages/{productId}
-        /// Displays all images currently associated with a product.
-        /// </summary>
-        public async Task<IActionResult> ProductImages(int productId)
+        //Pass
+        public async Task<IActionResult> ProductImages(int Id)
         {
-            var productImages = await _inventoryRepo.GetProductImages(productId);
 
-            return View(productImages);
+            ViewBag.ProductId = Id;
+            // GetProductImages likely returns List<ImageModel>
+            var productImages = await _inventoryRepo.GetProductImages(Id);
+
+            if (productImages == null)
+            {
+                return NotFound();
+            }
+
+            // Map each ImageModel to ProductImageVM
+            var vmList = productImages.Select(pi => new ProductImageVM
+            {
+                FileName = pi.FileName,
+                Description = pi.Description,
+                ImageData = pi.ImageData
+            }).ToList();
+
+            return View(vmList);
         }
 
-        /// <summary>
-        /// GET: /Inventory/AddImage/{productId}
-        /// Renders the upload form pre-filled with the target product ID.
-        /// </summary>
-        public async Task<IActionResult> AddImage(int productId)
+        //Pass
+        public async Task<IActionResult> AddImage(int Id)
         {
-            var vm = new ProductImageVM
-            {
-                FkProductId = productId
-            };
+            var vm = new ImageModel();
+            ViewBag.ProductId = Id;
 
             return View(vm);
         }
 
-        /// <summary>
-        /// POST: /Inventory/AddImage
-        /// Saves an uploaded image file to <c>wwwroot/images</c> and records
-        /// its URL in the database via <see cref="InventoryRepo.AddProductImage"/>.
-        /// Re-displays the form with validation errors when the model is invalid.
-        /// </summary>
+
+        //Pass
         [HttpPost]
-        public async Task<IActionResult> AddImage(ProductImageVM vm)
+        public async Task<IActionResult> AddImage(int productId, IFormFile file)
         {
             if (!ModelState.IsValid)
             {
-                return View(vm);
+                return View("AddImage");
             }
 
-            var success = await _inventoryRepo.AddProductImage(vm);
+            var addImageRepo = await _inventoryRepo.UploadImage(productId,file);
 
-            if (success)
+            if (addImageRepo)
             {
-                return RedirectToAction(nameof(ProductImages));
+                return RedirectToAction("ProductImages", new {id = productId});
             }
-            return View(vm);
+            return View("Index");
         }
     }
 }
