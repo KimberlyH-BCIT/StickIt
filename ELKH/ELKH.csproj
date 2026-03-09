@@ -1,7 +1,7 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk.Web">
 
   <PropertyGroup>
-    <TargetFramework>net10.0</TargetFramework>
+    
     <Nullable>enable</Nullable>
     <ImplicitUsings>enable</ImplicitUsings>
     <UserSecretsId>aspnet-ELKH-b32582b7-e53b-4481-ba17-11a5c3c1aa56</UserSecretsId>
@@ -47,4 +47,15 @@
     <Folder Include="wwwroot\images\" />
   </ItemGroup>
 
+  <ItemGroup>
+    <Content Include="Views\Manager\AddNewProduct.cshtml" />
+    <Content Include="Views\Manager\DeleteProduct.cshtml" />
+    <Content Include="Views\Manager\Index.cshtml" />
+    <Content Include="Views\Manager\ListAllTransactions.cshtml" />
+    <Content Include="Views\Manager\ListOfProducts.cshtml" />
+    <Content Include="Views\Manager\ListOfStaffAccount.cshtml" />
+    <Content Include="Views\Manager\ProductDetails.cshtml" />
+    <Content Include="Views\Manager\UpdateProductDetails.cshtml" />
+  </ItemGroup>
+	
 </Project>

@@ -1,43 +1,291 @@
-﻿@model ELKH.ViewModels.SalesVM
+@model ELKH.ViewModels.SalesVM
 
 @{
-    ViewData["Title"] = "ManageSales";
+    ViewData["Title"] = "Sales Dashboard";
     Layout = "~/Views/Shared/_Layout.cshtml";
+
+    // Serialize data for Chart.js
+    var weeklyLabels    = System.Text.Json.JsonSerializer.Serialize(Model.WeeklyLabels);
+    var weeklySales     = System.Text.Json.JsonSerializer.Serialize(Model.WeeklySalesData);
+    var monthlyLabels   = System.Text.Json.JsonSerializer.Serialize(Model.MonthlyLabels);
+    var monthlySales    = System.Text.Json.JsonSerializer.Serialize(Model.MonthlySalesData);
+    var topNames        = System.Text.Json.JsonSerializer.Serialize(Model.TopProducts.Select(p => p.ProductName).ToList());
+    var topUnits        = System.Text.Json.JsonSerializer.Serialize(Model.TopProducts.Select(p => p.UnitsSold).ToList());
 }
 
-<h1>ManageSales</h1>
+<div class="container-fluid mt-4 px-4">
 
-<div>
-    <h4>SalesVM</h4>
-    <hr />
-    <dl class="row">
-        <dt class = "col-sm-2">
-            @Html.DisplayNameFor(model => model.WeeklyTotalOrders)
-        </dt>
-        <dd class = "col-sm-10">
-            @Html.DisplayFor(model => model.WeeklyTotalOrders)
-        </dd>
-        <dt class = "col-sm-2">
-            @Html.DisplayNameFor(model => model.MonthlyTotalOrders)
-        </dt>
-        <dd class = "col-sm-10">
-            @Html.DisplayFor(model => model.MonthlyTotalOrders)
-        </dd>
-        <dt class = "col-sm-2">
-            @Html.DisplayNameFor(model => model.StockUpCount)
-        </dt>
-        <dd class = "col-sm-10">
-            @Html.DisplayFor(model => model.StockUpCount)
-        </dd>
-        <dt class = "col-sm-2">
-            @Html.DisplayNameFor(model => model.StockDownCount)
-        </dt>
-        <dd class = "col-sm-10">
-            @Html.DisplayFor(model => model.StockDownCount)
-        </dd>
-    </dl>
+    <!-- Page Header -->
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2 class="fw-bold text-primary mb-0">Sales Dashboard</h2>
+        <a asp-action="Index" class="btn btn-outline-primary rounded-pill px-4">
+            ← Back to Dashboard
+        </a>
+    </div>
+
+    <!-- ── Summary Cards ──────────────────────────────────────── -->
+    <div class="row g-4 mb-4">
+
+        <div class="col-12 col-sm-6 col-xl-3">
+            <div class="card border-0 shadow-sm rounded-4 h-100">
+                <div class="card-body d-flex align-items-center gap-3 p-4">
+                    <div class="rounded-circle bg-primary bg-opacity-10 p-3">
+                        <i class="bi bi-calendar-week fs-4 text-primary"></i>
+                    </div>
+                    <div>
+                        <p class="text-muted small mb-0">Weekly Gross Sales</p>
+                        <h4 class="fw-bold mb-0">$@Model.WeeklyGrossSales.ToString("N2")</h4>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-12 col-sm-6 col-xl-3">
+            <div class="card border-0 shadow-sm rounded-4 h-100">
+                <div class="card-body d-flex align-items-center gap-3 p-4">
+                    <div class="rounded-circle bg-success bg-opacity-10 p-3">
+                        <i class="bi bi-calendar-month fs-4 text-success"></i>
+                    </div>
+                    <div>
+                        <p class="text-muted small mb-0">Monthly Gross Sales</p>
+                        <h4 class="fw-bold mb-0">$@Model.MonthlyGrossSales.ToString("N2")</h4>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-12 col-sm-6 col-xl-3">
+            <div class="card border-0 shadow-sm rounded-4 h-100">
+                <div class="card-body d-flex align-items-center gap-3 p-4">
+                    <div class="rounded-circle bg-warning bg-opacity-10 p-3">
+                        <i class="bi bi-bag-check fs-4 text-warning"></i>
+                    </div>
+                    <div>
+                        <p class="text-muted small mb-0">Orders This Month</p>
+                        <h4 class="fw-bold mb-0">@Model.MonthlyTotalOrders</h4>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-12 col-sm-6 col-xl-3">
+            <div class="card border-0 shadow-sm rounded-4 h-100">
+                <div class="card-body d-flex align-items-center gap-3 p-4">
+                    <div class="rounded-circle bg-info bg-opacity-10 p-3">
+                        <i class="bi bi-cart-check fs-4 text-info"></i>
+                    </div>
+                    <div>
+                        <p class="text-muted small mb-0">Total Orders (All Time)</p>
+                        <h4 class="fw-bold mb-0">@Model.TotalOrdersAllTime</h4>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+    </div>
+
+    <!-- ── Charts Row ─────────────────────────────────────────── -->
+    <div class="row g-4 mb-4">
+
+        <!-- Weekly Sales Chart -->
+        <div class="col-12 col-lg-6">
+            <div class="card border-0 shadow-sm rounded-4 h-100">
+                <div class="card-body p-4">
+                    <h6 class="fw-semibold text-muted mb-3">
+                        <i class="bi bi-bar-chart-line me-1 text-primary"></i>
+                        Daily Sales — Last 7 Days
+                    </h6>
+                    <canvas id="weeklyChart" height="250"></canvas>
+                </div>
+            </div>
+        </div>
+
+        <!-- Monthly Sales Chart -->
+        <div class="col-12 col-lg-6">
+            <div class="card border-0 shadow-sm rounded-4 h-100">
+                <div class="card-body p-4">
+                    <h6 class="fw-semibold text-muted mb-3">
+                        <i class="bi bi-graph-up me-1 text-success"></i>
+                        Monthly Sales — Last 12 Months
+                    </h6>
+                    <canvas id="monthlyChart" height="250"></canvas>
+                </div>
+            </div>
+        </div>
+
+    </div>
+
+    <!-- ── Bottom Row: Top Products + Mini Bar ────────────────── -->
+    <div class="row g-4 mb-4">
+
+        <!-- Top Products Table -->
+        <div class="col-12 col-lg-7">
+            <div class="card border-0 shadow-sm rounded-4 h-100">
+                <div class="card-body p-4">
+                    <h6 class="fw-semibold text-muted mb-3">
+                        <i class="bi bi-trophy me-1 text-warning"></i>
+                        Top 5 Products by Units Sold
+                    </h6>
+
+                    @if (Model.TopProducts.Any())
+                    {
+                        <table class="table table-hover align-middle mb-0">
+                            <thead class="table-light">
+                                <tr>
+                                    <th>#</th>
+                                    <th>Product</th>
+                                    <th class="text-center">Units Sold</th>
+                                    <th class="text-end">Revenue</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @{ int rank = 1; }
+                                @foreach (var p in Model.TopProducts)
+                                {
+                                    <tr>
+                                        <td>
+                                            @if (rank == 1)
+                                            {
+                                                <span class="badge bg-warning text-dark">🥇 1</span>
+                                            }
+                                            else if (rank == 2)
+                                            {
+                                                <span class="badge bg-secondary">🥈 2</span>
+                                            }
+                                            else if (rank == 3)
+                                            {
+                                                <span class="badge bg-danger bg-opacity-75">🥉 3</span>
+                                            }
+                                            else
+                                            {
+                                                <span class="text-muted">@rank</span>
+                                            }
+                                        </td>
+                                        <td class="fw-semibold">@p.ProductName</td>
+                                        <td class="text-center">@p.UnitsSold</td>
+                                        <td class="text-end text-success fw-semibold">$@p.Revenue.ToString("N2")</td>
+                                    </tr>
+                                    rank++;
+                                }
+                            </tbody>
+                        </table>
+                    }
+                    else
+                    {
+                        <div class="text-center text-muted py-4">No sales data yet.</div>
+                    }
+                </div>
+            </div>
+        </div>
+
+        <!-- Top Products Bar Chart -->
+        <div class="col-12 col-lg-5">
+            <div class="card border-0 shadow-sm rounded-4 h-100">
+                <div class="card-body p-4">
+                    <h6 class="fw-semibold text-muted mb-3">
+                        <i class="bi bi-bar-chart me-1 text-danger"></i>
+                        Top Products — Units Sold
+                    </h6>
+                    <canvas id="topProductsChart" height="260"></canvas>
+                </div>
+            </div>
+        </div>
+
+    </div>
+
 </div>
-<div>
-    @Html.ActionLink("Edit", "Edit", new { /* id = Model.PrimaryKey */ }) |
-    <a asp-action="Index">Back to List</a>
-</div>
+
+@section Scripts {
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+    <script>
+        const weeklyLabels  = @Html.Raw(weeklyLabels);
+        const weeklySales   = @Html.Raw(weeklySales);
+        const monthlyLabels = @Html.Raw(monthlyLabels);
+        const monthlySales  = @Html.Raw(monthlySales);
+        const topNames      = @Html.Raw(topNames);
+        const topUnits      = @Html.Raw(topUnits);
+
+        // ── Weekly Bar Chart ──────────────────────────────────────
+        new Chart(document.getElementById('weeklyChart'), {
+            type: 'bar',
+            data: {
+                labels: weeklyLabels,
+                datasets: [{
+                    label: 'Sales ($)',
+                    data: weeklySales,
+                    backgroundColor: 'rgba(99, 102, 241, 0.7)',
+                    borderColor:     'rgba(99, 102, 241, 1)',
+                    borderWidth: 1,
+                    borderRadius: 6,
+                }]
+            },
+            options: {
+                responsive: true,
+                plugins: { legend: { display: false } },
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        ticks: { callback: v => '$' + v.toLocaleString() }
+                    }
+                }
+            }
+        });
+
+        // ── Monthly Line Chart ────────────────────────────────────
+        new Chart(document.getElementById('monthlyChart'), {
+            type: 'line',
+            data: {
+                labels: monthlyLabels,
+                datasets: [{
+                    label: 'Sales ($)',
+                    data: monthlySales,
+                    fill: true,
+                    backgroundColor: 'rgba(34, 197, 94, 0.15)',
+                    borderColor:     'rgba(34, 197, 94, 1)',
+                    borderWidth: 2,
+                    tension: 0.4,
+                    pointBackgroundColor: 'rgba(34, 197, 94, 1)',
+                    pointRadius: 4,
+                }]
+            },
+            options: {
+                responsive: true,
+                plugins: { legend: { display: false } },
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        ticks: { callback: v => '$' + v.toLocaleString() }
+                    }
+                }
+            }
+        });
+
+        // ── Top Products Horizontal Bar ───────────────────────────
+        new Chart(document.getElementById('topProductsChart'), {
+            type: 'bar',
+            data: {
+                labels: topNames,
+                datasets: [{
+                    label: 'Units Sold',
+                    data: topUnits,
+                    backgroundColor: [
+                        'rgba(251, 191, 36,  0.8)',
+                        'rgba(99,  102, 241, 0.8)',
+                        'rgba(34,  197, 94,  0.8)',
+                        'rgba(239, 68,  68,  0.8)',
+                        'rgba(20,  184, 166, 0.8)',
+                    ],
+                    borderRadius: 6,
+                }]
+            },
+            options: {
+                indexAxis: 'y',
+                responsive: true,
+                plugins: { legend: { display: false } },
+                scales: {
+                    x: { beginAtZero: true, ticks: { precision: 0 } }
+                }
+            }
+        });
+    </script>
+}

@@ -7,12 +7,22 @@ using Microsoft.EntityFrameworkCore;
 
 var builder = WebApplication.CreateBuilder(args);
 
+builder.Services.AddScoped<IRole_repo, Role_repo>();
+builder.Services.AddScoped<OrderHistoryManagementRepo>();
+builder.Services.AddScoped<InventoryRepo>();
+
+
+builder.Services.AddScoped<OrderHistoryManagementRepo>();
+builder.Services.AddScoped<InventoryRepo>();
+builder.Services.AddScoped<IRole_repo, Role_repo>();
 builder.Services.AddScoped<OrderHistoryManagementRepo>();
 builder.Services.AddScoped<InventoryRepo>();
 
 
 // Add services to the container.
-var connectionString = builder.Configuration.GetConnectionString("DefaultConnection") ?? throw new InvalidOperationException("Connection string 'DefaultConnection' not found.");
+var connectionString = builder.Configuration.GetConnectionString("DefaultConnection")
+    ?? throw new InvalidOperationException("Connection string 'DefaultConnection' not found.");
+
 builder.Services.AddDbContext<ApplicationDbContext>(options =>
     options.UseSqlite(connectionString));
 
@@ -228,6 +238,14 @@ catch (Exception ex)
 // Order: Exception Handling → HTTPS → Compression → Caching → Routing 
 //        → Authentication → Authorization → Endpoints
 // =====================================================================
+// Localization
+var supportedCultures = new[] { new CultureInfo("en-CA") };
+app.UseRequestLocalization(new RequestLocalizationOptions
+{
+    DefaultRequestCulture = new RequestCulture("en-CA"),
+    SupportedCultures = supportedCultures,
+    SupportedUICultures = supportedCultures
+});
 
 // -- Environment-specific error handling
 if (app.Environment.IsDevelopment())
@@ -243,6 +261,10 @@ else
     app.UseHsts();
 }
 
+app.UseHttpsRedirection();   
+app.UseStaticFiles();        
+app.UseRouting();            
+app.UseAuthentication();
 app.UseHttpsRedirection();
 app.UseStaticFiles();
 
@@ -283,6 +305,9 @@ app.UseStaticFiles();
 // Response Compression, Response/Output Caching, Routing, Authentication, Authorization.
 // See Extensions/ApplicationBuilderExtensions.cs for implementation.
 app.UseApplicationMiddleware();
+app.MapControllerRoute(
+    name: "default",
+    pattern: "{controller=Home}/{action=Index}/{id?}");
 
 // =====================================================================
 // Routing and endpoints

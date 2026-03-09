@@ -11,7 +11,9 @@
             <td>Name</td>
             <td>Quantity</td>
             <td>Active</td>
-            <td></td>
+            <td>Edit</td>
+            <td>Edit Image</td>
+            <td>Edit Quantity</td>
         </tr>
     </thead>
     <tbody>
@@ -22,10 +24,15 @@
                 <td>@pro.ProductName</td>
                 <td>@pro.Quantity</td>
                 <td>@pro.IsActive</td>
-                <td><a asp-controller="Inventory" asp-action="ProductImages" asp-route-Id="@pro.PkProductId">Edit Product Image</a></td>
                 <td>
-                    <label for="@pro.PkProductId">Edit Quantity</label>
-                    <input type="checkbox" class="editQuantity" data-id="@pro.PkProductId" />
+                    <a asp-controller="Inventory" asp-action="ProductImages" asp-route-id="@pro.PkProductId">Edit</a>
+                </td>
+                <td>
+                    <a asp-controller="Inventory" asp-action="ProductImages" asp-route-id="@pro.PkProductId">Edit Product Image</a>
+                </td>
+                <td>
+                    <label for="edit-@pro.PkProductId">Edit Quantity</label>
+                    <input id="edit-@pro.PkProductId" type="checkbox" class="editQuantity" data-id="@pro.PkProductId" />
 
                     <div class="editQuantityArea hide" data-id="@pro.PkProductId">
                         <form method="post" asp-action="EditProductAmount" asp-controller="Inventory">
@@ -34,7 +41,6 @@
                             <button type="submit">Update</button>
                         </form>
                     </div>
-                       
                 </td>
             </tr>
         }
@@ -42,8 +48,7 @@
 </table>
 
 <script>
-
-        document.addEventListener("DOMContentLoaded", function() {
+    document.addEventListener("DOMContentLoaded", function() {
         const inputCheck = document.querySelectorAll(".editQuantity");
 
         inputCheck.forEach(box => {
@@ -58,6 +63,5 @@
             });
         });
     });
-
 </script>
 

@@ -1,10 +1,13 @@
 ﻿using ELKH.Models;
 using System.ComponentModel.DataAnnotations;
 
-namespace ELKH.ViewModels
-{
+namespace ELKH.ViewModels;
     public class TransactionVM
-        {
+    {
+        public int PkTransactionID { get; set; }
+        public int PkOrderId { get; set; }
+        public decimal TotalAmount { get; set; }
+        public string FirstName { get; set; }
          public int PkTransactionId { get; set; }
         [Display(Name = "Transaction Status")]
         public string TransactionStatus { get; set; } = string.Empty;
@@ -20,4 +23,15 @@ namespace ELKH.ViewModels
         public OrderModel Order { get; set; } = new OrderModel();
     }
     
+=========
+﻿namespace ELKH.ViewModels
+{
+    public class TransactionVM
+    {
+        public int PkTransactionID { get; set; }
+        public int PkOrderId { get; set; }
+        public decimal TotalAmount { get; set; }
+        public string FirstName { get; set; }
+    }
+>>>>>>>>> Temporary merge branch 2
 }

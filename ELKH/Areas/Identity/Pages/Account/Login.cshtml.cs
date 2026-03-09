@@ -139,16 +139,13 @@ namespace ELKH.Areas.Identity.Pages.Account
                         return RedirectToAction("Index", "Manager");
                     }
 
+                    if (await _userManager.IsInRoleAsync(user, "Staff"))
+                    {
+                        return RedirectToAction("Index", "Staff");
+                    }
+
                     return RedirectToAction("Index", "Home");
                 }
-
-                //    if (await _userManager.IsInRoleAsync(user, "Staff"))
-                //    {
-                //        return RedirectToAction("Index", "Staff");
-                //    }
-
-                //     return RedirectToAction("Index", "Home");
-                //}
 
                 if (result.RequiresTwoFactor)
                 {

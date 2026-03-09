@@ -1,4 +1,5 @@
 ﻿using System.ComponentModel.DataAnnotations;
+using System.Collections.Generic;
 
 namespace ELKH.Models
 {
@@ -64,14 +65,16 @@ namespace ELKH.Models
         [Display(Name ="Is Default Address")]
         public bool IsDefault { get; set; } = true;
 
-        //Relationship with RegisiterUser
+        // Relationship with RegisteredUser
         public int? FkRegisteredUserId { get; set; }
         public RegisteredUserModel? RegisteredUser { get; set; }
 
-        //Relationship with Transaction
+        // Relationship with Transaction
         public ICollection<TransactionModel>? Transactions { get; set; }
 
-        //Relationship with ORder
-        public ICollection<OrderModel>? Orders { get; set; }
+        // Relationship with Order
+        public ICollection<OrderModel> Orders { get; set; } = new List<OrderModel>();
+
+        public string UserId { get; internal set; }
     }
 }

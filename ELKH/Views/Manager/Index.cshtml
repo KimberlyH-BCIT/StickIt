@@ -1,38 +1,38 @@
-﻿@{
-    ViewData["Title"] = "Manager Dashboard";
+﻿
+@{
+    ViewData["Title"] = "Index";
     Layout = "~/Views/Shared/_Layout.cshtml";
 }
 
-<div class="container mt-4">
-
-    <!-- Top Buttons -->
-    <div class="row g-4">
-
-        <div class="col-md-4">
-            <a asp-controller="Product"
-               asp-action="Index"
-               class="btn btn-primary w-100 py-3 fw-semibold">
-                Manage Products
-            </a>
-        </div>
-
-        <div class="col-md-4">
-            <a asp-controller="AdminRole"
-               asp-action="ListRoles"
-               class="btn btn-primary w-100 py-3 fw-semibold">
-                Manage Staff Account
-            </a>
-        </div>
-
-        <div class="col-md-4">
-            <a asp-controller="Transaction"
-               asp-action="Index"
-               class="btn btn-primary w-100 py-3 fw-semibold">
-                Transactions
-            </a>
-        </div>
-
+<div class="container mt-5">
+    <div class="text-center mb-5">
+        <h2 class="fw-bold">Manager Dashboard</h2>
+        <p class="text-muted">What would you like to manage today?</p>
     </div>
-
+    <div class="row g-4 justify-content-center">
+        <div class="col-md-4">
+            <a asp-controller="Manager" asp-action="ListOfProducts"
+               class="btn btn-primary w-100 p-4 rounded-4 shadow-sm d-flex flex-column align-items-center gap-2">
+                <span style="font-size:2.5rem;">📦</span>
+                <span class="fw-semibold fs-5">Manage Products</span>
+                <span class="text-white-50 small">Add, edit, delete products</span>
+            </a>
+        </div>
+        <div class="col-md-4">
+            <a asp-controller="Manager" asp-action="ListOfStaffAccount"
+               class="btn btn-primary w-100 p-4 rounded-4 shadow-sm d-flex flex-column align-items-center gap-2">
+                <span style="font-size:2.5rem;">👥</span>
+                <span class="fw-semibold fs-5">Staff Accounts</span>
+                <span class="text-white-50 small">View all staff and roles</span>
+            </a>
+        </div>
+        <div class="col-md-4">
+            <a asp-controller="Manager" asp-action="ListAllTransactions"
+               class="btn btn-primary w-100 p-4 rounded-4 shadow-sm d-flex flex-column align-items-center gap-2">
+                <span style="font-size:2.5rem;">💳</span>
+                <span class="fw-semibold fs-5">Transactions</span>
+                <span class="text-white-50 small">View all transactions</span>
+            </a>
+        </div>
+    </div>
 </div>
-

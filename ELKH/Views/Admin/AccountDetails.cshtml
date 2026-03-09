@@ -1,0 +1,101 @@
+@model ELKH.ViewModels.AccountDetailsVM
+
+@{
+    ViewData["Title"] = "Account Details";
+
+    bool showRoles = Model.User.Roles.Contains("Admin")
+                     || Model.User.Roles.Contains("Manager")
+                     || Model.User.Roles.Contains("Staff");
+}
+
+<div class="text-center mt-4">
+
+    <h1 class="display-4 fw-bold">@Model.User.Name</h1>
+
+    <div class="mt-4">
+        <p><strong>ID:</strong> @Model.User.Id</p>
+        <p><strong>Name:</strong> @Model.User.Name</p>
+        <p><strong>Email:</strong> @Model.User.Email</p>
+
+        @if (Model.Contact != null)
+        {
+            <p>
+                <strong>Address:</strong><br />
+                @Model.Contact.Street <br />
+                @Model.Contact.City, @Model.Contact.Province <br />
+                @Model.Contact.PostCode <br />
+                @Model.Contact.Country
+            </p>
+        }
+    </div>
+</div>
+
+@if (TempData["Success"] != null)
+{
+    <div class="alert alert-success text-center mt-3">@TempData["Success"]</div>
+}
+
+@if (showRoles)
+{
+    <div class="container mt-5">
+        <h3 class="text-center">Roles</h3>
+
+        <table class="table table-bordered text-center mt-3">
+            <thead class="table-dark">
+                <tr>
+                    <th>Series No</th>
+                    <th>Role Name</th>
+                    <th></th>
+                </tr>
+            </thead>
+            <tbody>
+                @{
+                    int count = 1;
+                }
+
+                @foreach (var role in Model.User.Roles)
+                {
+                    <tr>
+                        <td>@count</td>
+                        <td>@role</td>
+                        <td>
+                            <a asp-action="RemoveRole"
+                               asp-route-userId="@Model.User.Id"
+                               asp-route-role="@role"
+                               class="btn btn-danger btn-sm">
+                                Remove
+                            </a>
+                        </td>
+                    </tr>
+
+                    count++;
+                }
+            </tbody>
+        </table>
+
+        <div class="text-center mt-3">
+            @* Fixed: action was "UserList" but the controller method is "ListUsers" *@
+            <a asp-action="ListUsers" class="btn btn-secondary">
+                Back
+            </a>
+
+            @* Pass userId so the controller can look up the email automatically *@
+            <a asp-controller="AdminRole"
+               asp-action="AssignRoles"
+               asp-route-userId="@Model.User.Id"
+               asp-route-returnTo="UserDetails"
+               class="btn btn-primary">
+                Add New Role
+            </a>
+        </div>
+    </div>
+}
+else
+{
+    <div class="text-center mt-4">
+        @* Fixed: action was "UserList" but the controller method is "ListUsers" *@
+        <a asp-action="ListUsers" class="btn btn-secondary">
+            Back
+        </a>
+    </div>
+}

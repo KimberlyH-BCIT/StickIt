@@ -1,4 +1,4 @@
-﻿using System.ComponentModel;
+using System.ComponentModel;
 using System.ComponentModel.DataAnnotations;
 
 namespace ELKH.Models
@@ -59,16 +59,16 @@ namespace ELKH.Models
         /// </summary>
         public ICollection<OrderItemModel> OrderItems { get; set; } = new List<OrderItemModel>();
 
-        //Relationship with Transaction
-        public TransactionModel? Transaction { get; set; }
+        // Relationship with Transaction
+        public TransactionModel? Transaction { get; set; }          
 
-        //Order Status Relationship
+        // Order Status Relationship
         public OrderStatusModel? OrderStatuses { get; set; }
 
         /// <summary>
         /// Foreign key to the shipping/delivery address for this order.
         /// </summary>
         public int FkContactId { get; set; }
-        public ContactDetailModel? ContactDetail { get; set; }
+        public ContactDetailModel? ContactDetail { get; set; }       
     }
 }

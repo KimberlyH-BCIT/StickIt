@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations.Schema;
 
 namespace ELKH.Models;
 
@@ -19,4 +20,6 @@ public partial class ImageModel
 
     //Foreign key to Product (no navigation to keep ImageStoreContext isolated)
     public int FkProductId { get; set; }
+    
+    public string ProductImageURL { get; set; } = null!;
 }

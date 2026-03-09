@@ -1,66 +1,67 @@
-﻿@model ELKH.ViewModels.ProductVM
+@model ELKH.ViewModels.ProductVM
 
 @{
-    ViewData["Title"] = "AddNewProduct";
+    ViewData["Title"] = "Add New Product";
     Layout = "~/Views/Shared/_Layout.cshtml";
 }
 
-<h1>AddNewProduct</h1>
+<div class="d-flex justify-content-center mt-5">
+    <div class="card shadow-sm border-0 rounded-4" style="width:650px;">
+        <div class="card-body p-5">
 
-<h4>ProductVM</h4>
-<hr />
-<div class="row">
-    <div class="col-md-4">
-        <form asp-action="AddNewProduct">
-            <div asp-validation-summary="ModelOnly" class="text-danger"></div>
-            <div class="form-group">
-                <label asp-for="ProductId" class="control-label"></label>
-                <input asp-for="ProductId" class="form-control" />
-                <span asp-validation-for="ProductId" class="text-danger"></span>
-            </div>
-            <div class="form-group">
-                <label asp-for="ProductName" class="control-label"></label>
-                <input asp-for="ProductName" class="form-control" />
-                <span asp-validation-for="ProductName" class="text-danger"></span>
-            </div>
-            <div class="form-group">
-                <label asp-for="Description" class="control-label"></label>
-                <input asp-for="Description" class="form-control" />
-                <span asp-validation-for="Description" class="text-danger"></span>
-            </div>
-            <div class="form-group">
-                <label asp-for="Price" class="control-label"></label>
-                <input asp-for="Price" class="form-control" />
-                <span asp-validation-for="Price" class="text-danger"></span>
-            </div>
-            <div class="form-group">
-                <label asp-for="StockQuantity" class="control-label"></label>
-                <input asp-for="StockQuantity" class="form-control" />
-                <span asp-validation-for="StockQuantity" class="text-danger"></span>
-            </div>
-            <div class="form-group form-check">
-                <label class="form-check-label">
-                    <input class="form-check-input" asp-for="IsActive" /> @Html.DisplayNameFor(model => model.IsActive)
-                </label>
-            </div>
-            <div class="form-group">
-                <label asp-for="CategoryId" class="control-label"></label>
-                <input asp-for="CategoryId" class="form-control" />
-                <span asp-validation-for="CategoryId" class="text-danger"></span>
-            </div>
-            <div class="form-group">
-                <label asp-for="CategoryName" class="control-label"></label>
-                <input asp-for="CategoryName" class="form-control" />
-                <span asp-validation-for="CategoryName" class="text-danger"></span>
-            </div>
-            <div class="form-group">
-                <input type="submit" value="Create" class="btn btn-primary" />
-            </div>
-        </form>
+            <h2 class="fw-bold text-primary text-center mb-4">Add New Product</h2>
+
+            <form asp-action="AddNewProduct" method="post">
+                @Html.AntiForgeryToken()
+                <div asp-validation-summary="All" class="text-danger mb-3 text-center"></div>
+
+                <div class="mb-3">
+                    <label asp-for="ProductName" class="form-label fw-semibold"></label>
+                    <input asp-for="ProductName" class="form-control" placeholder="Enter product name" />
+                    <span asp-validation-for="ProductName" class="text-danger small"></span>
+                </div>
+
+                <div class="mb-3">
+                    <label asp-for="Description" class="form-label fw-semibold"></label>
+                    <textarea asp-for="Description" class="form-control" rows="3" placeholder="Enter description"></textarea>
+                    <span asp-validation-for="Description" class="text-danger small"></span>
+                </div>
+
+                <div class="row mb-3">
+                    <div class="col">
+                        <label asp-for="Price" class="form-label fw-semibold"></label>
+                        <div class="input-group">
+                            <span class="input-group-text">$</span>
+                            <input asp-for="Price" class="form-control" placeholder="0.00" />
+                        </div>
+                        <span asp-validation-for="Price" class="text-danger small"></span>
+                    </div>
+                    <div class="col">
+                        <label asp-for="StockQuantity" class="form-label fw-semibold"></label>
+                        <input asp-for="StockQuantity" class="form-control" placeholder="0" />
+                        <span asp-validation-for="StockQuantity" class="text-danger small"></span>
+                    </div>
+                </div>
+
+                <div class="mb-3">
+                    <label asp-for="CategoryName" class="form-label fw-semibold"></label>
+                    <input asp-for="CategoryName" class="form-control" placeholder="e.g. Electronics" />
+                    <span class="text-muted small">If category doesn't exist it will be created automatically.</span>
+                </div>
+
+                <div class="mb-4">
+                    <div class="form-check">
+                        <input asp-for="IsActive" class="form-check-input" />
+                        <label asp-for="IsActive" class="form-check-label fw-semibold"></label>
+                    </div>
+                </div>
+
+                <div class="d-flex justify-content-between">
+                    <a asp-action="ListOfProducts" class="btn btn-outline-secondary px-4">Cancel</a>
+                    <button type="submit" class="btn btn-success px-5">Add Product</button>
+                </div>
+            </form>
+
+        </div>
     </div>
 </div>
-
-<div>
-    <a asp-action="Index">Back to List</a>
-</div>
-

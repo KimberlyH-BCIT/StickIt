@@ -1,4 +1,4 @@
-﻿using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations;
 
 namespace ELKH.Models
 {
@@ -22,6 +22,6 @@ namespace ELKH.Models
         /// Foreign key to the order this status is associated with.
         /// </summary>
         public int FkOrderId { get; set; }
-        public OrderModel? Order { get; set; }
+        public OrderModel? Order { get; set; }   
     }
 }

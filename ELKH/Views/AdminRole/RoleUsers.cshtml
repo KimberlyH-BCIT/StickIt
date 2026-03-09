@@ -1,4 +1,4 @@
-﻿@using Microsoft.AspNetCore.Identity
+@using Microsoft.AspNetCore.Identity
 @model IEnumerable<IdentityUser>
 
 @{
@@ -7,36 +7,42 @@
 }
 
 <div class="d-flex justify-content-center mt-5">
-
     <div class="card shadow-sm" style="width:700px;">
         <div class="card-body p-5">
 
             <h2 class="fw-bold text-center mb-4 text-primary">
                 @ViewBag.RoleName Role
             </h2>
-            
-            <div class="d-flex justify-content-center mb-4">
-                <div style="width: 700px;" class="text-center">
 
-                    <div class="d-flex justify-content-between">
-                        <a asp-controller="AdminRole"
-                           asp-action="ListRoles"
-                           class="btn btn-primary w-50 me-3">
-                            Back to Roles list
-                        </a>
+            @if (TempData["Success"] != null)
+            {
+                <div class="alert alert-success text-center">@TempData["Success"]</div>
+            }
+            @if (TempData["Error"] != null)
+            {
+                <div class="alert alert-danger text-center">@TempData["Error"]</div>
+            }
 
-                        <a asp-controller="AdminRole"
-                           asp-action="AssignRoles"
-                           class="btn btn-primary w-50">
-                            Add New User
-                        </a>
-                    </div>
+            <div class="d-flex justify-content-between mb-4">
+                <a asp-controller="AdminRole"
+                   asp-action="ListRoles"
+                   class="btn btn-outline-secondary px-4">
+                    ← Back to Roles
+                </a>
 
-                </div>
+                @*
+                    Pass roleId so the controller can lock the role dropdown.
+                    returnTo=RoleDetails so after assigning, we come back here.
+                    No userId — the admin will type the user's email on the form.
+                *@
+                <a asp-controller="AdminRole"
+                   asp-action="AssignRoles"
+                   asp-route-roleId="@ViewBag.RoleId"
+                   asp-route-returnTo="RoleDetails"
+                   class="btn btn-primary px-4">
+                    + Assign User
+                </a>
             </div>
-
-
-            
 
             @if (!Model.Any())
             {
@@ -59,21 +65,11 @@
                             <tr>
                                 <td>@user.Email</td>
                                 <td class="text-end">
-                                    <form asp-action="RemoveUserFromRole"
-                                          method="post"
-                                          class="d-inline">
+                                    <form asp-action="RemoveUserFromRole" method="post" class="d-inline">
                                         @Html.AntiForgeryToken()
-
-                                        <input type="hidden"
-                                               name="roleId"
-                                               value="@ViewBag.RoleId" />
-
-                                        <input type="hidden"
-                                               name="userId"
-                                               value="@user.Id" />
-
-                                        <button type="submit"
-                                                class="btn btn-danger btn-sm px-4">
+                                        <input type="hidden" name="roleId" value="@ViewBag.RoleId" />
+                                        <input type="hidden" name="userId" value="@user.Id" />
+                                        <button type="submit" class="btn btn-danger btn-sm px-4">
                                             Remove User
                                         </button>
                                     </form>

@@ -63,5 +63,8 @@ namespace ELKH.ViewModels
         /// <summary>Whether this is the user's default address.</summary>
         [Display(Name = "Set as Default Address")]
         public bool IsDefault { get; set; } = false;
+
+        public string? UserId { get; set; }
     }
 }
+

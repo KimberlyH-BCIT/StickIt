@@ -1,48 +1,83 @@
-﻿@model IEnumerable<ELKH.ViewModels.UserProfileVM>
+@model List<ELKH.ViewModels.UserListVM>
 
 @{
-    ViewData["Title"] = "ListOfStaffAccount";
+    ViewData["Title"] = "Staff Accounts";
     Layout = "~/Views/Shared/_Layout.cshtml";
 }
 
-<h1>ListOfStaffAccount</h1>
+<div class="container-fluid mt-4 px-4">
 
-<p>
-    <a asp-action="Create">Create New</a>
-</p>
-<table class="table">
-    <thead>
-        <tr>
-            <th>
-                @Html.DisplayNameFor(model => model.PkEmail)
-            </th>
-            <th>
-                @Html.DisplayNameFor(model => model.FirstName)
-            </th>
-            <th>
-                @Html.DisplayNameFor(model => model.LastName)
-            </th>
-            <th></th>
-        </tr>
-    </thead>
-    <tbody>
-@foreach (var item in Model) {
-        <tr>
-            <td>
-                @Html.DisplayFor(modelItem => item.PkEmail)
-            </td>
-            <td>
-                @Html.DisplayFor(modelItem => item.FirstName)
-            </td>
-            <td>
-                @Html.DisplayFor(modelItem => item.LastName)
-            </td>
-            <td>
-                @Html.ActionLink("Edit", "Edit", new { /* id=item.PrimaryKey */ }) |
-                @Html.ActionLink("Details", "Details", new { /* id=item.PrimaryKey */ }) |
-                @Html.ActionLink("Delete", "Delete", new { /* id=item.PrimaryKey */ })
-            </td>
-        </tr>
-}
-    </tbody>
-</table>
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2 class="fw-bold text-primary mb-0">Staff Accounts</h2>
+        <a asp-action="Index" class="btn btn-outline-primary rounded-pill px-4">← Dashboard</a>
+    </div>
+
+    <!-- Search -->
+    <div class="card border-0 shadow-sm rounded-4 mb-4">
+        <div class="card-body p-4">
+            <form method="get" class="d-flex justify-content-center gap-2">
+                <div class="input-group w-50">
+                    <input type="text"
+                           name="search"
+                           value="@ViewBag.Search"
+                           class="form-control rounded-start-pill"
+                           placeholder="Search by email or role..." />
+                    <button type="submit" class="btn btn-primary rounded-end-pill px-4">Search</button>
+                </div>
+                @if (!string.IsNullOrEmpty(ViewBag.Search as string))
+                {
+                    <a asp-action="ListOfStaffAccount" class="btn btn-outline-secondary rounded-pill px-4">Clear</a>
+                }
+            </form>
+        </div>
+    </div>
+
+    <!-- Table -->
+    <div class="card border-0 shadow-sm rounded-4">
+        <div class="card-body p-0">
+            <div class="table-responsive">
+                <table class="table table-hover align-middle mb-0">
+                    <thead class="table-light">
+                        <tr>
+                            <th class="ps-4">Email</th>
+                            <th>Username</th>
+                            <th>Roles</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @if (Model.Any())
+                        {
+                            @foreach (var u in Model)
+                            {
+                                <tr>
+                                    <td class="ps-4 fw-semibold">@u.Email</td>
+                                    <td class="text-muted">@u.Name</td>
+                                    <td>
+                                        @foreach (var role in u.Roles)
+                                        {
+                                            var color = role switch
+                                            {
+                                                                "Admin" => "bg-danger",
+                                                                "Manager" => "bg-primary",
+                                                                "Staff" => "bg-info text-dark",
+                                                _ => "bg-secondary"
+                                            };
+                                            <span class="badge @color me-1">@role</span>
+                                        }
+                                    </td>
+                                </tr>
+                            }
+                        }
+                        else
+                        {
+                            <tr>
+                                <td colspan="3" class="text-center text-muted py-5">No staff accounts found.</td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+</div>

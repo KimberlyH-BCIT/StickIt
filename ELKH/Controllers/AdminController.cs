@@ -13,43 +13,14 @@ using Microsoft.Extensions.Logging;
 
 namespace ELKH.Controllers
 {
-    /// <summary>
-    /// Admin console controller providing administrative tools and utilities.
-    /// Handles system maintenance, cache management, and search indexing.
-    /// </summary>
-    /// <remarks>
-    /// TABLE OF CONTENTS
-    /// ================================================================================
-    /// 1. Fields & Constructor
-    /// 2. Dashboard
-    ///    - Index()                               // GET: Admin dashboard
-    /// 3. User Management
-    ///    - ListUsers()                           // GET: List all users
-    ///    - ManageUserRole()                      // GET: Manage user roles
-    ///    - CustomerAccountDetails()              // GET: Customer account details
-    ///    - StaffAccountDetails()                 // GET: Staff account details
-    ///    - ManageSales()                         // GET: Manage sales
-    /// 4. Search Index Management
-    ///    - ReindexFTS()                          // POST: Rebuild full-text search index
-    ///    - ReindexHealth()                       // GET: Check reindex service status
-    /// 5. Cache Management
-    ///    - CacheStats()                          // GET: Cache statistics
-    ///    - ClearFuzzyCache()                     // POST: Clear fuzzy search cache
-    /// ================================================================================
-    ///
-    /// All endpoints require Admin role authorization.
-    /// Routes: /Admin/{action}
-    /// </remarks>
     [Authorize(Roles = "Admin")]
     public class AdminController : Controller
     {
         private readonly IRole_repo _roleRepo;
-        private readonly ApplicationDbContext _context;
-        private readonly IMemoryCache _cache;
-        private readonly ILogger<AdminController> _logger;
-        private readonly IFuzzyReindexService _reindexService;
         private readonly UserManager<IdentityUser> _userManager;
+        private readonly Data.ApplicationDbContext _context;
 
+        public AdminController(IRole_repo roleRepo, UserManager<IdentityUser> userManager, ApplicationDbContext context)
         public AdminController(
             IRole_repo roleRepo,
             ApplicationDbContext context,
@@ -59,11 +30,6 @@ namespace ELKH.Controllers
             UserManager<IdentityUser> userManager)
         {
             _roleRepo = roleRepo;
-            _context = context;
-            _cache = cache;
-            _logger = logger;
-            _reindexService = reindexService;
-            _userManager = userManager;
         }
 
         /// <summary>Renders the admin dashboard with live order counts and stock-level statistics.</summary>
@@ -87,54 +53,196 @@ namespace ELKH.Controllers
             return View(vm);
         }
 
-        /// <summary>
-        /// Renders the user listing page with every Identity user and their assigned roles.
-        /// Roles are fetched per-user via UserManager because ASP.NET Core Identity does not
-        /// expose a single query that returns both users and roles; the list is small enough
-        /// that the extra round-trips are acceptable.
-        /// </summary>
-        public async Task<IActionResult> ListUsers()
+        /*============================== List Of All Users ==============================*/
+        public async Task<IActionResult> ListUsers(string search, string roleFilter, int page = 1)
         {
-            var users  = _userManager.Users.ToList();
-            var vmList = new List<UserListVM>();
-            foreach (var u in users)
+            int pageSize = 5;
+            var users = _userManager.Users.ToList();
+            var userList = new List<UserListVM>();
+
+            foreach (var user in users)
             {
-                var roles = await _userManager.GetRolesAsync(u);
-                vmList.Add(new UserListVM
+                var roles = await _userManager.GetRolesAsync(user);
+                userList.Add(new UserListVM
                 {
-                    Id    = u.Id,
-                    Email = u.Email ?? string.Empty,
+                    Id = user.Id,
+                    Email = user.Email,
                     Roles = roles.ToList()
                 });
             }
-            return View(vmList);
+
+            if (!string.IsNullOrEmpty(search))
+            {
+                userList = userList
+                    .Where(u => u.Email.Contains(search, StringComparison.OrdinalIgnoreCase)
+                             || u.Roles.Any(r => r.Contains(search, StringComparison.OrdinalIgnoreCase)))
+                    .ToList();
+            }
+
+            if (!string.IsNullOrEmpty(roleFilter) && roleFilter != "All")
+            {
+                userList = userList.Where(u => u.Roles.Contains(roleFilter)).ToList();
+            }
+
+            int totalUsers = userList.Count;
+            var pagedUsers = userList.Skip((page - 1) * pageSize).Take(pageSize).ToList();
+
+            ViewBag.CurrentPage = page;
+            ViewBag.TotalPages  = (int)Math.Ceiling((double)totalUsers / pageSize);
+            ViewBag.Search      = search;
+            ViewBag.RoleFilter  = roleFilter;
+
+            return View(pagedUsers);
         }
 
-        /// <summary>
-        /// Renders the role management page, pre-populating the view model
-        /// with all roles retrieved from <see cref="IRole_repo"/>.
-        /// </summary>
-        public IActionResult ManageUserRole()
+        /*============================== Account Details ==============================*/
+        [HttpGet]
+        public async Task<IActionResult> AccountDetails(string id)
         {
-            ManageRoleVM manageRoleVM = new ManageRoleVM();
+            if (string.IsNullOrEmpty(id))
+            {
+                return NotFound();
+            }
 
-            manageRoleVM.Roles = _roleRepo.GetAllRoles();
+            var user = await _userManager.FindByIdAsync(id);
+            if (user == null) return NotFound();
 
-            return View(manageRoleVM);
+            var roles   = await _userManager.GetRolesAsync(user);
+            var contact = await _context.ContactDetails.FirstOrDefaultAsync(c => c.UserId == user.Id);
+
+            var vm = new AccountDetailsVM
+            {
+                User = new UserListVM
+                {
+                    Id    = user.Id,
+                    Name  = user.UserName ?? "",
+                    Email = user.Email ?? "",
+                    Roles = roles.ToList()
+                },
+                Contact = contact == null ? null : new ContactDetailVM
+                {
+                    ContactId   = contact.PkContactId,
+                    FirstName   = contact.FirstName,
+                    LastName    = contact.LastName,
+                    PhoneNumber = contact.PhoneNumber,
+                    Street      = contact.Street,
+                    City        = contact.City,
+                    Province    = contact.Province,
+                    PostCode    = contact.PostCode,
+                    Country     = contact.Country,
+                    IsDefault   = contact.IsDefault
+                }
+            };
+
+            return View(vm);
         }
 
-        /// <summary>Renders the customer account details page (shell view).</summary>
-        public IActionResult CustomerAccountDetails()
+        public async Task<IActionResult> RemoveRole(string userId, string role)
         {
-            return View();
+            if (string.IsNullOrEmpty(userId) || string.IsNullOrEmpty(role))
+            {
+                return NotFound();
+            }
+
+            var user = await _userManager.FindByIdAsync(userId);
+
+            if (user == null)
+            {
+                return NotFound();
+            }
+
+            await _userManager.RemoveFromRoleAsync(user, role);
+            return RedirectToAction("AccountDetails", new { id = userId });
         }
 
-        /// <summary>Renders the staff account details page (shell view).</summary>
-        public IActionResult StaffAccountDetails()
+        /*============================== Manage Sales ==============================*/
+        public async Task<IActionResult> ManageSales()
         {
-            return View();
-        }
+            var now = DateTime.Now;
+            var weekStart = now.AddDays(-6).Date;
+            var monthStart = new DateTime(now.Year, now.Month, 1);
+            var yearStart = now.AddMonths(-11).Date;
 
+            // ── Fetch into memory first so decimal Sum() works with SQLite ──
+            var allTransactions = await _context.Transactions
+                .Where(t => t.TransactionDate >= yearStart)
+                .Select(t => new { t.TransactionDate, t.Amount })
+                .ToListAsync();
+
+            var weeklyTx = allTransactions.Where(t => t.TransactionDate.Date >= weekStart).ToList();
+            var monthlyTx = allTransactions.Where(t => t.TransactionDate >= monthStart).ToList();
+
+            // ── Summary cards ─────────────────────────────────────────────
+            decimal weeklyGross = weeklyTx.Any() ? weeklyTx.Sum(t => t.Amount) : 0m;
+            decimal monthlyGross = monthlyTx.Any() ? monthlyTx.Sum(t => t.Amount) : 0m;
+            int weeklyOrders = weeklyTx.Count;
+            int monthlyOrders = monthlyTx.Count;
+            int totalOrders = await _context.Orders.CountAsync();
+
+            // ── Weekly chart: last 7 days ─────────────────────────────────
+            var weeklyLabels = new List<string>();
+            var weeklySalesData = new List<decimal>();
+
+            for (int d = 6; d >= 0; d--)
+            {
+                var day = now.AddDays(-d).Date;
+                var dayTx = allTransactions.Where(t => t.TransactionDate.Date == day).ToList();
+                weeklyLabels.Add(day.ToString("ddd dd"));
+                weeklySalesData.Add(dayTx.Any() ? dayTx.Sum(t => t.Amount) : 0m);
+            }
+
+            // ── Monthly chart: last 12 months ─────────────────────────────
+            var monthlyLabels = new List<string>();
+            var monthlySalesData = new List<decimal>();
+
+            for (int m = 11; m >= 0; m--)
+            {
+                var month = now.AddMonths(-m);
+                var monthTx = allTransactions
+                    .Where(t => t.TransactionDate.Year == month.Year
+                             && t.TransactionDate.Month == month.Month)
+                    .ToList();
+                monthlyLabels.Add(month.ToString("MMM yyyy"));
+                monthlySalesData.Add(monthTx.Any() ? monthTx.Sum(t => t.Amount) : 0m);
+            }
+
+            // ── Top 5 products ────────────────────────────────────────────
+            var orderItems = await _context.OrderItems
+                .Include(oi => oi.Product) // use correct navigation property
+                .Select(oi => new
+                {
+                    oi.FkProductId,
+                    ProductName = oi.Product == null ? "Unknown" : oi.Product.Name,
+                    ProductPrice = oi.Product == null ? 0m : oi.Product.Price,
+                    oi.Quantity
+                })
+                .ToListAsync();
+
+            var topProducts = orderItems
+                .GroupBy(oi => new { oi.FkProductId, oi.ProductName, oi.ProductPrice })
+                .Select(g => new TopProductVM
+                {
+                    ProductName = g.Key.ProductName,
+                    UnitsSold = g.Sum(oi => oi.Quantity),
+                    Revenue = g.Sum(oi => oi.Quantity * g.Key.ProductPrice)
+                })
+                .OrderByDescending(p => p.UnitsSold)
+                .Take(5)
+                .ToList();
+
+            var vm = new SalesVM
+            {
+                WeeklyGrossSales = weeklyGross,
+                MonthlyGrossSales = monthlyGross,
+                WeeklyTotalOrders = weeklyOrders,
+                MonthlyTotalOrders = monthlyOrders,
+                TotalOrdersAllTime = totalOrders,
+                WeeklyLabels = weeklyLabels,
+                WeeklySalesData = weeklySalesData,
+                MonthlyLabels = monthlyLabels,
+                MonthlySalesData = monthlySalesData,
+                TopProducts = topProducts
+            };
         /// <summary>Renders the sales management page (shell view).</summary>
         public IActionResult ManageSales()
         {
