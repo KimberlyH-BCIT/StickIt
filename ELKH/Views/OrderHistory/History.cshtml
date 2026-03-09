@@ -1,0 +1,92 @@
+@model ELKH.ViewModels.OrderHistoryVM
+@{
+    ViewData["Title"] = "My Orders";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+
+@section title {
+    <h1 class="fw-bold mb-4">My Orders 📦</h1>
+}
+
+<div class="container py-4">
+
+    @if (TempData["Message"] is string msg)
+{
+        var parts = msg.Split(',', 2);
+        var alertType = parts[0].Trim() == "success" ? "alert-success" : "alert-warning";
+        <div class="alert @alertType alert-dismissible fade show" role="alert">
+            @parts[^1].Trim()
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
+}
+
+    @if (!Model.Orders.Any())
+    {
+        <div class="text-center py-5">
+            <i class="bi bi-box display-1 text-muted"></i>
+            <p class="fs-5 text-muted mt-3">You haven't placed any orders yet.</p>
+            <a asp-controller="Product" asp-action="Index" class="btn btn-dark mt-2">Start Shopping</a>
+        </div>
+    }
+else
+{
+        <div class="card shadow-sm">
+            <div class="table-responsive">
+                <table class="table table-hover mb-0">
+                    <thead class="table-light">
+            <tr>
+                <th>Order #</th>
+                <th>Date</th>
+                            <th>Items</th>
+                <th>Total</th>
+                <th>Status</th>
+                            <th>Delivery</th>
+                <th></th>
+            </tr>
+        </thead>
+        <tbody>
+                        @foreach (var order in Model.Orders)
+                        {
+                            var statusBadge = order.OrderStatus switch
+            {
+                                "Paid" => "bg-success",
+                                "Processing" => "bg-info text-dark",
+                                "Shipped" => "bg-primary",
+                                "Delivered" => "bg-success",
+                                "Cancelled" => "bg-danger",
+                                _ => "bg-secondary"
+                            };
+                            <tr class="align-middle">
+                                <td>#@order.PkOrderId</td>
+                                <td>@order.CreatedAt.ToString("MMM d, yyyy")</td>
+                                <td>@order.OrderItems.Count item@(order.OrderItems.Count != 1 ? "s" : "")</td>
+                                <td>$@order.TotalAmount.ToString("F2")</td>
+                                <td><span class="badge @statusBadge">@order.OrderStatus</span></td>
+                                <td><span class="text-muted small">@order.DeliveryStatus</span></td>
+                                <td class="d-flex gap-1 flex-wrap">
+                                    <a asp-controller="Order" asp-action="Details" asp-route-id="@order.PkOrderId"
+                                       class="btn btn-sm btn-outline-dark">View</a>
+                                    @foreach (var item in order.OrderItems)
+                                    {
+                                        if (item.Product is not null)
+                                        {
+                                            <form asp-controller="Cart" asp-action="AddToCart" method="post">
+                                                @Html.AntiForgeryToken()
+                                                <input type="hidden" name="itemId"   value="@item.FkProductId" />
+                                                <input type="hidden" name="quantity" value="1" />
+                                                <button type="submit" class="btn btn-sm btn-outline-secondary"
+                                                        title="Buy @item.Product.Name again">
+                                                    <i class="bi bi-arrow-repeat me-1"></i>@item.Product.Name
+                                                </button>
+                                            </form>
+                                        }
+                                    }
+                                </td>
+                </tr>
+            }
+        </tbody>
+    </table>
+            </div>
+        </div>
+}
+</div>

@@ -4,8 +4,18 @@ using ELKH.Models;
 
 namespace ELKH.Data
 { 
+
+    /// <summary>
+    /// Entity Framework Core database context for the application.
+    /// Manages all entity sets, relationships, indexes, and custom model configuration.
+    /// Inherits from IdentityDbContext to support ASP.NET Core Identity features.
+    /// </summary>
     public class ApplicationDbContext : IdentityDbContext
     {
+        /// <summary>
+        /// Initializes a new instance of the <see cref="ApplicationDbContext"/> class.
+        /// </summary>
+        /// <param name="options">The options to be used by a <see cref="DbContext"/>.</param>
         public ApplicationDbContext(DbContextOptions<ApplicationDbContext> options)
             : base(options)
         {
@@ -23,87 +33,138 @@ namespace ELKH.Data
         public DbSet<OrderStatusModel> OrderStatuses { get; set; }
         public DbSet<ProductRatingModel> ProductRatings { get; set; }
         public DbSet<WishListModel> WishLists { get; set; }
+        public DbSet<WishListItemModel> WishListItems { get; set; }
         public DbSet<UserLogModel> UserLogs { get; set; }
         public DbSet<UserProfileModel> UserProfiles { get; set; }
+        public DbSet<FuzzySuggestionModel> FuzzySuggestions { get; set; }
 
+        /// <summary>
+        /// Configures entity relationships, indexes, and table mappings for the application.
+        /// </summary>
+        /// <param name="modelBuilder">The builder being used to construct the model for this context.</param>
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
             base.OnModelCreating(modelBuilder);
 
-            // NOTE: The one-to-one configuration for Order <-> OrderStatus caused design-time
-            // errors when creating the ImageStoreContext. If you need this relationship,
-            // re-add configuration ensuring the dependent side is explicit and navigation
-            // properties are nullable (no default instantiation in model classes).
-            modelBuilder.Entity<OrderStatusModel>()
-                .HasOne(os => os.Order)
-                .WithOne(o => o.OrderStatuses)
-                .HasForeignKey<OrderStatusModel>(os => os.FkOrderId);
-
-            modelBuilder.Entity<RegisteredUserModel>()
-                        .HasOne(r => r.WishLists)
-                        .WithOne(w => w.RegisteredUser)
-                        .HasForeignKey<WishListModel>(w => w.FkUserId);
-
+            // One-to-one: Order <-> OrderStatus (each order has a single status record)
             modelBuilder.Entity<OrderModel>()
-                        .HasOne(o => o.Transaction)
-                        .WithOne(t => t.Order)
-                        .HasForeignKey<TransactionModel>(t => t.FkOrderId);
+                .HasOne(o => o.OrderStatusDetail)
+                .WithOne(d => d.Order)
+                .HasForeignKey<OrderStatusModel>(o => o.FkOrderId);
 
+            // One-to-one: RegisteredUser <-> WishList (each user has a single wishlist)
+            modelBuilder.Entity<RegisteredUserModel>()
+                .HasOne(r => r.WishLists)
+                .WithOne(w => w.RegisteredUser)
+                .HasForeignKey<WishListModel>(w => w.FkUserId);
+
+            // Many-to-one: WishListItem -> WishList (join entity for many-to-many between users and products)
+            modelBuilder.Entity<WishListItemModel>()
+                .HasOne(wi => wi.WishList)
+                .WithMany(w => w.WishListItems)
+                .HasForeignKey(wi => wi.FkWishListId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            // Many-to-one: WishListItem -> Product (join entity for many-to-many between wishlists and products)
+            modelBuilder.Entity<WishListItemModel>()
+                .HasOne(wi => wi.Product)
+                .WithMany(p => p.WishListItems)
+                .HasForeignKey(wi => wi.FkProductId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            // One-to-one: Order <-> Transaction (each order has a single payment transaction)
+            modelBuilder.Entity<OrderModel>()
+                .HasOne(o => o.Transaction)
+                .WithOne(t => t.Order)
+                .HasForeignKey<TransactionModel>(t => t.FkOrderId);
+
+            // Index on normalized product name for fast fuzzy search and autocomplete
+            modelBuilder.Entity<ProductModel>()
+                .HasIndex(p => p.NameNormalized);
+
+            // Table mappings for audit and fuzzy search infrastructure
+            modelBuilder.Entity<ELKH.Models.AuditEntryModel>().ToTable("AuditEntries");
+            modelBuilder.Entity<ELKH.Models.CachedFuzzyKeyModel>().ToTable("CachedFuzzyKeys");
+            modelBuilder.Entity<ELKH.Models.FuzzySuggestionModel>().ToTable("FuzzySuggestions");
+
+            // Index on normalized name for fuzzy suggestions (improves search performance)
+            modelBuilder.Entity<ELKH.Models.FuzzySuggestionModel>()
+                .HasIndex(f => f.NameNormalized);
+
+            // Many-to-one: FuzzySuggestion -> Product (each suggestion is linked to a product)
+            modelBuilder.Entity<ELKH.Models.FuzzySuggestionModel>()
+                .HasOne<ELKH.Models.ProductModel>()
+                .WithMany(p => p.FuzzySuggestions)
+                .HasForeignKey(f => f.PkProductId)
+                .OnDelete(Microsoft.EntityFrameworkCore.DeleteBehavior.Cascade);
+
+            // ── Explicit FK bindings ─────────────────────────────────────────────
+            // Without HasForeignKey, EF Core creates a shadow FK column alongside
+            // every explicit FkXxx property in the model, resulting in two FK columns
+            // per relationship (e.g. FkCategoryId AND CategoryPkCategoryId).
+            // These bindings tell EF to use the existing model properties so that
+            // new databases are created with a single FK column per relationship.
+            // Existing databases keep the orphaned shadow columns (harmless / ignored).
 
             modelBuilder.Entity<ProductModel>()
                 .HasOne(p => p.Category)
                 .WithMany(c => c.Products)
                 .HasForeignKey(p => p.FkCategoryId);
-            
-            modelBuilder.Entity<ProductModel>()
-                .HasOne(p => p.WishList)
-                .WithMany(w => w.Products)
-                .HasForeignKey(p => p.FkWishListId);
 
-            modelBuilder.Entity<ProductModel>().HasData(
-                    new ProductModel
-                    {
-                        PkProductId = 1,
-                        Name = "Pikacu",
-                        Description = "Character from anime",
-                        Price = 2.99m,
-                        StockQuantity = 10,
-                        IsActive = true,
-                        FkCategoryId = 1
-                    },
-                    new ProductModel
-                    {
-                        PkProductId = 2,
-                        Name = "Random",
-                        Description = "Random",
-                        Price = 1.99m,
-                        StockQuantity = 80,
-                        IsActive = true,
-                        FkCategoryId = 1
-                    },
-                    new ProductModel
-                    {
-                        PkProductId = 3,
-                        Name = "Random2",
-                        Description = "Random2",
-                        Price = 4.99m,
-                        StockQuantity = 80,
-                        IsActive = true,
-                        FkCategoryId = 2
-                    }
-                );
-            modelBuilder.Entity<CategoryModel>().HasData(
-                    new CategoryModel
-                    {
-                        PkCategoryId = 1,
-                        CategoryName = "Carton"
-                    },
-                    new CategoryModel
-                    {
-                        PkCategoryId = 2,
-                        CategoryName = "Fake"
-                    }
-                );
+            modelBuilder.Entity<CartModel>()
+                .HasOne(c => c.RegisteredUser)
+                .WithMany(u => u.Cart)
+                .HasForeignKey(c => c.FkRegisteredUserId);
+
+            modelBuilder.Entity<CartModel>()
+                .HasOne(c => c.Product)
+                .WithMany(p => p.Carts)
+                .HasForeignKey(c => c.FkProductID);
+
+            modelBuilder.Entity<ContactDetailModel>()
+                .HasOne(c => c.RegisteredUser)
+                .WithMany(u => u.ContactDetails)
+                .HasForeignKey(c => c.FkRegisteredUserId);
+
+            modelBuilder.Entity<OrderModel>()
+                .HasOne(o => o.RegisteredUser)
+                .WithMany(u => u.Orders)
+                .HasForeignKey(o => o.FkRegisteredUserId);
+
+modelBuilder.Entity<ProductModel>()
+    .HasOne(p => p.Category)
+    .WithMany(c => c.Products)
+    .HasForeignKey(p => p.FkCategoryId);
+
+modelBuilder.Entity<OrderModel>()
+    .HasOne(o => o.ContactDetail)
+    .WithMany()
+    .HasForeignKey(o => o.FkContactId);
+
+modelBuilder.Entity<OrderItemModel>()
+    .HasOne(oi => oi.Order)
+    .WithMany(o => o.OrderItems)
+    .HasForeignKey(oi => oi.FkOrderId);
+
+modelBuilder.Entity<OrderItemModel>()
+    .HasOne(oi => oi.Product)
+    .WithMany()
+    .HasForeignKey(oi => oi.FkProductId);
+
+modelBuilder.Entity<ProductRatingModel>()
+    .HasOne(r => r.Product)
+    .WithMany(p => p.ProductRatings)
+    .HasForeignKey(r => r.FkProductId);
+
+modelBuilder.Entity<ProductRatingModel>()
+    .HasOne(r => r.RegisteredUser)
+    .WithMany(u => u.ProductRatings)
+    .HasForeignKey(r => r.FkRegisteredUserId);
+
+modelBuilder.Entity<TransactionModel>()
+    .HasOne(t => t.ContactDetail)
+    .WithMany()
+    .HasForeignKey(t => t.FkContactId);
         }
 
     }

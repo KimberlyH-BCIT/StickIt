@@ -2,11 +2,18 @@
 using ELKH.Models;
 using ELKH.Repositories;
 using ELKH.ViewModels;
+using ELKH.Repositories;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore.Metadata.Internal;
 
 namespace ELKH.Controllers
 {
+    /// <summary>
+    /// Admin controller for inventory management: listing products, adjusting stock
+    /// quantities, and managing product images.
+    /// </summary>
+    [Authorize(Roles = "Admin")]
     public class InventoryController : Controller
     {
         private readonly InventoryRepo _inventoryRepo;

@@ -3,7 +3,7 @@ using Microsoft.AspNetCore.Mvc;
 
 namespace ELKH.Controllers
 {
-    [Authorize(Roles = "Staff")]
+    [Authorize(Roles = "Admin,Staff")]
     public class StaffControler : Controller
     {
         public IActionResult Index()

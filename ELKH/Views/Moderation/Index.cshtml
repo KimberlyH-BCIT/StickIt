@@ -1,0 +1,192 @@
+@model ELKH.ViewModels.ModerationIndexVM
+
+@{
+    ViewData["Title"] = "Review Moderation";
+}
+
+<h2>Review Moderation</h2>
+
+<form method="get" class="row g-2 mb-3">
+    <div class="col-auto">
+        <select name="filter" class="form-select">
+            <option value="all"        selected="@(Model.Query.Filter == "all")"       >All</option>
+            <option value="flagged"    selected="@(Model.Query.Filter == "flagged")"   >Flagged</option>
+            <option value="unapproved" selected="@(Model.Query.Filter == "unapproved")">Unapproved</option>
+        </select>
+    </div>
+    <div class="col-auto">
+        <input name="productId" value="@(Model.Query.ProductId?.ToString() ?? "")" class="form-control" placeholder="Product Id" />
+    </div>
+    <div class="col-auto position-relative">
+        <input id="productNameInput" name="productName" value="@(Model.Query.ProductName ?? "")" class="form-control" placeholder="Product name" autocomplete="off" />
+        <div id="productNameSuggestions" class="list-group position-absolute" style="z-index:1000;max-height:200px;overflow:auto;display:none;width:100%"></div>
+    </div>
+    <div class="col-auto">
+        <input name="userEmail" value="@(Model.Query.UserEmail ?? "")" class="form-control" placeholder="User email" />
+    </div>
+    <div class="col-auto">
+        <input type="date" name="fromDate" value="@(Model.Query.FromDate?.ToString("yyyy-MM-dd") ?? "")" class="form-control" />
+    </div>
+    <div class="col-auto">
+        <input type="date" name="toDate" value="@(Model.Query.ToDate?.ToString("yyyy-MM-dd") ?? "")" class="form-control" />
+    </div>
+    <div class="col-auto">
+        <input type="number" name="ratingMin" value="@(Model.Query.RatingMin?.ToString() ?? "")" class="form-control" placeholder="Min rating" min="1" max="5" />
+    </div>
+    <div class="col-auto">
+        <input type="number" name="ratingMax" value="@(Model.Query.RatingMax?.ToString() ?? "")" class="form-control" placeholder="Max rating" min="1" max="5" />
+    </div>
+    <div class="col-auto">
+        <select name="sort" class="form-select">
+            <option value="date_desc"   selected="@(Model.Query.Sort == "date_desc")"  >Newest</option>
+            <option value="date_asc"    selected="@(Model.Query.Sort == "date_asc")"   >Oldest</option>
+            <option value="rating_desc" selected="@(Model.Query.Sort == "rating_desc")">Top rated</option>
+            <option value="rating_asc"  selected="@(Model.Query.Sort == "rating_asc")" >Lowest rated</option>
+        </select>
+    </div>
+    <div class="col-auto">
+        <button class="btn btn-primary">Filter</button>
+    </div>
+</form>
+
+<table class="table">
+    <thead>
+        <tr>
+            <th>Id</th>
+            <th>Product</th>
+            <th>User</th>
+            <th>Rating</th>
+            <th>Comment</th>
+            <th>Approved</th>
+            <th>Flagged</th>
+            <th>Actions</th>
+        </tr>
+    </thead>
+    <tbody>
+        @foreach (var r in Model.Items)
+        {
+            <tr>
+                <td>@r.PkRatingId</td>
+                <td>@r.Product?.Name</td>
+                <td>@r.RegisteredUser?.Email</td>
+                <td>@r.Rating</td>
+                <td>@r.Description</td>
+                <td>@r.Approved</td>
+                <td>@r.IsFlagged</td>
+                <td>
+                    <button class="btn btn-sm btn-success approve-btn" data-id="@r.PkRatingId">Approve</button>
+                    <div class="d-inline ms-1">
+                        <input type="text" class="form-control form-control-sm note-input d-inline w-auto" data-id="@r.PkRatingId" placeholder="Note" />
+                        <button class="btn btn-sm btn-warning ms-1 flag-btn" data-id="@r.PkRatingId">Flag</button>
+                    </div>
+                </td>
+            </tr>
+        }
+    </tbody>
+</table>
+
+<nav>
+    <ul class="pagination">
+        @for (int i = 1; i <= Model.TotalPages; i++)
+        {
+            <li class="page-item @(i == Model.Query.Page ? "active" : "")">
+                <a class="page-link" href="?page=@i&pageSize=@Model.Query.PageSize&filter=@Model.Query.Filter&productId=@Model.Query.ProductId&productName=@Model.Query.ProductName&userEmail=@Model.Query.UserEmail&fromDate=@(Model.Query.FromDate?.ToString("yyyy-MM-dd"))&toDate=@(Model.Query.ToDate?.ToString("yyyy-MM-dd"))&ratingMin=@Model.Query.RatingMin&ratingMax=@Model.Query.RatingMax&sort=@Model.Query.Sort">@i</a>
+            </li>
+        }
+    </ul>
+</nav>
+
+<div id="toast-container"></div>
+
+@* Anti-forgery token written to a hidden field so the inline JS can read it
+   without a page reload. @inject gives direct access to IAntiforgery to produce
+   a fresh request token on every render. *@
+@using Microsoft.AspNetCore.Antiforgery
+@inject IAntiforgery Antiforgery
+<input type="hidden" id="af-token" value="@Antiforgery.GetAndStoreTokens(Context).RequestToken" />
+
+<script>
+    document.addEventListener('DOMContentLoaded', function(){
+
+        // ── Approve handler ──────────────────────────────────────────────────────
+        // Sends an AJAX POST to ModerationController.Approve with the CSRF token.
+        // Uses optimistic UI: button text updates immediately; reverts on failure.
+        document.querySelectorAll('.approve-btn').forEach(btn => {
+            btn.addEventListener('click', async function(){
+                var id = this.dataset.id;
+                var token = document.getElementById('af-token').value;
+                var formData = new FormData(); formData.append('id', id); formData.append('__RequestVerificationToken', token);
+                var oldText = this.textContent;
+                this.textContent = 'Approving...';
+                this.disabled = true;
+                var res = await fetch('@ELKH.Constants.ModerationRoutes.ApproveAction', { method: 'POST', headers: { 'X-Requested-With':'XMLHttpRequest' }, body: formData });
+                var json = await res.json();
+                if (json.success) {
+                    showToast('success', json.message || 'Approved');
+                    this.textContent = 'Approved';
+                } else {
+                    showToast('danger', json.message || 'Failed');
+                    this.textContent = oldText;
+                    this.disabled = false;
+                }
+            });
+        });
+
+        // ── Flag handler ─────────────────────────────────────────────────────────
+        // Reads the optional moderator note from the sibling input before posting.
+        // Same optimistic UI pattern as approve.
+        document.querySelectorAll('.flag-btn').forEach(btn => {
+            btn.addEventListener('click', async function(){
+                var id = this.dataset.id;
+                var token = document.getElementById('af-token').value;
+                var noteEl = document.querySelector('.note-input[data-id="'+id+'"]');
+                var note = noteEl ? noteEl.value : '';
+                var formData = new FormData(); formData.append('id', id); formData.append('note', note); formData.append('__RequestVerificationToken', token);
+                var oldText = this.textContent;
+                this.textContent = 'Flagging...';
+                this.disabled = true;
+                var res = await fetch('@ELKH.Constants.ModerationRoutes.FlagAction', { method: 'POST', headers: { 'X-Requested-With':'XMLHttpRequest' }, body: formData });
+                var json = await res.json();
+                if (json.success) {
+                    showToast('warning', json.message || 'Flagged');
+                    this.textContent = 'Flagged';
+                } else {
+                    showToast('danger', json.message || 'Failed');
+                    this.textContent = oldText;
+                    this.disabled = false;
+                }
+            });
+        });
+
+        // ── Toast helper ─────────────────────────────────────────────────────────
+        // Creates a Bootstrap Toast positioned in the top-right corner.
+        // The container is created lazily on first call so the DOM stays clean
+        // until the user performs an action.
+        // escapeHtml() is defined in site.js (loaded via the shared layout).
+        function showToast(level, text) {
+            var container = document.getElementById('toast-container');
+            if (!container) {
+                container = document.createElement('div');
+                container.id = 'toast-container';
+                container.style.position = 'fixed';
+                container.style.top = '1rem';
+                container.style.right = '1rem';
+                container.style.zIndex = 2000;
+                document.body.appendChild(container);
+            }
+            var el = document.createElement('div');
+            el.className = 'toast align-items-center text-white bg-' + (level === 'success' ? 'success' : (level === 'warning' ? 'warning' : 'danger')) + ' border-0';
+            el.role = 'alert';
+            el.ariaLive = 'assertive';
+            el.ariaAtomic = 'true';
+            el.style.minWidth = '200px';
+            // escapeHtml prevents XSS from server-supplied message strings.
+            el.innerHTML = '<div class="d-flex"><div class="toast-body">' + escapeHtml(text) + '</div><button type="button" class="btn-close btn-close-white ms-2 m-auto" data-bs-dismiss="toast" aria-label="Close"></button></div>';
+            container.appendChild(el);
+            var bs = new bootstrap.Toast(el, { delay: 4000 });
+            bs.show();
+            // Remove the element from the DOM after the fade-out completes (500 ms after hide).
+            setTimeout(() => el.remove(), 4500);
+        }
+    });
+</script>

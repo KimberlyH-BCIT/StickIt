@@ -1,0 +1,41 @@
+@model IEnumerable<ELKH.Models.WishListItemModel>
+
+@{
+    ViewData["Title"] = "My Wishlist";
+}
+
+<h2>@ViewData["Title"]</h2>
+
+<div class="mb-3">
+    <a class="btn btn-sm btn-outline-primary" asp-action="Index" asp-route-sort="date_desc">Newest</a>
+    <a class="btn btn-sm btn-outline-primary" asp-action="Index" asp-route-sort="date_asc">Oldest</a>
+</div>
+
+@if (!Model.Any())
+{
+    <p>Your wishlist is empty.</p>
+}
+else
+{
+    <div class="row">
+        @foreach (var item in Model)
+        {
+            var p = item.Product;
+            <div class="col-md-4 mb-3">
+                <div class="card">
+                    <div class="card-body">
+                        <h5 class="card-title">@p.Name</h5>
+                        <p class="card-text">@p.Description</p>
+                        <p class="card-text">Price: <span class="price" data-price="@p.Price">@p.Price.ToString("C")</span></p>
+                        <p class="card-text"><small class="text-muted">Added @item.DateAdded.ToLocalTime().ToString("g")</small></p>
+                        <form method="post" asp-action="RemoveAjax" class="remove-from-wishlist-form" data-product-id="@p.PkProductId">
+                            @Html.AntiForgeryToken()
+                            <input type="hidden" name="productId" value="@p.PkProductId" />
+                            <button type="submit" class="btn btn-sm btn-danger remove-from-wishlist-button">Remove</button>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        }
+    </div>
+}

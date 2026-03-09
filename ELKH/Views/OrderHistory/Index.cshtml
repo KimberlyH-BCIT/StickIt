@@ -1,27 +1,71 @@
 ﻿@model List<OrderDetailsVM>
-
-@section title{
-    <h3>Order Managemnt</h3>
+@{
+    ViewData["Title"] = "Order Management";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+    string[] statusOptions = ["Pending", "Processing", "Shipped", "Delivered", "Cancelled"];
 }
 
-<table>
-    <thead>
-        <tr>
-            <th>Order Id</th>
-            <th>User Email</th>
-            <th>Delivery Status</th>
-            <th></th>
-        </tr>
-    </thead>
-    <tbody>
-        @foreach(var order in Model)
-        {
+@if (TempData["Message"] is string msg)
+{
+    var parts     = msg.Split(',', 2);
+    var alertType = parts[0].Trim() == "success" ? "alert-success" : "alert-warning";
+    <div class="alert @alertType alert-dismissible fade show" role="alert">
+        @parts[^1].Trim()
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    </div>
+}
+
+<h3 class="fw-bold mb-4">Order Management</h3>
+
+<div class="table-responsive">
+    <table class="table table-hover align-middle">
+        <thead class="table-light">
             <tr>
-                <td>@order.OrderId</td>
-                <td>@order.UserEmail</td>
-                <td>@order.DeliveryStatus</td>
-                <td><a asp-controller="OrderHistory" asp-action="OrderDetails"  asp-route-orderId="@order.OrderId">Detail</a></td>
+                <th>Order #</th>
+                <th>Customer</th>
+                <th>Delivery Status</th>
+                <th>Update Status</th>
+                <th></th>
             </tr>
-        }
-    </tbody>
-</table>
+        </thead>
+        <tbody>
+            @foreach (var order in Model)
+            {
+                <tr>
+                    <td>#@order.OrderId</td>
+                    <td class="text-muted small">@order.UserEmail</td>
+                    <td><span class="badge bg-secondary">@order.DeliveryStatus</span></td>
+                    <td>
+                        <form asp-action="UpdateDeliveryStatus" method="post"
+                              class="d-flex gap-2 align-items-center">
+                            @Html.AntiForgeryToken()
+                            <input type="hidden" name="orderId" value="@order.OrderId" />
+                            <select name="deliveryStatus" class="form-select form-select-sm" style="width:auto;">
+                                @* The <select> is not bound to a model property, so the standard asp-for /
+                                   asp-items tag-helper cannot set the selected option automatically.
+                                   Each option is emitted manually, comparing the status string against
+                                   the order's current DeliveryStatus to write the selected attribute. *@
+                                    @foreach (var s in statusOptions)
+                                    {
+                                    @if (s == order.DeliveryStatus)
+                                    {
+                                        <option value="@s" selected>@s</option>
+                                    }
+                                    else
+                                    {
+                                        <option value="@s">@s</option>
+                                    }
+                                }
+                            </select>
+                            <button type="submit" class="btn btn-sm btn-primary">Update</button>
+                        </form>
+                    </td>
+                    <td>
+                        <a asp-action="OrderDetails" asp-route-orderId="@order.OrderId"
+                           class="btn btn-sm btn-outline-dark">Details</a>
+                    </td>
+                </tr>
+            }
+        </tbody>
+    </table>
+</div>

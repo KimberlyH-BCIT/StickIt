@@ -1,0 +1,89 @@
+﻿@using Microsoft.AspNetCore.Identity
+@model IEnumerable<IdentityUser>
+
+@{
+    ViewData["Title"] = "Users In Role";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+
+<div class="d-flex justify-content-center mt-5">
+
+    <div class="card shadow-sm" style="width:700px;">
+        <div class="card-body p-5">
+
+            <h2 class="fw-bold text-center mb-4 text-primary">
+                @ViewBag.RoleName Role
+            </h2>
+            
+            <div class="d-flex justify-content-center mb-4">
+                <div style="width: 700px;" class="text-center">
+
+                    <div class="d-flex justify-content-between">
+                        <a asp-controller="AdminRole"
+                           asp-action="ListRoles"
+                           class="btn btn-primary w-50 me-3">
+                            Back to Roles list
+                        </a>
+
+                        <a asp-controller="AdminRole"
+                           asp-action="AssignRoles"
+                           class="btn btn-primary w-50">
+                            Add New User
+                        </a>
+                    </div>
+
+                </div>
+            </div>
+
+
+            
+
+            @if (!Model.Any())
+            {
+                <div class="alert alert-info text-center">
+                    No users assigned to this role.
+                </div>
+            }
+            else
+            {
+                <table class="table align-middle">
+                    <thead class="table-light">
+                        <tr>
+                            <th>Email</th>
+                            <th class="text-end"></th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var user in Model)
+                        {
+                            <tr>
+                                <td>@user.Email</td>
+                                <td class="text-end">
+                                    <form asp-action="RemoveUserFromRole"
+                                          method="post"
+                                          class="d-inline">
+                                        @Html.AntiForgeryToken()
+
+                                        <input type="hidden"
+                                               name="roleId"
+                                               value="@ViewBag.RoleId" />
+
+                                        <input type="hidden"
+                                               name="userId"
+                                               value="@user.Id" />
+
+                                        <button type="submit"
+                                                class="btn btn-danger btn-sm px-4">
+                                            Remove User
+                                        </button>
+                                    </form>
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            }
+
+        </div>
+    </div>
+</div>

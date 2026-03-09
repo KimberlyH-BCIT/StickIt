@@ -1,0 +1,98 @@
+@model ELKH.ViewModels.WishlistSectionVM
+
+<div class="d-flex justify-content-between align-items-center mb-2">
+    <span class="text-muted small">
+        @Model.TotalItems item(s)
+        @if (Model.TotalPages > 1)
+        {
+            <span>&mdash; Page @Model.CurrentPage of @Model.TotalPages</span>
+        }
+    </span>
+    <select class="form-select form-select-sm w-auto dashboard-sort-select" aria-label="Sort wishlist">
+        <option value="date_desc" selected="@(Model.CurrentSort == "date_desc" ? "selected" : null)">Descending</option>
+        <option value="date_asc"  selected="@(Model.CurrentSort == "date_asc"  ? "selected" : null)">Ascending</option>
+        <option value="on_sale"   selected="@(Model.CurrentSort == "on_sale"   ? "selected" : null)">On Sale</option>
+        <option value="most_popular" selected="@(Model.CurrentSort == "most_popular" ? "selected" : null)">Most Popular</option>
+    </select>
+</div>
+
+@if (!Model.Items.Any())
+{
+    <p class="text-muted mb-0">
+        @(Model.CurrentSort == "on_sale" ? "No sale items in your wishlist." : "Your wishlist is empty.")
+    </p>
+}
+else
+{
+    <div class="row g-3">
+        @foreach (var item in Model.Items)
+        {
+            <div class="col-6 col-md-3">
+                <div class="card h-100">
+                    <div class="card-body">
+                        @if (item.DiscountPercent > 0)
+                        {
+                            <span class="badge bg-danger mb-1">@item.DiscountPercent% OFF</span>
+                        }
+                        <h6 class="card-title">@item.ProductName</h6>
+                        @if (item.DiscountPercent > 0)
+                        {
+                            <p class="card-text mb-0">
+                                <span class="text-decoration-line-through text-muted small">@item.Price.ToString("C")</span>
+                            </p>
+                            <p class="card-text text-danger fw-bold">@item.EffectivePrice.ToString("C")</p>
+                        }
+                        else
+                        {
+                            <p class="card-text text-muted">@item.Price.ToString("C")</p>
+                        }
+                        <a class="btn btn-sm btn-outline-secondary stretched-link"
+                           asp-controller="Product" asp-action="Details" asp-route-id="@item.ProductId">View</a>
+                    </div>
+                </div>
+            </div>
+        }
+    </div>
+
+    @if (Model.TotalPages > 1)
+    {
+        int pgStart = Math.Max(1, Model.CurrentPage - 2);
+        int pgEnd   = Math.Min(Model.TotalPages, Model.CurrentPage + 2);
+        <nav class="mt-3" aria-label="Wishlist page navigation">
+            <ul class="pagination pagination-sm justify-content-center mb-0">
+                <li class="page-item @(Model.CurrentPage == 1 ? "disabled" : "")">
+                    <a class="page-link dashboard-page-link" data-page="@(Model.CurrentPage - 1)" href="#">&laquo;</a>
+                </li>
+                @if (pgStart > 1)
+                {
+                    <li class="page-item">
+                        <a class="page-link dashboard-page-link" data-page="1" href="#">1</a>
+                    </li>
+                    @if (pgStart > 2)
+                    {
+                        <li class="page-item disabled"><span class="page-link">&hellip;</span></li>
+                    }
+                }
+                @for (int i = pgStart; i <= pgEnd; i++)
+                {
+                    <li class="page-item @(i == Model.CurrentPage ? "active" : "")">
+                        <a class="page-link dashboard-page-link" data-page="@i" href="#">@i</a>
+                    </li>
+                }
+                @if (pgEnd < Model.TotalPages)
+                {
+                    @if (pgEnd < Model.TotalPages - 1)
+                    {
+                        <li class="page-item disabled"><span class="page-link">&hellip;</span></li>
+                    }
+                    <li class="page-item">
+                        <a class="page-link dashboard-page-link" data-page="@Model.TotalPages" href="#">@Model.TotalPages</a>
+                    </li>
+                }
+                <li class="page-item @(Model.CurrentPage == Model.TotalPages ? "disabled" : "")">
+                    <a class="page-link dashboard-page-link" data-page="@(Model.CurrentPage + 1)" href="#">&raquo;</a>
+                </li>
+            </ul>
+        </nav>
+    }
+}
