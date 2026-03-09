@@ -7,9 +7,16 @@ using System.Globalization;
 
 var builder = WebApplication.CreateBuilder(args);
 
+
 builder.Services.AddScoped<IRole_repo, Role_repo>();
 builder.Services.AddScoped<OrderHistoryManagementRepo>();
 builder.Services.AddScoped<InventoryRepo>();
+
+
+builder.Services.AddScoped<OrderHistoryManagementRepo>();
+builder.Services.AddScoped<InventoryRepo>();
+builder.Services.AddScoped<IRole_repo, Role_repo>();
+
 
 // Add services to the container.
 var connectionString = builder.Configuration.GetConnectionString("DefaultConnection")

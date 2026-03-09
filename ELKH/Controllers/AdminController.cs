@@ -9,7 +9,7 @@ using Microsoft.EntityFrameworkCore;
 
 namespace ELKH.Controllers
 {
-    //[Authorize(Roles = "Admin")]
+    [Authorize(Roles = "Admin")]
     public class AdminController : Controller
     {
         private readonly IRole_repo _roleRepo;
@@ -48,13 +48,17 @@ namespace ELKH.Controllers
             }
 
             if (!string.IsNullOrEmpty(search))
+            {
                 userList = userList
                     .Where(u => u.Email.Contains(search, StringComparison.OrdinalIgnoreCase)
                              || u.Roles.Any(r => r.Contains(search, StringComparison.OrdinalIgnoreCase)))
                     .ToList();
+            }
 
             if (!string.IsNullOrEmpty(roleFilter) && roleFilter != "All")
+            {
                 userList = userList.Where(u => u.Roles.Contains(roleFilter)).ToList();
+            }
 
             int totalUsers = userList.Count;
             var pagedUsers = userList.Skip((page - 1) * pageSize).Take(pageSize).ToList();
@@ -117,7 +121,11 @@ namespace ELKH.Controllers
             }
 
             var user = await _userManager.FindByIdAsync(userId);
-            if (user == null) return NotFound();
+
+            if (user == null)
+            {
+                return NotFound();
+            }
 
             await _userManager.RemoveFromRoleAsync(user, role);
             return RedirectToAction("AccountDetails", new { id = userId });
