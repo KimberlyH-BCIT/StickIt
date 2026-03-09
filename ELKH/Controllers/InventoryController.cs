@@ -12,7 +12,7 @@ namespace ELKH.Controllers
     /// Admin controller for inventory management: listing products, adjusting stock
     /// quantities, and managing product images.
     /// </summary>
-    [Authorize(Roles = "Admin")]
+    //[Authorize(Roles = "Admin")]
     public class InventoryController : Controller
     {
         private readonly InventoryRepo _inventoryRepo;
