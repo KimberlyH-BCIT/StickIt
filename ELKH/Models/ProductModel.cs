@@ -71,7 +71,6 @@ public int? StockQuantity { get; set; } = 0;
         /// Foreign key to the product's category (required).
         /// </summary>
         public int FkCategoryId { get; set; }
-        public CategoryModel Category { get; set; } = new CategoryModel();
 
         //Product Image Relationship
         public ICollection<ImageModel>? ProductImages { get; set; }
@@ -85,7 +84,7 @@ public int? StockQuantity { get; set; } = 0;
         /// Collection of images associated with this product.
         /// Used for product galleries and thumbnails.
         /// </summary>
-        public ICollection<ProductImageModel>? ProductImages { get; set; }
+        public ICollection<ProductImageModel>? ProductImage { get; set; }
 
         //Cart Relationship
         public ICollection<CartModel>? Carts { get; set; }

@@ -79,7 +79,6 @@ namespace ELKH.Controllers
                 TempData["Error"] = "Order not found.";
                 return RedirectToAction(nameof(Index));
             }
-            var details = await _orderManagementRepo.OrderDetails(userEmail, orderId);
 
             // Map the full domain model to a flat VM consumed by the view.
             // Transaction and RegisteredUser are included by GetByIdAsync.

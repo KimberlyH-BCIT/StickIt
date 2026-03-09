@@ -29,7 +29,6 @@ namespace ELKH.Repositories
             return await _context.Orders
                 .Include(o => o.RegisteredUser)
                 .ToListAsync();
-            return orders;
         }
 
         /// <summary>
@@ -48,7 +47,6 @@ namespace ELKH.Repositories
                 .Include(o => o.OrderItems)
                     .ThenInclude(oi => oi.Product)
                 .FirstOrDefaultAsync();
-            return orderDetails;
         }
 
         /// <summary>

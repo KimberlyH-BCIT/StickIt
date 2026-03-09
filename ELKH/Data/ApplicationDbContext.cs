@@ -49,7 +49,7 @@ namespace ELKH.Data
 
             // One-to-one: Order <-> OrderStatus (each order has a single status record)
             modelBuilder.Entity<OrderModel>()
-                .HasOne(o => o.OrderStatusDetail)
+                .HasOne(o => o.OrderStatuses)
                 .WithOne(d => d.Order)
                 .HasForeignKey<OrderStatusModel>(o => o.FkOrderId);
 
@@ -153,7 +153,7 @@ modelBuilder.Entity<OrderItemModel>()
     .HasForeignKey(oi => oi.FkProductId);
 
 modelBuilder.Entity<ProductRatingModel>()
-    .HasOne(r => r.Product)
+    .HasOne(r => r.Products)
     .WithMany(p => p.ProductRatings)
     .HasForeignKey(r => r.FkProductId);
 

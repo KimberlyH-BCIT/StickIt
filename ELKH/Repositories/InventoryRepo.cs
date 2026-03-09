@@ -70,58 +70,62 @@ namespace ELKH.Repositories
 
                 // Create a new Image instance.
                 var image = new ImageModel
-            {
+                {
                     FileName = file.FileName,
                     Description = "",
                     FileType = file.ContentType,
                     ImageData = imageBytes,
                     FkProductId = productId
-            };
+                };
 
                 // Add to database context and save.
                 _imageDb.Images.Add(image);
                 bool isSaved = _imageDb.SaveChanges() > 0;
                 if (!isSaved)
-            {
-                return false;
+                {
+                    return false;
+                }
+                return true;
             }
-
-            // Use a GUID-based file name to prevent collisions and avoid exposing
-            // the original upload name (which could contain path traversal characters).
-            var fileName = Guid.NewGuid().ToString() +
-                           Path.GetExtension(vm.ProductImage.FileName);
-
-            // Resolve the physical path to wwwroot/images at runtime via IWebHostEnvironment.
-            var uploadPath = Path.Combine(_env.WebRootPath, "images");
-
-            // Create the images directory on first use if it does not already exist.
-            if (!Directory.Exists(uploadPath))
-                Directory.CreateDirectory(uploadPath);
-
-            var filePath = Path.Combine(uploadPath, fileName);
-
-            // Stream the upload directly to disk to avoid holding the entire file in memory.
-            using (var stream = new FileStream(filePath, FileMode.Create))
-            {
-                await vm.ProductImage.CopyToAsync(stream);
-            }
-
-            // Create DB record - set the required navigation property 'Product'
-            var image = new ProductImageModel
-            {
-                ProductImageURL = "/images/" + fileName,
-                FkProductId = product.PkProductId,
-                Product = product
-            };
-
-            product.ProductImages.Add(image);
-
-            await _context.SaveChangesAsync();
-
-            return true;
-        }
             return false;
         }
+
+                //    // Use a GUID-based file name to prevent collisions and avoid exposing
+                //    // the original upload name (which could contain path traversal characters).
+                //    var fileName = Guid.NewGuid().ToString() +
+                //                   Path.GetExtension(vm.ProductImage.FileName);
+
+                //    // Resolve the physical path to wwwroot/images at runtime via IWebHostEnvironment.
+                //    var uploadPath = Path.Combine(_env.WebRootPath, "images");
+
+                //    // Create the images directory on first use if it does not already exist.
+                //    if (!Directory.Exists(uploadPath))
+                //        Directory.CreateDirectory(uploadPath);
+
+                //    var filePath = Path.Combine(uploadPath, fileName);
+
+                //    // Stream the upload directly to disk to avoid holding the entire file in memory.
+                //    using (var stream = new FileStream(filePath, FileMode.Create))
+                //    {
+                //        await vm.ProductImage.CopyToAsync(stream);
+                //    }
+
+                //    // Create DB record - set the required navigation property 'Product'
+                //    var image = new ProductImageModel
+                //    {
+                //        ProductImageURL = "/images/" + fileName,
+                //        FkProductId = product.PkProductId,
+                //        Product = product
+                //    };
+
+                //    product.ProductImages.Add(image);
+
+                //    await _context.SaveChangesAsync();
+
+                //    return true;
+                //}
+                //    return false;
+                //}
     }
-}
+} 
 
