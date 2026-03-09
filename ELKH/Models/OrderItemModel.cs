@@ -11,10 +11,8 @@ namespace ELKH.Models
 
         // Relationship with Order
         public int FkOrderId { get; set; }
-        public OrderModel? Orders { get; set; }       // removed = new OrderModel()
-
         // Relationship with Product
         public int FkProductId { get; set; }
-        public ProductModel? Products { get; set; }   // removed = new ProductModel()
+        public ProductModel? Product { get; set; }
     }
 }

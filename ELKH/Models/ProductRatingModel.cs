@@ -12,10 +12,10 @@ namespace ELKH.Models
 
         //Product Relationship
         public int FkProductId { get; set; }
-        public ProductModel Products { get; set; } = new ProductModel();
+        public ProductModel? Products { get; set; }
 
         //Registered User Relationship
-        public int FkRegisteredUserId { get; set; }
-        public RegisteredUserModel RegisteredUsers { get; set; } = new RegisteredUserModel();
+        public int? FkRegisteredUserId { get; set; }
+        public RegisteredUserModel? RegisteredUsers { get; set; }
     }
 }

@@ -26,7 +26,7 @@ namespace ELKH.Repositories
                                       .Where(o => o.PkOrderId == orderId && o.RegisteredUser.Email == email)
                                       .Include(o => o.Transaction)
                                       .Include(o => o.OrderItems)
-                                      .ThenInclude(oi => oi.Products)
+                                      .ThenInclude(oi => oi.Product)
                                       .FirstOrDefaultAsync();
             return orderDetails;
         }

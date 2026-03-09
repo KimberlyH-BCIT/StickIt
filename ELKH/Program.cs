@@ -1,4 +1,5 @@
 using ELKH.Data;
+using ELKH.Models;
 using ELKH.Repositories;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Localization;
@@ -7,7 +8,6 @@ using System.Globalization;
 
 var builder = WebApplication.CreateBuilder(args);
 
-
 builder.Services.AddScoped<IRole_repo, Role_repo>();
 builder.Services.AddScoped<OrderHistoryManagementRepo>();
 builder.Services.AddScoped<InventoryRepo>();
@@ -16,6 +16,8 @@ builder.Services.AddScoped<InventoryRepo>();
 builder.Services.AddScoped<OrderHistoryManagementRepo>();
 builder.Services.AddScoped<InventoryRepo>();
 builder.Services.AddScoped<IRole_repo, Role_repo>();
+builder.Services.AddScoped<OrderHistoryManagementRepo>();
+builder.Services.AddScoped<InventoryRepo>();
 
 
 // Add services to the container.
@@ -25,6 +27,9 @@ var connectionString = builder.Configuration.GetConnectionString("DefaultConnect
 builder.Services.AddDbContext<ApplicationDbContext>(options =>
     options.UseSqlite(connectionString));
 
+builder.Services.AddDbContext<ImageStoreContext>(options =>
+    options.UseSqlite(builder.Configuration.GetConnectionString("ImageStoreConnection")));
+
 builder.Services.AddDatabaseDeveloperPageExceptionFilter();
 
 builder.Services.AddDefaultIdentity<IdentityUser>(options =>
@@ -32,6 +37,8 @@ builder.Services.AddDefaultIdentity<IdentityUser>(options =>
     .AddRoles<IdentityRole>()
     .AddEntityFrameworkStores<ApplicationDbContext>();
 
+
+// Register Razor Pages (project contains Razor Pages)
 builder.Services.AddRazorPages();
 builder.Services.AddControllersWithViews();
 
@@ -67,6 +74,13 @@ app.UseHttpsRedirection();
 app.UseStaticFiles();        
 app.UseRouting();            
 app.UseAuthentication();
+app.UseHttpsRedirection();
+app.UseStaticFiles();
+
+app.UseRouting();
+
+//app.UseAuthentication(); //-> Enable this when you want to require login for the entire app. Otherwise, you can use [Authorize] on specific controllers/actions as needed.
+
 app.UseAuthorization();
 
 app.MapControllerRoute(

@@ -184,12 +184,12 @@ namespace ELKH.Controllers
 
             // ── Top 5 products ────────────────────────────────────────────
             var orderItems = await _context.OrderItems
-                .Include(oi => oi.Products)
+                .Include(oi => oi.Product) // use correct navigation property
                 .Select(oi => new
                 {
                     oi.FkProductId,
-                    ProductName = oi.Products == null ? "Unknown" : oi.Products.Name,
-                    ProductPrice = oi.Products == null ? 0m : oi.Products.Price,
+                    ProductName = oi.Product == null ? "Unknown" : oi.Product.Name,
+                    ProductPrice = oi.Product == null ? 0m : oi.Product.Price,
                     oi.Quantity
                 })
                 .ToListAsync();
@@ -224,6 +224,89 @@ namespace ELKH.Controllers
         }
     }
 }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 

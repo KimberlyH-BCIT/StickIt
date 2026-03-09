@@ -3,6 +3,7 @@ using System;
 using ELKH.Data;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 #nullable disable
@@ -10,12 +11,13 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace ELKH.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    partial class ApplicationDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260304005757_InitialCreate")]
+    partial class InitialCreate20260304005757
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
-            modelBuilder.HasAnnotation("ProductVersion", "8.0.23");
             modelBuilder.HasAnnotation("ProductVersion", "10.0.2");
 
             modelBuilder.Entity("ELKH.Models.CartModel", b =>
@@ -35,10 +37,6 @@ namespace ELKH.Migrations
 
                     b.Property<int>("Quantity")
                         .HasColumnType("INTEGER");
-
-                    b.Property<int>("RegisteredUserPkRegisteredUserId")
-                        .HasColumnType("INTEGER");
-
 
                     b.Property<int?>("RegisteredUserPkRegisteredUserId")
                         .HasColumnType("INTEGER");
@@ -68,18 +66,6 @@ namespace ELKH.Migrations
                     b.HasKey("PkCategoryId");
 
                     b.ToTable("Categories");
-
-                    b.HasData(
-                        new
-                        {
-                            PkCategoryId = 1,
-                            CategoryName = "Carton"
-                        },
-                        new
-                        {
-                            PkCategoryId = 2,
-                            CategoryName = "Fake"
-                        });
                 });
 
             modelBuilder.Entity("ELKH.Models.ContactDetailModel", b =>
@@ -284,9 +270,6 @@ namespace ELKH.Migrations
                     b.Property<int>("StockQuantity")
                         .HasColumnType("INTEGER");
 
-                    b.Property<int>("WishListPkWishListId")
-                        .HasColumnType("INTEGER");
-
                     b.HasKey("PkProductId");
 
                     b.HasIndex("FkCategoryId");
@@ -294,38 +277,6 @@ namespace ELKH.Migrations
                     b.HasIndex("FkWishListId");
 
                     b.ToTable("Products");
-
-                    b.HasData(
-                        new
-                        {
-                            PkProductId = 1,
-                            Description = "Character from anime",
-                            FkCategoryId = 1,
-                            IsActive = true,
-                            Name = "Pikacu",
-                            Price = 2.99m,
-                            StockQuantity = 10
-                        },
-                        new
-                        {
-                            PkProductId = 2,
-                            Description = "Random",
-                            FkCategoryId = 1,
-                            IsActive = true,
-                            Name = "Random",
-                            Price = 1.99m,
-                            StockQuantity = 80
-                        },
-                        new
-                        {
-                            PkProductId = 3,
-                            Description = "Random2",
-                            FkCategoryId = 2,
-                            IsActive = true,
-                            Name = "Random2",
-                            Price = 4.99m,
-                            StockQuantity = 80
-                        });
                 });
 
             modelBuilder.Entity("ELKH.Models.ProductRatingModel", b =>

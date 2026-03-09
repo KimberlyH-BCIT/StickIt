@@ -1,8 +1,8 @@
+
 ﻿using ELKH.Models;
 using System.ComponentModel.DataAnnotations;
 
-namespace ELKH.ViewModels
-{
+namespace ELKH.ViewModels;
     public class TransactionVM
     {
         public int PkTransactionID { get; set; }
@@ -22,6 +22,5 @@ namespace ELKH.ViewModels
         //Relationship with Order
         public int FkOrderId { get; set; }
         public OrderModel Order { get; set; } = new OrderModel();
-    }
-    
+
 }

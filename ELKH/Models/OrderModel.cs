@@ -5,6 +5,8 @@ namespace ELKH.Models
 {
     public class OrderModel
     {
+        private TransactionModel? transaction;
+
         [Key]
         public int PkOrderId { get; set; }
 
@@ -22,19 +24,18 @@ namespace ELKH.Models
 
         // Relationship with User
         public int FkRegisteredUserId { get; set; }
-        public RegisteredUserModel? RegisteredUser { get; set; }     // removed = new()
-
+        public RegisteredUserModel? RegisteredUser { get; set; }    
         // Relationship with OrderItem
         public ICollection<OrderItemModel> OrderItems { get; set; } = new List<OrderItemModel>();
 
         // Relationship with Transaction
-        public TransactionModel? Transaction { get; set; }           // removed = new()
+        public TransactionModel? Transaction { get; set; }          
 
         // Order Status Relationship
-        public OrderStatusModel? OrderStatuses { get; set; }         // removed = new()
+        public OrderStatusModel? OrderStatuses { get; set; }
 
         // ContactDetail Relationship
         public int FkContactId { get; set; }
-        public ContactDetailModel? ContactDetail { get; set; }       // removed = new()
+        public ContactDetailModel? ContactDetail { get; set; }       
     }
 }

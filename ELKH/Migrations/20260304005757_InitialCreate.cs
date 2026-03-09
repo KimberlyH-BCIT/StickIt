@@ -6,7 +6,7 @@ using Microsoft.EntityFrameworkCore.Migrations;
 namespace ELKH.Migrations
 {
     /// <inheritdoc />
-    public partial class InitialCreate : Migration
+    public partial class InitialCreate20260304005757 : Migration
     {
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)
@@ -226,19 +226,17 @@ namespace ELKH.Migrations
                     PostCode = table.Column<string>(type: "TEXT", nullable: false),
                     Country = table.Column<string>(type: "TEXT", nullable: false),
                     IsDefault = table.Column<bool>(type: "INTEGER", nullable: false),
-                    FkRegisteredUserId = table.Column<int>(type: "INTEGER", nullable: false),
-                    RegisiteredUserPkRegisteredUserId = table.Column<int>(type: "INTEGER", nullable: false),
-                    UserId = table.Column<string>(type: "TEXT", nullable: false)
+                    FkRegisteredUserId = table.Column<int>(type: "INTEGER", nullable: true),
+                    RegisteredUserPkRegisteredUserId = table.Column<int>(type: "INTEGER", nullable: true)
                 },
                 constraints: table =>
                 {
                     table.PrimaryKey("PK_ContactDetails", x => x.PkContactId);
                     table.ForeignKey(
-                        name: "FK_ContactDetails_RegisteredUsers_RegisiteredUserPkRegisteredUserId",
-                        column: x => x.RegisiteredUserPkRegisteredUserId,
+                        name: "FK_ContactDetails_RegisteredUsers_RegisteredUserPkRegisteredUserId",
+                        column: x => x.RegisteredUserPkRegisteredUserId,
                         principalTable: "RegisteredUsers",
-                        principalColumn: "PkRegisteredUserId",
-                        onDelete: ReferentialAction.Cascade);
+                        principalColumn: "PkRegisteredUserId");
                 });
 
             migrationBuilder.CreateTable(
@@ -247,7 +245,7 @@ namespace ELKH.Migrations
                 {
                     PkWishListId = table.Column<int>(type: "INTEGER", nullable: false)
                         .Annotation("Sqlite:Autoincrement", true),
-                    FkUserId = table.Column<int>(type: "INTEGER", nullable: false)
+                    FkUserId = table.Column<int>(type: "INTEGER", nullable: true)
                 },
                 constraints: table =>
                 {
@@ -256,8 +254,7 @@ namespace ELKH.Migrations
                         name: "FK_WishLists_RegisteredUsers_FkUserId",
                         column: x => x.FkUserId,
                         principalTable: "RegisteredUsers",
-                        principalColumn: "PkRegisteredUserId",
-                        onDelete: ReferentialAction.Cascade);
+                        principalColumn: "PkRegisteredUserId");
                 });
 
             migrationBuilder.CreateTable(
@@ -304,8 +301,7 @@ namespace ELKH.Migrations
                     StockQuantity = table.Column<int>(type: "INTEGER", nullable: false),
                     IsActive = table.Column<bool>(type: "INTEGER", nullable: false),
                     FkCategoryId = table.Column<int>(type: "INTEGER", nullable: false),
-                    FkWishListId = table.Column<int>(type: "INTEGER", nullable: false),
-                    WishListPkWishListId = table.Column<int>(type: "INTEGER", nullable: false)
+                    FkWishListId = table.Column<int>(type: "INTEGER", nullable: true)
                 },
                 constraints: table =>
                 {
@@ -317,11 +313,10 @@ namespace ELKH.Migrations
                         principalColumn: "PkCategoryId",
                         onDelete: ReferentialAction.Cascade);
                     table.ForeignKey(
-                        name: "FK_Products_WishLists_WishListPkWishListId",
-                        column: x => x.WishListPkWishListId,
+                        name: "FK_Products_WishLists_FkWishListId",
+                        column: x => x.FkWishListId,
                         principalTable: "WishLists",
-                        principalColumn: "PkWishListId",
-                        onDelete: ReferentialAction.Cascade);
+                        principalColumn: "PkWishListId");
                 });
 
             migrationBuilder.CreateTable(
@@ -356,7 +351,7 @@ namespace ELKH.Migrations
                     DeliberyFee = table.Column<decimal>(type: "TEXT", nullable: false),
                     FkOrderId = table.Column<int>(type: "INTEGER", nullable: false),
                     FkContactId = table.Column<int>(type: "INTEGER", nullable: false),
-                    ContactDetailPkContactId = table.Column<int>(type: "INTEGER", nullable: false)
+                    ContactDetailPkContactId = table.Column<int>(type: "INTEGER", nullable: true)
                 },
                 constraints: table =>
                 {
@@ -365,8 +360,7 @@ namespace ELKH.Migrations
                         name: "FK_Transactions_ContactDetails_ContactDetailPkContactId",
                         column: x => x.ContactDetailPkContactId,
                         principalTable: "ContactDetails",
-                        principalColumn: "PkContactId",
-                        onDelete: ReferentialAction.Cascade);
+                        principalColumn: "PkContactId");
                     table.ForeignKey(
                         name: "FK_Transactions_Orders_FkOrderId",
                         column: x => x.FkOrderId,
@@ -383,10 +377,10 @@ namespace ELKH.Migrations
                         .Annotation("Sqlite:Autoincrement", true),
                     Quantity = table.Column<int>(type: "INTEGER", nullable: false),
                     TotalPrice = table.Column<decimal>(type: "TEXT", nullable: false),
-                    FkRegisteredUserId = table.Column<int>(type: "INTEGER", nullable: false),
-                    RegisteredUserPkRegisteredUserId = table.Column<int>(type: "INTEGER", nullable: false),
+                    FkRegisteredUserId = table.Column<int>(type: "INTEGER", nullable: true),
+                    RegisteredUserPkRegisteredUserId = table.Column<int>(type: "INTEGER", nullable: true),
                     FkProductID = table.Column<int>(type: "INTEGER", nullable: false),
-                    ProductPkProductId = table.Column<int>(type: "INTEGER", nullable: false)
+                    ProductPkProductId = table.Column<int>(type: "INTEGER", nullable: true)
                 },
                 constraints: table =>
                 {
@@ -395,14 +389,12 @@ namespace ELKH.Migrations
                         name: "FK_Carts_Products_ProductPkProductId",
                         column: x => x.ProductPkProductId,
                         principalTable: "Products",
-                        principalColumn: "PkProductId",
-                        onDelete: ReferentialAction.Cascade);
+                        principalColumn: "PkProductId");
                     table.ForeignKey(
                         name: "FK_Carts_RegisteredUsers_RegisteredUserPkRegisteredUserId",
                         column: x => x.RegisteredUserPkRegisteredUserId,
                         principalTable: "RegisteredUsers",
-                        principalColumn: "PkRegisteredUserId",
-                        onDelete: ReferentialAction.Cascade);
+                        principalColumn: "PkRegisteredUserId");
                 });
 
             migrationBuilder.CreateTable(
@@ -413,25 +405,23 @@ namespace ELKH.Migrations
                         .Annotation("Sqlite:Autoincrement", true),
                     Quantity = table.Column<int>(type: "INTEGER", nullable: false),
                     FkOrderId = table.Column<int>(type: "INTEGER", nullable: false),
-                    OrdersPkOrderId = table.Column<int>(type: "INTEGER", nullable: false),
+                    OrderPkOrderId = table.Column<int>(type: "INTEGER", nullable: true),
                     FkProductId = table.Column<int>(type: "INTEGER", nullable: false),
-                    ProductsPkProductId = table.Column<int>(type: "INTEGER", nullable: false)
+                    ProductPkProductId = table.Column<int>(type: "INTEGER", nullable: true)
                 },
                 constraints: table =>
                 {
                     table.PrimaryKey("PK_OrderItems", x => x.PkOrderItemId);
                     table.ForeignKey(
-                        name: "FK_OrderItems_Orders_OrdersPkOrderId",
-                        column: x => x.OrdersPkOrderId,
+                        name: "FK_OrderItems_Orders_OrderPkOrderId",
+                        column: x => x.OrderPkOrderId,
                         principalTable: "Orders",
-                        principalColumn: "PkOrderId",
-                        onDelete: ReferentialAction.Cascade);
+                        principalColumn: "PkOrderId");
                     table.ForeignKey(
-                        name: "FK_OrderItems_Products_ProductsPkProductId",
-                        column: x => x.ProductsPkProductId,
+                        name: "FK_OrderItems_Products_ProductPkProductId",
+                        column: x => x.ProductPkProductId,
                         principalTable: "Products",
-                        principalColumn: "PkProductId",
-                        onDelete: ReferentialAction.Cascade);
+                        principalColumn: "PkProductId");
                 });
 
             migrationBuilder.CreateTable(
@@ -442,7 +432,7 @@ namespace ELKH.Migrations
                         .Annotation("Sqlite:Autoincrement", true),
                     ProductImageURL = table.Column<string>(type: "TEXT", nullable: false),
                     FkProductId = table.Column<int>(type: "INTEGER", nullable: false),
-                    ProductPkProductId = table.Column<int>(type: "INTEGER", nullable: false)
+                    ProductPkProductId = table.Column<int>(type: "INTEGER", nullable: true)
                 },
                 constraints: table =>
                 {
@@ -451,8 +441,7 @@ namespace ELKH.Migrations
                         name: "FK_ProductImages_Products_ProductPkProductId",
                         column: x => x.ProductPkProductId,
                         principalTable: "Products",
-                        principalColumn: "PkProductId",
-                        onDelete: ReferentialAction.Cascade);
+                        principalColumn: "PkProductId");
                 });
 
             migrationBuilder.CreateTable(
@@ -465,9 +454,9 @@ namespace ELKH.Migrations
                     Rating = table.Column<int>(type: "INTEGER", nullable: false),
                     RatedTime = table.Column<DateTime>(type: "TEXT", nullable: false),
                     FkProductId = table.Column<int>(type: "INTEGER", nullable: false),
-                    ProductsPkProductId = table.Column<int>(type: "INTEGER", nullable: false),
-                    FkRegisteredUserId = table.Column<int>(type: "INTEGER", nullable: false),
-                    RegisteredUsersPkRegisteredUserId = table.Column<int>(type: "INTEGER", nullable: false)
+                    ProductsPkProductId = table.Column<int>(type: "INTEGER", nullable: true),
+                    FkRegisteredUserId = table.Column<int>(type: "INTEGER", nullable: true),
+                    RegisteredUsersPkRegisteredUserId = table.Column<int>(type: "INTEGER", nullable: true)
                 },
                 constraints: table =>
                 {
@@ -476,14 +465,12 @@ namespace ELKH.Migrations
                         name: "FK_ProductRatings_Products_ProductsPkProductId",
                         column: x => x.ProductsPkProductId,
                         principalTable: "Products",
-                        principalColumn: "PkProductId",
-                        onDelete: ReferentialAction.Cascade);
+                        principalColumn: "PkProductId");
                     table.ForeignKey(
                         name: "FK_ProductRatings_RegisteredUsers_RegisteredUsersPkRegisteredUserId",
                         column: x => x.RegisteredUsersPkRegisteredUserId,
                         principalTable: "RegisteredUsers",
-                        principalColumn: "PkRegisteredUserId",
-                        onDelete: ReferentialAction.Cascade);
+                        principalColumn: "PkRegisteredUserId");
                 });
 
             migrationBuilder.CreateIndex(
@@ -534,19 +521,19 @@ namespace ELKH.Migrations
                 column: "RegisteredUserPkRegisteredUserId");
 
             migrationBuilder.CreateIndex(
-                name: "IX_ContactDetails_RegisiteredUserPkRegisteredUserId",
+                name: "IX_ContactDetails_RegisteredUserPkRegisteredUserId",
                 table: "ContactDetails",
-                column: "RegisiteredUserPkRegisteredUserId");
+                column: "RegisteredUserPkRegisteredUserId");
 
             migrationBuilder.CreateIndex(
-                name: "IX_OrderItems_OrdersPkOrderId",
+                name: "IX_OrderItems_OrderPkOrderId",
                 table: "OrderItems",
-                column: "OrdersPkOrderId");
+                column: "OrderPkOrderId");
 
             migrationBuilder.CreateIndex(
-                name: "IX_OrderItems_ProductsPkProductId",
+                name: "IX_OrderItems_ProductPkProductId",
                 table: "OrderItems",
-                column: "ProductsPkProductId");
+                column: "ProductPkProductId");
 
             migrationBuilder.CreateIndex(
                 name: "IX_Orders_ContactDetailPkContactId",
@@ -585,9 +572,9 @@ namespace ELKH.Migrations
                 column: "FkCategoryId");
 
             migrationBuilder.CreateIndex(
-                name: "IX_Products_WishListPkWishListId",
+                name: "IX_Products_FkWishListId",
                 table: "Products",
-                column: "WishListPkWishListId");
+                column: "FkWishListId");
 
             migrationBuilder.CreateIndex(
                 name: "IX_Transactions_ContactDetailPkContactId",

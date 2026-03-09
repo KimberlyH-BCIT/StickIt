@@ -7,6 +7,5 @@
         public int Quantity { get; set; }
         public bool IsActive { get; set; }
         public List<string> ProductImage { get; set; } = new ();
-
     }
 }

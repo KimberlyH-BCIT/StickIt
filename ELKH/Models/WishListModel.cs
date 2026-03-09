@@ -8,10 +8,10 @@ namespace ELKH.Models
         public int PkWishListId { get; set; }
 
         //Relationship with user
-        public int FkUserId { get; set; }
-        public RegisteredUserModel RegisteredUser { get; set; } = new RegisteredUserModel();
+        public int? FkUserId { get; set; }
+        public RegisteredUserModel? RegisteredUser { get; set; }
 
         //Relationship with Product
-        public ICollection<ProductModel> Products { get; set; } = new List<ProductModel>();
+        public ICollection<ProductModel>? Products { get; set; }
     }
 }

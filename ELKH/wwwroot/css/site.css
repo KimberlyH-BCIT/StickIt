@@ -31,6 +31,7 @@ body {
     box-shadow: 0 10px 30px rgba(0, 0, 0, 0.05);
 }
 
+<<<<<<< HEAD
 
 /* =====================================================
    NAVBAR
@@ -235,4 +236,12 @@ body {
 .role-guest {
     border-color: #f8a5c2;
     color: #f8a5c2;
+=======
+.form-floating > .form-control-plaintext:focus::placeholder, .form-floating > .form-control:focus::placeholder {
+  text-align: start;
+}
+
+.hide{
+    display:none;
+>>>>>>> a6d3063fea56810d3b47ac96dfa4a2c4d4011c75
 }

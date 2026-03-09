@@ -11,11 +11,12 @@ namespace ELKH.Models
         public decimal TotalPrice { get; set; }
 
         //Relationship with RegisteredUser table
-        public int FkRegisteredUserId { get; set; }
-        public RegisteredUserModel RegisteredUser { get; set; } = new RegisteredUserModel();
+        public int? FkRegisteredUserId { get; set; }
+        public RegisteredUserModel? RegisteredUser { get; set; }
 
         //Relationship with Product
         public int FkProductID { get; set; }
-        public ProductModel Product { get; set; } =  new ProductModel();
+        public ProductModel? Product { get; set; }
     }
 }
+    

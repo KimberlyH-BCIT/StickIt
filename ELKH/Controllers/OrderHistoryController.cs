@@ -41,12 +41,12 @@ namespace ELKH.Controllers
                 OrderId = details.PkOrderId,
                 UserEmail = details.RegisteredUser.Email,
                 TransactionId = details.Transaction.PkTransactionId,
-                OrderItems = details.OrderItems.Select(oi => new OrderItemVM
+                OrderItems = details.OrderItems.Select(static oi => new OrderItemVM
                 {
-                    ProductId = oi.Products.PkProductId,
+                    ProductId = oi.Product?.PkProductId ?? 0,
                     Quantity = oi.Quantity,
-                    ProductName = oi.Products.Name,
-                    ProductPrice = oi.Products.Price
+                    ProductName = oi.Product?.Name ?? string.Empty,
+                    ProductPrice = oi.Product?.Price ?? 0m
                 }).ToList()
             };
 

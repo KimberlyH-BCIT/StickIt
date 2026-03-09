@@ -2,18 +2,20 @@
 using ELKH.Models;
 using ELKH.ViewModels;
 using Microsoft.AspNetCore.Http.HttpResults;
+using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using static System.Net.Mime.MediaTypeNames;
 
 namespace ELKH.Repositories
 {
     public class InventoryRepo
     {
         private readonly ApplicationDbContext _context;
-        private readonly IWebHostEnvironment _env;
-        public InventoryRepo(ApplicationDbContext context, IWebHostEnvironment env)
+        private readonly ImageStoreContext _imageDb;
+        public InventoryRepo(ApplicationDbContext context, ImageStoreContext imageDb)
         {
             _context = context;
-            _env = env;
+            _imageDb = imageDb;
         }
 
         public async Task<IEnumerable<ProductModel>> GetAllProduct()
@@ -22,11 +24,10 @@ namespace ELKH.Repositories
         }
 
 
-        public async Task<List<string>> GetProductImages(int id)
+        public async Task<List<ImageModel>> GetProductImages(int id)
         {
-            return await _context.ProductImages.Where(pi => pi.FkProductId == id)
-                                                            .Select(pi => pi.ProductImageURL)
-                                                            .ToListAsync();
+            return await _imageDb.Images.Where(pi => pi.FkProductId == id)
+                                .ToListAsync();
         }
 
         public async Task<ProductVM> EditProductQuantity(int productId, int quantityAmount)
@@ -49,56 +50,40 @@ namespace ELKH.Repositories
 
             return vm;
         }
-
-        public async Task<bool> AddProductImage(ProductImageVM vm)
+        public async Task<bool> UploadImage(int productId, IFormFile file)
         {
-            if (vm == null || vm.ProductImage == null || vm.ProductImage.Length == 0)
+            if (file != null && file.Length > 0)
             {
-                return false;
+                // Convert the file to a byte array.
+                using var stream = new MemoryStream();
+                file.CopyTo(stream);
+                var imageBytes = stream.ToArray();
+
+                // Create a new Image instance.
+                var image = new ImageModel
+                {
+                    FileName = file.FileName,
+                    Description = "",
+                    FileType = file.ContentType,
+                    ImageData = imageBytes,
+                    FkProductId = productId
+                };
+
+                // Add to database context and save.
+                _imageDb.Images.Add(image);
+                bool isSaved = _imageDb.SaveChanges() > 0;
+                if (!isSaved)
+                {
+                    return false;
+                }
+                return true;
             }
+            return false;
+        }
 
-            var product = await _context.Products
-                .Include(p => p.ProductImages)
-                .FirstOrDefaultAsync(p => p.PkProductId == vm.FkProductId);
 
-            if (product == null)
-            {
-                return false;
-            }
-
-            // 🔥 Generate unique file name
-            var fileName = Guid.NewGuid().ToString() +
-                           Path.GetExtension(vm.ProductImage.FileName);
-
-            // 🔥 Physical path
-            var uploadPath = Path.Combine(_env.WebRootPath, "images");
-
-            // 🔥 Ensure folder exists
-            if (!Directory.Exists(uploadPath))
-                Directory.CreateDirectory(uploadPath);
-
-            // 🔥 Full file path
-            var filePath = Path.Combine(uploadPath, fileName);
-
-            // 🔥 Save file to disk
-            using (var stream = new FileStream(filePath, FileMode.Create))
-            {
-                await vm.ProductImage.CopyToAsync(stream);
-            }
-
-            // Create DB record - set the required navigation property 'Product'
-            var image = new ProductImageModel
-            {
-                ProductImageURL = "/images/" + fileName,
-                FkProductId = product.PkProductId,
-                Product = product
-            };
-
-            product.ProductImages.Add(image);
-
-            await _context.SaveChangesAsync();
-
-            return true;
+       
         }
     }
-}
+
+

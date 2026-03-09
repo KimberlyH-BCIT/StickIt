@@ -26,6 +26,5 @@ namespace ELKH.Models
 
         //Relationship with WishList
         public WishListModel? WishLists { get; set; }
-
     }
 }

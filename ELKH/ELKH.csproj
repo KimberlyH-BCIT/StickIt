@@ -34,7 +34,6 @@
     <PackageReference Include="Microsoft.VisualStudio.Web.CodeGeneration.Design" Version="8.0.23" />
   </ItemGroup>
 
-
   <ItemGroup>
     <Folder Include="wwwroot\images\" />
   </ItemGroup>
@@ -49,4 +48,5 @@
     <Content Include="Views\Manager\ProductDetails.cshtml" />
     <Content Include="Views\Manager\UpdateProductDetails.cshtml" />
   </ItemGroup>
+	
 </Project>
