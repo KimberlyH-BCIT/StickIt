@@ -33,7 +33,7 @@ namespace ELKH.Repositories
                     TransactionStatus = t.TransactionStatus,
                     Amount = t.Amount,
                     TransactionDate = t.TransactionDate,
-                    DeliveryFee = t.DeliveryFee,
+                    DeliberyFee = t.DeliveryFee,
                     FkOrderId = t.FkOrderId
                 }).ToListAsync();
         }
