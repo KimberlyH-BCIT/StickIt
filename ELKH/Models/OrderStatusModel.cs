@@ -22,10 +22,6 @@ namespace ELKH.Models
         /// Foreign key to the order this status is associated with.
         /// </summary>
         public int FkOrderId { get; set; }
-
-        /// <summary>
-        /// Navigation property to the order this status is associated with.
-        /// </summary>
-        public OrderModel Order { get; set; } = null!;
+        public OrderModel? Order { get; set; }
     }
 }

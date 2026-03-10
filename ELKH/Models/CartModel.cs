@@ -20,16 +20,13 @@ namespace ELKH.Models
         /// <summary>Pre-computed line total (<c>effective unit price × Quantity</c>).</summary>
         public decimal TotalPrice { get; set; }
 
-        /// <summary>Foreign key to the owning registered user.</summary>
-        public int FkRegisteredUserId { get; set; }
-
-        /// <summary>Navigation property to the owning registered user.</summary>
-        public RegisteredUserModel RegisteredUser { get; set; } = null!;
+        //Relationship with RegisteredUser table
+        public int? FkRegisteredUserId { get; set; }
+        public RegisteredUserModel? RegisteredUser { get; set; }
 
         /// <summary>Foreign key to the product in this cart line.</summary>
         public int FkProductID { get; set; }
-
-        /// <summary>Navigation property to the product in this cart line.</summary>
-        public ProductModel Product { get; set; } = null!;
+        public ProductModel? Product { get; set; }
     }
 }
+    

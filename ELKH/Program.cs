@@ -5,7 +5,8 @@ using Microsoft.EntityFrameworkCore;
 
 var builder = WebApplication.CreateBuilder(args);
 
-// -- Service registrations
+builder.Services.AddScoped<OrderHistoryManagementRepo>();
+builder.Services.AddScoped<InventoryRepo>();
 
 // -- Database and Identity
 // SQLite database with Entity Framework Core. Connection string is required
@@ -28,24 +29,18 @@ builder.Services.AddDefaultIdentity<IdentityUser>(options => options.SignIn.Requ
 builder.Services.AddHealthChecks();
 
 // -- MVC / Razor
-// Support for both Controllers with Views (MVC) and Razor Pages.
-// This application uses both patterns for different features.
 builder.Services.AddControllersWithViews();
 builder.Services.AddRazorPages();
 
 // Configure antiforgery to also accept the validation token from the X-CSRF-TOKEN request
 // header. This enables JSON AJAX endpoints (which cannot submit form-encoded token fields)
 // to participate in full CSRF protection alongside standard form-based flows.
-// The JavaScript in _Layout.cshtml reads the token from the csrf-token <meta> tag and
-// attaches it as this header on every state-changing fetch() call.
 builder.Services.AddAntiforgery(options =>
 {
     options.HeaderName = "X-CSRF-TOKEN";
 });
 
 // -- Response Compression (reduces bandwidth by ~70%)
-// Compresses text-based responses (HTML, CSS, JS, JSON) using gzip/brotli.
-// Enabled for HTTPS to improve performance on slow connections.
 builder.Services.AddResponseCompression(options =>
 {
     options.EnableForHttps = true;
@@ -61,19 +56,27 @@ builder.Services.AddResponseCompression(options =>
 });
 
 // -- Caching
+builder.Services.AddMemoryCache();
+builder.Services.AddOutputCachingPolicies();
+
+// -- Configuration Options
+builder.Services.AddApplicationOptions(builder.Configuration);
+
+// Register repositories for dependency injection
+builder.Services.AddScoped<RegisteredUserLogRepo>();
+builder.Services.AddScoped<RegisteredUserProfileRepo>();
+builder.Services.AddScoped<ContactDetailRepo>();
+builder.Services.AddScoped<ICartRepo, CartRepo>();
+builder.Services.AddScoped<TransactionRepo>();
+
+// -- Caching
 // Two-layer caching strategy for optimal performance:
 // 1. Memory Cache - Fast in-memory storage for frequently accessed data
 // 2. Output Cache - HTTP response caching with tag invalidation support
 builder.Services.AddMemoryCache();
 builder.Services.AddOutputCachingPolicies(); // Extension method - see ServiceCollectionExtensions.cs
 
-// -- Configuration Options
-// Binds strongly-typed configuration classes from appsettings.json sections.
-// Includes: CacheOptions, SearchOptions, EmailOptions, ModerationOptions
-builder.Services.AddApplicationOptions(builder.Configuration); // Extension method - see ServiceCollectionExtensions.cs
-
 // -- Application Services (using extension methods for cleaner organization)
-// All service registrations are grouped by functionality in extension methods.
 // See Extensions/ServiceCollectionExtensions.cs for implementation details.
 builder.Services.AddBackgroundServices();  // FuzzyReindexService, FuzzyHelperService
 builder.Services.AddApplicationServices(); // UserService, SearchService, RatingService, ModerationService, ProductService, CartService
@@ -234,36 +237,21 @@ else
 
 app.UseHttpsRedirection();
 
-// ─── Security headers ────────────────────────────────────────────────────────
-// Applied before static files so even asset responses carry the headers.
-//
-//  X-Content-Type-Options: nosniff
-//      Prevents browsers from MIME-sniffing a response away from the declared
-//      Content-Type (e.g. treating a text/plain upload as text/html).
-//
-//  X-Frame-Options: SAMEORIGIN
-//      Blocks the application from being embedded in a cross-origin <iframe>,
-//      mitigating clickjacking attacks. SAMEORIGIN permits same-site embedding
-//      (e.g. admin sub-pages within the same domain) while blocking external frames.
-//
-//  Referrer-Policy: strict-origin-when-cross-origin
-//      Sends the full URL as referrer for same-origin requests, but only the
-//      origin (no path/query) for cross-origin requests, preventing sensitive
-//      URL parameters (order IDs, tokens) from leaking to third-party sites.
-//
-//  X-Permitted-Cross-Domain-Policies: none
-//      Stops Adobe Flash and Acrobat from loading data from this domain.
-//      Included for defence-in-depth even though Flash is retired.
+// Security headers — applied after routing so they are present on all responses
 app.Use(async (context, next) =>
 {
-    context.Response.Headers.Append("X-Content-Type-Options",          "nosniff");
-    context.Response.Headers.Append("X-Frame-Options",                 "SAMEORIGIN");
-    context.Response.Headers.Append("Referrer-Policy",                 "strict-origin-when-cross-origin");
+    context.Response.Headers.Append("X-Content-Type-Options",            "nosniff");
+    context.Response.Headers.Append("X-Frame-Options",                   "SAMEORIGIN");
+    context.Response.Headers.Append("Referrer-Policy",                   "strict-origin-when-cross-origin");
     context.Response.Headers.Append("X-Permitted-Cross-Domain-Policies", "none");
     await next();
 });
 
-app.UseStaticFiles();
+app.UseResponseCompression();
+app.UseOutputCache();
+
+app.UseAuthentication();
+app.UseAuthorization();
 
 // Extension method configures the standard middleware stack in correct order:
 // Response Compression, Response/Output Caching, Routing, Authentication, Authorization.
@@ -285,5 +273,7 @@ app.UseApplicationMiddleware();
 // See Extensions/ApplicationBuilderExtensions.cs for implementation
 // =====================================================================
 app.UseApplicationEndpoints();
+
+app.MapHealthChecks("/health");
 
 app.Run();
