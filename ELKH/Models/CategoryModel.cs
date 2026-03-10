@@ -21,9 +21,7 @@ namespace ELKH.Models
         [DisplayName("Category Name")]
         public string CategoryName { get; set; } = string.Empty;
 
-        /// <summary>
-        /// Collection of products in this category.
-        /// </summary>
-        public ICollection<ProductModel> Products { get; set; } = new List<ProductModel>();
+        //Products list
+        public ICollection<ProductModel>? Products { get; set; }
     }
 }
