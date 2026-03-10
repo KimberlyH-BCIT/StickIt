@@ -2,100 +2,248 @@
 
 @{
     ViewData["Title"] = "Account Details";
+    Layout = "~/Views/Shared/_Layout.cshtml";
 
-    bool showRoles = Model.User.Roles.Contains("Admin")
+    bool hasStaffRole = Model.User.Roles.Contains("Admin")
                      || Model.User.Roles.Contains("Manager")
                      || Model.User.Roles.Contains("Staff");
+
+    string initials = !string.IsNullOrEmpty(Model.Contact?.FirstName) && !string.IsNullOrEmpty(Model.Contact?.LastName)
+        ? $"{Model.Contact.FirstName[0]}{Model.Contact.LastName[0]}"
+        : Model.User.Email?.Length > 0 ? Model.User.Email[0].ToString().ToUpper() : "?";
+
+    string displayName = (Model.Contact != null && !string.IsNullOrEmpty(Model.Contact.FirstName))
+        ? $"{Model.Contact.FirstName} {Model.Contact.LastName}"
+        : Model.User.Name;
 }
 
-<div class="text-center mt-4">
+<div class="container py-4" style="max-width:820px;">
 
-    <h1 class="display-4 fw-bold">@Model.User.Name</h1>
-
-    <div class="mt-4">
-        <p><strong>ID:</strong> @Model.User.Id</p>
-        <p><strong>Name:</strong> @Model.User.Name</p>
-        <p><strong>Email:</strong> @Model.User.Email</p>
-
-        @if (Model.Contact != null)
-        {
-            <p>
-                <strong>Address:</strong><br />
-                @Model.Contact.Street <br />
-                @Model.Contact.City, @Model.Contact.Province <br />
-                @Model.Contact.PostCode <br />
-                @Model.Contact.Country
-            </p>
-        }
-    </div>
-</div>
-
-@if (TempData["Success"] != null)
-{
-    <div class="alert alert-success text-center mt-3">@TempData["Success"]</div>
-}
-
-@if (showRoles)
-{
-    <div class="container mt-5">
-        <h3 class="text-center">Roles</h3>
-
-        <table class="table table-bordered text-center mt-3">
-            <thead class="table-dark">
-                <tr>
-                    <th>Series No</th>
-                    <th>Role Name</th>
-                    <th></th>
-                </tr>
-            </thead>
-            <tbody>
-                @{
-                    int count = 1;
-                }
-
-                @foreach (var role in Model.User.Roles)
-                {
-                    <tr>
-                        <td>@count</td>
-                        <td>@role</td>
-                        <td>
-                            <a asp-action="RemoveRole"
-                               asp-route-userId="@Model.User.Id"
-                               asp-route-role="@role"
-                               class="btn btn-danger btn-sm">
-                                Remove
-                            </a>
-                        </td>
-                    </tr>
-
-                    count++;
-                }
-            </tbody>
-        </table>
-
-        <div class="text-center mt-3">
-            @* Fixed: action was "UserList" but the controller method is "ListUsers" *@
-            <a asp-action="ListUsers" class="btn btn-secondary">
-                Back
-            </a>
-
-            @* Pass userId so the controller can look up the email automatically *@
-            <a asp-controller="AdminRole"
-               asp-action="AssignRoles"
-               asp-route-userId="@Model.User.Id"
-               asp-route-returnTo="UserDetails"
-               class="btn btn-primary">
-                Add New Role
-            </a>
-        </div>
-    </div>
-}
-else
-{
-    <div class="text-center mt-4">
-        @* Fixed: action was "UserList" but the controller method is "ListUsers" *@
-        <a asp-action="ListUsers" class="btn btn-secondary">
-            Back
+    <div class="mb-4">
+        <a asp-action="ListUsers" class="btn btn-outline-secondary btn-sm rounded-pill px-3">
+            ← Back to Users
         </a>
     </div>
-}
+
+    @if (TempData["Success"] != null)
+    {
+        <div class="alert alert-success alert-dismissible fade show rounded-3">
+            <strong>Success:</strong> @TempData["Success"]
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
+    }
+
+    <!-- PROFILE CARD -->
+
+    <div class="card border-0 shadow-sm rounded-4 mb-4">
+        <div class="card-body p-4">
+
+            <div class="d-flex align-items-center gap-4 mb-4">
+
+                <div class="rounded-circle bg-primary text-white d-flex align-items-center justify-content-center fw-bold"
+                     style="width:70px;height:70px;font-size:1.7rem;">
+                    @initials
+                </div>
+
+                <div>
+                    <h4 class="fw-bold mb-1">@displayName</h4>
+                    <p class="text-muted small mb-2">@Model.User.Email</p>
+
+                    @foreach (var role in Model.User.Roles)
+                    {
+                        string badgeColor = role switch
+                        {
+                                    "Admin" => "danger",
+                                    "Manager" => "primary",
+                                    "Staff" => "info",
+                            _ => "secondary"
+                        };
+
+                        <span class="badge bg-@badgeColor me-1 px-3 py-2">@role</span>
+                    }
+
+                    @if (!Model.User.Roles.Any())
+                    {
+                        <span class="badge bg-light text-muted border">No Role Assigned</span>
+                    }
+                </div>
+
+            </div>
+
+            <hr />
+
+            <!-- USER INFO -->
+
+            <div class="row g-3">
+
+                <div class="col-md-3 col-6">
+                    <small class="text-muted">First Name</small>
+                    <div class="fw-semibold">@(Model.Contact?.FirstName ?? "—")</div>
+                </div>
+
+                <div class="col-md-3 col-6">
+                    <small class="text-muted">Last Name</small>
+                    <div class="fw-semibold">@(Model.Contact?.LastName ?? "—")</div>
+                </div>
+
+                <div class="col-md-3 col-6">
+                    <small class="text-muted">Phone</small>
+                    <div class="fw-semibold">@(Model.Contact?.PhoneNumber ?? "—")</div>
+                </div>
+
+                <div class="col-md-3 col-6">
+                    <small class="text-muted">Default Address</small>
+                    <div>
+                        @if (Model.Contact?.IsDefault == true)
+                        {
+                            <span class="badge bg-success">Yes</span>
+                        }
+                        else
+                        {
+                            <span class="badge bg-light text-muted border">No</span>
+                        }
+                    </div>
+                </div>
+
+                <div class="col-12">
+                    <hr />
+                </div>
+
+                <div class="col-12">
+                    <small class="text-muted">User ID</small>
+                    <div class="font-monospace small text-muted">@Model.User.Id</div>
+                </div>
+
+            </div>
+
+        </div>
+    </div>
+
+    <!-- ADDRESS CARD -->
+
+    <div class="card border-0 shadow-sm rounded-4 mb-4">
+        <div class="card-body p-4">
+
+            <h6 class="fw-bold mb-3">Address Information</h6>
+
+            @if (Model.Contact != null)
+            {
+                <div class="row g-3">
+
+                    <div class="col-md-6">
+                        <small class="text-muted">Street Address</small>
+                        <div class="fw-semibold">@Model.Contact.Street</div>
+                    </div>
+
+                    <div class="col-md-3">
+                        <small class="text-muted">City</small>
+                        <div class="fw-semibold">@Model.Contact.City</div>
+                    </div>
+
+                    <div class="col-md-3">
+                        <small class="text-muted">Province</small>
+                        <div class="fw-semibold">@Model.Contact.Province</div>
+                    </div>
+
+                    <div class="col-md-3">
+                        <small class="text-muted">Postal Code</small>
+                        <div class="fw-semibold">@Model.Contact.PostCode</div>
+                    </div>
+
+                    <div class="col-md-3">
+                        <small class="text-muted">Country</small>
+                        <div class="fw-semibold">@Model.Contact.Country</div>
+                    </div>
+
+                </div>
+            }
+            else
+            {
+                <p class="text-muted fst-italic">No address information available.</p>
+            }
+
+        </div>
+    </div>
+
+    <!-- ROLE MANAGEMENT -->
+
+    <div class="card border-0 shadow-sm rounded-4 mb-4">
+        <div class="card-body p-4">
+
+            <h6 class="fw-bold mb-3">User Roles</h6>
+
+            @if (Model.User.Roles.Any())
+            {
+                <table class="table table-sm align-middle text-center mb-3">
+
+                    <thead class="table-light">
+                        <tr>
+                            <th style="width:60px;">#</th>
+                            <th class="text-start">Role</th>
+                            <th style="width:120px;">Action</th>
+                        </tr>
+                    </thead>
+
+                    <tbody>
+
+                        @{
+                            int index = 1;
+                        }
+
+                        @foreach (var role in Model.User.Roles)
+                        {
+                            string badgeColor = role switch
+                            {
+                                            "Admin" => "danger",
+                                            "Manager" => "primary",
+                                            "Staff" => "info",
+                                _ => "secondary"
+                            };
+
+                            <tr>
+
+                                <td class="text-muted">@index</td>
+
+                                <td class="text-start">
+                                    <span class="badge bg-@badgeColor px-3 py-2">@role</span>
+                                </td>
+
+                                <td>
+                                    <a asp-action="RemoveRole"
+                                       asp-route-userId="@Model.User.Id"
+                                       asp-route-role="@role"
+                                       class="btn btn-outline-danger btn-sm rounded-pill px-3">
+                                        Remove
+                                    </a>
+                                </td>
+
+                            </tr>
+
+                            index++;
+                        }
+
+                    </tbody>
+
+                </table>
+            }
+            else
+            {
+                <p class="text-muted small mb-3">This user has no assigned roles.</p>
+            }
+
+            <div class="text-center">
+
+                <a asp-controller="AdminRole"
+                   asp-action="AssignRoles"
+                   asp-route-userId="@Model.User.Id"
+                   asp-route-returnTo="UserDetails"
+                   class="btn btn-primary rounded-pill px-4">
+                    + Add Role
+                </a>
+
+            </div>
+
+        </div>
+    </div>
+
+</div>

@@ -38,24 +38,45 @@ namespace ELKH.Controllers
             _reindexService = reindexService;
             _userManager = userManager;
         }
-        /// <summary>Renders the admin dashboard with live order counts and stock-level statistics.</summary>
+        /// <summary>Renders the admin dashboard with top products and stock stats.</summary>
         public async Task<IActionResult> Index()
         {
-            // Define rolling time windows used by the order-volume KPI cards.
             var now = DateTime.UtcNow;
-            var weekAgo = now.AddDays(-7);
+            var weekAgo  = now.AddDays(-7);
             var monthAgo = now.AddDays(-30);
 
             var vm = new SalesVM
             {
-                // Count orders placed within each rolling window.
-                WeeklyTotalOrders = await _context.Orders.CountAsync(o => o.CreatedAt >= weekAgo),
+                WeeklyTotalOrders  = await _context.Orders.CountAsync(o => o.CreatedAt >= weekAgo),
                 MonthlyTotalOrders = await _context.Orders.CountAsync(o => o.CreatedAt >= monthAgo),
-
-                // Split inventory into well-stocked (> 100 units) vs low-stock (≤ 100 units) buckets.
-                StockUpCount = await _context.Products.CountAsync(p => p.StockQuantity > 100),
+                StockUpCount   = await _context.Products.CountAsync(p => p.StockQuantity > 100),
                 StockDownCount = await _context.Products.CountAsync(p => p.StockQuantity <= 100),
             };
+
+            // Top 5 products for dashboard widget
+            var orderItems = await _context.OrderItems
+                .Include(oi => oi.Product)
+                .Select(oi => new
+                {
+                    oi.FkProductId,
+                    ProductName  = oi.Product == null ? "Unknown" : oi.Product.Name,
+                    ProductPrice = oi.Product == null ? 0m : oi.Product.Price,
+                    oi.Quantity
+                })
+                .ToListAsync();
+
+            ViewBag.TopProducts = orderItems
+                .GroupBy(oi => new { oi.FkProductId, oi.ProductName, oi.ProductPrice })
+                .Select(g => new TopProductVM
+                {
+                    ProductName = g.Key.ProductName,
+                    UnitsSold   = g.Sum(oi => oi.Quantity),
+                    Revenue     = g.Sum(oi => oi.Quantity * g.Key.ProductPrice)
+                })
+                .OrderByDescending(p => p.UnitsSold)
+                .Take(5)
+                .ToList();
+
             return View(vm);
         }
 
