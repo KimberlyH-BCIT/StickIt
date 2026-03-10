@@ -41,20 +41,13 @@ namespace ELKH.Controllers;
 /// </remarks>
 public class CartController : AuthenticatedControllerBase
 {
+    // Dependency: cart service implements domain logic for cart management and ordering.
     private readonly ICartService _cartService;
-    private readonly ApplicationDbContext _db;
-    private readonly ICartRepo _cartRepo;
 
-    public CartController(
-        ICartService cartService,
-        IUserService userService,
-        ApplicationDbContext db,
-        ICartRepo cartRepo)
+    public CartController(ICartService cartService, IUserService userService)
         : base(userService)
     {
         _cartService = cartService;
-        _db = db;
-        _cartRepo = cartRepo;
     }
 
     // ---------------------------------------------------------------------
@@ -66,6 +59,7 @@ public class CartController : AuthenticatedControllerBase
         var authResult = RequireAuthenticatedUser(out var email);
         if (authResult != null) return authResult;
 
+        // Delegate retrieval to the cart service and render the view with model data.
         var items = await _cartService.GetCartItemsAsync(email);
         return View(items);
     }
@@ -78,11 +72,13 @@ public class CartController : AuthenticatedControllerBase
     [ValidateAntiForgeryToken]
     public async Task<IActionResult> AddToCart(int itemId, int quantity)
     {
+        // Validate input early to avoid unnecessary work.
         if (quantity <= 0) return BadRequest("Quantity must be positive.");
 
         var authResult = RequireAuthenticatedUser(out var email);
         if (authResult != null) return authResult;
 
+        // Service performs the actual add-to-cart business logic including inventory checks.
         await _cartService.AddToCartAsync(email, itemId, quantity);
         return RedirectToAction(nameof(Index));
     }
@@ -121,56 +117,8 @@ public class CartController : AuthenticatedControllerBase
         var authResult = RequireAuthenticatedUser(out var email);
         if (authResult != null) return authResult;
 
+        // Removal is delegated to the service which enforces ownership and consistency checks.
         await _cartService.RemoveFromCartAsync(email, cartId);
-        return RedirectToAction(nameof(Index));
-    }
-
-    // POST: /Cart/Update
-    [HttpPost]
-    [ValidateAntiForgeryToken]
-    public async Task<IActionResult> Update(int cartId, int quantity)
-    {
-        if (quantity < 1) quantity = 1;
-
-        var authResult = RequireAuthenticatedUser(out var email);
-        if (authResult != null) return authResult;
-
-        var registeredUser = await _db.RegisteredUsers.FirstOrDefaultAsync(u => u.Email == email);
-        if (registeredUser == null)
-            return RedirectToAction(nameof(Index));
-
-        var cartItems = await _cartRepo.GetByUserIdAsync(registeredUser.PkRegisteredUserId);
-        var item = cartItems.FirstOrDefault(x => x.PkCartId == cartId);
-
-        if (item != null)
-        {
-            item.Quantity = quantity;
-            await _cartRepo.UpdateAsync(item);
-        }
-
-        return RedirectToAction(nameof(Index));
-    }
-
-    // POST: /Cart/Remove
-    [HttpPost]
-    [ValidateAntiForgeryToken]
-    public async Task<IActionResult> Remove(int cartId)
-    {
-        var authResult = RequireAuthenticatedUser(out var email);
-        if (authResult != null) return authResult;
-
-        var registeredUser = await _db.RegisteredUsers.FirstOrDefaultAsync(u => u.Email == email);
-        if (registeredUser == null)
-            return RedirectToAction(nameof(Index));
-
-        var cartItems = await _cartRepo.GetByUserIdAsync(registeredUser.PkRegisteredUserId);
-        var item = cartItems.FirstOrDefault(x => x.PkCartId == cartId);
-
-        if (item != null)
-        {
-            await _cartRepo.RemoveAsync(cartId);
-        }
-
         return RedirectToAction(nameof(Index));
     }
 
@@ -183,6 +131,8 @@ public class CartController : AuthenticatedControllerBase
         var authResult = RequireAuthenticatedUser(out var email);
         if (authResult != null) return authResult;
 
+        // Gather items and compute totals for the checkout view. Keep presentation concerns here
+        // while the service remains responsible for pricing/business calculations.
         var items = await _cartService.GetCartItemsAsync(email);
         var total = items.Sum(i => i.TotalPrice);
         ViewBag.Total = total;

@@ -1,8 +1,5 @@
 using ELKH.Data;
 using ELKH.Extensions;
-using ELKH.Models;
-using ELKH.Repositories;
-using ELKH.Services;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 
@@ -11,13 +8,12 @@ var builder = WebApplication.CreateBuilder(args);
 builder.Services.AddScoped<OrderHistoryManagementRepo>();
 builder.Services.AddScoped<InventoryRepo>();
 
-// Add services to the container.
+// -- Database and Identity
+// SQLite database with Entity Framework Core. Connection string is required
+// and will throw if missing to fail fast during startup.
 var connectionString = builder.Configuration.GetConnectionString("DefaultConnection")
     ?? throw new InvalidOperationException("Connection string 'DefaultConnection' not found.");
-
-builder.Services.AddDbContext<ApplicationDbContext>(options =>
-    options.UseSqlite(connectionString));
-
+builder.Services.AddDbContext<ApplicationDbContext>(options => options.UseSqlite(connectionString));
 builder.Services.AddDatabaseDeveloperPageExceptionFilter();
 
 // ASP.NET Core Identity with email confirmation requirement.
@@ -25,6 +21,7 @@ builder.Services.AddDatabaseDeveloperPageExceptionFilter();
 // AddRoles<IdentityRole>() is required for [Authorize(Roles = "...")] to function —
 // without it, role claims are never populated and role-based access always fails.
 builder.Services.AddDefaultIdentity<IdentityUser>(options => options.SignIn.RequireConfirmedAccount = true)
+    .AddRoles<IdentityRole>()
     .AddEntityFrameworkStores<ApplicationDbContext>();
 
 // -- Health Checks (for monitoring and deployment readiness)
@@ -72,8 +69,12 @@ builder.Services.AddScoped<ContactDetailRepo>();
 builder.Services.AddScoped<ICartRepo, CartRepo>();
 builder.Services.AddScoped<TransactionRepo>();
 
-builder.Services.Configure<PayPalOptions>(builder.Configuration.GetSection("PayPal"));
-builder.Services.AddHttpClient<PayPalService>();
+// -- Caching
+// Two-layer caching strategy for optimal performance:
+// 1. Memory Cache - Fast in-memory storage for frequently accessed data
+// 2. Output Cache - HTTP response caching with tag invalidation support
+builder.Services.AddMemoryCache();
+builder.Services.AddOutputCachingPolicies(); // Extension method - see ServiceCollectionExtensions.cs
 
 // -- Application Services (using extension methods for cleaner organization)
 // See Extensions/ServiceCollectionExtensions.cs for implementation details.
@@ -235,8 +236,6 @@ else
 }
 
 app.UseHttpsRedirection();
-app.UseStaticFiles();
-app.UseRouting();
 
 // Security headers — applied after routing so they are present on all responses
 app.Use(async (context, next) =>
@@ -254,11 +253,26 @@ app.UseOutputCache();
 app.UseAuthentication();
 app.UseAuthorization();
 
-app.MapControllerRoute(
-    name: "default",
-    pattern: "{controller=Home}/{action=Index}/{id?}");
+// Extension method configures the standard middleware stack in correct order:
+// Response Compression, Response/Output Caching, Routing, Authentication, Authorization.
+// See Extensions/ApplicationBuilderExtensions.cs for implementation.
+app.UseApplicationMiddleware();
 
-app.MapRazorPages();
+// =====================================================================
+// Routing and endpoints
+// ---------------------------------------------------------------------
+// Map all application endpoints (controllers, Razor pages, health checks).
+// Extension method ensures consistent endpoint configuration.
+// 
+// Endpoints configured:
+// - Static assets (CSS, JS, images with caching headers)
+// - Controller routes (default pattern: {controller=Home}/{action=Index}/{id?})
+// - Razor Pages (convention-based routing)
+// - Health checks (/health endpoint for monitoring)
+// 
+// See Extensions/ApplicationBuilderExtensions.cs for implementation
+// =====================================================================
+app.UseApplicationEndpoints();
 
 app.MapHealthChecks("/health");
 

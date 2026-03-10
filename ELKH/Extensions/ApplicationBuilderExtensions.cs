@@ -97,7 +97,8 @@ namespace ELKH.Extensions
             // Default MVC route — areas are handled by the [Area] attribute on controllers
             app.MapControllerRoute(
                 name: "default",
-                pattern: "{controller=Home}/{action=Index}/{id?}");
+                pattern: "{controller=Home}/{action=Index}/{id?}")
+                .WithStaticAssets();
 
             // Convention-based Razor Pages routing
             app.MapRazorPages();

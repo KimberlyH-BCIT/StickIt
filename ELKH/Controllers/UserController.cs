@@ -7,7 +7,6 @@ using Microsoft.AspNetCore.Mvc;
 
 namespace ELKH.Controllers
 {
-
     /// <summary>
     /// Controller responsible for user account related operations: profile management,
     /// address book CRUD and login history. All actions require an authenticated user.
@@ -39,22 +38,12 @@ namespace ELKH.Controllers
     /// - Apply per-request presentation preferences (culture/currency) when available.
     /// - All actions require authentication (inherited from AuthenticatedControllerBase)
     /// </remarks>
-    
-    
     public class UserController : AuthenticatedControllerBase
     {
         private readonly IRegisteredUserProfileRepo _profileRepository;
         private readonly IRegisteredUserLogRepo _logRepository;
         private readonly IContactDetailRepo _contactRepository;
         private readonly IRatingService _ratingService;
-
-        [HttpGet]
-        public IActionResult LeaveReview()
-        {
-            return View();
-        }
-        
-
 
         public UserController(
             IRegisteredUserProfileRepo profileRepository,
@@ -671,6 +660,5 @@ namespace ELKH.Controllers
 
         #endregion
 
-    }
-}
-
+            }
+        }
