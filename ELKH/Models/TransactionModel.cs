@@ -38,6 +38,6 @@ namespace ELKH.Models
         public int FkContactId { get; set; }
 
         /// <summary>Navigation property to the shipping address used for this transaction.</summary>
-        public ContactDetailModel ContactDetail { get; set; } = null!;
+        public ContactDetailModel ContactDetail { get; set; } = null!
     }
 }
