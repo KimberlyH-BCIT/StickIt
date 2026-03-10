@@ -1,66 +1,106 @@
-﻿@model IEnumerable<ELKH.ViewModels.TransactionVM>
+﻿@model List<ELKH.ViewModels.TransactionVM>
 
 @{
-    ViewData["Title"] = "ListAllTransactions";
+    ViewData["Title"] = "Transactions";
     Layout = "~/Views/Shared/_Layout.cshtml";
 }
 
-<h1>ListAllTransactions</h1>
+<div class="container-fluid mt-4 px-4">
 
-<p>
-    <a asp-action="Create">Create New</a>
-</p>
-<table class="table">
-    <thead>
-        <tr>
-            <th>
-                @Html.DisplayNameFor(model => model.PkTransactionId)
-            </th>
-            <th>
-                @Html.DisplayNameFor(model => model.TransactionStatus)
-            </th>
-            <th>
-                @Html.DisplayNameFor(model => model.Amount)
-            </th>
-            <th>
-                @Html.DisplayNameFor(model => model.TransactionDate)
-            </th>
-            <th>
-                @Html.DisplayNameFor(model => model.DeliberyFee)
-            </th>
-            <th>
-                @Html.DisplayNameFor(model => model.FkOrderId)
-            </th>
-            <th></th>
-        </tr>
-    </thead>
-    <tbody>
-@foreach (var item in Model) {
-        <tr>
-            <td>
-                @Html.DisplayFor(modelItem => item.PkTransactionId)
-            </td>
-            <td>
-                @Html.DisplayFor(modelItem => item.TransactionStatus)
-            </td>
-            <td>
-                @Html.DisplayFor(modelItem => item.Amount)
-            </td>
-            <td>
-                @Html.DisplayFor(modelItem => item.TransactionDate)
-            </td>
-            <td>
-                @Html.DisplayFor(modelItem => item.DeliberyFee)
-            </td>
-            <td>
-                @Html.DisplayFor(modelItem => item.FkOrderId)
-            </td>
-            <td>
-                @Html.ActionLink("Edit", "Edit", new { /* id=item.PrimaryKey */ }) |
-                @Html.ActionLink("Details", "Details", new { /* id=item.PrimaryKey */ }) |
-                @Html.ActionLink("Delete", "Delete", new { /* id=item.PrimaryKey */ })
-            </td>
-        </tr>
-}
-    </tbody>
-</table>
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2 class="fw-bold text-primary mb-0">All Transactions</h2>
+        <a asp-action="Index" class="btn btn-outline-primary rounded-pill px-4">← Dashboard</a>
+    </div>
+
+    <!-- Search -->
+    <div class="card border-0 shadow-sm rounded-4 mb-4">
+        <div class="card-body p-4">
+            <form method="get" class="d-flex justify-content-center gap-2">
+                <div class="input-group w-50">
+                    <input type="text"
+                           name="search"
+                           value="@ViewBag.Search"
+                           class="form-control rounded-start-pill"
+                           placeholder="Search by status..." />
+                    <button type="submit" class="btn btn-primary rounded-end-pill px-4">Search</button>
+                </div>
+                @if (!string.IsNullOrEmpty(ViewBag.Search as string))
+                {
+                    <a asp-action="ListAllTransactions" class="btn btn-outline-secondary rounded-pill px-4">Clear</a>
+                }
+            </form>
+        </div>
+    </div>
+
+    <!-- Table -->
+    <div class="card border-0 shadow-sm rounded-4">
+        <div class="card-body p-0">
+            <div class="table-responsive">
+                <table class="table table-hover align-middle mb-0">
+                    <thead class="table-light">
+                        <tr>
+                            <th class="ps-4">#</th>
+                            <th>Order #</th>
+                            <th>Status</th>
+                            <th class="text-end">Amount</th>
+                            <th class="text-end">Delivery Fee</th>
+                            <th>Date</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @if (Model.Any())
+                        {
+                            @foreach (var t in Model)
+                            {
+                                <tr>
+                                    <td class="ps-4 text-muted small">@t.PkTransactionId</td>
+                                    <td>Order #@t.FkOrderId</td>
+                                    <td>
+                                        @{
+                                            var badgeClass = t.TransactionStatus?.ToLower() switch
+                                            {
+                                                                "paid" => "bg-success",
+                                                                "pending" => "bg-warning text-dark",
+                                                                "failed" => "bg-danger",
+                                                _ => "bg-secondary"
+                                            };
+                                        }
+                                        <span class="badge @badgeClass">@t.TransactionStatus</span>
+                                    </td>
+                                    <td class="text-end fw-semibold text-success">$@t.Amount.ToString("N2")</td>
+                                    <td class="text-end text-muted">$@t.DeliveryFee.ToString("N2")</td>
+                                    <td class="text-muted small">@t.TransactionDate.ToString("MMM dd, yyyy h:mm tt")</td>
+                                </tr>
+                            }
+                        }
+                        else
+                        {
+                            <tr>
+                                <td colspan="6" class="text-center text-muted py-5">No transactions found.</td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- Pagination -->
+    @if (ViewBag.TotalPages > 1)
+    {
+        <nav class="mt-4">
+            <ul class="pagination justify-content-center">
+                @for (int i = 1; i <= ViewBag.TotalPages; i++)
+                {
+                    <li class="page-item @(ViewBag.CurrentPage == i ? "active" : "")">
+                        <a class="page-link rounded-pill mx-1"
+                           asp-action="ListAllTransactions"
+                           asp-route-page="@i"
+                           asp-route-search="@ViewBag.Search">@i</a>
+                    </li>
+                }
+            </ul>
+        </nav>
+    }
+
+</div>

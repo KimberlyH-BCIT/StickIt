@@ -4,14 +4,12 @@ using ELKH.Models;
 using ELKH.Repositories;
 using ELKH.Services;
 using Microsoft.AspNetCore.Identity;
-using Microsoft.AspNetCore.Localization;
 using Microsoft.EntityFrameworkCore;
-using System.Globalization;
 
 var builder = WebApplication.CreateBuilder(args);
 
-builder.Services.AddScoped<Role_repo>();
-builder.Services.AddScoped<OrderManagementRepo>();
+builder.Services.AddScoped<OrderHistoryManagementRepo>();
+builder.Services.AddScoped<InventoryRepo>();
 
 // Add services to the container.
 var connectionString = builder.Configuration.GetConnectionString("DefaultConnection")
@@ -22,50 +20,217 @@ builder.Services.AddDbContext<ApplicationDbContext>(options =>
 
 builder.Services.AddDatabaseDeveloperPageExceptionFilter();
 
+// ASP.NET Core Identity with email confirmation requirement.
+// Users must confirm their email before they can sign in.
+// AddRoles<IdentityRole>() is required for [Authorize(Roles = "...")] to function —
+// without it, role claims are never populated and role-based access always fails.
 builder.Services.AddDefaultIdentity<IdentityUser>(options => options.SignIn.RequireConfirmedAccount = true)
     .AddEntityFrameworkStores<ApplicationDbContext>();
 
+// -- Health Checks (for monitoring and deployment readiness)
+// Exposes /health endpoint for load balancers, monitoring tools, and container orchestrators
+builder.Services.AddHealthChecks();
+
+// -- MVC / Razor
 builder.Services.AddControllersWithViews();
 builder.Services.AddRazorPages();
+
+// Configure antiforgery to also accept the validation token from the X-CSRF-TOKEN request
+// header. This enables JSON AJAX endpoints (which cannot submit form-encoded token fields)
+// to participate in full CSRF protection alongside standard form-based flows.
+builder.Services.AddAntiforgery(options =>
+{
+    options.HeaderName = "X-CSRF-TOKEN";
+});
+
+// -- Response Compression (reduces bandwidth by ~70%)
+builder.Services.AddResponseCompression(options =>
+{
+    options.EnableForHttps = true;
+    options.MimeTypes = new[]
+    {
+        "text/plain",
+        "text/html",
+        "text/css",
+        "application/javascript",
+        "application/json",
+        "application/xml"
+    };
+});
+
+// -- Caching
+builder.Services.AddMemoryCache();
+builder.Services.AddOutputCachingPolicies();
+
+// -- Configuration Options
+builder.Services.AddApplicationOptions(builder.Configuration);
 
 // Register repositories for dependency injection
 builder.Services.AddScoped<RegisteredUserLogRepo>();
 builder.Services.AddScoped<RegisteredUserProfileRepo>();
 builder.Services.AddScoped<ContactDetailRepo>();
 builder.Services.AddScoped<ICartRepo, CartRepo>();
+builder.Services.AddScoped<TransactionRepo>();
 
 builder.Services.Configure<PayPalOptions>(builder.Configuration.GetSection("PayPal"));
 builder.Services.AddHttpClient<PayPalService>();
 
-// Team extension registrations
-builder.Services.AddApplicationOptions(builder.Configuration);
-builder.Services.AddBackgroundServices();
-builder.Services.AddApplicationServices();
-builder.Services.AddEmailServices();
-builder.Services.AddRepositories();
+// -- Application Services (using extension methods for cleaner organization)
+// See Extensions/ServiceCollectionExtensions.cs for implementation details.
+builder.Services.AddBackgroundServices();  // FuzzyReindexService, FuzzyHelperService
+builder.Services.AddApplicationServices(); // UserService, SearchService, RatingService, ModerationService, ProductService, CartService
+builder.Services.AddEmailServices();       // SmtpEmailSender, EmailSenderAdapter, IEmailSender
+builder.Services.AddRepositories();        // All repository implementations with base class inheritance
 
+// -- Mapping
+// AutoMapper for DTO/ViewModel conversions. Profile defined in Mapping/AutoMapperProfile.cs
 builder.Services.AddAutoMapper(typeof(ELKH.Mapping.AutoMapperProfile));
 
+// =====================================================================
+// Build application
+// =====================================================================
 var app = builder.Build();
 
-/// Localization configuration - set default culture to English (Canada) and specify supported cultures and currency
-var supportedCultures = new[] { new CultureInfo("en-CA") };
-
-app.UseRequestLocalization(new RequestLocalizationOptions
+// Warn loudly if AllowedHosts is still the development default in a non-Development environment.
+// Override via the ASPNETCORE_AllowedHosts environment variable (e.g. "yourdomain.com;www.yourdomain.com").
+if (!app.Environment.IsDevelopment())
 {
-    DefaultRequestCulture = new RequestCulture("en-CA"),
-    SupportedCultures = supportedCultures,
-    SupportedUICultures = supportedCultures
-});
+    var allowedHosts = app.Configuration["AllowedHosts"];
+    if (string.IsNullOrEmpty(allowedHosts) || allowedHosts == "localhost" || allowedHosts == "*")
+    {
+        app.Logger.LogWarning(
+            "AllowedHosts is '{Value}'. Set the ASPNETCORE_AllowedHosts environment variable " +
+            "to your production domain(s) to enable host header filtering.",
+            allowedHosts ?? "(empty)");
+    }
+}
 
-// Configure the HTTP request pipeline.
+// =====================================================================
+// Automatic database migrations
+// ---------------------------------------------------------------------
+// PRODUCTION WARNING: Running migrations on startup is unsafe in multi-instance
+// deployments. Concurrent instances racing to migrate the same database can cause
+// partial schema changes, data corruption, or startup failures.
+//
+// Default behaviour (no config key set):
+//   - Development  → migrations ARE applied automatically (good DX)
+//   - Production   → migrations are SKIPPED (apply via deployment pipeline)
+//
+// To override, set BOTH keys in your environment:
+//   Database:ApplyMigrationsOnStartup = true
+//   Database:AllowMigrationInProduction = true
+//
+// The second key acts as an explicit acknowledgement of the production risk.
+// =====================================================================
+try
+{
+    using var scope = app.Services.CreateScope();
+    var config = scope.ServiceProvider.GetRequiredService<Microsoft.Extensions.Configuration.IConfiguration>();
+    var env = scope.ServiceProvider.GetRequiredService<Microsoft.Extensions.Hosting.IHostEnvironment>();
+    var logger = scope.ServiceProvider.GetRequiredService<Microsoft.Extensions.Logging.ILoggerFactory>().CreateLogger("DatabaseMigration");
+
+    var explicitlyEnabled = config.GetValue<bool?>("Database:ApplyMigrationsOnStartup");
+    var productionOverride = config.GetValue<bool>("Database:AllowMigrationInProduction");
+
+    // Determine whether to apply migrations:
+    // - Development: apply by default unless explicitly disabled
+    // - Production:  only apply if BOTH opt-in keys are set to true
+    bool apply;
+    if (env.IsDevelopment())
+    {
+        apply = explicitlyEnabled ?? true;
+    }
+    else
+    {
+        apply = explicitlyEnabled == true && productionOverride;
+        if (apply)
+        {
+            logger.LogWarning(
+                "Applying EF Core migrations on startup in a non-Development environment. " +
+                "This is unsafe in multi-instance deployments and should be moved to the " +
+                "deployment pipeline. Set Database:AllowMigrationInProduction=false to disable.");
+        }
+    }
+
+    if (apply)
+    {
+        try
+        {
+            logger.LogInformation("Applying pending Entity Framework Core migrations...");
+            var db = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
+            db.Database.Migrate();
+
+            // Ensure UserActivityLog columns exist (idempotent — SQLite throws if column
+            // already exists, so the exception is swallowed and execution continues).
+            foreach (var sql in new[]
+            {
+                "ALTER TABLE UserLogs ADD COLUMN ActivityType TEXT NULL",
+                "ALTER TABLE UserLogs ADD COLUMN ActivityDetail TEXT NULL",
+                "ALTER TABLE UserProfiles ADD COLUMN AvatarData BLOB NULL",
+                "ALTER TABLE UserProfiles ADD COLUMN AvatarMimeType TEXT NULL"
+            })
+            {
+                try { db.Database.ExecuteSqlRaw(sql); }
+                catch { /* column already present — no action needed */ }
+            }
+
+            logger.LogInformation("Database migrations applied successfully.");
+
+            // Seed demo products (no-op if products already exist)
+            await DbSeeder.SeedProductsAsync(db);
+
+            // Seed 50 demo customer accounts (no-op if any @home.com users exist)
+            var userMgr = scope.ServiceProvider.GetRequiredService<UserManager<IdentityUser>>();
+            var webEnv  = scope.ServiceProvider.GetRequiredService<Microsoft.AspNetCore.Hosting.IWebHostEnvironment>();
+            await DbSeeder.SeedCustomersAsync(db, userMgr, webEnv.WebRootPath);
+
+            // Seed default admin role and test admin account (no-op if already exists).
+            // Credentials are read from config — set Seed:AdminEmail and Seed:AdminPass
+            // via user-secrets in development or environment variables in production.
+            var roleMgr = scope.ServiceProvider.GetRequiredService<RoleManager<IdentityRole>>();
+            await DbSeeder.SeedAdminAsync(userMgr, roleMgr, config);
+
+            logger.LogInformation("Database seeding complete.");
+        }
+        catch (Exception ex)
+        {
+            // Log but do not prevent the application from starting.
+            var logger2 = scope.ServiceProvider.GetRequiredService<Microsoft.Extensions.Logging.ILogger<Program>>();
+            logger2.LogError(ex, "An error occurred while applying database migrations on startup.");
+        }
+    }
+}
+catch (Exception ex)
+{
+    // Use a local LoggerFactory instead of building a second DI container, which
+    // would produce a "service provider already built" warning and bypass singleton
+    // lifetime management.
+    using var fallbackFactory = LoggerFactory.Create(b => b.AddConsole());
+    var logger = fallbackFactory.CreateLogger("DatabaseMigrationStart");
+    logger.LogWarning(ex, "Failed to initialize automatic migration application logic.");
+}
+
+// =====================================================================
+// HTTP request pipeline
+// ---------------------------------------------------------------------
+// Middleware order is critical in ASP.NET Core. This pipeline is carefully
+// ordered for optimal security, performance, and functionality.
+// 
+// Order: Exception Handling → HTTPS → Compression → Caching → Routing 
+//        → Authentication → Authorization → Endpoints
+// =====================================================================
+
+// -- Environment-specific error handling
 if (app.Environment.IsDevelopment())
 {
+    // Development: Show detailed error pages with stack traces and database queries
     app.UseMigrationsEndPoint();
 }
 else
 {
+    // Production: User-friendly error page without sensitive information
     app.UseExceptionHandler("/Home/Error");
+    // HSTS: Enforce HTTPS for 30 days (prevents downgrade attacks)
     app.UseHsts();
 }
 
@@ -73,7 +238,20 @@ app.UseHttpsRedirection();
 app.UseStaticFiles();
 app.UseRouting();
 
-//app.UseAuthentication();
+// Security headers — applied after routing so they are present on all responses
+app.Use(async (context, next) =>
+{
+    context.Response.Headers.Append("X-Content-Type-Options",            "nosniff");
+    context.Response.Headers.Append("X-Frame-Options",                   "SAMEORIGIN");
+    context.Response.Headers.Append("Referrer-Policy",                   "strict-origin-when-cross-origin");
+    context.Response.Headers.Append("X-Permitted-Cross-Domain-Policies", "none");
+    await next();
+});
+
+app.UseResponseCompression();
+app.UseOutputCache();
+
+app.UseAuthentication();
 app.UseAuthorization();
 
 app.MapControllerRoute(
@@ -81,5 +259,7 @@ app.MapControllerRoute(
     pattern: "{controller=Home}/{action=Index}/{id?}");
 
 app.MapRazorPages();
+
+app.MapHealthChecks("/health");
 
 app.Run();

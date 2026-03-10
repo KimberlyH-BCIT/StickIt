@@ -64,28 +64,14 @@ namespace ELKH.Models
         [Display(Name ="Is Default Address")]
         public bool IsDefault { get; set; } = true;
 
-        // =====================================================================
-        // Relationships
-        // =====================================================================
+        //Relationship with RegisiterUser
+        public int? FkRegisteredUserId { get; set; }
+        public RegisteredUserModel? RegisteredUser { get; set; }
 
-        /// <summary>
-        /// Foreign key to the registered user who owns this contact detail.
-        /// </summary>
-        public int FkRegisteredUserId { get; set; }
+        //Relationship with Transaction
+        public ICollection<TransactionModel>? Transactions { get; set; }
 
-        /// <summary>
-        /// Navigation property to the registered user who owns this contact detail.
-        /// </summary>
-        public RegisteredUserModel RegisteredUser { get; set; } = null!;
-
-        /// <summary>
-        /// Collection of transactions (payments) associated with this contact detail.
-        /// </summary>
-        public ICollection<TransactionModel> Transactions { get; set; } = new List<TransactionModel>();
-
-        /// <summary>
-        /// Collection of orders shipped to this contact detail.
-        /// </summary>
-        public ICollection<OrderModel> Orders { get; set; } = new List<OrderModel>();
+        //Relationship with ORder
+        public ICollection<OrderModel>? Orders { get; set; }
     }
 }
