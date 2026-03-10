@@ -2,9 +2,7 @@
 using ELKH.Models;
 using ELKH.ViewModels;
 using Microsoft.AspNetCore.Http.HttpResults;
-using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
-using static System.Net.Mime.MediaTypeNames;
 
 namespace ELKH.Repositories
 {
@@ -15,11 +13,12 @@ namespace ELKH.Repositories
     public class InventoryRepo
     {
         private readonly ApplicationDbContext _context;
-        private readonly ImageStoreContext _imageDb;
-        public InventoryRepo(ApplicationDbContext context, ImageStoreContext imageDb)
+        private readonly IWebHostEnvironment _env;
+
+        public InventoryRepo(ApplicationDbContext context, IWebHostEnvironment env)
         {
             _context = context;
-            _imageDb = imageDb;
+            _env = env;
         }
 
         /// <summary>Returns all products without any includes (lightweight listing query).</summary>
@@ -28,10 +27,11 @@ namespace ELKH.Repositories
             return await _context.Products.ToListAsync();
         }
 
-
-        public async Task<List<ImageModel>> GetProductImages(int id)
+        /// <summary>Returns the URL strings for all images associated with the given product.</summary>
+        public async Task<List<string>> GetProductImages(int id)
         {
-            return await _imageDb.Images.Where(pi => pi.FkProductId == id)
+            return await _context.ProductImages.Where(pi => pi.FkProductId == id)
+                                               .Select(pi => pi.ProductImageURL)
                                                .ToListAsync();
         }
 
@@ -53,71 +53,86 @@ namespace ELKH.Repositories
                 ProductName = products.Name,
                 Description = products.Description,
                 Price = products.Price,
-                StockQuantity = products.StockQuantity,
+                StockQuantity = products.StockQuantity ?? 0,
                 IsActive = products.IsActive
             };
 
             return vm;
         }
-        private const long MaxFileSizeBytes = 5 * 1024 * 1024; // 5 MB
 
-        private static readonly HashSet<string> _allowedExtensions =
-            new(StringComparer.OrdinalIgnoreCase) { ".jpg", ".jpeg", ".png", ".gif", ".webp", ".bmp" };
-
-        private static bool HasValidImageSignature(byte[] bytes)
+        /// <summary>
+        /// Saves an uploaded product image to <c>wwwroot/images</c> and records its URL in the database.
+        /// Returns <c>false</c> when the VM, file, target product is missing, the MIME type is not an
+        /// allowed image format, or the file exceeds the 10 MB size limit.
+        /// </summary>
+        public async Task<bool> AddProductImage(ProductImageVM vm)
         {
-            if (bytes.Length < 4) return false;
-
-            // JPEG: FF D8 FF
-            if (bytes[0] == 0xFF && bytes[1] == 0xD8 && bytes[2] == 0xFF)
-                return true;
-            // PNG: 89 50 4E 47 0D 0A 1A 0A
-            if (bytes.Length >= 8 &&
-                bytes[0] == 0x89 && bytes[1] == 0x50 && bytes[2] == 0x4E && bytes[3] == 0x47 &&
-                bytes[4] == 0x0D && bytes[5] == 0x0A && bytes[6] == 0x1A && bytes[7] == 0x0A)
-                return true;
-            // GIF: GIF8
-            if (bytes[0] == 0x47 && bytes[1] == 0x49 && bytes[2] == 0x46 && bytes[3] == 0x38)
-                return true;
-            // BMP: BM
-            if (bytes[0] == 0x42 && bytes[1] == 0x4D)
-                return true;
-            // WebP: RIFF....WEBP
-            if (bytes.Length >= 12 &&
-                bytes[0] == 0x52 && bytes[1] == 0x49 && bytes[2] == 0x46 && bytes[3] == 0x46 &&
-                bytes[8] == 0x57 && bytes[9] == 0x45 && bytes[10] == 0x42 && bytes[11] == 0x50)
-                return true;
-
-            return false;
-        }
-
-        public async Task<bool> UploadImage(int productId, IFormFile file)
-        {
-            if (file == null || file.Length == 0) return false;
-            if (file.Length > MaxFileSizeBytes) return false;
-
-            var ext = Path.GetExtension(file.FileName);
-            if (!_allowedExtensions.Contains(ext)) return false;
-
-            using var stream = new MemoryStream();
-            await file.CopyToAsync(stream);
-            var imageBytes = stream.ToArray();
-
-            if (!HasValidImageSignature(imageBytes)) return false;
-
-            var safeFileName = Guid.NewGuid().ToString("N") + ext.ToLowerInvariant();
-
-            var image = new ImageModel
+            if (vm == null || vm.ProductImage == null || vm.ProductImage.Length == 0)
             {
-                FileName = safeFileName,
-                Description = "",
-                FileType = file.ContentType,
-                ImageData = imageBytes,
-                FkProductId = productId
+                return false;
+            }
+
+            // Validate MIME type against the safe-list before touching the filesystem.
+            // SVG is intentionally excluded: it supports inline <script> tags and can
+            // carry XSS payloads when rendered in a browser.
+            var allowedTypes = new HashSet<string>(StringComparer.OrdinalIgnoreCase)
+            {
+                "image/jpeg",
+                "image/png",
+                "image/gif",
+                "image/webp"
             };
 
-            _imageDb.Images.Add(image);
-            return _imageDb.SaveChanges() > 0;
+            if (!allowedTypes.Contains(vm.ProductImage.ContentType))
+                return false;
+
+            // Cap uploads at 10 MB to prevent denial-of-service via large file writes.
+            const long maxBytes = 10 * 1024 * 1024;
+            if (vm.ProductImage.Length > maxBytes)
+                return false;
+
+            var product = await _context.Products
+                .Include(p => p.ProductImages)
+                .FirstOrDefaultAsync(p => p.PkProductId == vm.FkProductId);
+
+            if (product == null)
+            {
+                return false;
+            }
+
+            // Use a GUID-based file name to prevent collisions and avoid exposing
+            // the original upload name (which could contain path traversal characters).
+            var fileName = Guid.NewGuid().ToString() +
+                           Path.GetExtension(vm.ProductImage.FileName);
+
+            // Resolve the physical path to wwwroot/images at runtime via IWebHostEnvironment.
+            var uploadPath = Path.Combine(_env.WebRootPath, "images");
+
+            // Create the images directory on first use if it does not already exist.
+            if (!Directory.Exists(uploadPath))
+                Directory.CreateDirectory(uploadPath);
+
+            var filePath = Path.Combine(uploadPath, fileName);
+
+            // Stream the upload directly to disk to avoid holding the entire file in memory.
+            using (var stream = new FileStream(filePath, FileMode.Create))
+            {
+                await vm.ProductImage.CopyToAsync(stream);
+            }
+
+            // Create DB record - set the required navigation property 'Product'
+            var image = new ProductImageModel
+            {
+                ProductImageURL = "/images/" + fileName,
+                FkProductId = product.PkProductId,
+                Product = product
+            };
+
+            product.ProductImages.Add(image);
+
+            await _context.SaveChangesAsync();
+
+            return true;
         }
     }
 }

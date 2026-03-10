@@ -96,15 +96,6 @@
                         <li class="nav-item">
                             <a class="nav-link text-dark" asp-area="" asp-controller="Product" asp-action="Index">Products</a>
                         </li>
-                            @* @if (User.IsInRole("Staff")) *@
-                            @* { *@
-                                <li class="nav-item">
-                                <a class="nav-link text-dark" asp-area="" asp-controller="OrderHistory" asp-action="Index">Order History</a>
-                                </li>
-                                <li class="nav-item">
-                                    <a class="nav-link text-dark" asp-area="" asp-controller="Inventory" asp-action="Index">Inventory</a>
-                                </li>
-                            @* } *@
                         @if (SignInManager.IsSignedIn(User))
                         {
                             <li class="nav-item">

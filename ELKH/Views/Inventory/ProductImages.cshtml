@@ -1,18 +1,18 @@
-﻿@model IEnumerable<ProductImageVM>
+﻿@model InventoryVM
 
 <table>
     <thead>
         <tr>
             <th>Images</th>
             <th>Action</th>
-            <th><a asp-action="AddImage" asp-controller="Inventory" asp-route-Id="@ViewBag.ProductId">Add Image</a></th>
+            <th><a>Add Image</a></th>
         </tr>
     </thead>
     <tbody>
-        @foreach(var image in Model)
+        @foreach(var image in Model.ProductImage)
         {
             <tr>
-                <td><img src="data:image/jpeg;base64,@System.Convert.ToBase64String(image.ImageData)" style="max-width: 200px; max-height: 200px;"/></td>
+                <td><img src="@image" /></td>
                 <td><a>Edit</a></td>
             </tr>
         }

@@ -72,28 +72,34 @@ public int? StockQuantity { get; set; } = 0;
         /// </summary>
         public int FkCategoryId { get; set; }
 
-        //Product Image Relationship
-        public ICollection<ImageModel>? ProductImages { get; set; }
         /// <summary>
         /// Navigation property to the product's category.
         /// Used for category filtering and display.
         /// </summary>
-        public CategoryModel? Category { get; set; }
+        public CategoryModel Category { get; set; } = null!;
 
         /// <summary>
         /// Collection of images associated with this product.
         /// Used for product galleries and thumbnails.
         /// </summary>
-        public ICollection<ProductImageModel>? ProductImage { get; set; }
+        public ICollection<ProductImageModel> ProductImages { get; set; } = new List<ProductImageModel>();
 
-        //Cart Relationship
-        public ICollection<CartModel>? Carts { get; set; }
+        /// <summary>
+        /// Collection of shopping cart entries that include this product.
+        /// </summary>
+        public ICollection<CartModel> Carts { get; set; } = new List<CartModel>();
 
-        //OriderItem Relationship
-        public ICollection<OrderItemModel>? OrderItems { get; set; }
+        /// <summary>
+        /// Collection of order line items for this product.
+        /// Tracks all orders that included this product.
+        /// </summary>
+        public ICollection<OrderItemModel> OrderItems { get; set; } = new List<OrderItemModel>();
 
-        //Product Rating Relationship
-        public ICollection<ProductRatingModel>? ProductRatings { get; set; }
+        /// <summary>
+        /// Collection of customer ratings and reviews for this product.
+        /// Used to calculate average rating and display customer feedback.
+        /// </summary>
+        public ICollection<ProductRatingModel> ProductRatings { get; set; } = new List<ProductRatingModel>();
 
         /// <summary>
         /// Collection of wishlist entries for this product.

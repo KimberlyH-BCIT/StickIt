@@ -45,10 +45,10 @@ namespace ELKH.Repositories
         {
             try
             {
-                // Only unset other defaults if this contact belongs to a registered user
-                if (contact.IsDefault && contact.FkRegisteredUserId.HasValue)
+                // If this is being set as default, unset other defaults for this user
+                if (contact.IsDefault)
                 {
-                    await UnsetOtherDefaultsAsync(contact.FkRegisteredUserId.Value, contact.PkContactId);
+                    await UnsetOtherDefaultsAsync(contact.FkRegisteredUserId, contact.PkContactId);
                 }
 
                 Context.ContactDetails.Add(contact);
@@ -78,9 +78,9 @@ namespace ELKH.Repositories
                 }
 
                 // If this is being set as default, unset other defaults for this user
-                if (contact.IsDefault && !existing.IsDefault && contact.FkRegisteredUserId.HasValue)
+                if (contact.IsDefault && !existing.IsDefault)
                 {
-                    await UnsetOtherDefaultsAsync(contact.FkRegisteredUserId.Value, contact.PkContactId);
+                    await UnsetOtherDefaultsAsync(contact.FkRegisteredUserId, contact.PkContactId);
                 }
 
                 existing.FirstName = contact.FirstName;

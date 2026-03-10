@@ -590,7 +590,7 @@ namespace ELKH.Controllers
                 Description = p.Description,
                 Price = p.Price,
                 DiscountPercent = p.DiscountPercent,
-                StockQuantity = p.StockQuantity,
+                StockQuantity = p.StockQuantity ?? 0,
                 IsActive = p.IsActive,
                 CategoryId = p.FkCategoryId,
                 CategoryName = p.Category?.CategoryName ?? "Unknown"

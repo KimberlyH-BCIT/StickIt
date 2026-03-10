@@ -22,42 +22,8 @@
                 <td>@pro.ProductName</td>
                 <td>@pro.Quantity</td>
                 <td>@pro.IsActive</td>
-                <td><a asp-controller="Inventory" asp-action="ProductImages" asp-route-Id="@pro.PkProductId">Edit Product Image</a></td>
-                <td>
-                    <label for="@pro.PkProductId">Edit Quantity</label>
-                    <input type="checkbox" class="editQuantity" data-id="@pro.PkProductId" />
-
-                    <div class="editQuantityArea hide" data-id="@pro.PkProductId">
-                        <form method="post" asp-action="EditProductAmount" asp-controller="Inventory">
-                            <input type="hidden" name="productId" value="@pro.PkProductId" />
-                            <input type="number" name="quantityId" value="@pro.Quantity" />
-                            <button type="submit">Update</button>
-                        </form>
-                    </div>
-                       
-                </td>
+                <td><a asp-controller="Inventory" asp-action="ProductImages" asp-route-id="@pro.PkProductId">Edit</a></td>
             </tr>
         }
     </tbody>
 </table>
-
-<script>
-
-        document.addEventListener("DOMContentLoaded", function() {
-        const inputCheck = document.querySelectorAll(".editQuantity");
-
-        inputCheck.forEach(box => {
-            box.addEventListener("change", function() {
-                const editArea = document.querySelector(`.editQuantityArea[data-id='${this.dataset.id}']`);
-
-                if(this.checked){
-                    editArea.classList.remove("hide");
-                } else {
-                    editArea.classList.add("hide");
-                }
-            });
-        });
-    });
-
-</script>
-

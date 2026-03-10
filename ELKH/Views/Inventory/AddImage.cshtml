@@ -1,87 +1,44 @@
-﻿@model ELKH.Models.ImageModel
+﻿@model ProductImageVM;
 
-@{  ViewData["Title"] = "Home Page"; }
-<h1 class="display-4">Upload Your Image</h1>
-<p class="lead">Please select an image file you wish to upload.</p>
-<hr class="my-4">
+<form method="post" asp-action="AddImage" enctype="multipart/form-data">
+    <h3>Add Image Below</h3>
+    <input type="hidden" asp-for="FkProductId" />
+    <div id="dropZone" style="
+        border: 2px dashed #999;
+        padding: 40px;
+        text-align: center;
+        border-radius: 10px;
+        cursor: pointer;">
 
-<form asp-controller="Inventory" asp-action="AddImage" method="post"
-      enctype="multipart/form-data">
-    <input type="hidden" name="productId" value="@ViewBag.productId" />
-    <span class="form-group">
-        <label for="file" class="btn btn-info btn-block">
-            Choose image
-        </label>
-        <input type="file" class="form-control-file" id="file" 
-            name="file" style="display:none;" 
-            onchange="previewImage();">
-        <img id="preview" src="#" alt="Image Preview"
-             style="max-width: 400px; max-height: 400px;
-             margin-top: 10px; display:none;">
-    </span>
-    <button type="submit" class="btn btn-primary">Upload</button>
+        Drag & drop image here or click to select
+
+        <input type="file" asp-for="ProductImage" id="fileInput" style="display:none;" />
+    </div>
+    <input type="submit" />
 </form>
 
-
-<style>
-    body {
-        background-color: #f7f7f7;
-    }
-
-    .container {
-        background-color: #ffffff;
-        padding: 2rem;
-        border-radius: 0.5rem;
-        box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.15);
-    }
-
-    .btn-info {
-        background-color: #17a2b8;
-        border-color: #17a2b8;
-        color: white;
-        font-size: 16px;
-    }
-
-    .btn-info:hover {
-        background-color: #138496;
-        border-color: #117a8b;
-        color: white;
-    }
-
-    .btn-success {
-        font-weight: 400;
-        background-color: #28a745;
-        border-color: #28a745;
-    }
-
-    .btn-success:hover {
-        background-color: #218838;
-        border-color: #1e7e34;
-    }
-
-    .btn-upload {
-        padding: 5px 15px;
-        font-size: 16px;
-    }
-</style>
-
-
 <script>
-    function previewImage() {
-        var file =
-            document.querySelector('input[type=file]').files[0];
-        var reader = new FileReader();
+    const dropZone = document.getElementById("dropzone");
+    const fileInput = document.getElementById("fileInput")
 
-        reader.onloadend = function () {
-            var preview = document.getElementById('preview');
-            preview.src = reader.result;
-            preview.style.display = 'block';
-        }
+    dropZone.addEventListener("click", ()=>{
+        fileInput.click();
+    })
 
-        if (file) {
-            reader.readAsDataURL(file);
-        } else {
-            preview.src = "";
-        }
-    }
+    dropZone.addEventListener("dragover", (e) =>{
+        e.PreventDefault;
+        dropZone.style.background = "#f0f8ff";
+    });
+
+    dropZone.addEventListener("dragleave",()=>{
+        dropZone.style.background = "";
+    });
+
+    dropZone.addEventListener("drop",(e)=>{
+
+        e.preventDefault();
+        const files = e.dataTransfer.files;
+        fileInput.files = files;
+    });
+
 </script>

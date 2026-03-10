@@ -53,7 +53,11 @@ namespace ELKH.Models
         /// Foreign key to the rated product.
         /// </summary>
         public int FkProductId { get; set; }
-        public ProductModel? Products { get; set; }
+
+        /// <summary>
+        /// Navigation property to the rated product.
+        /// </summary>
+        public ProductModel Product { get; set; } = null!;
 
         /// <summary>
         /// Foreign key to the registered user who submitted the rating.
