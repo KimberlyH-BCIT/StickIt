@@ -358,3 +358,6 @@ footer[style*="background:#111"] a:hover{ color: var(--mint) !important; }
     box-shadow: 0 0 0 .15rem rgba(102,209,193,.25) !important;
 }
 
+.hide{
+    display:none;
+}
