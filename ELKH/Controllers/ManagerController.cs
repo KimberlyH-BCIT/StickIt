@@ -32,6 +32,8 @@ namespace ELKH.Controllers
     /// corresponding Razor views. Business logic will be wired in a future iteration
     /// once the service layer contracts are finalised.
     /// </remarks>
+    /// 
+
     [Authorize(Roles = "Admin,Manager")]
     public class ManagerController : Controller
     {
@@ -290,7 +292,7 @@ namespace ELKH.Controllers
                                     TransactionStatus = t.TransactionStatus,
                                     Amount = t.Amount,
                                     TransactionDate = t.TransactionDate,
-                                    DeliberyFee = t.DeliberyFee,
+                                    DeliberyFee = t.DeliveryFee,
                                     FkOrderId = t.FkOrderId
                                 })
                                 .ToListAsync();

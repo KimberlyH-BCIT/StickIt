@@ -34,6 +34,7 @@ namespace ELKH.Controllers
     /// Role mutations delegate directly to <see cref="RoleManager{TRole}"/> so that
     /// Identity's own validation and concurrency handling are exercised.
     /// </remarks>
+    
     [Authorize(Roles = "Admin")]
     public class AdminRoleController : Controller
     {

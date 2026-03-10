@@ -46,6 +46,10 @@ namespace ELKH.Data.Migrations.ImageStore
                         .HasColumnType("BLOB")
                         .HasColumnName("imageData");
 
+                    b.Property<string>("ProductImageURL")
+                        .IsRequired()
+                        .HasColumnType("TEXT");
+
                     b.HasKey("ImageId");
 
                     b.ToTable("Image", (string)null);

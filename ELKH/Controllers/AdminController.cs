@@ -17,10 +17,12 @@ namespace ELKH.Controllers
     public class AdminController : Controller
     {
         private readonly IRole_repo _roleRepo;
+        private readonly ApplicationDbContext _context;
+        private readonly IMemoryCache _cache;
+        private readonly ILogger<AdminController> _logger;
+        private readonly IFuzzyReindexService _reindexService;
         private readonly UserManager<IdentityUser> _userManager;
-        private readonly Data.ApplicationDbContext _context;
 
-        public AdminController(IRole_repo roleRepo, UserManager<IdentityUser> userManager, ApplicationDbContext context)
         public AdminController(
             IRole_repo roleRepo,
             ApplicationDbContext context,
@@ -30,25 +32,29 @@ namespace ELKH.Controllers
             UserManager<IdentityUser> userManager)
         {
             _roleRepo = roleRepo;
+            _context = context;
+            _cache = cache;
+            _logger = logger;
+            _reindexService = reindexService;
+            _userManager = userManager;
         }
-
         /// <summary>Renders the admin dashboard with live order counts and stock-level statistics.</summary>
         public async Task<IActionResult> Index()
         {
             // Define rolling time windows used by the order-volume KPI cards.
-            var now      = DateTime.UtcNow;
-            var weekAgo  = now.AddDays(-7);
+            var now = DateTime.UtcNow;
+            var weekAgo = now.AddDays(-7);
             var monthAgo = now.AddDays(-30);
 
             var vm = new SalesVM
             {
                 // Count orders placed within each rolling window.
-                WeeklyTotalOrders  = await _context.Orders.CountAsync(o => o.CreatedAt >= weekAgo),
+                WeeklyTotalOrders = await _context.Orders.CountAsync(o => o.CreatedAt >= weekAgo),
                 MonthlyTotalOrders = await _context.Orders.CountAsync(o => o.CreatedAt >= monthAgo),
 
                 // Split inventory into well-stocked (> 100 units) vs low-stock (≤ 100 units) buckets.
-                StockUpCount       = await _context.Products.CountAsync(p => p.StockQuantity > 100),
-                StockDownCount     = await _context.Products.CountAsync(p => p.StockQuantity <= 100),
+                StockUpCount = await _context.Products.CountAsync(p => p.StockQuantity > 100),
+                StockDownCount = await _context.Products.CountAsync(p => p.StockQuantity <= 100),
             };
             return View(vm);
         }
@@ -88,9 +94,9 @@ namespace ELKH.Controllers
             var pagedUsers = userList.Skip((page - 1) * pageSize).Take(pageSize).ToList();
 
             ViewBag.CurrentPage = page;
-            ViewBag.TotalPages  = (int)Math.Ceiling((double)totalUsers / pageSize);
-            ViewBag.Search      = search;
-            ViewBag.RoleFilter  = roleFilter;
+            ViewBag.TotalPages = (int)Math.Ceiling((double)totalUsers / pageSize);
+            ViewBag.Search = search;
+            ViewBag.RoleFilter = roleFilter;
 
             return View(pagedUsers);
         }
@@ -107,30 +113,30 @@ namespace ELKH.Controllers
             var user = await _userManager.FindByIdAsync(id);
             if (user == null) return NotFound();
 
-            var roles   = await _userManager.GetRolesAsync(user);
+            var roles = await _userManager.GetRolesAsync(user);
             var contact = await _context.ContactDetails.FirstOrDefaultAsync(c => c.UserId == user.Id);
 
             var vm = new AccountDetailsVM
             {
                 User = new UserListVM
                 {
-                    Id    = user.Id,
-                    Name  = user.UserName ?? "",
+                    Id = user.Id,
+                    Name = user.UserName ?? "",
                     Email = user.Email ?? "",
                     Roles = roles.ToList()
                 },
                 Contact = contact == null ? null : new ContactDetailVM
                 {
-                    ContactId   = contact.PkContactId,
-                    FirstName   = contact.FirstName,
-                    LastName    = contact.LastName,
+                    ContactId = contact.PkContactId,
+                    FirstName = contact.FirstName,
+                    LastName = contact.LastName,
                     PhoneNumber = contact.PhoneNumber,
-                    Street      = contact.Street,
-                    City        = contact.City,
-                    Province    = contact.Province,
-                    PostCode    = contact.PostCode,
-                    Country     = contact.Country,
-                    IsDefault   = contact.IsDefault
+                    Street = contact.Street,
+                    City = contact.City,
+                    Province = contact.Province,
+                    PostCode = contact.PostCode,
+                    Country = contact.Country,
+                    IsDefault = contact.IsDefault
                 }
             };
 
@@ -243,11 +249,14 @@ namespace ELKH.Controllers
                 MonthlySalesData = monthlySalesData,
                 TopProducts = topProducts
             };
-        /// <summary>Renders the sales management page (shell view).</summary>
-        public IActionResult ManageSales()
-        {
-            return View();
+
+            return View(vm);
         }
+        /// <summary>Renders the sales management page (shell view).</summary>
+        //public IActionResult ManageSales()
+        //{
+        //    return View();
+        //}
 
         // =====================================================================
         // Search Index Management
@@ -460,3 +469,4 @@ WHERE PkProductId NOT IN (SELECT rowid FROM ProductFTS);
         public string? Reason { get; set; }
     }
 }
+

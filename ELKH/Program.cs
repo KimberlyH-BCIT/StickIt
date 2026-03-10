@@ -3,7 +3,9 @@ using ELKH.Extensions;
 using ELKH.Models;
 using ELKH.Repositories;
 using Microsoft.AspNetCore.Identity;
+using Microsoft.AspNetCore.Localization;
 using Microsoft.EntityFrameworkCore;
+using System.Globalization;
 
 var builder = WebApplication.CreateBuilder(args);
 

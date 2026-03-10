@@ -11,24 +11,19 @@ namespace ELKH.Controllers
     /// Admin controller for inventory management: listing products, adjusting stock
     /// quantities, and managing product images.
     /// </summary>
-    //[Authorize(Roles = "Admin")]
+    
+    [Authorize(Roles = "Admin")]
     public class InventoryController : Controller
     {
         private readonly InventoryRepo _inventoryRepo;
         
-=========
         
->>>>>>>>> Temporary merge branch 2
         public InventoryController(InventoryRepo inventoryRepo)
-
+        {
             _inventoryRepo = inventoryRepo;
-        //Pass
-<<<<<<<<< Temporary merge branch 1
-=========
+        }
 
 
-        //Pass
->>>>>>>>> Temporary merge branch 2
         public async Task<IActionResult> Index()
         {
             var products = await _inventoryRepo.GetAllProduct();
@@ -38,16 +33,10 @@ namespace ELKH.Controllers
                 PkProductId = p.PkProductId,
                 ProductName = p.Name,
                 Quantity = p.StockQuantity,
-        //Pass
             }).ToList();
 
             return View(inventoryList);
         }
-
-<<<<<<<<< Temporary merge branch 1
-=========
-        //Pass
->>>>>>>>> Temporary merge branch 2
         [HttpPost]
         public async Task<IActionResult> EditProductAmount(int productId, int quantityId)
         {
@@ -75,7 +64,7 @@ namespace ELKH.Controllers
             var vmList = productImages.Select(pi => new ProductImageVM
             {
                 ProductImage = null,
-                FkProductId = productId
+                FkProductId = Id
             }).ToList();
 
             return View(vmList);
@@ -85,7 +74,7 @@ namespace ELKH.Controllers
         public async Task<IActionResult> AddImage(int productId)
         {
             var vm = new ImageModel();
-            ViewBag.ProductId = Id;
+            ViewBag.ProductId = productId;
 
             return View(vm);
         }

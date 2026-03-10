@@ -1,5 +1,5 @@
 ﻿@model ELKH.Models.ImageModel
-
+@* 
 @{
     ViewData["Title"] = "Add Product Image";
 }
@@ -9,7 +9,7 @@
         padding: 40px;
 <form asp-controller="Inventory" asp-action="AddImage" method="post"
       enctype="multipart/form-data">
-        border-radius: 10px;
+        border-radius: 10px>
     <span class="form-group">
         <label for="file" class="btn btn-info btn-block">
         Drag & drop image here or click to select
@@ -43,9 +43,7 @@
         fileInput.files = files;
     });
 
-</script>
-=========
-﻿@model ELKH.Models.ImageModel
+</script> *@
 
 @{  ViewData["Title"] = "Home Page"; }
 <h1 class="display-4">Upload Your Image</h1>

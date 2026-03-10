@@ -8,6 +8,9 @@ namespace ELKH.ViewModels
         public int WeeklyTotalOrders { get; set; }
         public int MonthlyTotalOrders { get; set; }
         public int TotalOrdersAllTime { get; set; }
+        public int StockUpCount { get; set; }
+
+        public int StockDownCount { get; set; }
 
         // ── Weekly Chart (last 7 days, day labels + daily totals) ──
         public List<string> WeeklyLabels { get; set; } = new();   // e.g. ["Mon","Tue",...]
