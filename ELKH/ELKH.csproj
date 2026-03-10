@@ -1,4 +1,4 @@
-Project Sdk="Microsoft.NET.Sdk.Web">
+﻿<Project Sdk="Microsoft.NET.Sdk.Web">
 
   <PropertyGroup>
     <TargetFramework>net10.0</TargetFramework>
@@ -44,7 +44,5 @@ Project Sdk="Microsoft.NET.Sdk.Web">
   <ItemGroup>
     <None Remove="e2e\**\*" />
     <None Remove="tests\**\*" />
-    <Folder Include="wwwroot\images\" />
   </ItemGroup>
-
 </Project>

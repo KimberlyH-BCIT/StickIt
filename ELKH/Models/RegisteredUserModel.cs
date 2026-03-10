@@ -27,7 +27,7 @@ namespace ELKH.Models
         /// <summary>Saved delivery addresses belonging to this user.</summary>
         public ICollection<ContactDetailModel>? ContactDetails { get; set; }
 
-        //Relationship With ProductRating
+        /// <summary>Product ratings submitted by this user.</summary>
         public ICollection<ProductRatingModel>? ProductRatings { get; set; }
 
         /// <summary>

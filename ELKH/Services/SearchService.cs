@@ -146,7 +146,7 @@ LIMIT 10;";
             var normQuery = normQ;
             var prefix = normQuery.Length >= 3 ? normQuery.Substring(0, 3) : normQuery;
             var candidates = await _db.Products
-                .Select(p => new { p.PkProductId, p.Name, p.Price, p.NameNormalized, Thumbnail = p.ProductImage.Select(pi => pi.ProductImageURL).FirstOrDefault() })
+                .Select(p => new { p.PkProductId, p.Name, p.Price, p.NameNormalized, Thumbnail = p.ProductImages.Select(pi => pi.ProductImageURL).FirstOrDefault() })
                 .Where(p => p.NameNormalized.Contains(prefix) || p.NameNormalized.StartsWith(normQuery))
                 .Take(_searchOptions?.Value?.Fuzzy?.CandidateLimit ?? 200)
                 .ToListAsync();

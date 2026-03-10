@@ -22,12 +22,20 @@ namespace ELKH.Models
         /// Foreign key to the order this item belongs to.
         /// </summary>
         public int FkOrderId { get; set; }
-        public OrderModel? Order { get; set; }
+
+        /// <summary>
+        /// Navigation property to the order this item belongs to.
+        /// </summary>
+        public OrderModel Order { get; set; } = null!;
 
         /// <summary>
         /// Foreign key to the product in this order item.
         /// </summary>
         public int FkProductId { get; set; }
-        public ProductModel? Product { get; set; }
+
+        /// <summary>
+        /// Navigation property to the product in this order item.
+        /// </summary>
+        public ProductModel Product { get; set; } = null!;
     }
 }
