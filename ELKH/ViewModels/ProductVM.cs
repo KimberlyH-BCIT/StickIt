@@ -39,7 +39,7 @@ namespace ELKH.ViewModels
         /// <summary>Current inventory quantity.</summary>
         [Display(Name = "Stock Quantity")]
         [Range(0, int.MaxValue, ErrorMessage = "Stock quantity cannot be negative")]
-        public int StockQuantity { get; set; } = 0;
+        public int? StockQuantity { get; set; }
 
         /// <summary>Whether the product is active and visible in the catalog.</summary>
         [Display(Name = "Is Active")]

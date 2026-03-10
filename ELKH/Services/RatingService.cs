@@ -58,7 +58,7 @@ namespace ELKH.Services
         {
             return _db.ProductRatings
                 .Include(r => r.RegisteredUser)
-                .Include(r => r.Product);
+                .Include(r => r.Products);
         }
 
         /// <inheritdoc/>
@@ -76,7 +76,7 @@ namespace ELKH.Services
             if (query.ProductId.HasValue)
                 q = q.Where(r => r.FkProductId == query.ProductId.Value);
             if (!string.IsNullOrEmpty(query.ProductName))
-                q = q.Where(r => r.Product != null && r.Product.Name.Contains(query.ProductName));
+                q = q.Where(r => r.Products != null && r.Products.Name.Contains(query.ProductName));
             if (!string.IsNullOrEmpty(query.UserEmail))
                 q = q.Where(r => r.RegisteredUser.Email == query.UserEmail);
             if (query.FromDate.HasValue)
@@ -136,7 +136,7 @@ namespace ELKH.Services
             var ratings = await _db.ProductRatings
                 .AsNoTracking()
                 .Where(r => r.FkRegisteredUserId == userId && !r.IsDeleted)
-                .Include(r => r.Product)
+                .Include(r => r.Products)
                 .ToListAsync(ct);
 
             // Collect the order item IDs referenced by this user's ratings so we can
@@ -160,7 +160,7 @@ namespace ELKH.Services
             {
                 RatingId     = r.PkRatingId,
                 ProductId    = r.FkProductId,
-                ProductName  = r.Product.Name,
+                ProductName  = r.Products.Name,
                 Rating       = r.Rating,
                 Description  = r.Description,
                 RatedTime    = r.RatedTime,
