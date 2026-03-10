@@ -1,21 +1,24 @@
 @model ELKH.ViewModels.CartVM
 @{
-    ViewData["Title"] = "Cart";
+    ViewData["Title"] = "Your Cart";
     Layout = "~/Views/Shared/_Layout.cshtml";
 }
 
+@section title {
+    <h1 class="fw-bold mb-4">Your Cart 🛒</h1>
+}
+
 <div class="container py-4">
-    <h1 class="fw-bold mb-4">My Cart</h1>
 
     @if (TempData["Message"] is string msg)
-    {
+{
         var parts = msg.Split(',', 2);
         var alertType = parts[0].Trim() == "success" ? "alert-success" : "alert-warning";
         <div class="alert @alertType alert-dismissible fade show" role="alert">
             @parts[^1].Trim()
             <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
         </div>
-    }
+}
 
     @if (Model.IsEmpty)
     {
@@ -26,8 +29,8 @@
             {
                 <a asp-controller="Product" asp-action="Index" class="btn btn-dark mt-2">Shop Stickers</a>
             }
-            else
-            {
+else
+{
                 <p class="text-muted">
                     <a asp-area="Identity" asp-page="/Account/Login">Log in</a> to start shopping.
                 </p>
@@ -37,24 +40,25 @@
     else
     {
         <div class="row g-4">
+            <!-- Cart Items -->
             <div class="col-lg-8">
                 <div class="card shadow-sm">
                     <div class="card-body p-0">
                         <table class="table table-borderless mb-0">
                             <thead class="table-light">
-                                <tr>
-                                    <th>Product</th>
+            <tr>
+                <th>Product</th>
                                     <th class="text-center">Price</th>
                                     <th class="text-center">Qty</th>
                                     <th class="text-end">Total</th>
-                                    <th></th>
-                                </tr>
-                            </thead>
-                            <tbody>
+                <th></th>
+            </tr>
+        </thead>
+        <tbody>
                                 @foreach (var item in Model.Items)
-                                {
+            {
                                     <tr class="align-middle">
-                                        <td>
+                    <td>
                                             <div class="d-flex align-items-center gap-3">
                                                 @if (!string.IsNullOrEmpty(item.ImageUrl))
                                                 {
@@ -83,52 +87,70 @@
                                         <td class="text-end fw-bold">$@item.LineTotal.ToString("F2")</td>
                                         <td class="text-end">
                                             <form asp-controller="Cart" asp-action="Remove" method="post">
-                                                @Html.AntiForgeryToken()
+                            @Html.AntiForgeryToken()
                                                 <input type="hidden" name="cartId" value="@item.CartItemId" />
                                                 <button type="submit" class="btn btn-sm btn-outline-danger" title="Remove">
                                                     <i class="bi bi-trash"></i>
                                                 </button>
-                                            </form>
-                                        </td>
-                                    </tr>
-                                }
-                            </tbody>
-                        </table>
+                        </form>
+                    </td>
+                </tr>
+            }
+        </tbody>
+    </table>
                     </div>
+                </div>
+
+                <div class="mt-2">
+                    <form asp-controller="Cart" asp-action="Clear" method="post">
+                        @Html.AntiForgeryToken()
+                        <button type="submit" class="btn btn-outline-danger btn-sm"
+                                onclick="return confirm('Clear your entire cart?')">
+                            <i class="bi bi-trash me-1"></i>Clear Cart
+                        </button>
+                    </form>
                 </div>
             </div>
 
+            <!-- Order Summary -->
             <div class="col-lg-4">
-                <div class="card shadow-sm rounded-4">
+                <div class="card shadow-sm">
                     <div class="card-body">
-                        <h5 class="fw-bold mb-3">Summary</h5>
-
+                        <h5 class="fw-bold mb-3">Order Summary</h5>
                         <div class="d-flex justify-content-between mb-2">
-                            <span class="text-muted">Subtotal</span>
+                            <span>Subtotal</span>
                             <span>$@Model.Subtotal.ToString("F2")</span>
                         </div>
                         <div class="d-flex justify-content-between mb-2">
-                            <span class="text-muted">Tax</span>
+                            <span>Tax (12%)</span>
                             <span>$@Model.Tax.ToString("F2")</span>
                         </div>
-                        <div class="d-flex justify-content-between mb-3">
-                            <span class="text-muted">Shipping</span>
-                            <span>$@Model.ShippingCost.ToString("F2")</span>
+                        <div class="d-flex justify-content-between mb-2">
+                            <span>Shipping</span>
+                            <span>@(Model.ShippingCost == 0 ? "Free!" : "$" + Model.ShippingCost.ToString("F2"))</span>
                         </div>
-
                         <hr />
-
                         <div class="d-flex justify-content-between fw-bold fs-5 mb-3">
                             <span>Total</span>
                             <span>$@Model.Total.ToString("F2")</span>
                         </div>
-
-                        <a asp-controller="Checkout" asp-action="Index" class="btn stickit-btn w-100">
-                            Checkout
-                        </a>
+                        <p class="text-muted small text-center mb-3">
+                            <i class="bi bi-truck me-1"></i>@Model.ShippingNote
+                        </p>
+                        @if (User.Identity?.IsAuthenticated == true)
+                        {
+                            <a asp-controller="Checkout" asp-action="Index" class="btn btn-dark w-100 btn-lg">
+                                <i class="bi bi-credit-card me-2"></i>Proceed to Checkout
+                            </a>
+                        }
+                        else
+                        {
+                            <a asp-area="Identity" asp-page="/Account/Login"
+                               class="btn btn-dark w-100 btn-lg">Login to Checkout</a>
+                        }
                     </div>
                 </div>
             </div>
         </div>
-    }
+}
 </div>

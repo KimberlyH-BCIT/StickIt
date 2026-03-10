@@ -95,14 +95,17 @@ namespace ELKH.Extensions
         public static WebApplication UseApplicationEndpoints(this WebApplication app)
         {
             // Static assets with cache-busting fingerprints (.NET 10 MapStaticAssets)
-            
+            app.MapStaticAssets();
 
             // Default MVC route — areas are handled by the [Area] attribute on controllers
             app.MapControllerRoute(
                 name: "default",
-                pattern: "{controller=Home}/{action=Index}/{id?}");
+                pattern: "{controller=Home}/{action=Index}/{id?}")
+                .WithStaticAssets();
 
-            app.MapRazorPages();
+            // Convention-based Razor Pages routing
+            app.MapRazorPages()
+               .WithStaticAssets();
 
             // Unauthenticated health check for uptime monitoring and container readiness probes
             app.MapHealthChecks("/health");
