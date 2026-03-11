@@ -23,7 +23,8 @@ namespace ELKH.Data
 
         public DbSet<ProductModel> Products { get; set; }
         public DbSet<CategoryModel> Categories { get; set; }
-        public DbSet<ProductImageModel> ProductImages { get; set; }
+        public DbSet<ImageModel> ProductImages { get; set; }
+        public DbSet<ProductImageModel> ProductImage { get; set; }
         public DbSet<RegisteredUserModel> RegisteredUsers { get; set; }
         public DbSet<CartModel> Carts { get; set; }
         public DbSet<OrderModel> Orders { get; set; }
@@ -48,7 +49,7 @@ namespace ELKH.Data
 
             // One-to-one: Order <-> OrderStatus (each order has a single status record)
             modelBuilder.Entity<OrderModel>()
-                .HasOne(o => o.OrderStatusDetail)
+                .HasOne(o => o.OrderStatuses)
                 .WithOne(d => d.Order)
                 .HasForeignKey<OrderStatusModel>(o => o.FkOrderId);
 
@@ -131,41 +132,37 @@ namespace ELKH.Data
                 .WithMany(u => u.Orders)
                 .HasForeignKey(o => o.FkRegisteredUserId);
 
-modelBuilder.Entity<ProductModel>()
-    .HasOne(p => p.Category)
-    .WithMany(c => c.Products)
-    .HasForeignKey(p => p.FkCategoryId);
+            modelBuilder.Entity<OrderModel>()
+                .HasOne(o => o.ContactDetail)
+                .WithMany()
+                .HasForeignKey(o => o.FkContactId);
 
-modelBuilder.Entity<OrderModel>()
-    .HasOne(o => o.ContactDetail)
-    .WithMany()
-    .HasForeignKey(o => o.FkContactId);
+            modelBuilder.Entity<OrderItemModel>()
+                .HasOne(oi => oi.Order)
+                .WithMany(o => o.OrderItems)
+                .HasForeignKey(oi => oi.FkOrderId);
 
-modelBuilder.Entity<OrderItemModel>()
-    .HasOne(oi => oi.Order)
-    .WithMany(o => o.OrderItems)
-    .HasForeignKey(oi => oi.FkOrderId);
+            modelBuilder.Entity<OrderItemModel>()
+                .HasOne(oi => oi.Product)
+                .WithMany()
+                .HasForeignKey(oi => oi.FkProductId);
 
-modelBuilder.Entity<OrderItemModel>()
-    .HasOne(oi => oi.Product)
-    .WithMany()
-    .HasForeignKey(oi => oi.FkProductId);
+            modelBuilder.Entity<ProductRatingModel>()
+                .HasOne(r => r.Products)
+                .WithMany(p => p.ProductRatings)
+                .HasForeignKey(r => r.FkProductId);
 
-modelBuilder.Entity<ProductRatingModel>()
-    .HasOne(r => r.Product)
-    .WithMany(p => p.ProductRatings)
-    .HasForeignKey(r => r.FkProductId);
+            modelBuilder.Entity<ProductRatingModel>()
+                .HasOne(r => r.RegisteredUser)
+                .WithMany(u => u.ProductRatings)
+                .HasForeignKey(r => r.FkRegisteredUserId);
 
-modelBuilder.Entity<ProductRatingModel>()
-    .HasOne(r => r.RegisteredUser)
-    .WithMany(u => u.ProductRatings)
-    .HasForeignKey(r => r.FkRegisteredUserId);
-
-modelBuilder.Entity<TransactionModel>()
-    .HasOne(t => t.ContactDetail)
-    .WithMany()
-    .HasForeignKey(t => t.FkContactId);
+            modelBuilder.Entity<TransactionModel>()
+                .HasOne(t => t.ContactDetail)
+                .WithMany()
+                .HasForeignKey(t => t.FkContactId);
         }
+
     }
 
 }

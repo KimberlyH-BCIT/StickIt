@@ -30,14 +30,10 @@ namespace ELKH.Models
 
         /// <summary>Foreign key to the order this transaction settles.</summary>
         public int FkOrderId { get; set; }
-
-        /// <summary>Navigation property to the order this transaction settles.</summary>
-        public OrderModel Order { get; set; } = null!;
+        public OrderModel? Order { get; set; }
 
         /// <summary>Foreign key to the shipping address used for this transaction.</summary>
         public int FkContactId { get; set; }
-
-        /// <summary>Navigation property to the shipping address used for this transaction.</summary>
-        public ContactDetailModel ContactDetail { get; set; } = null!;
+        public ContactDetailModel? ContactDetail { get; set; }
     }
 }
