@@ -9,7 +9,6 @@ using Microsoft.EntityFrameworkCore;
 
 var builder = WebApplication.CreateBuilder(args);
 
-builder.Services.AddScoped<IRole_repo, Role_repo>();
 builder.Services.AddScoped<OrderHistoryManagementRepo>();
 builder.Services.AddScoped<InventoryRepo>();
 
@@ -76,10 +75,7 @@ builder.Services.AddHttpClient<PayPalService>();
 builder.Services.Configure<ReCaptchaOptions>(builder.Configuration.GetSection("ReCaptcha"));
 builder.Services.AddHttpClient<IReCaptchaService, ReCaptchaService>();
 
-// Register repositories for dependency injection
-builder.Services.AddScoped<RegisteredUserLogRepo>();
-builder.Services.AddScoped<RegisteredUserProfileRepo>();
-builder.Services.AddScoped<ContactDetailRepo>();
+// Register repositories whose callers inject the concrete type or interface not covered by AddRepositories()
 builder.Services.AddScoped<ICartRepo, CartRepo>();
 builder.Services.AddScoped<TransactionRepo>();
 // -- Application Services (using extension methods for cleaner organization)
@@ -140,7 +136,6 @@ app.UseHttpsRedirection();
 app.UseStaticFiles();        
 app.UseRouting();            
 app.UseAuthentication();
-app.UseHttpsRedirection();
 
 // Security headers — applied after routing so they are present on all responses
 app.Use(async (context, next) =>
