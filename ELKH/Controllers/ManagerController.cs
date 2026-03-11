@@ -181,7 +181,7 @@ namespace ELKH.Controllers
                     TransactionStatus = t.TransactionStatus,
                     Amount            = t.Amount,
                     TransactionDate   = t.TransactionDate,
-                    DeliberyFee       = t.DeliveryFee,
+                    DeliveryFee       = t.DeliveryFee,
                     FkOrderId         = t.FkOrderId
                 })
                 .ToListAsync();
