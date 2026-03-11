@@ -1,3 +1,4 @@
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using ELKH.ViewModels;
 using System.Collections.Generic;
@@ -32,6 +33,7 @@ namespace ELKH.Controllers;
 /// <see cref="ProcessPayment"/> always succeeds; <see cref="Complete"/> returns a
 /// hard-coded mock order reference. Both methods must be replaced before go-live.
 /// </remarks>
+[Authorize]
 public class CheckoutController : Controller
 {
     private readonly ApplicationDbContext _db;
@@ -43,19 +45,22 @@ public class CheckoutController : Controller
         _db = db;
         _cartRepo = cartRepo;
         _env = env;
-
-        // Hard stop: the payment flow is a stub. Refuse to serve any environment
-        // other than Development so this can never reach real users by accident.
-        // Remove this guard (and wire up a real payment provider) before production.
-        if (!_env.IsDevelopment())
-            throw new InvalidOperationException(
-                "CheckoutController: payment processing is not integrated. " +
-                "Wire up a real payment gateway before deploying outside Development.");
     }
+
+    // Guard: payment flow is a stub — never serve outside Development.
+    // Returns a 503 result if not in Development, null otherwise.
+    // Remove this method (and all call sites) once a real payment gateway is wired up.
+    private IActionResult? StubGuard() =>
+        _env.IsDevelopment()
+            ? null
+            : StatusCode(503, "Checkout is not available in this environment. " +
+                              "A real payment gateway must be integrated before go-live.");
 
     [HttpGet]
     public async Task<IActionResult> Index()
     {
+        if (StubGuard() is { } guard) return guard;
+
         var email = User.FindFirstValue(ClaimTypes.Email) ?? User.Identity?.Name;
         if (string.IsNullOrWhiteSpace(email))
             return RedirectToPage("/Account/Login", new { area = "Identity" });
@@ -94,6 +99,7 @@ public class CheckoutController : Controller
     [ValidateAntiForgeryToken]
     public IActionResult ProcessPayment(CheckoutVM vm)
     {
+        if (StubGuard() is { } guard) return guard;
         if (!ModelState.IsValid) return View("Index", vm);
 
         // STUB: Payment gateway integration is not yet implemented.
@@ -114,6 +120,8 @@ public class CheckoutController : Controller
 
     public IActionResult Complete()
     {
+        if (StubGuard() is { } guard) return guard;
+
         // STUB: Replace with the real order ID returned by the payment/order pipeline.
         ViewBag.OrderId = "ORDER-12345-MOCK";
         return View();

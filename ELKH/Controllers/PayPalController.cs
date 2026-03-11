@@ -1,10 +1,12 @@
 using ELKH.Configuration;
 using ELKH.Services;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Options;
 
 namespace ELKH.Controllers;
 
+[Authorize]
 [ApiController]
 [Route("paypal")]
 public class PayPalController : ControllerBase

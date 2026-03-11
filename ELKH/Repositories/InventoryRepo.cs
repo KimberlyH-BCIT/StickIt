@@ -1,10 +1,7 @@
 ﻿using ELKH.Data;
 using ELKH.Models;
 using ELKH.ViewModels;
-using Microsoft.AspNetCore.Http.HttpResults;
-using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
-using static System.Net.Mime.MediaTypeNames;
 
 namespace ELKH.Repositories
 {
@@ -37,31 +34,31 @@ namespace ELKH.Repositories
 
         /// <summary>
         /// Updates the stock quantity for a single product and returns the updated view model.
-        /// Throws <see cref="NullReferenceException"/> if no product with <paramref name="productId"/> exists.
         /// </summary>
+        /// <exception cref="KeyNotFoundException">Thrown when no product with <paramref name="productId"/> exists.</exception>
         public async Task<ProductVM> EditProductQuantity(int productId, int quantityAmount)
         {
-            var products = await _context.Products.Where(p => p.PkProductId == productId)
-                                                  .FirstOrDefaultAsync();
-            products.StockQuantity = quantityAmount;
+            var product = await _context.Products
+                                        .Where(p => p.PkProductId == productId)
+                                        .FirstOrDefaultAsync()
+                         ?? throw new KeyNotFoundException($"Product {productId} not found.");
 
+            product.StockQuantity = quantityAmount;
             await _context.SaveChangesAsync();
 
-            var vm = new ProductVM
+            return new ProductVM
             {
-                ProductId = products.PkProductId,
-                ProductName = products.Name,
-                Description = products.Description,
-                Price = products.Price,
-                StockQuantity = products.StockQuantity,
-                IsActive = products.IsActive
+                ProductId     = product.PkProductId,
+                ProductName   = product.Name,
+                Description   = product.Description,
+                Price         = product.Price,
+                StockQuantity = product.StockQuantity,
+                IsActive      = product.IsActive
             };
-
-            return vm;
         }
         private const long MaxFileSizeBytes = 5 * 1024 * 1024; // 5 MB
 
-        private static readonly HashSet<string> _allowedExtensions =
+        private static readonly HashSet<string> s_allowedExtensions =
             new(StringComparer.OrdinalIgnoreCase) { ".jpg", ".jpeg", ".png", ".gif", ".webp", ".bmp" };
 
         private static bool HasValidImageSignature(byte[] bytes)
@@ -97,7 +94,7 @@ namespace ELKH.Repositories
             if (file.Length > MaxFileSizeBytes) return false;
 
             var ext = Path.GetExtension(file.FileName);
-            if (!_allowedExtensions.Contains(ext)) return false;
+            if (!s_allowedExtensions.Contains(ext)) return false;
 
             using var stream = new MemoryStream();
             await file.CopyToAsync(stream);

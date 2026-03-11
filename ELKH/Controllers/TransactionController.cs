@@ -1,8 +1,10 @@
 ﻿using ELKH.Repositories;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 namespace ELKH.Controllers
 {
+    [Authorize(Roles = "Admin,Manager")]
     public class TransactionController : Controller
     {
         private readonly TransactionRepo _repo;
