@@ -6,7 +6,10 @@ using ELKH.Services;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Localization;
 using Microsoft.EntityFrameworkCore;
-using System.Globalization;
+using System.Globalization; 
+using ELKH.Models.Options;
+
+
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -37,11 +40,14 @@ builder.Services.AddScoped<ICartRepo, CartRepo>();
 builder.Services.Configure<PayPalOptions>(builder.Configuration.GetSection("PayPal"));
 builder.Services.AddHttpClient<PayPalService>();
 
+builder.Services.Configure<ReCaptchaOptions>(builder.Configuration.GetSection("ReCaptcha"));
+builder.Services.AddHttpClient<IReCaptchaService, ReCaptchaService>();
+
 // Team extension registrations
 builder.Services.AddApplicationOptions(builder.Configuration);
 builder.Services.AddBackgroundServices();
 builder.Services.AddApplicationServices();
-builder.Services.AddEmailServices();
+builder.Services.AddEmailServices();    
 builder.Services.AddRepositories();
 
 builder.Services.AddAutoMapper(typeof(ELKH.Mapping.AutoMapperProfile));
