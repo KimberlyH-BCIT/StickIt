@@ -1,10 +1,13 @@
 using ELKH.Data;
 using ELKH.Extensions;
+using ELKH.Models;
+using ELKH.Repositories;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 
 var builder = WebApplication.CreateBuilder(args);
 
+builder.Services.AddScoped<IRole_repo, Role_repo>();
 builder.Services.AddScoped<OrderHistoryManagementRepo>();
 builder.Services.AddScoped<InventoryRepo>();
 
@@ -14,6 +17,9 @@ builder.Services.AddScoped<InventoryRepo>();
 var connectionString = builder.Configuration.GetConnectionString("DefaultConnection")
     ?? throw new InvalidOperationException("Connection string 'DefaultConnection' not found.");
 builder.Services.AddDbContext<ApplicationDbContext>(options => options.UseSqlite(connectionString));
+
+builder.Services.AddDbContext<ImageStoreContext>(options =>
+    options.UseSqlite(builder.Configuration.GetConnectionString("ImageStoreConnection")));
 builder.Services.AddDatabaseDeveloperPageExceptionFilter();
 
 // ASP.NET Core Identity with email confirmation requirement.
@@ -68,15 +74,8 @@ builder.Services.AddScoped<RegisteredUserProfileRepo>();
 builder.Services.AddScoped<ContactDetailRepo>();
 builder.Services.AddScoped<ICartRepo, CartRepo>();
 builder.Services.AddScoped<TransactionRepo>();
-
-// -- Caching
-// Two-layer caching strategy for optimal performance:
-// 1. Memory Cache - Fast in-memory storage for frequently accessed data
-// 2. Output Cache - HTTP response caching with tag invalidation support
-builder.Services.AddMemoryCache();
-builder.Services.AddOutputCachingPolicies(); // Extension method - see ServiceCollectionExtensions.cs
-
 // -- Application Services (using extension methods for cleaner organization)
+// All service registrations are grouped by functionality in extension methods.
 // See Extensions/ServiceCollectionExtensions.cs for implementation details.
 builder.Services.AddBackgroundServices();  // FuzzyReindexService, FuzzyHelperService
 builder.Services.AddApplicationServices(); // UserService, SearchService, RatingService, ModerationService, ProductService, CartService
@@ -107,111 +106,6 @@ if (!app.Environment.IsDevelopment())
 }
 
 // =====================================================================
-// Automatic database migrations
-// ---------------------------------------------------------------------
-// PRODUCTION WARNING: Running migrations on startup is unsafe in multi-instance
-// deployments. Concurrent instances racing to migrate the same database can cause
-// partial schema changes, data corruption, or startup failures.
-//
-// Default behaviour (no config key set):
-//   - Development  → migrations ARE applied automatically (good DX)
-//   - Production   → migrations are SKIPPED (apply via deployment pipeline)
-//
-// To override, set BOTH keys in your environment:
-//   Database:ApplyMigrationsOnStartup = true
-//   Database:AllowMigrationInProduction = true
-//
-// The second key acts as an explicit acknowledgement of the production risk.
-// =====================================================================
-try
-{
-    using var scope = app.Services.CreateScope();
-    var config = scope.ServiceProvider.GetRequiredService<Microsoft.Extensions.Configuration.IConfiguration>();
-    var env = scope.ServiceProvider.GetRequiredService<Microsoft.Extensions.Hosting.IHostEnvironment>();
-    var logger = scope.ServiceProvider.GetRequiredService<Microsoft.Extensions.Logging.ILoggerFactory>().CreateLogger("DatabaseMigration");
-
-    var explicitlyEnabled = config.GetValue<bool?>("Database:ApplyMigrationsOnStartup");
-    var productionOverride = config.GetValue<bool>("Database:AllowMigrationInProduction");
-
-    // Determine whether to apply migrations:
-    // - Development: apply by default unless explicitly disabled
-    // - Production:  only apply if BOTH opt-in keys are set to true
-    bool apply;
-    if (env.IsDevelopment())
-    {
-        apply = explicitlyEnabled ?? true;
-    }
-    else
-    {
-        apply = explicitlyEnabled == true && productionOverride;
-        if (apply)
-        {
-            logger.LogWarning(
-                "Applying EF Core migrations on startup in a non-Development environment. " +
-                "This is unsafe in multi-instance deployments and should be moved to the " +
-                "deployment pipeline. Set Database:AllowMigrationInProduction=false to disable.");
-        }
-    }
-
-    if (apply)
-    {
-        try
-        {
-            logger.LogInformation("Applying pending Entity Framework Core migrations...");
-            var db = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
-            db.Database.Migrate();
-
-            // Ensure UserActivityLog columns exist (idempotent — SQLite throws if column
-            // already exists, so the exception is swallowed and execution continues).
-            foreach (var sql in new[]
-            {
-                "ALTER TABLE UserLogs ADD COLUMN ActivityType TEXT NULL",
-                "ALTER TABLE UserLogs ADD COLUMN ActivityDetail TEXT NULL",
-                "ALTER TABLE UserProfiles ADD COLUMN AvatarData BLOB NULL",
-                "ALTER TABLE UserProfiles ADD COLUMN AvatarMimeType TEXT NULL"
-            })
-            {
-                try { db.Database.ExecuteSqlRaw(sql); }
-                catch { /* column already present — no action needed */ }
-            }
-
-            logger.LogInformation("Database migrations applied successfully.");
-
-            // Seed demo products (no-op if products already exist)
-            await DbSeeder.SeedProductsAsync(db);
-
-            // Seed 50 demo customer accounts (no-op if any @home.com users exist)
-            var userMgr = scope.ServiceProvider.GetRequiredService<UserManager<IdentityUser>>();
-            var webEnv  = scope.ServiceProvider.GetRequiredService<Microsoft.AspNetCore.Hosting.IWebHostEnvironment>();
-            await DbSeeder.SeedCustomersAsync(db, userMgr, webEnv.WebRootPath);
-
-            // Seed default admin role and test admin account (no-op if already exists).
-            // Credentials are read from config — set Seed:AdminEmail and Seed:AdminPass
-            // via user-secrets in development or environment variables in production.
-            var roleMgr = scope.ServiceProvider.GetRequiredService<RoleManager<IdentityRole>>();
-            await DbSeeder.SeedAdminAsync(userMgr, roleMgr, config);
-
-            logger.LogInformation("Database seeding complete.");
-        }
-        catch (Exception ex)
-        {
-            // Log but do not prevent the application from starting.
-            var logger2 = scope.ServiceProvider.GetRequiredService<Microsoft.Extensions.Logging.ILogger<Program>>();
-            logger2.LogError(ex, "An error occurred while applying database migrations on startup.");
-        }
-    }
-}
-catch (Exception ex)
-{
-    // Use a local LoggerFactory instead of building a second DI container, which
-    // would produce a "service provider already built" warning and bypass singleton
-    // lifetime management.
-    using var fallbackFactory = LoggerFactory.Create(b => b.AddConsole());
-    var logger = fallbackFactory.CreateLogger("DatabaseMigrationStart");
-    logger.LogWarning(ex, "Failed to initialize automatic migration application logic.");
-}
-
-// =====================================================================
 // HTTP request pipeline
 // ---------------------------------------------------------------------
 // Middleware order is critical in ASP.NET Core. This pipeline is carefully
@@ -220,7 +114,6 @@ catch (Exception ex)
 // Order: Exception Handling → HTTPS → Compression → Caching → Routing 
 //        → Authentication → Authorization → Endpoints
 // =====================================================================
-
 // -- Environment-specific error handling
 if (app.Environment.IsDevelopment())
 {
@@ -235,6 +128,10 @@ else
     app.UseHsts();
 }
 
+app.UseHttpsRedirection();   
+app.UseStaticFiles();        
+app.UseRouting();            
+app.UseAuthentication();
 app.UseHttpsRedirection();
 
 // Security headers — applied after routing so they are present on all responses
@@ -247,30 +144,10 @@ app.Use(async (context, next) =>
     await next();
 });
 
-app.UseResponseCompression();
-app.UseOutputCache();
-
-app.UseAuthentication();
-app.UseAuthorization();
-
-// Extension method configures the standard middleware stack in correct order:
-// Response Compression, Response/Output Caching, Routing, Authentication, Authorization.
-// See Extensions/ApplicationBuilderExtensions.cs for implementation.
 app.UseApplicationMiddleware();
 
 // =====================================================================
 // Routing and endpoints
-// ---------------------------------------------------------------------
-// Map all application endpoints (controllers, Razor pages, health checks).
-// Extension method ensures consistent endpoint configuration.
-// 
-// Endpoints configured:
-// - Static assets (CSS, JS, images with caching headers)
-// - Controller routes (default pattern: {controller=Home}/{action=Index}/{id?})
-// - Razor Pages (convention-based routing)
-// - Health checks (/health endpoint for monitoring)
-// 
-// See Extensions/ApplicationBuilderExtensions.cs for implementation
 // =====================================================================
 app.UseApplicationEndpoints();
 

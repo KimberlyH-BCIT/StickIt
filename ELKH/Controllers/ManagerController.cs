@@ -1,33 +1,12 @@
-﻿using ELKH.Data;
-using ELKH.Repositories;
+using ELKH.Data;
 using ELKH.ViewModels;
 using Microsoft.AspNetCore.Authorization;
-using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 
 namespace ELKH.Controllers
 {
-    /// <summary>
-    /// Manager console controller — routes accessible to both Admin and Manager roles.
-    /// </summary>
-    /// <remarks>
-    /// TABLE OF CONTENTS
-    /// ================================================================================
-    /// 1. Inventory / Product management
-    ///    - Index()                   // Dashboard landing page
-    ///    - ListOfProducts()          // Product catalogue list
-    ///    - AddNewProduct()           // New product form
-    ///    - ProductDetails(id)        // Single-product detail view
-    ///    - UpdateProductDetails(id)  // Edit product form
-    ///    - DeleteProduct(id)         // Delete confirmation
-    /// 2. Staff management
-    ///    - ListOfStaffAccount()      // Staff account listing
-    /// 3. Financials
-    ///    - ListAllTransactions()     // Transaction listing
-    /// ================================================================================
-    /// </remarks>
     [Authorize(Roles = "Admin,Manager")]
     public class ManagerController : Controller
     {
@@ -36,262 +15,180 @@ namespace ELKH.Controllers
 
         public ManagerController(ApplicationDbContext context, UserManager<IdentityUser> userManager)
         {
-            _context = context;
+            _context     = context;
             _userManager = userManager;
         }
 
         // ================= DASHBOARD =================
-        public IActionResult Index()
+        public async Task<IActionResult> Index()
         {
+            var now      = DateTime.UtcNow;
+            var weekAgo  = now.AddDays(-7);
+            var monthAgo = now.AddDays(-30);
+
+            ViewBag.TotalProducts    = await _context.Products.CountAsync();
+            ViewBag.ActiveProducts   = await _context.Products.CountAsync(p => p.IsActive);
+            ViewBag.InactiveProducts = await _context.Products.CountAsync(p => !p.IsActive);
+            ViewBag.StockUpCount     = await _context.Products.CountAsync(p => p.StockQuantity > 20);
+            ViewBag.StockDownCount   = await _context.Products.CountAsync(p => p.StockQuantity <= 20);
+            ViewBag.LowStockCount    = await _context.Products.CountAsync(p => p.StockQuantity <= 5);
+            ViewBag.WeeklyOrders     = await _context.Orders.CountAsync(o => o.CreatedAt >= weekAgo);
+            ViewBag.MonthlyOrders    = await _context.Orders.CountAsync(o => o.CreatedAt >= monthAgo);
+            ViewBag.TotalStaff       = (await _userManager.GetUsersInRoleAsync("Staff")).Count
+                                     + (await _userManager.GetUsersInRoleAsync("Manager")).Count;
+
             return View();
         }
 
-        // ================= PRODUCTS =================
-        public async Task<IActionResult> ListOfProducts(string search, int page = 1)
+        // ================= LIST PRODUCTS =================
+        public async Task<IActionResult> ListOfProducts(string search, string stockFilter, string activeFilter, int page = 1)
         {
             int pageSize = 8;
 
             var query = _context.Products
                 .Include(p => p.Category)
+                .Include(p => p.ProductImage)
                 .AsQueryable();
 
             if (!string.IsNullOrEmpty(search))
-            {
                 query = query.Where(p => p.Name.Contains(search) ||
                                          p.Category.CategoryName.Contains(search));
-            }
+
+            if (stockFilter == "low")
+                query = query.Where(p => p.StockQuantity <= 5);
+            else if (stockFilter == "medium")
+                query = query.Where(p => p.StockQuantity > 5 && p.StockQuantity <= 20);
+            else if (stockFilter == "stocked")
+                query = query.Where(p => p.StockQuantity > 20);
+
+            if (activeFilter == "active")
+                query = query.Where(p => p.IsActive);
+            else if (activeFilter == "inactive")
+                query = query.Where(p => !p.IsActive);
 
             int total = await query.CountAsync();
 
-            var products = await query
-                            .Skip((page - 1) * pageSize)
-                            .Take(pageSize)
-                            .Select(p => new ProductVM
-                            {
-                                ProductId = p.PkProductId,
-                                ProductName = p.Name,
-                                Description = p.Description,
-                                Price = p.Price,
-                                StockQuantity = p.StockQuantity ?? 0,
-                                IsActive = p.IsActive,
-                                CategoryId = p.FkCategoryId,
-                                CategoryName = p.Category.CategoryName
-                            })
-                            .ToListAsync();
+            var rawProducts = await query
+                .OrderBy(p => p.StockQuantity)
+                .Skip((page - 1) * pageSize)
+                .Take(pageSize)
+                .ToListAsync();
 
-            ViewBag.CurrentPage = page;
-            ViewBag.TotalPages = (int)Math.Ceiling((double)total / pageSize);
-            ViewBag.Search = search;
+            var products = rawProducts.Select(p => new ProductVM
+            {
+                ProductId     = p.PkProductId,
+                ProductName   = p.Name,
+                Description   = p.Description,
+                Price         = p.Price,
+                DiscountPercent = p.DiscountPercent,
+                StockQuantity = p.StockQuantity,
+                IsActive      = p.IsActive,
+                CategoryId    = p.FkCategoryId,
+                CategoryName  = p.Category?.CategoryName ?? "",
+                // Pull first image URL — empty string if none
+                Thumbnail     = p.ProductImage?.FirstOrDefault()?.ProductImageURL ?? ""
+            }).ToList();
+
+            ViewBag.CurrentPage  = page;
+            ViewBag.TotalPages   = (int)Math.Ceiling((double)total / pageSize);
+            ViewBag.Search       = search;
+            ViewBag.StockFilter  = stockFilter;
+            ViewBag.ActiveFilter = activeFilter;
 
             return View(products);
+        }
+
+        // ================= TOGGLE ACTIVE =================
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> ToggleActive(int id, string? stockFilter, string? activeFilter, string? search, int page = 1)
+        {
+            var p = await _context.Products.FindAsync(id);
+            if (p == null) return NotFound();
+
+            p.IsActive = !p.IsActive;
+            await _context.SaveChangesAsync();
+            TempData["Success"] = $"'{p.Name}' is now {(p.IsActive ? "Active" : "Inactive")}.";
+
+            return RedirectToAction("ListOfProducts", new { search, stockFilter, activeFilter, page });
         }
 
         // ================= PRODUCT DETAILS =================
         public async Task<IActionResult> ProductDetails(int id)
         {
             var p = await _context.Products
-                            .Include(p => p.Category)
-                            .FirstOrDefaultAsync(p => p.PkProductId == id);
-
-            if (p == null)
-            {
-                return NotFound();
-            }
-
-            return View(new ProductVM
-            {
-                ProductId = p.PkProductId,
-                ProductName = p.Name,
-                Description = p.Description,
-                Price = p.Price,
-                StockQuantity = p.StockQuantity ?? 0,
-                IsActive = p.IsActive,
-                CategoryId = p.FkCategoryId,
-                CategoryName = p.Category.CategoryName
-            });
-        }
-
-        // ================= ADD NEW PRODUCT
-        [HttpGet]
-        public IActionResult AddNewProduct()
-        {
-            return View(new ProductVM());
-        }
-
-        [HttpPost]
-        [ValidateAntiForgeryToken]
-        public async Task<IActionResult> AddNewProduct(ProductVM model)
-        {
-            var category = await _context.Categories
-                .FirstOrDefaultAsync(c => c.CategoryName == model.CategoryName);
-
-            if (category == null)
-            {
-                category = new ELKH.Models.CategoryModel { CategoryName = model.CategoryName };
-                _context.Categories.Add(category);
-                await _context.SaveChangesAsync();
-            }
-
-            ModelState.Remove("CategoryId");
-            model.CategoryId = category.PkCategoryId;
-
-            if (!ModelState.IsValid)
-            {
-                return View(model);
-            }
-
-            _context.Products.Add(new ELKH.Models.ProductModel
-            {
-                Name = model.ProductName,
-                Description = model.Description,
-                Price = model.Price,
-                StockQuantity = model.StockQuantity,
-                IsActive = model.IsActive,
-                FkCategoryId = category.PkCategoryId
-            });
-
-            await _context.SaveChangesAsync();
-            TempData["Success"] = "Product added successfully.";
-            return RedirectToAction("ListOfProducts");
-        }
-
-        // ================= UPDATE PRODUCT =================
-        [HttpGet]
-        public async Task<IActionResult> UpdateProductDetails(int id)
-        {
-            var p = await _context.Products
                 .Include(p => p.Category)
-                .FirstOrDefaultAsync(p => p.PkProductId == id);
-
-            if (p == null)
-            {
-                return NotFound();
-            }
-
-            return View(new ProductVM
-            {
-                ProductId = p.PkProductId,
-                ProductName = p.Name,
-                Description = p.Description,
-                Price = p.Price,
-                StockQuantity = p.StockQuantity ?? 0,
-                IsActive = p.IsActive,
-                CategoryId = p.FkCategoryId,
-                CategoryName = p.Category.CategoryName
-            });
-        }
-
-        [HttpPost]
-        [ValidateAntiForgeryToken]
-        public async Task<IActionResult> UpdateProductDetails(ProductVM model)
-        {
-            var p = await _context.Products.FindAsync(model.ProductId);
-            if (p == null)
-            {
-                return NotFound();
-            }
-
-            var category = await _context.Categories
-                .FirstOrDefaultAsync(c => c.CategoryName == model.CategoryName);
-
-            if (category == null)
-            {
-                category = new ELKH.Models.CategoryModel { CategoryName = model.CategoryName };
-                _context.Categories.Add(category);
-                await _context.SaveChangesAsync();
-            }
-
-            ModelState.Remove("CategoryId");
-            model.CategoryId = category.PkCategoryId;
-
-            if (!ModelState.IsValid)
-            {
-                return View(model);
-            }
-
-            p.Name = model.ProductName;
-            p.Description = model.Description;
-            p.Price = model.Price;
-            p.StockQuantity = model.StockQuantity;
-            p.IsActive = model.IsActive;
-            p.FkCategoryId = category.PkCategoryId;
-
-            await _context.SaveChangesAsync();
-            TempData["Success"] = "Product updated successfully.";
-            return RedirectToAction("ListOfProducts");
-        }
-
-        // ================= DELETE PRODUCT =================
-        [HttpGet]
-        public async Task<IActionResult> DeleteProduct(int id)
-        {
-            var p = await _context.Products
-                .Include(p => p.Category)
+                .Include(p => p.ProductImage)
+                .Include(p => p.ProductRatings)
                 .FirstOrDefaultAsync(p => p.PkProductId == id);
 
             if (p == null) return NotFound();
 
-            return View(new ProductVM
+            // Compute average rating
+            double avgRating = 0;
+            int ratingCount  = 0;
+            if (p.ProductRatings != null && p.ProductRatings.Any())
             {
-                ProductId = p.PkProductId,
-                ProductName = p.Name,
-                Description = p.Description,
-                Price = p.Price,
-                StockQuantity = p.StockQuantity ?? 0,
-                IsActive = p.IsActive,
-                CategoryId = p.FkCategoryId,
-                CategoryName = p.Category.CategoryName
-            });
-        }
-
-        [HttpPost, ActionName("DeleteProduct")]
-        [ValidateAntiForgeryToken]
-        public async Task<IActionResult> DeleteProductConfirmed(int id)
-        {
-            var p = await _context.Products.FindAsync(id);
-            if (p == null)
-            {
-                return NotFound();
+                var approved = p.ProductRatings.Where(r => r.Approved && !r.IsDeleted).ToList();
+                ratingCount  = approved.Count;
+                avgRating    = ratingCount > 0 ? approved.Average(r => r.Rating) : 0;
             }
 
-            _context.Products.Remove(p);
-            await _context.SaveChangesAsync();
-            TempData["Success"] = "Product deleted successfully.";
-            return RedirectToAction("ListOfProducts");
+            var vm = new ProductVM
+            {
+                ProductId       = p.PkProductId,
+                ProductName     = p.Name,
+                Description     = p.Description,
+                Price           = p.Price,
+                DiscountPercent = p.DiscountPercent,
+                StockQuantity   = p.StockQuantity,
+                IsActive        = p.IsActive,
+                CategoryId      = p.FkCategoryId,
+                CategoryName    = p.Category?.CategoryName ?? "",
+                Thumbnail       = p.ProductImage?.FirstOrDefault()?.ProductImageURL ?? "",
+                AverageRating   = avgRating
+            };
+
+            // Pass ratings to view via ViewBag
+            ViewBag.Ratings     = p.ProductRatings?
+                .Where(r => r.Approved && !r.IsDeleted)
+                .OrderByDescending(r => r.RatedTime)
+                .ToList() ?? new List<ELKH.Models.ProductRatingModel>();
+            ViewBag.RatingCount = ratingCount;
+
+            return View(vm);
         }
+
 
         // ================= TRANSACTIONS =================
         public async Task<IActionResult> ListAllTransactions(string search, int page = 1)
         {
             int pageSize = 10;
-
-            var query = _context.Transactions.AsQueryable();
+            var query    = _context.Transactions.AsQueryable();
 
             if (!string.IsNullOrEmpty(search))
-            {
                 query = query.Where(t => t.TransactionStatus.Contains(search));
-            }
 
             int total = await query.CountAsync();
 
             var transactions = await query
-                                .OrderByDescending(t => t.TransactionDate)
-                                .Skip((page - 1) * pageSize)
-                                .Take(pageSize)
-                                .Select(t => new TransactionVM
-                                {
-                                    PkTransactionId = t.PkTransactionId,
-                                    TransactionStatus = t.TransactionStatus,
-                                    Amount = t.Amount,
-                                    TransactionDate = t.TransactionDate,
-                                    DeliveryFee = t.DeliveryFee,
-                                    FkOrderId = t.FkOrderId
-                                })
-                                .ToListAsync();
+                .OrderByDescending(t => t.TransactionDate)
+                .Skip((page - 1) * pageSize)
+                .Take(pageSize)
+                .Select(t => new TransactionVM
+                {
+                    PkTransactionId   = t.PkTransactionId,
+                    TransactionStatus = t.TransactionStatus,
+                    Amount            = t.Amount,
+                    TransactionDate   = t.TransactionDate,
+                    DeliberyFee       = t.DeliveryFee,
+                    FkOrderId         = t.FkOrderId
+                })
+                .ToListAsync();
 
             ViewBag.CurrentPage = page;
-            ViewBag.TotalPages = (int)Math.Ceiling((double)total / pageSize);
-            ViewBag.Search = search;
+            ViewBag.TotalPages  = (int)Math.Ceiling((double)total / pageSize);
+            ViewBag.Search      = search;
 
             return View(transactions);
         }
@@ -300,21 +197,20 @@ namespace ELKH.Controllers
         public async Task<IActionResult> ListOfStaffAccount(string search)
         {
             var staffRoles = new[] { "Manager", "Staff", "Admin" };
-            var allUsers = _userManager.Users.ToList();
-            var staffList = new List<UserListVM>();
+            var allUsers   = _userManager.Users.ToList();
+            var staffList  = new List<UserListVM>();
 
             foreach (var user in allUsers)
             {
                 var roles = await _userManager.GetRolesAsync(user);
                 if (roles.Any(r => staffRoles.Contains(r)))
-                {
                     staffList.Add(new UserListVM
                     {
-                        Id = user.Id,
+                        Id    = user.Id,
                         Email = user.Email ?? "",
+                        Name  = user.UserName ?? "",
                         Roles = roles.ToList()
                     });
-                }
             }
 
             if (!string.IsNullOrEmpty(search))
@@ -328,6 +224,3 @@ namespace ELKH.Controllers
         }
     }
 }
-
-        
-    

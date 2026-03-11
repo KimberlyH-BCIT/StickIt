@@ -1,10 +1,10 @@
 ﻿using ELKH.Models;
 using System.ComponentModel.DataAnnotations;
 
-namespace ELKH.ViewModels
-{
+namespace ELKH.ViewModels;
     public class TransactionVM
     {
+        public string FirstName { get; set; } = string.Empty;
         public int PkTransactionId { get; set; }
         [Display(Name = "Transaction Status")]
         public string TransactionStatus { get; set; } = string.Empty;
@@ -19,5 +19,4 @@ namespace ELKH.ViewModels
         public int FkOrderId { get; set; }
         public OrderModel Order { get; set; } = new OrderModel();
     }
-    
-}
+   

@@ -173,7 +173,7 @@ body {
 
 
 /* =====================================================
-   FORM IMPROVEMENTS (Bootstrap Fixes)
+   FORM IMPROVEMENTS 
 ===================================================== */
 
 .btn:focus,
@@ -194,7 +194,6 @@ body {
 .form-floating > .form-control:focus::placeholder {
     text-align: start;
 }
-
 /* Inline dark footer like <footer style="background:#111;"> */
 footer[style*="background:#111"]{
     background: linear-gradient(180deg,
@@ -223,3 +222,29 @@ footer[style*="background:#111"] a:hover{ color: var(--mint) !important; }
 .hide{
     display:none;
 }
+/* =====================================================
+   user list role icons
+===================================================== */
+.role-badge {
+    padding: 6px 16px;
+    border-radius: 20px;
+    font-weight: 600;
+    font-size: 0.8rem;
+    border: 2px solid;
+    background: white;
+    display: inline-block;
+    min-width: 85px;
+    text-align: center;
+    text-decoration: none;
+}
+
+.active-role {
+    background: #f8f9fa;
+    box-shadow: 0 2px 6px rgba(0,0,0,0.08);
+}
+
+.role-admin    { border-color: #dc3545; color: #dc3545; }
+.role-manager  { border-color: #0d6efd; color: #0d6efd; }
+.role-staff    { border-color: #0dcaf0; color: #0dcaf0; }
+.role-customer { border-color: #6c757d; color: #6c757d; }
+.role-none     { border-color: #adb5bd; color: #adb5bd; }

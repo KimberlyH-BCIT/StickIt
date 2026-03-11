@@ -1,45 +1,87 @@
 ﻿@model ELKH.Models.ImageModel
+@* 
+@{
+    ViewData["Title"] = "Add Product Image";
+}
+<h1 class="display-4">Upload Product Image</h1>
+    <div id="dropZone" style="
+        border: 2px dashed #999;
+        padding: 40px;
+<form asp-controller="Inventory" asp-action="AddImage" method="post"
+      enctype="multipart/form-data">
+        border-radius: 10px>
+    <span class="form-group">
+        <label for="file" class="btn btn-info btn-block">
+        Drag & drop image here or click to select
+
+        <input type="file" asp-for="ProductImage" id="fileInput" style="display:none;" />
+            name="file" style="display:none;" 
+            onchange="previewImage();">
+</form>
+
+             margin-top: 10px; display:none;">
+    </span>
+    <button type="submit" class="btn btn-primary">Upload</button>
+
+    dropZone.addEventListener("click", ()=>{
+        fileInput.click();
+    })
+
+    dropZone.addEventListener("dragover", (e) =>{
+        e.PreventDefault;
+        dropZone.style.background = "#f0f8ff";
+    });
+
+    dropZone.addEventListener("dragleave",()=>{
+        dropZone.style.background = "";
+    });
+
+    dropZone.addEventListener("drop",(e)=>{
+
+        e.preventDefault();
+        const files = e.dataTransfer.files;
+        fileInput.files = files;
+    });
+
+</script> *@
 
 @{  ViewData["Title"] = "Home Page"; }
 <h1 class="display-4">Upload Your Image</h1>
 <p class="lead">Please select an image file you wish to upload.</p>
 <hr class="my-4">
 
-<form asp-controller="Inventory" asp-action="AddImage" method="post"
-      enctype="multipart/form-data">
+<form asp-action="AddImage" method="post" enctype="multipart/form-data">
     <input type="hidden" name="productId" value="@ViewBag.productId" />
-    <span class="form-group">
-        <label for="file" class="btn btn-info btn-block">
+    <div class="form-group">
+        <label for="file" class="btn btn-info">
             Choose image
         </label>
         <input type="file" class="form-control-file" id="file" 
-            name="file" style="display:none;" 
-            onchange="previewImage();">
+            name="file" accept="image/*" style="display:none;" 
+            onchange="previewImage();" />
         <img id="preview" src="#" alt="Image Preview"
              style="max-width: 400px; max-height: 400px;
-             margin-top: 10px; display:none;">
-    </span>
-    <button type="submit" class="btn btn-primary">Upload</button>
+             margin-top: 10px; display:none;" />
+    </div>
+    <button type="submit" class="btn btn-primary">Upload Image</button>
 </form>
 
 
 <style>
-    body {
-        background-color: #f7f7f7;
+        var file =
+            document.querySelector('input[type=file]').files[0];
     }
 
     .container {
-        background-color: #ffffff;
+            var preview = document.getElementById('preview');
         padding: 2rem;
         border-radius: 0.5rem;
-        box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.15);
+        }
     }
 
     .btn-info {
         background-color: #17a2b8;
-        border-color: #17a2b8;
         color: white;
-        font-size: 16px;
     }
 
     .btn-info:hover {
@@ -68,20 +110,22 @@
 
 <script>
     function previewImage() {
-        var file =
-            document.querySelector('input[type=file]').files[0];
+        var fileInput = document.querySelector('input[type=file]');
+        var file = fileInput.files[0];
         var reader = new FileReader();
 
         reader.onloadend = function () {
-            var preview = document.getElementById('preview');
+            var preview = document.getElementById('preview');       
             preview.src = reader.result;
             preview.style.display = 'block';
-        }
+        };
 
         if (file) {
             reader.readAsDataURL(file);
         } else {
+            var preview = document.getElementById('preview');
             preview.src = "";
+            preview.style.display = 'none';
         }
     }
 </script>

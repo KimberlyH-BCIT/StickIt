@@ -1,4 +1,4 @@
-﻿@model ELKH.ViewModels.AssignRoleVM
+@model ELKH.ViewModels.AssignRoleVM
 
 @{
     ViewData["Title"] = "Assign Role";
@@ -13,28 +13,47 @@
                 Assign Role to User
             </h2>
 
+            @if (TempData["Error"] != null)
+            {
+                <div class="alert alert-danger text-center">@TempData["Error"]</div>
+            }
+
             <form asp-action="AssignRoles" method="post">
 
-                <div asp-validation-summary="All"
-                     class="text-danger mb-3 text-center"></div>
+                @* Hidden fields — must all be present so POST controller can redirect correctly *@
+                <input type="hidden" asp-for="UserId" />
+                <input type="hidden" asp-for="ReturnTo" />
+                <input type="hidden" asp-for="RoleId" />
+                <input type="hidden" asp-for="IsRoleLocked" />
 
+                <div asp-validation-summary="All" class="text-danger mb-3 text-center"></div>
+
+                @* Email: read-only when we already know the user, editable otherwise *@
                 <div class="mb-4">
                     <label asp-for="Email" class="form-label fw-semibold"></label>
-                    <input asp-for="Email"
-                           class="form-control form-control-lg"
-                           placeholder="Enter user email" />
+                    @if (Model.UserId != null)
+                    {
+                        <input asp-for="Email"
+                               class="form-control form-control-lg bg-light"
+                               readonly />
+                    }
+                    else
+                    {
+                        <input asp-for="Email"
+                               class="form-control form-control-lg"
+                               placeholder="Enter user email" />
+                    }
                 </div>
 
+                @* Role: locked (read-only) from RoleUsers, selectable dropdown otherwise *@
                 <div class="mb-4">
-
                     @if (Model.IsRoleLocked)
                     {
                         <label class="form-label fw-semibold">Role</label>
                         <input type="text"
-                               class="form-control form-control-lg"
+                               class="form-control form-control-lg bg-light"
                                value="@Model.RoleName"
                                readonly />
-
                         <input type="hidden" asp-for="RoleName" />
                     }
                     else
@@ -42,21 +61,40 @@
                         <label asp-for="RoleName" class="form-label fw-semibold"></label>
                         <select asp-for="RoleName"
                                 asp-items="@(new SelectList(Model.Roles, "RoleName", "RoleName"))"
-                                class="form-control form-control-lg">
+                                class="form-select form-select-lg">
                             <option value="">-- Select Role --</option>
                         </select>
                     }
-
                 </div>
 
                 <div class="d-flex justify-content-between mt-4">
-                    <a asp-action="ListRoles"
-                       class="btn btn-outline-secondary px-4">
-                        Cancel
-                    </a>
 
-                    <button type="submit"
-                            class="btn btn-primary px-5">
+                    @* Cancel navigates back to wherever the user came from *@
+                    @if (Model.ReturnTo == "UserDetails")
+                    {
+                        <a asp-controller="Admin" asp-action="AccountDetails"
+                           asp-route-id="@Model.UserId"
+                           class="btn btn-outline-secondary px-4">
+                            Cancel
+                        </a>
+                    }
+                    else if (Model.ReturnTo == "RoleDetails")
+                    {
+                        <a asp-controller="AdminRole" asp-action="ListRoles"
+                           asp-route-roleId="@Model.RoleId"
+                           class="btn btn-outline-secondary px-4">
+                            Cancel
+                        </a>
+                    }
+                    else
+                    {
+                        <a asp-controller="AdminRole" asp-action="ListRoles"
+                           class="btn btn-outline-secondary px-4">
+                            Cancel
+                        </a>
+                    }
+
+                    <button type="submit" class="btn btn-primary px-5">
                         Assign Role
                     </button>
                 </div>

@@ -1,223 +1,309 @@
 @model ELKH.ViewModels.SalesVM
+
 @{
     ViewData["Title"] = "Admin Dashboard";
     Layout = "~/Views/Shared/_Layout.cshtml";
+    var topProducts = ViewBag.TopProducts as List<ELKH.ViewModels.TopProductVM>
+                      ?? new List<ELKH.ViewModels.TopProductVM>();
 }
 
-<h2 class="mb-4">Admin Dashboard</h2>
+<div class="container-fluid px-4 mt-4 pb-5">
 
-<div class="row g-3 mb-4">
-    <div class="col-sm-6 col-xl-3">
-        <div class="card border-0 shadow-sm h-100">
-            <div class="card-body d-flex align-items-center gap-3">
-                <div class="fs-1 text-primary">📦</div>
-                <div>
-                    <div class="text-muted small">Weekly Orders</div>
-                    <div class="fs-3 fw-bold">@Model.WeeklyTotalOrders</div>
-                </div>
-            </div>
+    <!-- ── Header ────────────────────────────────────────────── -->
+    <div class="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-2">
+        <div>
+            <h2 class="fw-bold mb-0">Admin Dashboard</h2>
+            <p class="text-muted mb-0 small">Full system access · @DateTime.Now.ToString("dddd, MMMM d yyyy")</p>
+        </div>
+        <!-- View-as shortcuts -->
+        <div class="d-flex gap-2 flex-wrap">
+            <a asp-controller="Manager" asp-action="Index"
+               class="btn btn-sm btn-outline-secondary rounded-pill px-3">
+                👔 View as Manager
+            </a>
+            <a asp-controller="Staff" asp-action="Index"
+               class="btn btn-sm btn-outline-secondary rounded-pill px-3">
+                🧑‍💼 View as Staff
+            </a>
+            <a asp-controller="Home" asp-action="Index"
+               class="btn btn-sm btn-outline-secondary rounded-pill px-3">
+                🛒 View as Customer
+            </a>
         </div>
     </div>
-    <div class="col-sm-6 col-xl-3">
-        <div class="card border-0 shadow-sm h-100">
-            <div class="card-body d-flex align-items-center gap-3">
-                <div class="fs-1 text-success">📈</div>
-                <div>
-                    <div class="text-muted small">Monthly Orders</div>
-                    <div class="fs-3 fw-bold">@Model.MonthlyTotalOrders</div>
+
+    <!-- ── 3 Main Action Cards ────────────────────────────────── -->
+    <div class="row g-4 mb-5">
+
+        <!-- Manage Roles -->
+        <div class="col-md-4">
+            <a asp-controller="AdminRole" asp-action="ListRoles" class="text-decoration-none">
+                <div class="card border-0 shadow-sm rounded-4 h-100 admin-card">
+                    <div class="card-body p-4 d-flex align-items-center gap-4">
+                        <div class="admin-icon-wrap bg-primary bg-opacity-10 rounded-4 p-3">
+                            <span style="font-size:2.4rem;">🔐</span>
+                        </div>
+                        <div>
+                            <h5 class="fw-bold mb-1 text-dark">Manage Roles</h5>
+                            <p class="text-muted small mb-2">Assign and remove user roles</p>
+                            <span class="badge bg-primary bg-opacity-10 text-primary px-3 py-1 rounded-pill small">
+                                Roles & Permissions
+                            </span>
+                        </div>
+                    </div>
+                    <div class="card-footer bg-primary text-white text-center py-2 rounded-bottom-4 fw-semibold small">
+                        Go to Role Management →
+                    </div>
                 </div>
-            </div>
+            </a>
         </div>
-    </div>
-    <div class="col-sm-6 col-xl-3">
-        <div class="card border-0 shadow-sm h-100">
-            <div class="card-body d-flex align-items-center gap-3">
-                <div class="fs-1 text-success">🟢</div>
-                <div>
-                    <div class="text-muted small">Well Stocked</div>
-                    <div class="fs-3 fw-bold">@Model.StockUpCount</div>
-                    <div class="text-muted" style="font-size:.75rem">products &gt; 100 units</div>
+
+        <!-- Manage Accounts -->
+        <div class="col-md-4">
+            <a asp-controller="Admin" asp-action="ListUsers" class="text-decoration-none">
+                <div class="card border-0 shadow-sm rounded-4 h-100 admin-card">
+                    <div class="card-body p-4 d-flex align-items-center gap-4">
+                        <div class="admin-icon-wrap bg-success bg-opacity-10 rounded-4 p-3">
+                            <span style="font-size:2.4rem;">👤</span>
+                        </div>
+                        <div>
+                            <h5 class="fw-bold mb-1 text-dark">Manage Accounts</h5>
+                            <p class="text-muted small mb-2">View, edit, and manage all users</p>
+                            <span class="badge bg-success bg-opacity-10 text-success px-3 py-1 rounded-pill small">
+                                User Management
+                            </span>
+                        </div>
+                    </div>
+                    <div class="card-footer bg-success text-white text-center py-2 rounded-bottom-4 fw-semibold small">
+                        Go to User Accounts →
+                    </div>
                 </div>
-            </div>
+            </a>
         </div>
-    </div>
-    <div class="col-sm-6 col-xl-3">
-        <div class="card border-0 shadow-sm h-100">
-            <div class="card-body d-flex align-items-center gap-3">
-                <div class="fs-1 text-warning">🔴</div>
-                <div>
-                    <div class="text-muted small">Low Stock</div>
-                    <div class="fs-3 fw-bold">@Model.StockDownCount</div>
-                    <div class="text-muted" style="font-size:.75rem">products ≤ 100 units</div>
+
+        <!-- Manage Sales -->
+        <div class="col-md-4">
+            <a asp-controller="Admin" asp-action="ManageSales" class="text-decoration-none">
+                <div class="card border-0 shadow-sm rounded-4 h-100 admin-card">
+                    <div class="card-body p-4 d-flex align-items-center gap-4">
+                        <div class="admin-icon-wrap bg-warning bg-opacity-10 rounded-4 p-3">
+                            <span style="font-size:2.4rem;">📊</span>
+                        </div>
+                        <div>
+                            <h5 class="fw-bold mb-1 text-dark">Manage Sales</h5>
+                            <p class="text-muted small mb-2">Daily, weekly, monthly & yearly stats</p>
+                            <span class="badge bg-warning bg-opacity-25 text-warning px-3 py-1 rounded-pill small">
+                                Sales Analytics
+                            </span>
+                        </div>
+                    </div>
+                    <div class="card-footer bg-warning text-dark text-center py-2 rounded-bottom-4 fw-semibold small">
+                        Go to Sales Dashboard →
+                    </div>
                 </div>
-            </div>
+            </a>
         </div>
-    </div>
-</div>
 
-<div class="row g-4 mb-4">
-    <div class="col-md-4">
-        <a asp-controller="AdminRole" asp-action="ListRoles" class="btn btn-primary w-100 p-4 shadow">
-            Manage Roles
-        </a>
     </div>
-    <div class="col-md-4">
-        <a asp-controller="Admin" asp-action="ListUsers" class="btn btn-primary w-100 p-4">
-            Manage User Accounts
-        </a>
-    </div>
-    <div class="col-md-4">
-        <a asp-controller="Admin" asp-action="ManageSales" class="btn btn-primary w-100 p-4">
-            Manage Sales
-        </a>
-    </div>
-</div>
 
-<hr />
+    <!-- ── Top 5 Products ─────────────────────────────────────── -->
+    <div class="card border-0 shadow-sm rounded-4 mb-4">
+        <div class="card-body p-4">
+            <h5 class="fw-bold mb-4">🏆 Top 5 Products by Units Sold</h5>
 
-<h4>Search Index &amp; Cache Tools</h4>
-
-<div class="mb-3">
-    <h4>Search Index</h4>
-    <p>Use the button below to clear fuzzy autocomplete cache.</p>
-    <div class="input-group mb-2">
-        <input id="clear-reason" class="form-control" placeholder="Reason for clearing (optional)" />
-        <button id="clear-fuzzy-cache" class="btn btn-danger">Clear Fuzzy Cache</button>
-    </div>
-    <div class="input-group mb-2">
-        <input id="reindex-reason" class="form-control" placeholder="Reason for reindexing (required)" />
-        <button id="reindex-fts" class="btn btn-secondary">Reindex FTS</button>
-    </div>
-    <div id="clear-result" class="mt-2"></div>
-    <p class="mt-2">View <a asp-area="Admin" asp-controller="Audit" asp-action="Index">audit log</a> for recent actions.</p>
-</div>
-
-<div class="mb-3">
-    <h4>Cache Stats</h4>
-    <div class="d-flex align-items-center">
-        <div id="cache-stats">Loading...</div>
-        <button id="refresh-stats" class="btn btn-sm btn-outline-primary ms-3">Refresh</button>
-    </div>
-    <div class="mt-2">
-        <strong>Reindex status:</strong> <span id="reindex-status">Loading...</span>
-    </div>
-</div>
-<div class="mb-3">
-    <h4>Reindex Metrics</h4>
-    <div id="reindex-metrics">Loading metrics...</div>
-</div>
-
-<script>
-    // ─── Admin dashboard scripts ─────────────────────────────────────────────────
-    // Three independent async handlers wired to the admin tool buttons:
-    //   1. #clear-fuzzy-cache  – POST to /Admin/ClearFuzzyCache with audit reason
-    //   2. loadStats()         – GET /Admin/CacheStats + GET /Admin/ReindexHealth
-    //   3. #reindex-fts        – POST to /Admin/ReindexFTS with audit reason
-
-    // Read the per-request antiforgery token written by _Layout.cshtml.
-    // Every state-changing POST attaches this as X-CSRF-TOKEN so ASP.NET Core's
-    // [ValidateAntiForgeryToken] attribute can verify the request origin.
-    const csrfToken = document.querySelector('meta[name="csrf-token"]')?.content ?? '';
-
-    // ─── 1. Clear fuzzy-search cache ─────────────────────────────────────────────
-    // Requires a non-empty reason field so the action is always audit-logged.
-    document.getElementById('clear-fuzzy-cache')?.addEventListener('click', async function(){
-        const reasonInput = document.getElementById('clear-reason');
-        if (!reasonInput || !reasonInput.value.trim()) { alert('Please provide a reason for clearing the cache.'); return; }
-        if (!confirm('Clear fuzzy autocomplete cache?')) return;
-        const btn = this;
-        btn.disabled = true;
-        btn.textContent = 'Clearing...';
-        try {
-            const reason = document.getElementById('clear-reason').value;
-            const res = await fetch('@Url.Action("ClearFuzzyCache","Admin")', { method: 'POST', headers: { 'X-Requested-With':'XMLHttpRequest', 'Content-Type':'application/json', 'X-CSRF-TOKEN': csrfToken }, body: JSON.stringify({ reason }) });
-            const json = await res.json();
-            if (json.success) {
-                document.getElementById('clear-result').innerHTML = '<div class="alert alert-success">Cache cleared</div>';
-            } else {
-                document.getElementById('clear-result').innerHTML = '<div class="alert alert-warning">Failed to clear cache</div>';
+            @if (topProducts.Any())
+            {
+                <div class="table-responsive">
+                    <table class="table table-hover align-middle mb-0 text-center">
+                        <thead class="table-light">
+                            <tr>
+                                <th style="width:60px;">Rank</th>
+                                <th class="text-start">Product</th>
+                                <th>Units Sold</th>
+                                <th>Revenue</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @{ int rank = 1; }
+                            @foreach (var p in topProducts)
+                            {
+                                <tr>
+                                    <td>
+                                        @if (rank == 1)     { <span class="badge bg-warning text-dark fs-6">🥇</span> }
+                                        else if (rank == 2) { <span class="badge bg-secondary fs-6">🥈</span> }
+                                        else if (rank == 3) { <span class="badge bg-danger bg-opacity-75 fs-6">🥉</span> }
+                                        else                { <span class="fw-semibold text-muted">@rank</span> }
+                                    </td>
+                                    <td class="text-start fw-semibold">@p.ProductName</td>
+                                    <td>
+                                        <span class="badge bg-primary bg-opacity-10 text-primary px-3 py-2">
+                                            @p.UnitsSold units
+                                        </span>
+                                    </td>
+                                    <td class="text-success fw-bold">$@p.Revenue.ToString("N2")</td>
+                                </tr>
+                                rank++;
+                            }
+                        </tbody>
+                    </table>
+                </div>
             }
-        } catch (e) {
-            document.getElementById('clear-result').innerHTML = '<div class="alert alert-danger">Network error</div>';
-        } finally { btn.disabled = false; btn.textContent = 'Clear Fuzzy Cache'; }
-    });
-
-    // ─── 2. Cache & reindex stats ────────────────────────────────────────────────
-    // loadStats() performs two sequential fetches and updates three separate DOM regions:
-    //   - #cache-stats      ← populated from /Admin/CacheStats
-    //   - #reindex-status   ← populated from /Admin/ReindexHealth (lastRun, lastDuration)
-    //   - #reindex-metrics  ← populated from /Admin/ReindexHealth (suggestionCount, runCount)
-    // Errors in the secondary ReindexHealth call are silently ignored so a background
-    // service restart never breaks the primary cache stats display.
-    async function loadStats(){
-        const container = document.getElementById('cache-stats');
-        const refreshBtn = document.getElementById('refresh-stats');
-        if (refreshBtn) refreshBtn.disabled = true;
-        // show spinner
-        if (container) container.innerHTML = '<div class="spinner-border spinner-border-sm text-primary" role="status"><span class="visually-hidden">Loading...</span></div> Loading...';
-        try{
-            const res = await fetch('@Url.Action("CacheStats","Admin")');
-            if (!res.ok) {
-                if (container) container.innerHTML = '<span class="text-danger">Failed to load stats</span>';
-                return;
+            else
+            {
+                <div class="text-center text-muted py-5">
+                    <span style="font-size:3rem;">📦</span>
+                    <p class="mt-2">No sales data yet. Products appear here once orders are placed.</p>
+                </div>
             }
-            const j = await res.json();
-            if (j.success) {
-                const last = j.lastClear ? new Date(j.lastClear).toLocaleString() : 'never';
-                container.innerHTML = `<p>Persisted fuzzy keys: <strong>${j.keys}</strong></p><p>Last clear: <strong>${last}</strong></p>`;
-            } else {
-                container.innerHTML = '<span class="text-danger">Failed to load stats</span>';
-            }
-            // also fetch reindex health from a lightweight endpoint
-            try {
-                const r = await fetch('@Url.Action("ReindexHealth","Admin")');
-                if (r.ok) {
-                    const rr = await r.json();
-                    const statusEl = document.getElementById('reindex-status');
-                    if (rr && rr.success) {
-                        statusEl.textContent = `Last run: ${rr.lastRun || 'never'}${rr.lastDuration ? ' (duration: ' + rr.lastDuration + ')' : ''}`;
-                    }
+        </div>
+    </div>
 
-                    // metrics
-                    const met = document.getElementById('reindex-metrics');
-                    if (met) met.innerHTML = `<p>Suggestion rows: <strong>${rr.suggestionCount}</strong></p><p>Run count: <strong>${rr.runCount}</strong></p>`;
-                }
-            } catch { }
-        } catch (err) {
-            if (container) container.innerHTML = '<span class="text-danger">Network error</span>';
-        } finally {
-            if (refreshBtn) refreshBtn.disabled = false;
-        }
+    <!-- ── Search Index & Cache Tools ───────────────────────────── -->
+    <div class="card border-0 shadow-sm rounded-4">
+        <div class="card-body p-4">
+            <h5 class="fw-bold mb-1">🔍 Search Index & Cache Tools</h5>
+            <p class="text-muted small mb-4">Manage the fuzzy search index and clear stale cache entries.</p>
+
+            <div class="row g-4">
+
+                <!-- Search Index -->
+                <div class="col-md-6">
+                    <div class="p-3 bg-light rounded-3">
+                        <h6 class="fw-semibold mb-3">Search Index</h6>
+                        <p class="text-muted small">Use the button below to clear fuzzy autocomplete cache.</p>
+                        <div class="mb-3">
+                            <input id="clearReason" type="text" class="form-control mb-2"
+                                   placeholder="Reason for clearing (optional)" />
+                            <button onclick="clearCache()" class="btn btn-danger btn-sm rounded-pill px-4">
+                                Clear Fuzzy Cache
+                            </button>
+                        </div>
+                        <div class="mb-3">
+                            <input id="reindexReason" type="text" class="form-control mb-2"
+                                   placeholder="Reason for reindexing (required)" />
+                            <button onclick="reindexFTS()" class="btn btn-primary btn-sm rounded-pill px-4">
+                                Reindex FTS
+                            </button>
+                        </div>
+                        <p class="small text-muted mb-0">
+                            View <a asp-controller="Admin" asp-action="AuditIndex">audit log</a> for recent actions.
+                        </p>
+                    </div>
+                </div>
+
+                <!-- Cache Stats -->
+                <div class="col-md-6">
+                    <div class="p-3 bg-light rounded-3 h-100">
+                        <h6 class="fw-semibold mb-3">Cache Stats</h6>
+                        <p class="small mb-1">
+                            Persisted fuzzy keys: <strong id="cacheKeyCount">—</strong>
+                        </p>
+                        <p class="small mb-3">
+                            Last clear: <strong id="lastClear">—</strong>
+                        </p>
+                        <button onclick="refreshStats()" class="btn btn-outline-secondary btn-sm rounded-pill px-4 mb-3">
+                            Refresh
+                        </button>
+                        <p class="small mb-1">
+                            Reindex status: <span id="reindexStatus">Loading…</span>
+                        </p>
+                        <div id="reindexMetrics" class="small text-muted d-none">
+                            <p class="mb-0">Suggestion rows: <strong id="suggestionCount">—</strong></p>
+                            <p class="mb-0">Run count: <strong id="runCount">—</strong></p>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+
+            <!-- Result toast -->
+            <div id="cacheResult" class="alert mt-3 d-none" role="alert"></div>
+        </div>
+    </div>
+
+</div>
+
+<style>
+    .admin-card {
+        transition: transform .18s ease, box-shadow .18s ease;
+        cursor: pointer;
     }
-    loadStats();
-    document.getElementById('refresh-stats')?.addEventListener('click', function(){ loadStats(); });
-    // expose last-run stat by hitting cache-stats which includes lastClear; also add a small health display
-    const healthEl = document.createElement('div');
-    healthEl.id = 'reindex-health';
-    document.getElementById('cache-stats')?.insertAdjacentElement('afterend', healthEl);
+    .admin-card:hover {
+        transform: translateY(-4px);
+        box-shadow: 0 8px 24px rgba(0,0,0,.12) !important;
+    }
+    .admin-icon-wrap {
+        min-width: 64px;
+        min-height: 64px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+</style>
 
-    // ─── 3. Trigger FTS reindex ───────────────────────────────────────────────────
-    // Requires a non-empty reason field (validated by the server) so every manual
-    // reindex is traceable in the audit log. On success, stats are refreshed in-place.
-    document.getElementById('reindex-fts')?.addEventListener('click', async function(){
-        const reasonInput = document.getElementById('reindex-reason');
-        if (!reasonInput || !reasonInput.value.trim()) { alert('Please provide a reason for reindexing.'); return; }
-        if (!confirm('Trigger FTS reindex?')) return;
-        const btn = this;
-        btn.disabled = true;
-        btn.textContent = 'Reindexing...';
+@section Scripts {
+<script>
+    const token = document.querySelector('input[name="__RequestVerificationToken"]')?.value ?? '';
+
+    async function refreshStats() {
         try {
-            const res = await fetch('@Url.Action("ReindexFTS","Admin")', { method: 'POST', headers: { 'X-Requested-With':'XMLHttpRequest', 'Content-Type':'application/json', 'X-CSRF-TOKEN': csrfToken }, body: JSON.stringify({ reason: reasonInput.value }) });
-            const json = await res.json();
-            if (json.success) {
-                document.getElementById('clear-result').innerHTML = '<div class="alert alert-success">Reindex completed</div>';
-                // refresh stats
-                loadStats();
-            } else {
-                document.getElementById('clear-result').innerHTML = '<div class="alert alert-warning">Reindex failed</div>';
+            const r = await fetch('/Admin/CacheStats');
+            const d = await r.json();
+            if (d.success) {
+                document.getElementById('cacheKeyCount').textContent = d.keys ?? 0;
+                document.getElementById('lastClear').textContent = d.lastClear
+                    ? new Date(d.lastClear).toLocaleString() : 'never';
+                if (d.lastRun) {
+                    document.getElementById('reindexStatus').textContent =
+                        'Last run: ' + new Date(d.lastRun).toLocaleString() +
+                        (d.lastDuration ? ' (duration: ' + d.lastDuration + ')' : '');
+                }
             }
-        } catch (e) {
-            document.getElementById('clear-result').innerHTML = '<div class="alert alert-danger">Network error</div>';
-        } finally { btn.disabled = false; btn.textContent = 'Reindex FTS'; }
-    });
+            const h = await (await fetch('/Admin/ReindexHealth')).json();
+            if (h.success) {
+                document.getElementById('suggestionCount').textContent = h.suggestionCount ?? 0;
+                document.getElementById('runCount').textContent = h.runCount ?? 0;
+                document.getElementById('reindexMetrics').classList.remove('d-none');
+            }
+        } catch(e) { console.error(e); }
+    }
+
+    async function clearCache() {
+        const reason = document.getElementById('clearReason').value;
+        const r = await fetch('/Admin/ClearFuzzyCache', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', 'RequestVerificationToken': token },
+            body: JSON.stringify({ reason })
+        });
+        const d = await r.json();
+        showResult(d.success
+            ? `✅ Cleared ${d.cleared} cache entries.`
+            : `❌ ${d.message ?? 'Error clearing cache.'}`, d.success);
+        refreshStats();
+    }
+
+    async function reindexFTS() {
+        const reason = document.getElementById('reindexReason').value;
+        if (!reason.trim()) { showResult('❌ Reason is required for reindexing.', false); return; }
+        const r = await fetch('/Admin/ReindexFTS', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', 'RequestVerificationToken': token },
+            body: JSON.stringify({ reason })
+        });
+        const d = await r.json();
+        showResult(d.success ? '✅ Reindex complete.' : '❌ Reindex failed.', d.success);
+        refreshStats();
+    }
+
+    function showResult(msg, ok) {
+        const el = document.getElementById('cacheResult');
+        el.className = `alert mt-3 ${ok ? 'alert-success' : 'alert-danger'}`;
+        el.textContent = msg;
+        el.classList.remove('d-none');
+        setTimeout(() => el.classList.add('d-none'), 5000);
+    }
+
+    // Load stats on page load
+    refreshStats();
 </script>
+}

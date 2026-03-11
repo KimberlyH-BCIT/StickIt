@@ -16,12 +16,13 @@
     }
     <meta name="csrf-token" content="@csrfToken" />
     <link rel="icon" type="image/png" href="~/logo-stickit.png" />
-    <title>@ViewData["Title"] - ELKH</title>
+<title>@ViewData["Title"] - ELKH</title>
     <script type="importmap"></script>
     <link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.min.css" />
     <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
     <link rel="stylesheet" href="~/ELKH.styles.css" asp-append-version="true" />
 </head>
+
 <body>
 <header class="site-header bg-white box-shadow mb-3">
 
@@ -69,23 +70,22 @@
                     <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" fill="currentColor" viewBox="0 0 16 16" aria-hidden="true">
                         <path fill-rule="evenodd" d="M2.5 12a.5.5 0 0 1 .5-.5h10a.5.5 0 0 1 0 1H3a.5.5 0 0 1-.5-.5zm0-4a.5.5 0 0 1 .5-.5h10a.5.5 0 0 1 0 1H3a.5.5 0 0 1-.5-.5zm0-4a.5.5 0 0 1 .5-.5h10a.5.5 0 0 1 0 1H3a.5.5 0 0 1-.5-.5z"/>
                     </svg>
-                </button>
-                @if (User.IsInRole("Admin"))
-                {
-                    <ul class="navbar-nav flex-row flex-grow-1 justify-content-evenly mb-0">
-                        <li class="nav-item">
-                            <a class="nav-link text-dark fw-semibold" asp-controller="Admin" asp-action="Index">Home</a>
-                        </li>
-                        <li class="nav-item">
-                            <a class="nav-link text-dark" asp-controller="Home" asp-action="Index">View as Customer</a>
-                        </li>
-                        <li class="nav-item">
-                            <a class="nav-link text-dark" asp-controller="Manager" asp-action="Index">View as Manager</a>
-                        </li>
-                        <li class="nav-item">
-                            <a class="nav-link text-dark" asp-controller="Staff" asp-action="Index">View as Staff</a>
-                        </li>
-                    </ul>
+</button>
+@if (User.IsInRole("Admin"))
+{
+    <ul class="navbar-nav flex-row flex-grow-1 justify-content-evenly mb-0">
+        <li class="nav-item">
+            <a class="nav-link text-dark fw-semibold" asp-controller="Admin" asp-action="Index">Home</a>
+        </li>
+        <li class="nav-item">
+            <a class="nav-link text-dark" asp-controller="Home" asp-action="Index">View as Customer</a>
+        </li>
+        <li class="nav-item">
+            <a class="nav-link text-dark" asp-controller="Manager" asp-action="Index">View as Manager</a>
+        </li>
+        <li class="nav-item">
+            <a class="nav-link text-dark" asp-controller="Staff" asp-action="Index">View as Staff</a>
+        </li>
                 }
                 else
                 {
@@ -96,15 +96,15 @@
                         <li class="nav-item">
                             <a class="nav-link text-dark" asp-area="" asp-controller="Product" asp-action="Index">Products</a>
                         </li>
-                            @* @if (User.IsInRole("Staff")) *@
-                            @* { *@
-                                <li class="nav-item">
+                        @if (User.IsInRole("Staff"))
+                        {
+                            <li class="nav-item">
                                 <a class="nav-link text-dark" asp-area="" asp-controller="OrderHistory" asp-action="Index">Order History</a>
-                                </li>
-                                <li class="nav-item">
-                                    <a class="nav-link text-dark" asp-area="" asp-controller="Inventory" asp-action="Index">Inventory</a>
-                                </li>
-                            @* } *@
+                            </li>
+                            <li class="nav-item">
+                                <a class="nav-link text-dark" asp-area="" asp-controller="Inventory" asp-action="Index">Inventory</a>
+                            </li>
+                        }
                         @if (SignInManager.IsSignedIn(User))
                         {
                             <li class="nav-item">
@@ -185,23 +185,22 @@
             @RenderSection("title",false)
         </div>
         @{
-            // TempData["Message"] uses the application-wide "level, text" convention.
-            // Controllers write this value through the SetSuccessMessage / SetWarningMessage /
-            // SetErrorMessage helpers in AuthenticatedControllerBase (or directly as raw strings
-            // in controllers that do not inherit from it, e.g. OrderHistoryController).
-            // Format:  "<level>, <display text>"  — e.g. "success, Order placed successfully"
-            // The level token is compared case-insensitively and mapped to a Bootstrap alert class.
             var raw = TempData["Message"] as string;
             if (!string.IsNullOrEmpty(raw))
             {
                 var parts = raw.Split(',', 2);
                 var level = parts.Length > 0 ? parts[0].Trim().ToLower() : "info";
                 var text = parts.Length > 1 ? parts[1].Trim() : string.Empty;
-                var alertClass = "alert-secondary";
-                if (level == "success") { alertClass = "alert-success"; }
-                else if (level == "danger" || level == "error") { alertClass = "alert-danger"; }
-                else if (level == "warning") { alertClass = "alert-warning"; }
-                else if (level == "info") { alertClass = "alert-info"; }
+                var alertClass = level switch
+                {
+                    "success" => "alert-success",
+                    "danger" or "error" => "alert-danger",
+                    "warning" => "alert-warning",
+                    "info" => "alert-info",
+                    _ => "alert-secondary"
+                };
+                if (!string.IsNullOrEmpty(text))
+                {
         <div class="row">
             <div class="col-12">
                 <div class="alert @alertClass alert-dismissible fade show" role="alert">
@@ -210,11 +209,107 @@
                 </div>
             </div>
         </div>
-            }
-        }
+    }
+}
         <main role="main" class="pb-3">
             @RenderBody()
         </main>
+
+    </div>
+
+    <footer style="background:#111;">
+        <div class="container py-5 text-white-50 small">
+            <div class="row g-4">
+
+                <div class="col-6 col-lg-3">
+                    <div class="text-white fw-bold mb-2">Useful links</div>
+                    <ul class="list-unstyled mb-0">
+                        <li class="mb-2"><a class="text-white-50 text-decoration-none" asp-controller="Home" asp-action="Index">Home</a></li>
+                        <li class="mb-2"><a class="text-white-50 text-decoration-none" asp-controller="Product" asp-action="Index">All Products</a></li>
+                        <li class="mb-2"><a class="text-white-50 text-decoration-none" asp-controller="Cart" asp-action="Index">Cart</a></li>
+                        <li><a class="text-white-50 text-decoration-none" asp-controller="Order" asp-action="History">My Orders</a></li>
+                    </ul>
+                </div>
+
+                <div class="col-6 col-lg-3">
+                    <div class="text-white fw-bold mb-2">Support</div>
+                    <ul class="list-unstyled mb-0">
+                        <li class="mb-2"><a class="text-white-50 text-decoration-none" href="#">Contact</a></li>
+                        <li class="mb-2"><a class="text-white-50 text-decoration-none" href="#">FAQ</a></li>
+                        <li class="mb-2"><a class="text-white-50 text-decoration-none" href="#">Shipping</a></li>
+                        <li><a class="text-white-50 text-decoration-none" href="#">Returns</a></li>
+                    </ul>
+                </div>
+
+                <div class="col-6 col-lg-3">
+                    <div class="text-white fw-bold mb-2">Company</div>
+                    <ul class="list-unstyled mb-0">
+                        <li class="mb-2"><a class="text-white-50 text-decoration-none" href="#">About</a></li>
+                        <li class="mb-2"><a class="text-white-50 text-decoration-none" asp-controller="Home" asp-action="Privacy">Privacy</a></li>
+                        <li class="mb-2"><a class="text-white-50 text-decoration-none" href="#">Terms</a></li>
+                        <li><a class="text-white-50 text-decoration-none" href="#">Accessibility</a></li>
+                    </ul>
+                </div>
+
+                <div class="col-12 col-lg-3">
+                    <div class="text-white fw-bold mb-2">Stay connected</div>
+                    <div class="text-white-50 mb-3">Subscribe for product drops and updates.</div>
+
+                    <form class="d-flex gap-2 mb-3">
+                        <input class="form-control form-control-sm" type="email" placeholder="Email address" />
+                        <button class="btn btn-warning btn-sm fw-bold" type="button">Subscribe</button>
+                    </form>
+
+                    <div class="d-flex gap-3 fs-5">
+                        <a class="text-white-50" href="#"><i class="bi bi-instagram"></i></a>
+                        <a class="text-white-50" href="#"><i class="bi bi-facebook"></i></a>
+                        <a class="text-white-50" href="#"><i class="bi bi-youtube"></i></a>
+                        <a class="text-white-50" href="#"><i class="bi bi-tiktok"></i></a>
+                    </div>
+                </div>
+
+            </div>
+
+            <hr class="border-secondary my-4" />
+
+            <div class="d-flex justify-content-between align-items-center flex-wrap gap-2">
+                <div>© @DateTime.Now.Year - ELKH</div>
+                <div class="d-flex gap-3">
+                    <a class="text-white-50 text-decoration-none" asp-controller="Home" asp-action="Privacy">Privacy</a>
+                    <a class="text-white-50 text-decoration-none" href="#">Terms</a>
+                </div>
+            </div>
+        </div>
+    <!-- Wishlist sign-in prompt (shared across all pages; shown when a guest clicks any wishlist button) -->
+    <div class="modal fade" id="wishlistSignInModal" tabindex="-1"
+         aria-labelledby="wishlistSignInModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="wishlistSignInModalLabel">
+                        <i class="bi bi-heart me-2"></i>Save to Wishlist
+                    </h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <p class="mb-0">Sign in to save items to your wishlist and access them any time.</p>
+                </div>
+                <div class="modal-footer justify-content-start gap-2">
+                    <a asp-area="Identity" asp-page="/Account/Login"
+                       asp-route-returnUrl="@(Context.Request.Path + Context.Request.QueryString)"
+                       class="btn btn-dark">
+                        <i class="bi bi-box-arrow-in-right me-1"></i>Sign In
+                    </a>
+                    <a asp-area="Identity" asp-page="/Account/Register"
+                       asp-route-returnUrl="@(Context.Request.Path + Context.Request.QueryString)"
+                       class="btn btn-outline-secondary">
+                        <i class="bi bi-person-plus me-1"></i>Create an Account
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+
     </div>
 
     <footer style="background:#111;">
@@ -312,10 +407,12 @@
         </div>
     </div>
 
-    <script src="~/lib/jquery/dist/jquery.min.js"></script>
+    <script src="~/lib/jquery/dist/jquery.min.js">
+    @await Html.PartialAsync("_ValidationScriptsPartial")
     <script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
     <script src="~/js/site.js" asp-append-version="true"></script>
     @await Html.PartialAsync("_ValidationScriptsPartial")
     @await RenderSectionAsync("Scripts", required: false)
+
 </body>
 </html>
