@@ -1,7 +1,9 @@
+using ELKH.Configuration;
 using ELKH.Data;
 using ELKH.Extensions;
 using ELKH.Models;
 using ELKH.Repositories;
+using ELKH.Services;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 
@@ -67,6 +69,12 @@ builder.Services.AddOutputCachingPolicies();
 
 // -- Configuration Options
 builder.Services.AddApplicationOptions(builder.Configuration);
+
+// -- Payment and security services
+builder.Services.Configure<PayPalOptions>(builder.Configuration.GetSection("PayPal"));
+builder.Services.AddHttpClient<PayPalService>();
+builder.Services.Configure<ReCaptchaOptions>(builder.Configuration.GetSection("ReCaptcha"));
+builder.Services.AddHttpClient<IReCaptchaService, ReCaptchaService>();
 
 // Register repositories for dependency injection
 builder.Services.AddScoped<RegisteredUserLogRepo>();
