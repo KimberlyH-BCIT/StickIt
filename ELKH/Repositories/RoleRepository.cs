@@ -1,15 +1,14 @@
-﻿using Microsoft.AspNetCore.Identity;
-using Microsoft.EntityFrameworkCore;
+using Microsoft.AspNetCore.Identity;
 using ELKH.Data;
 using ELKH.ViewModels;
 
 namespace ELKH.Repositories
 {
-    public class Role_repo : IRole_repo
+    public class RoleRepository : IRoleRepository
     {
         private readonly ApplicationDbContext _context;
 
-        public Role_repo(ApplicationDbContext context)
+        public RoleRepository(ApplicationDbContext context)
         {
             _context = context;
         }
@@ -19,7 +18,7 @@ namespace ELKH.Repositories
             return _context.Roles
                 .Select(r => new RoleVM
                 {
-                    RoleId = r.Id,
+                    RoleId   = r.Id,
                     RoleName = r.Name
                 })
                 .ToList();
@@ -28,37 +27,27 @@ namespace ELKH.Repositories
         public RoleVM GetRoleById(string roleId)
         {
             var role = _context.Roles.FirstOrDefault(r => r.Id == roleId);
-
-            if (role == null)
-            {
-                return null;
-            }
+            if (role == null) return null!;
 
             return new RoleVM
             {
-                RoleId = role.Id,
+                RoleId   = role.Id,
                 RoleName = role.Name
             };
         }
 
         public void CreateRole(RoleVM role)
         {
-            var identityRole = new IdentityRole
-            {
-                Name = role.RoleName
-            };
-
-            _context.Roles.Add(identityRole);
+            _context.Roles.Add(new IdentityRole { Name = role.RoleName });
             _context.SaveChanges();
         }
 
         public void UpdateRole(RoleVM role)
         {
-            var existingRole = _context.Roles.FirstOrDefault(r => r.Id == role.RoleId);
-
-            if (existingRole != null)
+            var existing = _context.Roles.FirstOrDefault(r => r.Id == role.RoleId);
+            if (existing != null)
             {
-                existingRole.Name = role.RoleName;
+                existing.Name = role.RoleName;
                 _context.SaveChanges();
             }
         }
@@ -66,7 +55,6 @@ namespace ELKH.Repositories
         public void DeleteRole(string roleId)
         {
             var role = _context.Roles.FirstOrDefault(r => r.Id == roleId);
-
             if (role != null)
             {
                 _context.Roles.Remove(role);

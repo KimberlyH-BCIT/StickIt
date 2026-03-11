@@ -16,7 +16,7 @@ namespace ELKH.Controllers
     [Authorize(Roles = "Admin")]
     public class AdminController : Controller
     {
-        private readonly IRole_repo _roleRepo;
+        private readonly IRoleRepository _roleRepo;
         private readonly ApplicationDbContext _context;
         private readonly IMemoryCache _cache;
         private readonly ILogger<AdminController> _logger;
@@ -24,7 +24,7 @@ namespace ELKH.Controllers
         private readonly UserManager<IdentityUser> _userManager;
 
         public AdminController(
-            IRole_repo roleRepo,
+            IRoleRepository roleRepo,
             ApplicationDbContext context,
             IMemoryCache cache,
             ILogger<AdminController> logger,

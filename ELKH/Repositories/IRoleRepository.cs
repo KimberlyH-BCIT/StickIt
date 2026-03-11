@@ -1,8 +1,8 @@
-﻿using ELKH.ViewModels;
+using ELKH.ViewModels;
 
 namespace ELKH.Repositories
 {
-    public interface IRole_repo
+    public interface IRoleRepository
     {
         List<RoleVM> GetAllRoles();
         RoleVM GetRoleById(string roleId);
@@ -10,5 +10,4 @@ namespace ELKH.Repositories
         void UpdateRole(RoleVM role);
         void DeleteRole(string roleId);
     }
-
 }

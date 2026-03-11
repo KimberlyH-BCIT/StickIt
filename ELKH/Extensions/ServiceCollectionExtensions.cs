@@ -49,7 +49,7 @@ namespace ELKH.Extensions
         /// </summary>
         public static IServiceCollection AddRepositories(this IServiceCollection services)
         {
-            services.AddScoped<IRole_repo, Role_repo>();
+            services.AddScoped<IRoleRepository, RoleRepository>();
             services.AddScoped<IOrderManagementRepo, OrderManagementRepo>();
             services.AddScoped<IRegisteredUserLogRepo, RegisteredUserLogRepo>();
             services.AddScoped<IRegisteredUserProfileRepo, RegisteredUserProfileRepo>();
