@@ -12,7 +12,7 @@ namespace ELKH.Controllers
     /// quantities, and managing product images.
     /// </summary>
     
-    [Authorize(Roles = "Admin")]
+    //[Authorize(Roles = "Admin")]
     public class InventoryController : Controller
     {
         private readonly InventoryRepo _inventoryRepo;
@@ -63,7 +63,7 @@ namespace ELKH.Controllers
             // an IFormFile is not available when reading images from the repository.
             var vmList = productImages.Select(pi => new ProductImageVM
             {
-                ProductImage = null,
+                ImageData = pi.ImageData,
                 FkProductId = Id
             }).ToList();
 

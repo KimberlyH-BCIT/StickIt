@@ -51,7 +51,7 @@
 <hr class="my-4">
 
 <form asp-action="AddImage" method="post" enctype="multipart/form-data">
-    <input type="hidden" name="productId" value="@ViewBag.productId" />
+    <input type="hidden" name="productId" value="@ViewBag.ProductId" />
     <div class="form-group">
         <label for="file" class="btn btn-info">
             Choose image
@@ -66,46 +66,6 @@
     <button type="submit" class="btn btn-primary">Upload Image</button>
 </form>
 
-
-<style>
-        var file =
-            document.querySelector('input[type=file]').files[0];
-    }
-
-    .container {
-            var preview = document.getElementById('preview');
-        padding: 2rem;
-        border-radius: 0.5rem;
-        }
-    }
-
-    .btn-info {
-        background-color: #17a2b8;
-        color: white;
-    }
-
-    .btn-info:hover {
-        background-color: #138496;
-        border-color: #117a8b;
-        color: white;
-    }
-
-    .btn-success {
-        font-weight: 400;
-        background-color: #28a745;
-        border-color: #28a745;
-    }
-
-    .btn-success:hover {
-        background-color: #218838;
-        border-color: #1e7e34;
-    }
-
-    .btn-upload {
-        padding: 5px 15px;
-        font-size: 16px;
-    }
-</style>
 
 
 <script>

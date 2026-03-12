@@ -227,7 +227,6 @@ namespace ELKH.Migrations
                         .HasColumnType("BLOB");
 
                     b.Property<string>("ProductImageURL")
-                        .IsRequired()
                         .HasColumnType("TEXT");
 
                     b.Property<int?>("ProductModelPkProductId")
