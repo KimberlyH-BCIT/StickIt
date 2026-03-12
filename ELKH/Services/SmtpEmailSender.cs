@@ -47,7 +47,7 @@ namespace ELKH.Services
             foreach (var address in to)
                 message.To.Add(MailboxAddress.Parse(address));
             message.Subject = subject;
-            message.Body    = new TextPart("plain") { Text = body };
+            message.Body    = new TextPart("html") { Text = body };
 
             // Choose the correct socket security based on port convention:
             //   465  → implicit TLS (SslOnConnect)

@@ -420,7 +420,10 @@ WHERE PkProductId NOT IN (SELECT rowid FROM ProductFTS);
                         lastDuration = _reindexService.LastDuration;
                     }
                 }
-                catch { }
+                catch (Exception ex)
+                {
+                    _logger.LogWarning(ex, "Could not read reindex service metrics");
+                }
 
                 return Json(new
                 {
@@ -431,8 +434,9 @@ WHERE PkProductId NOT IN (SELECT rowid FROM ProductFTS);
                     lastDuration
                 });
             }
-            catch
+            catch (Exception ex)
             {
+                _logger.LogError(ex, "Failed to retrieve reindex health status");
                 return Json(new { success = false });
             }
         }
@@ -474,7 +478,10 @@ WHERE PkProductId NOT IN (SELECT rowid FROM ProductFTS);
                     _context.CachedFuzzyKeys.RemoveRange(keys);
                     _context.SaveChanges();
                 }
-                catch { }
+                catch (Exception ex)
+                {
+                    _logger.LogWarning(ex, "Failed to persist CachedFuzzyKey removal for {Count} keys", keys.Count);
+                }
 
                 // Step 3: Log for monitoring
                 _logger.LogInformation(
@@ -497,7 +504,10 @@ WHERE PkProductId NOT IN (SELECT rowid FROM ProductFTS);
                     _context.Add(audit);
                     _context.SaveChanges();
                 }
-                catch { /* swallow to not fail admin action */ }
+                catch (Exception ex)
+                {
+                    _logger.LogWarning(ex, "Failed to persist ClearFuzzyCache audit entry");
+                }
             }
 
             return Ok(new { success = true, cleared = registryCount });

@@ -35,16 +35,19 @@ namespace ELKH.Extensions
             // 3. Response Compression — compress before caching so cached responses are already compressed
             app.UseResponseCompression();
 
-            // 4. Output Cache — cache compressed responses with tag-based invalidation
+            // 4. Rate Limiting — reject excess requests before they hit the cache or business logic
+            app.UseRateLimiter();
+
+            // 5. Output Cache — cache compressed responses with tag-based invalidation
             app.UseOutputCache();
 
-            // 5. Routing — endpoint routing resolution (must precede auth middleware)
+            // 6. Routing — endpoint routing resolution (must precede auth middleware)
             app.UseRouting();
 
-            // 6. Authentication — establish the user's identity from cookies/tokens
+            // 7. Authentication — establish the user's identity from cookies/tokens
             app.UseAuthentication();
 
-            // 7. Authorization — enforce access policies against the established identity
+            // 8. Authorization — enforce access policies against the established identity
             app.UseAuthorization();
 
             return app;
@@ -111,7 +114,14 @@ namespace ELKH.Extensions
         /// </remarks>
         public static WebApplication UseApplicationEndpoints(this WebApplication app)
         {
-            // Default MVC route — areas are handled by the [Area] attribute on controllers
+            // Area route — must be registered before the default route so that
+            // controllers decorated with [Area] (e.g. AuditController, MetricsController)
+            // are reachable at /{area}/{controller}/{action}.
+            app.MapControllerRoute(
+                name: "areas",
+                pattern: "{area:exists}/{controller=Home}/{action=Index}/{id?}");
+
+            // Default MVC route
             app.MapControllerRoute(
                 name: "default",
                 pattern: "{controller=Home}/{action=Index}/{id?}")

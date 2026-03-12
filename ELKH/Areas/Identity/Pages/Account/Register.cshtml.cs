@@ -22,6 +22,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 using Microsoft.AspNetCore.WebUtilities;
 using Microsoft.Extensions.Logging;
+using static ELKH.Extensions.RateLimitPolicies;
 
 namespace ELKH.Areas.Identity.Pages.Account
 {
@@ -181,6 +182,7 @@ namespace ELKH.Areas.Identity.Pages.Account
         /// 5. Sends an email-confirmation link; redirects to confirmation page or signs in directly
         ///    depending on <c>RequireConfirmedAccount</c> setting.
         /// </summary>
+        [Microsoft.AspNetCore.RateLimiting.EnableRateLimiting(ELKH.Extensions.RateLimitPolicies.Auth)]
         public async Task<IActionResult> OnPostAsync(string returnUrl = null)
         {
             returnUrl ??= Url.Content("~/");

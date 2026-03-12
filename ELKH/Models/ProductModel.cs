@@ -21,18 +21,21 @@ namespace ELKH.Models
         /// Display name of the product as shown to customers.
         /// </summary>
         [Required]
+        [MaxLength(100)]
         public string Name { get; set; } = string.Empty;
 
         /// <summary>
         /// Normalized version of the product name for search and indexing.
         /// Stored in lowercase with diacritics removed for efficient fuzzy matching.
         /// </summary>
+        [MaxLength(100)]
         public string NameNormalized { get; set; } = string.Empty;
 
         /// <summary>
         /// Detailed product description shown on product detail pages.
         /// </summary>
         [Required]
+        [MaxLength(2000)]
         public string Description { get; set; } = string.Empty;
 
         /// <summary>
@@ -55,6 +58,7 @@ namespace ELKH.Models
         /// Decremented when orders are placed, incremented when restocked.
         /// </summary>
         [DisplayName("Stock Quantities")]
+        [ConcurrencyCheck]
 public int? StockQuantity { get; set; } = 0;
 
 /// <summary>

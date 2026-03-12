@@ -19,44 +19,52 @@ namespace ELKH.Models
         /// First name of the contact/recipient.
         /// </summary>
         [Display(Name ="First Name")]
+        [MaxLength(100)]
         public string FirstName { get; set; } = string.Empty;
 
         /// <summary>
         /// Last name of the contact/recipient.
         /// </summary>
         [Display(Name = "Last Name")]
+        [MaxLength(100)]
         public string LastName { get; set; } = string.Empty;
 
         /// <summary>
         /// Phone number for delivery or contact purposes.
         /// </summary>
         [Display(Name = "Phone Number")]
+        [MaxLength(30)]
         public string PhoneNumber { get; set; } = string.Empty;
 
         /// <summary>
         /// Street address (line 1).
         /// </summary>
+        [MaxLength(200)]
         public string Street { get; set; } = string.Empty;
 
         /// <summary>
         /// City or locality.
         /// </summary>
+        [MaxLength(100)]
         public string City { get; set; } = string.Empty;
 
         /// <summary>
         /// Province, state, or region.
         /// </summary>
+        [MaxLength(100)]
         public string Province { get; set; } = string.Empty;
 
         /// <summary>
         /// Postal or ZIP code.
         /// </summary>
         [Display(Name ="Postcode")]
+        [MaxLength(20)]
         public string PostCode { get; set; } = string.Empty;
 
         /// <summary>
         /// Country (default: Canada).
         /// </summary>
+        [MaxLength(100)]
         public string Country { get; set; } = "Canada";
 
         /// <summary>

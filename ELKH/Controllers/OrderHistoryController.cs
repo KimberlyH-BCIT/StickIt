@@ -3,6 +3,7 @@ using ELKH.Services;
 using ELKH.ViewModels;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.Extensions.Logging;
 
 namespace ELKH.Controllers
 {
@@ -12,15 +13,6 @@ namespace ELKH.Controllers
     [Authorize(Roles = "Admin")]
     public class OrderHistoryController : Controller
     {
-        private readonly IOrderHistoryManagementRepo _orderManagementRepo;
-        private readonly IOrderEmailService _orderEmail;
-        private readonly IRegisteredUserProfileRepo _profileRepo;
-
-        /// <summary>
-        /// Server-side allowlist for the delivery status dropdown.
-        /// Must stay in sync with the <c>statusOptions</c> array in <c>Views/OrderHistory/Index.cshtml</c>.
-        /// Any value not in this set is rejected before it reaches the database.
-        /// </summary>
         private static readonly HashSet<string> ValidDeliveryStatuses =
         [
             "Pending",
@@ -30,14 +22,21 @@ namespace ELKH.Controllers
             "Cancelled"
         ];
 
+        private readonly IOrderHistoryManagementRepo _orderManagementRepo;
+        private readonly IOrderEmailService _orderEmail;
+        private readonly IRegisteredUserProfileRepo _profileRepo;
+        private readonly ILogger<OrderHistoryController> _logger;
+
         public OrderHistoryController(
             IOrderHistoryManagementRepo orderManagementRepo,
             IOrderEmailService orderEmail,
-            IRegisteredUserProfileRepo profileRepo)
+            IRegisteredUserProfileRepo profileRepo,
+            ILogger<OrderHistoryController> logger)
         {
             _orderManagementRepo = orderManagementRepo;
             _orderEmail          = orderEmail;
             _profileRepo         = profileRepo;
+            _logger              = logger;
         }
 
         /// <summary>

@@ -4,6 +4,7 @@ using ELKH.Services;
 using ELKH.ViewModels;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.Extensions.Logging;
 
 namespace ELKH.Controllers
 {
@@ -44,19 +45,23 @@ namespace ELKH.Controllers
         private readonly IRegisteredUserLogRepo _logRepository;
         private readonly IContactDetailRepo _contactRepository;
         private readonly IRatingService _ratingService;
+        private readonly ILogger<UserController> _logger;
 
         public UserController(
             IRegisteredUserProfileRepo profileRepository,
             IRegisteredUserLogRepo logRepository,
             IContactDetailRepo contactRepository,
             IRatingService ratingService,
-            IUserService userService) 
-            : base(userService)
+            IUserService userService,
+            ILogger<UserController> logger,
+            ELKH.Data.ApplicationDbContext db)
+            : base(db, userService)
         {
             _profileRepository = profileRepository;
             _logRepository = logRepository;
             _contactRepository = contactRepository;
             _ratingService = ratingService;
+            _logger = logger;
         }
 
         #region Dashboard & Profile

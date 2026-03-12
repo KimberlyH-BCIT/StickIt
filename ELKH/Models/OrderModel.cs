@@ -20,6 +20,7 @@ namespace ELKH.Models
         /// Updated throughout the order lifecycle.
         /// </summary>
         [Display(Name = "Order Status")]
+        [MaxLength(50)]
         public string OrderStatus { get; set; } = string.Empty;
 
         /// <summary>
@@ -41,6 +42,7 @@ namespace ELKH.Models
         /// Separate from order status to track fulfillment independently.
         /// </summary>
         [Display(Name ="Delivery Status")]
+        [MaxLength(50)]
         public string DeliveryStatus { get; set; } = string.Empty;
 
         // =====================================================================

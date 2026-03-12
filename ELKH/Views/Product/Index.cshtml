@@ -2,11 +2,15 @@
 
 @{
     ViewData["Title"] = "Products";
-    var products = Model.ToList();
-    const int pageSize = 15;
+    var products   = Model.ToList();
+    var page       = ViewBag.Page       as int? ?? 1;
+    var totalPages = ViewBag.TotalPages as int? ?? 1;
+    var total      = ViewBag.Total      as int? ?? products.Count;
+    var search     = ViewBag.Search     as string;
+    var categoryId = ViewBag.CategoryId as int?;
 }
 
-<h2 class="mb-4">Products</h2>
+<h2 class="mb-3">Products</h2>
 
 <style>
     .product-card {
@@ -19,83 +23,140 @@
     }
 </style>
 
-<div class="row row-cols-1 row-cols-sm-2 row-cols-md-3 row-cols-lg-5 g-3" id="productGrid">
-    @for (int i = 0; i < products.Count; i++)
-    {
-        var p = products[i];
-        <div class="col product-card-col@(i >= pageSize ? " extra-product d-none" : "")">
-            <div class="card h-100 shadow-sm product-card"
-                 data-href="@Url.Action("Details", "Product", new { id = p.ProductId })">
-                <div class="card-body d-flex flex-column p-3">
+@* ── Filter form ──────────────────────────────────────────────────────── *@
+<form method="get" asp-action="Index" class="row g-2 mb-4 align-items-end">
+    <div class="col-sm-5">
+        <label class="form-label fw-semibold">Search</label>
+        <input type="search" name="search" value="@search"
+               class="form-control" placeholder="Search by name or description…" />
+    </div>
+    <div class="col-sm-4">
+        <label class="form-label fw-semibold">Category</label>
+        <select name="categoryId" asp-items="ViewBag.Categories" class="form-select">
+            <option value="">All categories</option>
+        </select>
+    </div>
+    <div class="col-sm-auto d-flex gap-2">
+        <button type="submit" class="btn btn-primary">Filter</button>
+        @if (!string.IsNullOrWhiteSpace(search) || categoryId.HasValue)
+        {
+            <a asp-action="Index" class="btn btn-outline-secondary">Clear</a>
+        }
+    </div>
+</form>
 
-                    @* Product name — single line, truncated *@
-                    <h6 class="card-title text-truncate mb-2 fw-semibold"
-                        title="@p.ProductName">@p.ProductName</h6>
+@* ── Result count ─────────────────────────────────────────────────────── *@
+<p class="text-muted small mb-3">
+    Showing @products.Count of @total product@(total != 1 ? "s" : "")
+    @if (!string.IsNullOrWhiteSpace(search)) { <span>matching &ldquo;@search&rdquo;</span> }
+</p>
 
-                    @* Price *@
-                    <div class="mb-3">
-                        @if (p.DiscountPercent > 0)
-                        {
-                            var effective = p.Price * (1 - p.DiscountPercent / 100m);
-                            <div>
-                                <span class="text-muted text-decoration-line-through small price"
-                                      data-price="@p.Price">@p.Price.ToString("C")</span>
-                                <span class="badge bg-danger ms-1">@p.DiscountPercent%&nbsp;off</span>
-                            </div>
-                            <span class="fw-bold text-success price"
-                                  data-price="@effective">@effective.ToString("C")</span>
-                        }
-                        else
-                        {
-                            <span class="fw-semibold price" data-price="@p.Price">@p.Price.ToString("C")</span>
-                        }
-                    </div>
+@* ── Product grid ─────────────────────────────────────────────────────── *@
+@if (!products.Any())
+{
+    <div class="alert alert-light border">No products found. <a asp-action="Index">Clear filters</a></div>
+}
+else
+{
+    <div class="row row-cols-1 row-cols-sm-2 row-cols-md-3 row-cols-lg-4 g-3" id="productGrid">
+        @foreach (var p in products)
+        {
+            <div class="col">
+                <div class="card h-100 shadow-sm product-card"
+                     data-href="@Url.Action("Details", "Product", new { id = p.ProductId })">
+                    <div class="card-body d-flex flex-column p-3">
 
-                    @* Action buttons — stop click from bubbling to card *@
-                    <div class="mt-auto d-flex flex-column gap-2">
-                        <form asp-controller="Cart" asp-action="AddToCart" method="post">
-                            @Html.AntiForgeryToken()
-                            <input type="hidden" name="itemId" value="@p.ProductId" />
-                            <input type="hidden" name="quantity" value="1" />
-                            <button type="submit" class="btn btn-sm btn-primary w-100">Add to Cart</button>
-                        </form>
+                        <h6 class="card-title text-truncate mb-2 fw-semibold"
+                            title="@p.ProductName">@p.ProductName</h6>
 
-                        @if (User.Identity?.IsAuthenticated == true)
-                        {
-                            <form asp-controller="Wishlist" asp-action="AddAjax" method="post"
-                                  class="add-to-wishlist-form" data-product-id="@p.ProductId">
+                        <p class="text-muted small mb-2" style="display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;">
+                            @p.Description
+                        </p>
+
+                        <div class="mb-3">
+                            @if (p.DiscountPercent > 0)
+                            {
+                                var effective = p.Price * (1 - p.DiscountPercent / 100m);
+                                <div>
+                                    <span class="text-muted text-decoration-line-through small">@p.Price.ToString("C")</span>
+                                    <span class="badge bg-danger ms-1">@p.DiscountPercent%&nbsp;off</span>
+                                </div>
+                                <span class="fw-bold text-success">@effective.ToString("C")</span>
+                            }
+                            else
+                            {
+                                <span class="fw-semibold">@p.Price.ToString("C")</span>
+                            }
+                        </div>
+
+                        <div class="mt-auto d-flex flex-column gap-2">
+                            <form asp-controller="Cart" asp-action="AddToCart" method="post">
                                 @Html.AntiForgeryToken()
-                                <input type="hidden" name="productId" value="@p.ProductId" />
-                                <button type="submit"
-                                        class="btn btn-sm btn-outline-secondary w-100 add-to-wishlist-button">
+                                <input type="hidden" name="itemId" value="@p.ProductId" />
+                                <input type="hidden" name="quantity" value="1" />
+                                <button type="submit" class="btn btn-sm btn-primary w-100">Add to Cart</button>
+                            </form>
+
+                            @if (User.Identity?.IsAuthenticated == true)
+                            {
+                                <form asp-controller="Wishlist" asp-action="AddAjax" method="post"
+                                      class="add-to-wishlist-form" data-product-id="@p.ProductId">
+                                    @Html.AntiForgeryToken()
+                                    <input type="hidden" name="productId" value="@p.ProductId" />
+                                    <button type="submit"
+                                            class="btn btn-sm btn-outline-secondary w-100 add-to-wishlist-button">
+                                        ♡&nbsp;Wishlist
+                                    </button>
+                                </form>
+                            }
+                            else
+                            {
+                                <button type="button"
+                                        class="btn btn-sm btn-outline-secondary w-100"
+                                        data-bs-toggle="modal" data-bs-target="#wishlistSignInModal">
                                     ♡&nbsp;Wishlist
                                 </button>
-                            </form>
-                        }
-                        else
-                        {
-                            <button type="button"
-                                    class="btn btn-sm btn-outline-secondary w-100"
-                                    data-bs-toggle="modal" data-bs-target="#wishlistSignInModal">
-                                ♡&nbsp;Wishlist
-                            </button>
-                        }
                             }
-                    </div>
+                        </div>
 
+                    </div>
                 </div>
             </div>
-        </div>
-    }
-</div>
-
-@if (products.Count > pageSize)
-{
-    <div class="text-center mt-4" id="showMoreContainer">
-        <button class="btn btn-outline-primary px-5" id="showMoreBtn" onclick="showMoreProducts()">
-            Show More
-        </button>
+        }
     </div>
+
+    @* ── Pagination ───────────────────────────────────────────────────── *@
+    @if (totalPages > 1)
+    {
+        <nav class="mt-4" aria-label="Product pages">
+            <ul class="pagination justify-content-center flex-wrap">
+                <li class="page-item @(page <= 1 ? "disabled" : "")">
+                    <a class="page-link"
+                       asp-action="Index"
+                       asp-route-search="@search"
+                       asp-route-categoryId="@categoryId"
+                       asp-route-page="@(page - 1)">‹</a>
+                </li>
+                @for (int i = 1; i <= totalPages; i++)
+                {
+                    <li class="page-item @(i == page ? "active" : "")">
+                        <a class="page-link"
+                           asp-action="Index"
+                           asp-route-search="@search"
+                           asp-route-categoryId="@categoryId"
+                           asp-route-page="@i">@i</a>
+                    </li>
+                }
+                <li class="page-item @(page >= totalPages ? "disabled" : "")">
+                    <a class="page-link"
+                       asp-action="Index"
+                       asp-route-search="@search"
+                       asp-route-categoryId="@categoryId"
+                       asp-route-page="@(page + 1)">›</a>
+                </li>
+            </ul>
+        </nav>
+    }
 }
 
 @section Scripts {
@@ -110,38 +171,6 @@
                     }
                 });
             });
-
-            var step = @pageSize;
-
-            window.showMoreProducts = function () {
-                var hidden = document.querySelectorAll('.extra-product.d-none');
-                var toShow = Array.prototype.slice.call(hidden, 0, step);
-                toShow.forEach(function (el) { el.classList.remove('d-none'); });
-
-                if (document.querySelectorAll('.extra-product.d-none').length === 0) {
-                    var container = document.getElementById('showMoreContainer');
-                    if (container) container.style.display = 'none';
-                }
-            };
-        })();
-    </script>
-}
-    <script>
-        (function () {
-            var shown = @pageSize;
-            var step  = @pageSize;
-
-            window.showMoreProducts = function () {
-                var hidden = document.querySelectorAll('.extra-product.d-none');
-                var toShow = Array.prototype.slice.call(hidden, 0, step);
-                toShow.forEach(function (el) { el.classList.remove('d-none'); });
-                shown += toShow.length;
-
-                if (document.querySelectorAll('.extra-product.d-none').length === 0) {
-                    var container = document.getElementById('showMoreContainer');
-                    if (container) container.style.display = 'none';
-                }
-            };
         })();
     </script>
 }

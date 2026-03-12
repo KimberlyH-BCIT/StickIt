@@ -288,6 +288,8 @@ public static class DbSeeder
         IConfiguration configuration)
     {
         const string adminRole    = "Admin";
+        const string managerRole  = "Manager";
+        const string staffRole    = "Staff";
         const string customerRole = "Customer";
 
         // Read from user-secrets / environment variables.
@@ -300,12 +302,12 @@ public static class DbSeeder
         var adminPass  = configuration["Seed:AdminPass"];
         if (string.IsNullOrWhiteSpace(adminPass))  adminPass  = "Admin@2025!";
 
-        // Ensure both roles exist regardless of whether the users already exist.
-        if (!await roleManager.RoleExistsAsync(adminRole))
-            await roleManager.CreateAsync(new IdentityRole(adminRole));
-
-        if (!await roleManager.RoleExistsAsync(customerRole))
-            await roleManager.CreateAsync(new IdentityRole(customerRole));
+        // Ensure all four roles exist regardless of whether the users already exist.
+        foreach (var role in new[] { adminRole, managerRole, staffRole, customerRole })
+        {
+            if (!await roleManager.RoleExistsAsync(role))
+                await roleManager.CreateAsync(new IdentityRole(role));
+        }
 
         var admin = await userManager.FindByEmailAsync(adminEmail);
 

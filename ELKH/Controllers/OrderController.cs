@@ -1,5 +1,6 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using ELKH.Data;
 using ELKH.Repositories;
 using ELKH.Services;
 using System.Linq;
@@ -24,8 +25,9 @@ public class OrderController : AuthenticatedControllerBase
     public OrderController(
         IOrderManagementRepo orderManagementRepo,
         IProductService productService,
-        IUserService userService)
-        : base(userService)
+        IUserService userService,
+        ApplicationDbContext db)
+        : base(db, userService)
     {
         _orderManagementRepo = orderManagementRepo;
         _productService = productService;

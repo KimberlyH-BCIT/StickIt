@@ -6,6 +6,7 @@ using ELKH.Data;
 using ELKH.ViewModels;
 using ELKH.Models;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Logging;
 
 namespace ELKH.Services
 {
@@ -19,18 +20,14 @@ namespace ELKH.Services
         private readonly ApplicationDbContext _db;
         private readonly ISearchService _searchService;
         private readonly AutoMapper.IMapper _mapper;
+        private readonly ILogger<ProductService> _logger;
 
-        /// <summary>
-        /// Initializes a new instance of <see cref="ProductService"/> with its dependencies.
-        /// </summary>
-        /// <param name="db">EF Core context for product and category data.</param>
-        /// <param name="searchService">Search service used by <see cref="SearchNames"/>.</param>
-        /// <param name="mapper">AutoMapper instance for entity ↔ view-model projection.</param>
-        public ProductService(ApplicationDbContext db, ISearchService searchService, AutoMapper.IMapper mapper)
+        public ProductService(ApplicationDbContext db, ISearchService searchService, AutoMapper.IMapper mapper, ILogger<ProductService> logger)
         {
             _db = db;
             _searchService = searchService;
-            _mapper = mapper;
+            _mapper        = mapper;
+            _logger        = logger;
         }
 
         /// <inheritdoc/>
@@ -126,7 +123,11 @@ WHERE PkProductId NOT IN (SELECT rowid FROM ProductFTS);
                 _db.Add(new ELKH.Models.AuditEntryModel { Action = "ReindexFTS", Actor = "system", Timestamp = System.DateTime.UtcNow, AffectedKeysCount = 0, Details = "Reindexed ProductFTS table", Reason = reason });
                 await _db.SaveChangesAsync(ct);
             }
-            catch { }
+            catch (Exception ex)
+            {
+                // Audit write failure must never block the reindex — log and continue.
+                _logger.LogWarning(ex, "Failed to persist ReindexFTS audit entry");
+            }
         }
 
         /// <inheritdoc/>

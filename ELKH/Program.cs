@@ -65,6 +65,9 @@ builder.Services.AddResponseCompression(options =>
 builder.Services.AddMemoryCache();
 builder.Services.AddOutputCachingPolicies();
 
+// -- Rate Limiting (brute-force / enumeration protection)
+builder.Services.AddRateLimitingPolicies();
+
 // -- Configuration Options
 builder.Services.AddApplicationOptions(builder.Configuration);
 

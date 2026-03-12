@@ -156,6 +156,11 @@ namespace ELKH.Services
                 await transaction.CommitAsync();
                 return order.PkOrderId;
             }
+            catch (Microsoft.EntityFrameworkCore.DbUpdateConcurrencyException)
+            {
+                await transaction.RollbackAsync();
+                return -1; // another request updated stock first
+            }
             catch
             {
                 await transaction.RollbackAsync();
@@ -334,6 +339,11 @@ namespace ELKH.Services
 
                     await transaction.CommitAsync();
                     return order.PkOrderId;
+                }
+                catch (Microsoft.EntityFrameworkCore.DbUpdateConcurrencyException)
+                {
+                    await transaction.RollbackAsync();
+                    return -1; // concurrent order modified stock first
                 }
                 catch
                 {
