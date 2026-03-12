@@ -6,7 +6,7 @@ using Microsoft.Extensions.Options;
 
 namespace ELKH.Services;
 
-public class PayPalService
+public class PayPalService : IPayPalService
 {
     private readonly HttpClient _http;
     private readonly PayPalOptions _opts;

@@ -73,7 +73,7 @@ builder.Services.AddApplicationOptions(builder.Configuration);
 
 // -- Payment and security services
 builder.Services.Configure<PayPalOptions>(builder.Configuration.GetSection("PayPal"));
-builder.Services.AddHttpClient<PayPalService>();
+builder.Services.AddHttpClient<IPayPalService, PayPalService>();
 builder.Services.Configure<ReCaptchaOptions>(builder.Configuration.GetSection("ReCaptcha"));
 builder.Services.AddHttpClient<IReCaptchaService, ReCaptchaService>();
 

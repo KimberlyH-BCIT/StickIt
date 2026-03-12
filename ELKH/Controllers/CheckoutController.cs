@@ -40,7 +40,7 @@ public class CheckoutController : Controller
 {
     private readonly ApplicationDbContext _db;
     private readonly ICartRepo _cartRepo;
-    private readonly PayPalService _paypal;
+    private readonly IPayPalService _paypal;
     private readonly IOrderEmailService _orderEmail;
     private readonly ILogger<CheckoutController> _logger;
     private readonly string _currency;
@@ -48,7 +48,7 @@ public class CheckoutController : Controller
     public CheckoutController(
         ApplicationDbContext db,
         ICartRepo cartRepo,
-        PayPalService paypal,
+        IPayPalService paypal,
         IOrderEmailService orderEmail,
         ILogger<CheckoutController> logger,
         IOptions<PayPalOptions> paypalOpts)

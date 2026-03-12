@@ -11,10 +11,10 @@ namespace ELKH.Controllers;
 [Route("paypal")]
 public class PayPalController : ControllerBase
 {
-    private readonly PayPalService  _payPal;
+    private readonly IPayPalService  _payPal;
     private readonly PayPalOptions  _opts;
 
-    public PayPalController(PayPalService payPal, IOptions<PayPalOptions> opts)
+    public PayPalController(IPayPalService payPal, IOptions<PayPalOptions> opts)
     {
         _payPal = payPal;
         _opts   = opts.Value;
