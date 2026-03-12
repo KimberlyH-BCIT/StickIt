@@ -449,7 +449,7 @@ WHERE PkProductId NOT IN (SELECT rowid FROM ProductFTS);
         /// <returns>JSON result with the number of cache entries cleared.</returns>
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public IActionResult ClearFuzzyCache([FromBody] ClearCachePayload payload)
+        public async Task<IActionResult> ClearFuzzyCache([FromBody] ClearCachePayload payload)
         {
             // Step 1: Validate reason is provided (required for audit trail)
             if (string.IsNullOrWhiteSpace(payload?.Reason))
@@ -476,7 +476,7 @@ WHERE PkProductId NOT IN (SELECT rowid FROM ProductFTS);
                 try
                 {
                     _context.CachedFuzzyKeys.RemoveRange(keys);
-                    _context.SaveChanges();
+                    await _context.SaveChangesAsync();
                 }
                 catch (Exception ex)
                 {
@@ -502,7 +502,7 @@ WHERE PkProductId NOT IN (SELECT rowid FROM ProductFTS);
                         Reason = reason
                     };
                     _context.Add(audit);
-                    _context.SaveChanges();
+                    await _context.SaveChangesAsync();
                 }
                 catch (Exception ex)
                 {

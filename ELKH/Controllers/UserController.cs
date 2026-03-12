@@ -184,13 +184,13 @@ namespace ELKH.Controllers
                     FirstName = vm.Profile.FirstName,
                     LastName  = vm.Profile.LastName
                 };
-                _profileRepository.Add(newProfile);
+                await _profileRepository.AddAndSaveAsync(newProfile);
             }
             else
             {
                 existing.FirstName = vm.Profile.FirstName;
                 existing.LastName  = vm.Profile.LastName;
-                _profileRepository.UpdateAndSave(existing);
+                await _profileRepository.UpdateAndSaveAsync(existing);
             }
 
             SetSuccessMessage("Profile updated successfully");
@@ -275,13 +275,13 @@ namespace ELKH.Controllers
                     AvatarData     = bytes,
                     AvatarMimeType = file.ContentType
                 };
-                _profileRepository.Add(newProfile);
+                await _profileRepository.AddAndSaveAsync(newProfile);
             }
             else
             {
                 existing.AvatarData     = bytes;
                 existing.AvatarMimeType = file.ContentType;
-                _profileRepository.UpdateAndSave(existing);
+                await _profileRepository.UpdateAndSaveAsync(existing);
             }
 
             await _logRepository.LogActivityAsync(email, "AvatarUploaded", $"Uploaded profile picture ({file.ContentType}, {file.Length} bytes)");
@@ -302,7 +302,7 @@ namespace ELKH.Controllers
             {
                 existing.AvatarData     = null;
                 existing.AvatarMimeType = null;
-                _profileRepository.UpdateAndSave(existing);
+                await _profileRepository.UpdateAndSaveAsync(existing);
                 await _logRepository.LogActivityAsync(email, "AvatarRemoved", "Removed profile picture");
                 SetSuccessMessage("Profile picture removed.");
             }
@@ -412,7 +412,7 @@ namespace ELKH.Controllers
                 FkRegisteredUserId = userId.Value
             };
 
-            bool success = await _contactRepository.AddAsync(contact);
+            bool success = await _contactRepository.AddAndSaveAsync(contact);
 
             if (success)
             {
@@ -494,7 +494,7 @@ namespace ELKH.Controllers
                 FkRegisteredUserId = userId.Value
             };
 
-            bool success = await _contactRepository.UpdateAsync(contact);
+            bool success = await _contactRepository.UpdateAndSaveAsync(contact);
 
             if (success)
             {
@@ -593,7 +593,7 @@ namespace ELKH.Controllers
             }
 
             contact.IsDefault = true;
-            bool success = await _contactRepository.UpdateAsync(contact);
+            bool success = await _contactRepository.UpdateAndSaveAsync(contact);
 
             if (success)
             {

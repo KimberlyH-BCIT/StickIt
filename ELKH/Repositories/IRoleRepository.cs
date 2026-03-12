@@ -6,8 +6,8 @@ namespace ELKH.Repositories
     {
         List<RoleVM> GetAllRoles();
         RoleVM GetRoleById(string roleId);
-        void CreateRole(RoleVM role);
-        void UpdateRole(RoleVM role);
-        void DeleteRole(string roleId);
+        Task CreateRoleAsync(RoleVM role);
+        Task UpdateRoleAsync(RoleVM role);
+        Task DeleteRoleAsync(string roleId);
     }
 }

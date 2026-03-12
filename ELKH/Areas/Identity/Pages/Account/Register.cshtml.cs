@@ -229,7 +229,7 @@ namespace ELKH.Areas.Identity.Pages.Account
                         IsDefault = true,
                         FkRegisteredUserId = registeredUser.PkRegisteredUserId
                     };
-                    await _contactRepository.AddAsync(contact);
+                    await _contactRepository.AddAndSaveAsync(contact);
 
                     // Assign the Customer role to every new registrant.
                     const string customerRole = "Customer";

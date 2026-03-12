@@ -1,10 +1,8 @@
-﻿using ELKH.Data;
-using ELKH.Models;
+﻿using ELKH.Models;
 using ELKH.ViewModels;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc.Rendering;
-using Microsoft.EntityFrameworkCore;
 using static ELKH.Extensions.RateLimitPolicies;
 
 namespace ELKH.Controllers

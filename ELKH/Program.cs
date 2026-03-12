@@ -119,21 +119,20 @@ if (!app.Environment.IsDevelopment())
 // Order: Exception Handling → HTTPS → Compression → Caching → Routing 
 //        → Authentication → Authorization → Endpoints
 // =====================================================================
-// -- Environment-specific error handling
 if (app.Environment.IsDevelopment())
 {
-    // Development: Show detailed error pages with stack traces and database queries
+    // Development: show detailed error page with stack traces and DB queries.
+    app.UseDeveloperExceptionPage();
     app.UseMigrationsEndPoint();
 }
 else
 {
-    // Production: User-friendly error page without sensitive information
-    app.UseExceptionHandler("/Home/Error");
-    // HSTS: Enforce HTTPS for 30 days (prevents downgrade attacks)
+    // HSTS: Enforce HTTPS for 30 days (prevents downgrade attacks).
+    // Exception handling and status-code pages are registered inside UseApplicationMiddleware.
     app.UseHsts();
 }
 
-app.UseStaticFiles();        
+app.UseStaticFiles();
 
 app.UseApplicationMiddleware();
 

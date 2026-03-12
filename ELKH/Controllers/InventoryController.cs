@@ -37,6 +37,7 @@ public async Task<IActionResult> Index()
         }
 
 [HttpPost]
+        [ValidateAntiForgeryToken]
         public async Task<IActionResult> EditProductAmount(int productId, int quantityId)
         {
             await _inventoryRepo.EditProductQuantity(productId, quantityId);
@@ -78,6 +79,7 @@ public async Task<IActionResult> AddImage(int productId)
 
         //Pass
         [HttpPost]
+        [ValidateAntiForgeryToken]
         [RequestSizeLimit(5 * 1024 * 1024)]
         [RequestFormLimits(MultipartBodyLengthLimit = 5 * 1024 * 1024)]
         public async Task<IActionResult> AddImage(int productId, IFormFile file)

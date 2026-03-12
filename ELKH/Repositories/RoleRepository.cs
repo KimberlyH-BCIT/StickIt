@@ -1,4 +1,5 @@
 using Microsoft.AspNetCore.Identity;
+using Microsoft.EntityFrameworkCore;
 using ELKH.Data;
 using ELKH.ViewModels;
 
@@ -14,52 +15,37 @@ namespace ELKH.Repositories
         }
 
         public List<RoleVM> GetAllRoles()
-        {
-            return _context.Roles
-                .Select(r => new RoleVM
-                {
-                    RoleId   = r.Id,
-                    RoleName = r.Name
-                })
+            => _context.Roles
+                .Select(r => new RoleVM { RoleId = r.Id, RoleName = r.Name })
                 .ToList();
-        }
 
         public RoleVM GetRoleById(string roleId)
         {
             var role = _context.Roles.FirstOrDefault(r => r.Id == roleId);
             if (role == null) return null!;
-
-            return new RoleVM
-            {
-                RoleId   = role.Id,
-                RoleName = role.Name
-            };
+            return new RoleVM { RoleId = role.Id, RoleName = role.Name };
         }
 
-        public void CreateRole(RoleVM role)
+        public async Task CreateRoleAsync(RoleVM role)
         {
             _context.Roles.Add(new IdentityRole { Name = role.RoleName });
-            _context.SaveChanges();
+            await _context.SaveChangesAsync();
         }
 
-        public void UpdateRole(RoleVM role)
+        public async Task UpdateRoleAsync(RoleVM role)
         {
-            var existing = _context.Roles.FirstOrDefault(r => r.Id == role.RoleId);
-            if (existing != null)
-            {
-                existing.Name = role.RoleName;
-                _context.SaveChanges();
-            }
+            var existing = await _context.Roles.FirstOrDefaultAsync(r => r.Id == role.RoleId);
+            if (existing is null) return;
+            existing.Name = role.RoleName;
+            await _context.SaveChangesAsync();
         }
 
-        public void DeleteRole(string roleId)
+        public async Task DeleteRoleAsync(string roleId)
         {
-            var role = _context.Roles.FirstOrDefault(r => r.Id == roleId);
-            if (role != null)
-            {
-                _context.Roles.Remove(role);
-                _context.SaveChanges();
-            }
+            var role = await _context.Roles.FirstOrDefaultAsync(r => r.Id == roleId);
+            if (role is null) return;
+            _context.Roles.Remove(role);
+            await _context.SaveChangesAsync();
         }
     }
 }

@@ -25,6 +25,14 @@ namespace ELKH.Extensions
         /// </remarks>
         public static IApplicationBuilder UseApplicationMiddleware(this IApplicationBuilder app)
         {
+            // 0. Exception handler — must be first so it catches errors from all subsequent middleware.
+            //    In Development the developer exception page is used instead (configured in Program.cs).
+            app.UseExceptionHandler("/Error");
+
+            // Status-code pages: 404, 403, 429, etc. are re-executed through /Error/{statusCode}
+            // so users see a consistent branded error page rather than a blank response.
+            app.UseStatusCodePagesWithReExecute("/Error/{0}");
+
             // 1. Security Headers — set on every response before any content is written.
             //    Added first so headers are present even on error pages and redirects.
             app.UseSecurityHeaders();
@@ -87,16 +95,17 @@ namespace ELKH.Extensions
 
                 // Primary browser-side XSS defence: restrict sources for scripts, styles,
                 // images, and other resource types to same-origin by default.
+                // PayPal SDK is loaded from www.paypal.com; it communicates with the PayPal
+                // checkout page (www.paypal.com) and the sandbox/live API (api-m.*.paypal.com).
                 // 'unsafe-inline' for style-src is required by Bootstrap/inline styles.
-                // Tighten this policy (remove unsafe-inline, add nonces) once a CSP-ready
-                // front-end build pipeline is in place.
                 context.Response.Headers["Content-Security-Policy"] =
                     "default-src 'self'; " +
-                    "script-src 'self'; " +
+                    "script-src 'self' https://www.paypal.com https://www.sandbox.paypal.com; " +
                     "style-src 'self' 'unsafe-inline'; " +
-                    "img-src 'self' data:; " +
+                    "img-src 'self' data: https://www.paypalobjects.com; " +
                     "font-src 'self'; " +
-                    "connect-src 'self'; " +
+                    "connect-src 'self' https://api-m.paypal.com https://api-m.sandbox.paypal.com; " +
+                    "frame-src https://www.paypal.com https://www.sandbox.paypal.com; " +
                     "frame-ancestors 'self';";
 
                 await next();
