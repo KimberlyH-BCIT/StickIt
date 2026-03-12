@@ -1,0 +1,25 @@
+﻿@model IEnumerable<OrderDetailsVM>
+
+<table>
+    <thead>
+        <tr>
+            <td>Order Id</td>
+            <td>User Email</td>
+            <td>Delivery Status</td>
+            <td></td>
+        </tr>
+    </thead>
+    <tbody>
+        @foreach(var order in Model)
+        {
+            <tr>
+                <td>@order.OrderId</td>
+                <td>@order.UserEmail</td>
+                <td>@order.DeliveryStatus</td>
+                <td>
+                    <a asp-controller="OrderHistoryStaff" asp-action="OrderDetail" asp-route-orderId="@order.OrderId">Details</a>
+                </td>
+            </tr>
+        }
+    </tbody>
+</table>

@@ -19,6 +19,7 @@ builder.Services.AddScoped<InventoryRepo>();
 builder.Services.AddScoped<IRole_repo, Role_repo>();
 builder.Services.AddScoped<OrderHistoryManagementRepo>();
 builder.Services.AddScoped<InventoryRepo>();
+builder.Services.AddScoped<OrderHistoryStaffRepo>();
 
 
 // Add services to the container.

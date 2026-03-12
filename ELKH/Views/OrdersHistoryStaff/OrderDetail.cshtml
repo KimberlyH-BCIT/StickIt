@@ -1,0 +1,30 @@
+﻿@model OrderDetailsVM
+
+<h2>User: <span>@Model.UserEmail</span></h2>
+<h2>Order ID: <span>@Model.OrderId</span></h2>
+<h2>Transaction ID: <span>@Model.TransactionId</span></h2>
+
+<table>
+    <thead>
+        <tr>
+            <td>SKU</td>
+            <td>Product Name</td>
+            <td>Quantity</td>
+            <td>Unit Price</td>
+        </tr>
+    </thead>
+    <tbody>
+        @foreach(var product in Model.OrderItems)
+        {
+            <tr>
+                <td>@product.ProductId</td>
+                <td>@product.ProductName</td>
+                <td>@product.Quantity</td>
+                <td>@product.ProductPrice</td>
+            </tr>
+        }
+        <tr>
+            <td>Total Price:@Model.TotalPrice</td>
+        </tr>
+    </tbody>
+</table>
