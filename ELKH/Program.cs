@@ -9,9 +9,6 @@ using Microsoft.EntityFrameworkCore;
 
 var builder = WebApplication.CreateBuilder(args);
 
-builder.Services.AddScoped<OrderHistoryManagementRepo>();
-builder.Services.AddScoped<InventoryRepo>();
-
 // -- Database and Identity
 // SQLite database with Entity Framework Core. Connection string is required
 // and will throw if missing to fail fast during startup.
@@ -19,8 +16,10 @@ var connectionString = builder.Configuration.GetConnectionString("DefaultConnect
     ?? throw new InvalidOperationException("Connection string 'DefaultConnection' not found.");
 builder.Services.AddDbContext<ApplicationDbContext>(options => options.UseSqlite(connectionString));
 
+var imageStoreConnection = builder.Configuration.GetConnectionString("ImageStoreConnection")
+    ?? throw new InvalidOperationException("Connection string 'ImageStoreConnection' not found.");
 builder.Services.AddDbContext<ImageStoreContext>(options =>
-    options.UseSqlite(builder.Configuration.GetConnectionString("ImageStoreConnection")));
+    options.UseSqlite(imageStoreConnection));
 builder.Services.AddDatabaseDeveloperPageExceptionFilter();
 
 // ASP.NET Core Identity with email confirmation requirement.
@@ -77,7 +76,6 @@ builder.Services.AddHttpClient<IReCaptchaService, ReCaptchaService>();
 
 // Register repositories whose callers inject the concrete type or interface not covered by AddRepositories()
 builder.Services.AddScoped<ICartRepo, CartRepo>();
-builder.Services.AddScoped<TransactionRepo>();
 // -- Application Services (using extension methods for cleaner organization)
 // All service registrations are grouped by functionality in extension methods.
 // See Extensions/ServiceCollectionExtensions.cs for implementation details.
@@ -141,6 +139,37 @@ app.UseApplicationMiddleware();
 // =====================================================================
 app.UseApplicationEndpoints();
 
-app.MapHealthChecks("/health");
+// =====================================================================
+// Database migration and seeding
+// =====================================================================
+// Migrations: controlled by Database:ApplyMigrationsOnStartup (defaults true
+// in Development, false elsewhere). Database:AllowMigrationInProduction must
+// ALSO be true before migrations run outside Development — the double-guard
+// prevents accidental schema changes on a shared production database.
+//
+// Seeding: fully idempotent — each seeder checks for existing data and
+// returns immediately when the database is already populated.
+await using (var scope = app.Services.CreateAsyncScope())
+{
+    var sp = scope.ServiceProvider;
+    var db = sp.GetRequiredService<ApplicationDbContext>();
+
+    var applyMigrations     = app.Configuration.GetValue<bool?>("Database:ApplyMigrationsOnStartup")
+                                  ?? app.Environment.IsDevelopment();
+    var allowInProduction   = app.Configuration.GetValue<bool>("Database:AllowMigrationInProduction");
+
+    if (applyMigrations && (app.Environment.IsDevelopment() || allowInProduction))
+    {
+        await db.Database.MigrateAsync();
+        await sp.GetRequiredService<ImageStoreContext>().Database.MigrateAsync();
+    }
+
+    var userManager = sp.GetRequiredService<UserManager<IdentityUser>>();
+    var roleManager = sp.GetRequiredService<RoleManager<IdentityRole>>();
+
+    await DbSeeder.SeedProductsAsync(db);
+    await DbSeeder.SeedAdminAsync(userManager, roleManager, app.Configuration);
+    await DbSeeder.SeedCustomersAsync(db, userManager, app.Environment.WebRootPath);
+}
 
 app.Run();

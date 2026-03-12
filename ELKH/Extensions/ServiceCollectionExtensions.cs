@@ -54,38 +54,37 @@ namespace ELKH.Extensions
             services.AddScoped<IRegisteredUserLogRepo, RegisteredUserLogRepo>();
             services.AddScoped<IRegisteredUserProfileRepo, RegisteredUserProfileRepo>();
             services.AddScoped<IContactDetailRepo, ContactDetailRepo>();
+            services.AddScoped<IOrderHistoryManagementRepo, OrderHistoryManagementRepo>();
+            services.AddScoped<IInventoryRepo, InventoryRepo>();
+            services.AddScoped<IOrderRepo, OrderRepo>();
+            services.AddScoped<ITransactionRepo, TransactionRepo>();
 
             return services;
         }
 
         /// <summary>
         /// Register email services with adapter pattern for Identity compatibility.
+        /// In Development, FileEmailSender writes emails to disk. In all other environments,
+        /// SmtpEmailSender wrapped in EmailSenderAdapter is used. Only the active sender is
+        /// instantiated per request scope; the unused implementation is never created.
         /// </summary>
         public static IServiceCollection AddEmailServices(this IServiceCollection services)
         {
-            // Register concrete implementations
-            services.AddScoped<SmtpEmailSender>();
-            services.AddScoped<EmailSenderAdapter>();
-            services.AddScoped<FileEmailSender>();
-
-            // Choose the effective IEmailSender implementation based on environment.
-            // In Development, use FileEmailSender to save emails to disk rather than sending
-            // them over the network. In other environments, use the EmailSenderAdapter
-            // which delegates to SmtpEmailSender.
+            // Construct only the sender that is needed for the current environment.
             services.AddScoped<IEmailSender>(sp =>
             {
                 var env = sp.GetRequiredService<Microsoft.Extensions.Hosting.IHostEnvironment>();
-                if (env.IsDevelopment()) return sp.GetRequiredService<FileEmailSender>();
-                return sp.GetRequiredService<EmailSenderAdapter>();
+                if (env.IsDevelopment())
+                    return Microsoft.Extensions.DependencyInjection.ActivatorUtilities.CreateInstance<FileEmailSender>(sp);
+                var smtp = Microsoft.Extensions.DependencyInjection.ActivatorUtilities.CreateInstance<SmtpEmailSender>(sp);
+                return new EmailSenderAdapter(smtp);
             });
 
+            // Forward the Identity interface to the same scoped instance so both
+            // interfaces share one object per request scope.
             services.AddScoped<Microsoft.AspNetCore.Identity.UI.Services.IEmailSender>(sp =>
-            {
-                var env = sp.GetRequiredService<Microsoft.Extensions.Hosting.IHostEnvironment>();
-                if (env.IsDevelopment()) return sp.GetRequiredService<FileEmailSender>();
-                return sp.GetRequiredService<EmailSenderAdapter>();
-            });
-            
+                (Microsoft.AspNetCore.Identity.UI.Services.IEmailSender)sp.GetRequiredService<IEmailSender>());
+
             return services;
         }
 

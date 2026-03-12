@@ -237,12 +237,8 @@ public async Task<IActionResult> AssignRoles(string? userId, string? returnTo, s
             var role = await _roleManager.FindByIdAsync(roleId);
             if (role == null) return NotFound();
 
-            var usersInRole = new List<IdentityUser>();
-            foreach (var user in _userManager.Users)
-            {
-                if (role.Name != null && await _userManager.IsInRoleAsync(user, role.Name))
-                    usersInRole.Add(user);
-            }
+            // Single query instead of one IsInRoleAsync call per user.
+            var usersInRole = await _userManager.GetUsersInRoleAsync(role.Name!);
 
             ViewBag.RoleId = role.Id;
             ViewBag.RoleName = role.Name;

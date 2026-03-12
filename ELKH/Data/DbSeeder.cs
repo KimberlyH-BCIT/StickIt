@@ -293,8 +293,12 @@ public static class DbSeeder
         // Read from user-secrets / environment variables.
         // The fallback values are intentionally weak dev-only defaults;
         // they must be overridden for any shared or internet-accessible environment.
-        var adminEmail = configuration["Seed:AdminEmail"] ?? "admin@stickit.dev";
-        var adminPass  = configuration["Seed:AdminPass"]  ?? "Admin@2025!";
+        // IsNullOrWhiteSpace guards against the empty-string values in appsettings.json,
+        // which would never satisfy the ?? operator and would create a credential-less account.
+        var adminEmail = configuration["Seed:AdminEmail"];
+        if (string.IsNullOrWhiteSpace(adminEmail)) adminEmail = "admin@stickit.dev";
+        var adminPass  = configuration["Seed:AdminPass"];
+        if (string.IsNullOrWhiteSpace(adminPass))  adminPass  = "Admin@2025!";
 
         // Ensure both roles exist regardless of whether the users already exist.
         if (!await roleManager.RoleExistsAsync(adminRole))

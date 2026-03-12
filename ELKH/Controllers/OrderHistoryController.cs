@@ -12,7 +12,7 @@ namespace ELKH.Controllers
     [Authorize(Roles = "Admin")]
     public class OrderHistoryController : Controller
     {
-        private readonly OrderHistoryManagementRepo _orderManagementRepo;
+        private readonly IOrderHistoryManagementRepo _orderManagementRepo;
         private readonly IOrderEmailService _orderEmail;
         private readonly IRegisteredUserProfileRepo _profileRepo;
 
@@ -31,7 +31,7 @@ namespace ELKH.Controllers
         ];
 
         public OrderHistoryController(
-            OrderHistoryManagementRepo orderManagementRepo,
+            IOrderHistoryManagementRepo orderManagementRepo,
             IOrderEmailService orderEmail,
             IRegisteredUserProfileRepo profileRepo)
         {

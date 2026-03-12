@@ -597,7 +597,7 @@ namespace ELKH.Controllers
                 ,
                 // Any() guard prevents the InvalidOperationException that Average() throws
                 // on an empty sequence; unrated products default to zero.
-                AverageRating = p.ProductRatings.Any() ? p.ProductRatings.Average(r => r.Rating) : 0
+                AverageRating = p.ProductRatings != null && p.ProductRatings.Any() ? p.ProductRatings.Average(r => r.Rating) : 0
             };
         }
 

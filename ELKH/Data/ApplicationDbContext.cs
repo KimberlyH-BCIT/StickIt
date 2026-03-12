@@ -36,6 +36,8 @@ namespace ELKH.Data
         public DbSet<UserLogModel> UserLogs { get; set; }
         public DbSet<UserProfileModel> UserProfiles { get; set; }
         public DbSet<FuzzySuggestionModel> FuzzySuggestions { get; set; }
+        public DbSet<AuditEntryModel> AuditEntries { get; set; }
+        public DbSet<CachedFuzzyKeyModel> CachedFuzzyKeys { get; set; }
 
         /// <summary>
         /// Configures entity relationships, indexes, and table mappings for the application.
@@ -51,19 +53,24 @@ namespace ELKH.Data
                 .WithOne(w => w.RegisteredUser)
                 .HasForeignKey<WishListModel>(w => w.FkUserId);
 
-            // Many-to-one: WishListItem -> WishList (join entity for many-to-many between users and products)
-            modelBuilder.Entity<WishListItemModel>()
-                .HasOne(wi => wi.WishList)
-                .WithMany(w => w.WishListItems)
-                .HasForeignKey(wi => wi.FkWishListId)
-                .OnDelete(DeleteBehavior.Cascade);
-
-            // Many-to-one: WishListItem -> Product (join entity for many-to-many between wishlists and products)
-            modelBuilder.Entity<WishListItemModel>()
-                .HasOne(wi => wi.Product)
-                .WithMany(p => p.WishListItems)
-                .HasForeignKey(wi => wi.FkProductId)
-                .OnDelete(DeleteBehavior.Cascade);
+            // Many-to-many: WishList -> Products via WishListItemModel.
+            // UsingEntity consolidates the two separate WishListItem relationship configs
+            // into a single declaration and exposes a direct Products skip-navigation on
+            // WishListModel so callers can query wishlist.Products without going through
+            // WishListItems. No schema changes — the existing join table is reused.
+            modelBuilder.Entity<WishListModel>()
+                .HasMany(w => w.Products)
+                .WithMany()
+                .UsingEntity<WishListItemModel>(
+                    r => r.HasOne(wi => wi.Product)
+                          .WithMany(p => p.WishListItems)
+                          .HasForeignKey(wi => wi.FkProductId)
+                          .OnDelete(DeleteBehavior.Cascade),
+                    l => l.HasOne(wi => wi.WishList)
+                          .WithMany(w => w.WishListItems)
+                          .HasForeignKey(wi => wi.FkWishListId)
+                          .OnDelete(DeleteBehavior.Cascade)
+                );
 
             // One-to-one: Order <-> Transaction (each order has a single payment transaction)
             modelBuilder.Entity<OrderModel>()

@@ -83,43 +83,64 @@ namespace ELKH.Controllers
         /*============================== List Of All Users ==============================*/
         public async Task<IActionResult> ListUsers(string search, string roleFilter, int page = 1)
         {
-            int pageSize = 5;
-            var users = _userManager.Users.ToList();
-            var userList = new List<UserListVM>();
+            const int pageSize = 5;
 
-            foreach (var user in users)
+            // Candidate set: either all users in the requested role (single query)
+            // or the full user table narrowed by the email search predicate in the DB.
+            IList<IdentityUser> candidates;
+
+            bool hasRoleFilter = !string.IsNullOrEmpty(roleFilter) && roleFilter != "All";
+
+            if (hasRoleFilter)
+            {
+                // Single server-side query: returns only users assigned to this role.
+                candidates = await _userManager.GetUsersInRoleAsync(roleFilter);
+
+                // Apply optional email search in-memory on the (already small) role-member list.
+                if (!string.IsNullOrEmpty(search))
+                {
+                    candidates = candidates
+                        .Where(u => u.Email?.Contains(search, StringComparison.OrdinalIgnoreCase) ?? false)
+                        .ToList();
+                }
+            }
+            else
+            {
+                // Push the email filter to the database; avoid loading all users into memory.
+                IQueryable<IdentityUser> query = _userManager.Users;
+                if (!string.IsNullOrEmpty(search))
+                    query = query.Where(u => u.Email != null && u.Email.Contains(search));
+
+                candidates = await query.ToListAsync();
+            }
+
+            int totalUsers = candidates.Count;
+
+            // Materialise only the current page before the per-user role look-ups.
+            var pageUsers = candidates
+                .Skip((page - 1) * pageSize)
+                .Take(pageSize)
+                .ToList();
+
+            // GetRolesAsync is called only for the paged slice (≤ pageSize users).
+            var userList = new List<UserListVM>(pageUsers.Count);
+            foreach (var user in pageUsers)
             {
                 var roles = await _userManager.GetRolesAsync(user);
                 userList.Add(new UserListVM
                 {
-                    Id = user.Id,
-                    Email = user.Email,
+                    Id    = user.Id,
+                    Email = user.Email ?? string.Empty,
                     Roles = roles.ToList()
                 });
             }
 
-            if (!string.IsNullOrEmpty(search))
-            {
-                userList = userList
-                    .Where(u => (u.Email?.Contains(search, StringComparison.OrdinalIgnoreCase) ?? false)
-                             || u.Roles.Any(r => r.Contains(search, StringComparison.OrdinalIgnoreCase)))
-                    .ToList();
-            }
-
-            if (!string.IsNullOrEmpty(roleFilter) && roleFilter != "All")
-            {
-                userList = userList.Where(u => u.Roles.Contains(roleFilter)).ToList();
-            }
-
-            int totalUsers = userList.Count;
-            var pagedUsers = userList.Skip((page - 1) * pageSize).Take(pageSize).ToList();
-
             ViewBag.CurrentPage = page;
-            ViewBag.TotalPages = (int)Math.Ceiling((double)totalUsers / pageSize);
-            ViewBag.Search = search;
-            ViewBag.RoleFilter = roleFilter;
+            ViewBag.TotalPages  = (int)Math.Ceiling((double)totalUsers / pageSize);
+            ViewBag.Search      = search;
+            ViewBag.RoleFilter  = roleFilter;
 
-            return View(pagedUsers);
+            return View(userList);
         }
 
         /*============================== Account Details ==============================*/
@@ -355,7 +376,7 @@ WHERE PkProductId NOT IN (SELECT rowid FROM ProductFTS);
             if (svc == null)
                 return Json(new { success = false, message = "service unavailable" });
 
-            var suggestionCount = _context.Set<FuzzySuggestionModel>().Count();
+            var suggestionCount = _context.FuzzySuggestions.Count();
 
             return Json(new
             {
@@ -381,8 +402,8 @@ WHERE PkProductId NOT IN (SELECT rowid FROM ProductFTS);
         {
             try
             {
-                var count = _context.Set<CachedFuzzyKeyModel>().Count();
-                var lastClear = _context.Set<AuditEntryModel>()
+                var count = _context.CachedFuzzyKeys.Count();
+                var lastClear = _context.AuditEntries
                     .Where(a => a.Action == "ClearFuzzyCache")
                     .OrderByDescending(a => a.Timestamp)
                     .Select(a => a.Timestamp)
@@ -435,7 +456,7 @@ WHERE PkProductId NOT IN (SELECT rowid FROM ProductFTS);
             var reason = payload.Reason;
 
             // Step 2: Load persisted cache keys and clear them
-            var keys = _context.Set<CachedFuzzyKeyModel>().ToList();
+            var keys = _context.CachedFuzzyKeys.ToList();
             var registryCount = 0;
 
             if (keys.Any())
@@ -450,7 +471,7 @@ WHERE PkProductId NOT IN (SELECT rowid FROM ProductFTS);
                 // Remove persisted registry
                 try
                 {
-                    _context.Set<CachedFuzzyKeyModel>().RemoveRange(keys);
+                    _context.CachedFuzzyKeys.RemoveRange(keys);
                     _context.SaveChanges();
                 }
                 catch { }

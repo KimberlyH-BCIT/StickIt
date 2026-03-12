@@ -279,7 +279,7 @@ namespace ELKH.Controllers
                 _profileRepository.UpdateAndSave(existing);
             }
 
-            _logRepository.LogActivityAsync(email, "AvatarUploaded", $"Uploaded profile picture ({file.ContentType}, {file.Length} bytes)");
+            await _logRepository.LogActivityAsync(email, "AvatarUploaded", $"Uploaded profile picture ({file.ContentType}, {file.Length} bytes)");
             SetSuccessMessage("Profile picture updated successfully.");
             return RedirectToAction(nameof(EditProfile));
         }
@@ -501,7 +501,7 @@ namespace ELKH.Controllers
                 SetErrorMessage("Failed to update address");
             }
 
-            return RedirectToAction(nameof(EditProfile));
+            return RedirectToAction(nameof(Addresses));
         }
 
         // GET: User/DeleteAddress/5

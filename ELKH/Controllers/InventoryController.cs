@@ -14,9 +14,9 @@ namespace ELKH.Controllers
 [Authorize(Roles = "Admin")]
 public class InventoryController : Controller
 {
-    private readonly InventoryRepo _inventoryRepo;
+    private readonly IInventoryRepo _inventoryRepo;
 
-    public InventoryController(InventoryRepo inventoryRepo)
+        public InventoryController(IInventoryRepo inventoryRepo)
         {
             _inventoryRepo = inventoryRepo;
         }

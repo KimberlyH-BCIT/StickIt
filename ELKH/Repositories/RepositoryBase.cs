@@ -33,7 +33,7 @@ namespace ELKH.Repositories
             catch (Exception ex)
             {
                 Logger.LogError(ex, "Error retrieving {EntityType} with ID {Id}", typeof(TEntity).Name, id);
-                return null;
+                throw;
             }
         }
 
@@ -49,7 +49,7 @@ namespace ELKH.Repositories
             catch (Exception ex)
             {
                 Logger.LogError(ex, "Error retrieving {EntityType} with ID {Id}", typeof(TEntity).Name, id);
-                return null;
+                throw;
             }
         }
 
@@ -65,7 +65,7 @@ namespace ELKH.Repositories
             catch (Exception ex)
             {
                 Logger.LogError(ex, "Error retrieving all {EntityType}", typeof(TEntity).Name);
-                return Enumerable.Empty<TEntity>();
+                throw;
             }
         }
 
@@ -81,7 +81,7 @@ namespace ELKH.Repositories
             catch (Exception ex)
             {
                 Logger.LogError(ex, "Error retrieving all {EntityType}", typeof(TEntity).Name);
-                return Enumerable.Empty<TEntity>();
+                throw;
             }
         }
 

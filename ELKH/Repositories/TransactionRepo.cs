@@ -8,7 +8,7 @@ namespace ELKH.Repositories
     /// Repository for read-only transaction queries used by admin listing views.
     /// Projects directly to <see cref="TransactionVM"/> to avoid loading full entity graphs.
     /// </summary>
-    public class TransactionRepo
+    public class TransactionRepo : ITransactionRepo
     {
         private readonly ApplicationDbContext _context;
 

@@ -129,7 +129,7 @@ namespace ELKH.Services
                                     .Where(wi => wi.Product.DiscountPercent > 0)
                                     .OrderByDescending(wi => wi.Product.DiscountPercent),
                 "most_popular" => baseQuery
-                                    .OrderByDescending(wi => wi.Product.ProductRatings
+                                    .OrderByDescending(wi => wi.Product!.ProductRatings!
                                         .Count(r => r.Approved && !r.IsDeleted)),
                 _              => baseQuery.OrderByDescending(wi => wi.DateAdded)
             };
@@ -177,7 +177,7 @@ namespace ELKH.Services
             IQueryable<OrderModel> query = sort switch
             {
                 "date_asc"     => baseQuery.Include(o => o.OrderItems).OrderBy(o => o.CreatedAt),
-                "on_sale"      => baseQuery.Include(o => o.OrderItems).Where(o => o.OrderItems.Any(oi => oi.Product.DiscountPercent > 0)).OrderByDescending(o => o.CreatedAt),
+                "on_sale"      => baseQuery.Include(o => o.OrderItems).Where(o => o.OrderItems.Any(oi => oi.Product!.DiscountPercent > 0)).OrderByDescending(o => o.CreatedAt),
                 "most_popular" => baseQuery.Include(o => o.OrderItems).OrderByDescending(o => o.OrderItems.Sum(oi => oi.Quantity)),
                 _              => baseQuery.Include(o => o.OrderItems).OrderByDescending(o => o.CreatedAt)
             };

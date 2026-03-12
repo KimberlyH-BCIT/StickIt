@@ -10,7 +10,7 @@ namespace ELKH.Repositories
     /// Provides queries that eager-load only the navigation properties
     /// required by each view, avoiding unnecessary over-fetching.
     /// </summary>
-    public class OrderHistoryManagementRepo
+    public class OrderHistoryManagementRepo : IOrderHistoryManagementRepo
     {
         private ApplicationDbContext _context;
 

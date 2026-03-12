@@ -123,30 +123,29 @@ WHERE PkProductId NOT IN (SELECT rowid FROM ProductFTS);
 
             // Precompute top fuzzy suggestions: simple approach - store normalized name and metadata.
             //
-            // We remove existing suggestion records and insert a replacement set. This is a
-            // coarse-grained approach (full replace) but keeps the logic straightforward and
-            // avoids complex incremental update code. The dataset is expected to be small
-            // enough that this is acceptable in the target environment.
+            // The delete and insert are wrapped in a single transaction so concurrent
+            // search requests never observe an empty suggestion table between the two steps.
             try
             {
                 var suggestions = await db.Products
                     .Select(p => new ELKH.Models.FuzzySuggestionModel
                     {
-                        PkProductId = p.PkProductId,
-                        Name = p.Name,
+                        PkProductId    = p.PkProductId,
+                        Name           = p.Name,
                         NameNormalized = p.Name.ToLowerInvariant(),
-                        Price = p.Price,
-                        Thumbnail = p.ProductImage!.Select(pi => pi.ProductImageURL).FirstOrDefault() ?? string.Empty,
-                        CreatedAt = DateTime.UtcNow
+                        Price          = p.Price,
+                        Thumbnail      = p.ProductImage!.Select(pi => pi.ProductImageURL).FirstOrDefault() ?? string.Empty,
+                        CreatedAt      = DateTime.UtcNow
                     })
                     .ToListAsync(cancellationToken);
 
-                // replace existing suggestions
-                db.FuzzySuggestions.RemoveRange(db.FuzzySuggestions);
-                await db.SaveChangesAsync(cancellationToken);
+                using var tx = await db.Database.BeginTransactionAsync(cancellationToken);
 
+                await db.Database.ExecuteSqlRawAsync("DELETE FROM FuzzySuggestions", cancellationToken);
                 db.FuzzySuggestions.AddRange(suggestions);
                 await db.SaveChangesAsync(cancellationToken);
+
+                await tx.CommitAsync(cancellationToken);
 
                 _logger.LogInformation("Fuzzy suggestions reindexed: {Count}", suggestions.Count);
                 lock (_metricsLock)

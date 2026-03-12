@@ -141,7 +141,7 @@ namespace ELKH.Areas.Identity.Pages.Account
 
                     if (await _userManager.IsInRoleAsync(user, "Staff"))
                     {
-                        return RedirectToAction("Index", "Staff");
+                        return RedirectToAction("Index", "Home");
                     }
 
                     return RedirectToAction("Index", "Home");

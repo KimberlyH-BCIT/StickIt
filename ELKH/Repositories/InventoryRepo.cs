@@ -9,7 +9,7 @@ namespace ELKH.Repositories
     /// Repository for inventory management operations including product queries,
     /// stock quantity updates, and product image uploads.
     /// </summary>
-    public class InventoryRepo
+    public class InventoryRepo : IInventoryRepo
     {
         private readonly ApplicationDbContext _context;
         private readonly ImageStoreContext _imageDb;

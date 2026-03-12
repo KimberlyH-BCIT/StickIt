@@ -52,7 +52,7 @@ namespace ELKH.Controllers
 
             if (!string.IsNullOrEmpty(search))
                 query = query.Where(p => p.Name.Contains(search) ||
-                                         p.Category.CategoryName.Contains(search));
+                                         (p.Category != null && p.Category.CategoryName.Contains(search)));
 
             if (stockFilter == "low")
                 query = query.Where(p => p.StockQuantity <= 5);
