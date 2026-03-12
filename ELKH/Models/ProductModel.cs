@@ -72,9 +72,6 @@ public int? StockQuantity { get; set; } = 0;
         /// Foreign key to the product's category (required).
         /// </summary>
         public int FkCategoryId { get; set; }
-
-        //Product Image Relationship
-        public ICollection<ImageModel>? ProductImages { get; set; }
         /// <summary>
         /// Navigation property to the product's category.
         /// Used for category filtering and display.

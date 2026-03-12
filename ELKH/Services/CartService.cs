@@ -146,7 +146,8 @@ namespace ELKH.Services
                 {
                     FkOrderId   = order.PkOrderId,
                     FkProductId = itemId,
-                    Quantity    = quantity
+                    Quantity    = quantity,
+                    UnitPrice   = effective
                 });
 
                 product.StockQuantity = (product.StockQuantity) - quantity;
@@ -318,7 +319,8 @@ namespace ELKH.Services
                         { 
                             FkOrderId = order.PkOrderId,
                             FkProductId = c.FkProductID,
-                            Quantity = c.Quantity
+                            Quantity = c.Quantity,
+                            UnitPrice = products[c.FkProductID].GetEffectivePrice()
                         });
                         products[c.FkProductID].StockQuantity =
                             (products[c.FkProductID].StockQuantity) - c.Quantity;

@@ -53,7 +53,7 @@ namespace ELKH.Controllers
             var orderVM = orders.Select(o => new OrderDetailsVM
             {
                 OrderId        = o.PkOrderId,
-                UserEmail      = o.RegisteredUser.Email,
+                UserEmail      = o.RegisteredUser?.Email ?? string.Empty,
                 DeliveryStatus = o.DeliveryStatus,
             }).ToList();
 
@@ -82,17 +82,18 @@ namespace ELKH.Controllers
 
             // Map the full domain model to a flat VM consumed by the view.
             // Transaction and RegisteredUser are included by GetByIdAsync.
+            // Transaction may be null for orders that have not yet been paid (Pending status).
             var detailsVM = new OrderDetailsVM
             {
                 OrderId       = details.PkOrderId,
-                UserEmail     = details.RegisteredUser.Email,
-                TransactionId = details.Transaction.PkTransactionId,
+                UserEmail     = details.RegisteredUser?.Email ?? string.Empty,
+                TransactionId = details.Transaction?.PkTransactionId ?? 0,
                 OrderItems    = details.OrderItems.Select(oi => new OrderItemVM
                 {
-                    ProductId    = oi.Product.PkProductId,
+                    ProductId    = oi.Product?.PkProductId ?? 0,
                     Quantity     = oi.Quantity,
-                    ProductName  = oi.Product.Name,
-                    ProductPrice = oi.Product.Price
+                    ProductName  = oi.Product?.Name ?? string.Empty,
+                    ProductPrice = oi.Product?.Price ?? 0m
                 }).ToList()
             };
             return View(detailsVM);

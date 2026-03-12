@@ -62,9 +62,6 @@ namespace ELKH.Models
         //Relationship with Transaction
         public TransactionModel? Transaction { get; set; }
 
-        //Order Status Relationship
-        public OrderStatusModel? OrderStatuses { get; set; }
-
         /// <summary>
         /// Foreign key to the shipping/delivery address for this order.
         /// </summary>

@@ -101,7 +101,7 @@ namespace ELKH.Controllers
             if (!string.IsNullOrEmpty(search))
             {
                 userList = userList
-                    .Where(u => u.Email.Contains(search, StringComparison.OrdinalIgnoreCase)
+                    .Where(u => (u.Email?.Contains(search, StringComparison.OrdinalIgnoreCase) ?? false)
                              || u.Roles.Any(r => r.Contains(search, StringComparison.OrdinalIgnoreCase)))
                     .ToList();
             }
@@ -135,7 +135,16 @@ namespace ELKH.Controllers
             if (user == null) return NotFound();
 
             var roles = await _userManager.GetRolesAsync(user);
-            var contact = await _context.ContactDetails.FirstOrDefaultAsync(c => c.UserId == user.Id);
+
+            // Resolve the application-side RegisteredUser by email so we can look up
+            // the contact detail via the canonical FK (FkRegisteredUserId) rather than
+            // the Identity GUID string, which may not be populated on all rows.
+            var registeredUser = await _context.RegisteredUsers
+                .FirstOrDefaultAsync(r => r.Email == user.Email);
+            var contact = registeredUser is null
+                ? null
+                : await _context.ContactDetails
+                    .FirstOrDefaultAsync(c => c.FkRegisteredUserId == registeredUser.PkRegisteredUserId);
 
             var vm = new AccountDetailsVM
             {
@@ -164,6 +173,8 @@ namespace ELKH.Controllers
             return View(vm);
         }
 
+        [HttpPost]
+        [ValidateAntiForgeryToken]
         public async Task<IActionResult> RemoveRole(string userId, string role)
         {
             if (string.IsNullOrEmpty(userId) || string.IsNullOrEmpty(role))
@@ -185,7 +196,7 @@ namespace ELKH.Controllers
         /*============================== Manage Sales ==============================*/
         public async Task<IActionResult> ManageSales()
         {
-            var now = DateTime.Now;
+            var now = DateTime.UtcNow;
             var weekStart = now.AddDays(-6).Date;
             var monthStart = new DateTime(now.Year, now.Month, 1);
             var yearStart = now.AddMonths(-11).Date;

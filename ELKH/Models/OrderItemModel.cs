@@ -19,6 +19,13 @@ namespace ELKH.Models
         public int Quantity { get; set; } = 1;
 
         /// <summary>
+        /// Unit price of the product at the time of purchase (after any discount).
+        /// Stored as a snapshot so historical line totals remain accurate even if
+        /// the product price is later changed.
+        /// </summary>
+        public decimal UnitPrice { get; set; } = 0;
+
+        /// <summary>
         /// Foreign key to the order this item belongs to.
         /// </summary>
         public int FkOrderId { get; set; }

@@ -225,7 +225,6 @@ namespace ELKH.Areas.Identity.Pages.Account
                         PostCode = Input.PostCode,
                         Country = Input.Country,
                         IsDefault = true,
-                        UserId = user.Id,
                         FkRegisteredUserId = registeredUser.PkRegisteredUserId
                     };
                     await _contactRepository.AddAsync(contact);

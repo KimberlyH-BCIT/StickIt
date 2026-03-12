@@ -24,7 +24,7 @@ public class CartRepo : ICartRepo
     public async Task<IEnumerable<CartModel>> GetByUserIdAsync(int registeredUserId) =>
         await _context.Carts
             .Include(c => c.Product)
-                .ThenInclude(p => p.ProductImages)
+                .ThenInclude(p => p.ProductImage)
             .Where(c => c.FkRegisteredUserId == registeredUserId)
             .ToListAsync();
 

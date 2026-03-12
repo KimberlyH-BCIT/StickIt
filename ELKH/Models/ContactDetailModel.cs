@@ -74,7 +74,5 @@ public ICollection<TransactionModel>? Transactions { get; set; }
 
 // Relationship with Order
 public ICollection<OrderModel> Orders { get; set; } = new List<OrderModel>();
-
-public string UserId { get; internal set; }
     }
 }

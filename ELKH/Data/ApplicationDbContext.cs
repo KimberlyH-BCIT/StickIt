@@ -23,7 +23,6 @@ namespace ELKH.Data
 
         public DbSet<ProductModel> Products { get; set; }
         public DbSet<CategoryModel> Categories { get; set; }
-        public DbSet<ImageModel> ProductImages { get; set; }
         public DbSet<ProductImageModel> ProductImage { get; set; }
         public DbSet<RegisteredUserModel> RegisteredUsers { get; set; }
         public DbSet<CartModel> Carts { get; set; }
@@ -31,7 +30,6 @@ namespace ELKH.Data
         public DbSet<OrderItemModel> OrderItems { get; set; }
         public DbSet<TransactionModel> Transactions { get; set; }
         public DbSet<ContactDetailModel> ContactDetails { get; set; }
-        public DbSet<OrderStatusModel> OrderStatuses { get; set; }
         public DbSet<ProductRatingModel> ProductRatings { get; set; }
         public DbSet<WishListModel> WishLists { get; set; }
         public DbSet<WishListItemModel> WishListItems { get; set; }
@@ -46,12 +44,6 @@ namespace ELKH.Data
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
             base.OnModelCreating(modelBuilder);
-
-            // One-to-one: Order <-> OrderStatus (each order has a single status record)
-            modelBuilder.Entity<OrderModel>()
-                .HasOne(o => o.OrderStatuses)
-                .WithOne(d => d.Order)
-                .HasForeignKey<OrderStatusModel>(o => o.FkOrderId);
 
             // One-to-one: RegisteredUser <-> WishList (each user has a single wishlist)
             modelBuilder.Entity<RegisteredUserModel>()
