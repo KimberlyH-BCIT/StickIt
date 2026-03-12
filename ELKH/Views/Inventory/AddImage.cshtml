@@ -1,49 +1,4 @@
 ﻿@model ELKH.Models.ImageModel
-@* 
-@{
-    ViewData["Title"] = "Add Product Image";
-}
-<h1 class="display-4">Upload Product Image</h1>
-    <div id="dropZone" style="
-        border: 2px dashed #999;
-        padding: 40px;
-<form asp-controller="Inventory" asp-action="AddImage" method="post"
-      enctype="multipart/form-data">
-        border-radius: 10px>
-    <span class="form-group">
-        <label for="file" class="btn btn-info btn-block">
-        Drag & drop image here or click to select
-
-        <input type="file" asp-for="ProductImage" id="fileInput" style="display:none;" />
-            name="file" style="display:none;" 
-            onchange="previewImage();">
-</form>
-
-             margin-top: 10px; display:none;">
-    </span>
-    <button type="submit" class="btn btn-primary">Upload</button>
-
-    dropZone.addEventListener("click", ()=>{
-        fileInput.click();
-    })
-
-    dropZone.addEventListener("dragover", (e) =>{
-        e.PreventDefault;
-        dropZone.style.background = "#f0f8ff";
-    });
-
-    dropZone.addEventListener("dragleave",()=>{
-        dropZone.style.background = "";
-    });
-
-    dropZone.addEventListener("drop",(e)=>{
-
-        e.preventDefault();
-        const files = e.dataTransfer.files;
-        fileInput.files = files;
-    });
-
-</script> *@
 
 @{  ViewData["Title"] = "Home Page"; }
 <h1 class="display-4">Upload Your Image</h1>

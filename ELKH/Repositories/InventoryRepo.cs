@@ -90,42 +90,19 @@ namespace ELKH.Repositories
             return false;
         }
 
-                //    // Use a GUID-based file name to prevent collisions and avoid exposing
-                //    // the original upload name (which could contain path traversal characters).
-                //    var fileName = Guid.NewGuid().ToString() +
-                //                   Path.GetExtension(vm.ProductImage.FileName);
+        public async Task<bool> DeleteImage(int imageId)
+        {
+            var findImageById = await _imageDb.Images.Where(i => i.ImageId == imageId)
+                                               .FirstOrDefaultAsync();
+            if(findImageById == null)
+            {
+                return false;
+            }
 
-                //    // Resolve the physical path to wwwroot/images at runtime via IWebHostEnvironment.
-                //    var uploadPath = Path.Combine(_env.WebRootPath, "images");
-
-                //    // Create the images directory on first use if it does not already exist.
-                //    if (!Directory.Exists(uploadPath))
-                //        Directory.CreateDirectory(uploadPath);
-
-                //    var filePath = Path.Combine(uploadPath, fileName);
-
-                //    // Stream the upload directly to disk to avoid holding the entire file in memory.
-                //    using (var stream = new FileStream(filePath, FileMode.Create))
-                //    {
-                //        await vm.ProductImage.CopyToAsync(stream);
-                //    }
-
-                //    // Create DB record - set the required navigation property 'Product'
-                //    var image = new ProductImageModel
-                //    {
-                //        ProductImageURL = "/images/" + fileName,
-                //        FkProductId = product.PkProductId,
-                //        Product = product
-                //    };
-
-                //    product.ProductImages.Add(image);
-
-                //    await _context.SaveChangesAsync();
-
-                //    return true;
-                //}
-                //    return false;
-                //}
+            _imageDb.Images.Remove(findImageById);
+            _imageDb.SaveChanges();
+            return true;
+        }
     }
 } 
 

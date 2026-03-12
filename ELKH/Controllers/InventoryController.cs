@@ -63,6 +63,7 @@ namespace ELKH.Controllers
             // an IFormFile is not available when reading images from the repository.
             var vmList = productImages.Select(pi => new ProductImageVM
             {
+                ImageId = pi.ImageId,
                 ImageData = pi.ImageData,
                 FkProductId = Id
             }).ToList();
@@ -98,6 +99,15 @@ namespace ELKH.Controllers
             return View("Index");
         }
 
-      
+        [HttpPost]
+        public async Task<IActionResult> DeleteImage(int productId ,int imageId)
+        {
+            var deleteImageRepo = await _inventoryRepo.DeleteImage(imageId);
+            if (deleteImageRepo)
+            {
+                return RedirectToAction("ProductImages", new { id = productId });
+            }
+            return View("Index");
+        }
     }
 }
