@@ -136,7 +136,7 @@ WHERE PkProductId NOT IN (SELECT rowid FROM ProductFTS);
                         Name = p.Name,
                         NameNormalized = p.Name.ToLowerInvariant(),
                         Price = p.Price,
-                        Thumbnail = p.ProductImage.Select(pi => pi.ProductImageURL).FirstOrDefault() ?? string.Empty,
+                        Thumbnail = p.ProductImage!.Select(pi => pi.ProductImageURL).FirstOrDefault() ?? string.Empty,
                         CreatedAt = DateTime.UtcNow
                     })
                     .ToListAsync(cancellationToken);

@@ -79,6 +79,23 @@ namespace ELKH.Extensions
                 // Opt out of browser features this application does not use.
                 context.Response.Headers["Permissions-Policy"] = "camera=(), microphone=(), geolocation=()";
 
+                // Prevent Adobe Flash and PDF readers from making cross-domain requests.
+                context.Response.Headers["X-Permitted-Cross-Domain-Policies"] = "none";
+
+                // Primary browser-side XSS defence: restrict sources for scripts, styles,
+                // images, and other resource types to same-origin by default.
+                // 'unsafe-inline' for style-src is required by Bootstrap/inline styles.
+                // Tighten this policy (remove unsafe-inline, add nonces) once a CSP-ready
+                // front-end build pipeline is in place.
+                context.Response.Headers["Content-Security-Policy"] =
+                    "default-src 'self'; " +
+                    "script-src 'self'; " +
+                    "style-src 'self' 'unsafe-inline'; " +
+                    "img-src 'self' data:; " +
+                    "font-src 'self'; " +
+                    "connect-src 'self'; " +
+                    "frame-ancestors 'self';";
+
                 await next();
             });
         }

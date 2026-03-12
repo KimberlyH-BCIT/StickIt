@@ -132,20 +132,7 @@ else
     app.UseHsts();
 }
 
-app.UseHttpsRedirection();   
 app.UseStaticFiles();        
-app.UseRouting();            
-app.UseAuthentication();
-
-// Security headers — applied after routing so they are present on all responses
-app.Use(async (context, next) =>
-{
-    context.Response.Headers.Append("X-Content-Type-Options",            "nosniff");
-    context.Response.Headers.Append("X-Frame-Options",                   "SAMEORIGIN");
-    context.Response.Headers.Append("Referrer-Policy",                   "strict-origin-when-cross-origin");
-    context.Response.Headers.Append("X-Permitted-Cross-Domain-Policies", "none");
-    await next();
-});
 
 app.UseApplicationMiddleware();
 

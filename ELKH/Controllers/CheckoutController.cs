@@ -53,8 +53,7 @@ public class CheckoutController : Controller
     private IActionResult? StubGuard() =>
         _env.IsDevelopment()
             ? null
-            : StatusCode(503, "Checkout is not available in this environment. " +
-                              "A real payment gateway must be integrated before go-live.");
+            : StatusCode(503, "Service temporarily unavailable.");
 
     [HttpGet]
     public async Task<IActionResult> Index()

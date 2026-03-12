@@ -84,16 +84,46 @@ public async Task<IActionResult> AddImage(int productId)
         {
             if (!ModelState.IsValid)
             {
+                ViewBag.ProductId = productId;
                 return View("AddImage");
             }
 
-var addImageRepo = await _inventoryRepo.UploadImage(productId, file);
-
-if (addImageRepo)
-{
-    return RedirectToAction("ProductImages", new { id = productId });
+            if (file == null || file.Length == 0)
+            {
+                ModelState.AddModelError("", "Please select a file.");
+                ViewBag.ProductId = productId;
+                return View("AddImage");
             }
-            return View("Index");
+
+            var allowedExtensions = new HashSet<string>(StringComparer.OrdinalIgnoreCase)
+                { ".jpg", ".jpeg", ".png", ".gif", ".webp", ".bmp" };
+            var ext = Path.GetExtension(file.FileName);
+            if (!allowedExtensions.Contains(ext))
+            {
+                ModelState.AddModelError("", "Only image files are allowed (jpg, jpeg, png, gif, webp, bmp).");
+                ViewBag.ProductId = productId;
+                return View("AddImage");
+            }
+
+            var allowedMimeTypes = new HashSet<string>(StringComparer.OrdinalIgnoreCase)
+                { "image/jpeg", "image/png", "image/gif", "image/webp", "image/bmp" };
+            if (!allowedMimeTypes.Contains(file.ContentType))
+            {
+                ModelState.AddModelError("", "The uploaded file has an invalid content type.");
+                ViewBag.ProductId = productId;
+                return View("AddImage");
+            }
+
+            var addImageRepo = await _inventoryRepo.UploadImage(productId, file);
+
+            if (addImageRepo)
+            {
+                return RedirectToAction("ProductImages", new { id = productId });
+            }
+
+            ModelState.AddModelError("", "The file could not be saved. Ensure it is a valid image under 5 MB.");
+            ViewBag.ProductId = productId;
+            return View("AddImage");
         }
 
       

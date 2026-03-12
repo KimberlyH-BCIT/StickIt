@@ -195,7 +195,7 @@ public async Task<IActionResult> AssignRoles(string? userId, string? returnTo, s
                 return View(model);
             }
 
-            if (await _userManager.IsInRoleAsync(user, model.RoleName))
+            if (await _userManager.IsInRoleAsync(user, model.RoleName!))
             {
                 ModelState.AddModelError("", "User is already assigned to this role.");
                 await ReloadRoles(model);
@@ -240,7 +240,7 @@ public async Task<IActionResult> AssignRoles(string? userId, string? returnTo, s
             var usersInRole = new List<IdentityUser>();
             foreach (var user in _userManager.Users)
             {
-                if (await _userManager.IsInRoleAsync(user, role.Name))
+                if (role.Name != null && await _userManager.IsInRoleAsync(user, role.Name))
                     usersInRole.Add(user);
             }
 

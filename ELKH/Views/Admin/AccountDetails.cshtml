@@ -209,12 +209,14 @@
                                 </td>
 
                                 <td>
-                                    <a asp-action="RemoveRole"
-                                       asp-route-userId="@Model.User.Id"
-                                       asp-route-role="@role"
-                                       class="btn btn-outline-danger btn-sm rounded-pill px-3">
-                                        Remove
-                                    </a>
+                                    <form asp-action="RemoveRole" method="post" style="display:inline;">
+                                        @Html.AntiForgeryToken()
+                                        <input type="hidden" name="userId" value="@Model.User.Id" />
+                                        <input type="hidden" name="role" value="@role" />
+                                        <button type="submit" class="btn btn-outline-danger btn-sm rounded-pill px-3">
+                                            Remove
+                                        </button>
+                                    </form>
                                 </td>
 
                             </tr>

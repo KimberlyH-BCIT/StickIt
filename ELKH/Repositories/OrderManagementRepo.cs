@@ -27,7 +27,7 @@ namespace ELKH.Repositories
                 .Select(o => new OrderDetailsVM
                 {
                     OrderId = o.PkOrderId,
-                    UserEmail = o.RegisteredUser.Email,
+                    UserEmail = o.RegisteredUser!.Email,
                     DeliveryStatus = o.DeliveryStatus
                 })
                 .ToListAsync();
@@ -40,11 +40,11 @@ namespace ELKH.Repositories
         {
             return await Context.Orders
                 .Include(o => o.RegisteredUser)
-                .Where(o => o.RegisteredUser.Email == email)
+                .Where(o => o.RegisteredUser!.Email == email)
                 .Select(o => new OrderDetailsVM
                 {
                     OrderId = o.PkOrderId,
-                    UserEmail = o.RegisteredUser.Email,
+                    UserEmail = o.RegisteredUser!.Email,
                     DeliveryStatus = o.DeliveryStatus
                 })
                 .ToListAsync();
@@ -70,7 +70,7 @@ namespace ELKH.Repositories
         {
             return await Context.Orders
                 .AsNoTracking()
-                .Where(o => o.RegisteredUser.Email == userEmail)
+                .Where(o => o.RegisteredUser!.Email == userEmail)
                 .Include(o => o.OrderItems)
                     .ThenInclude(oi => oi.Product)
                 .OrderByDescending(o => o.CreatedAt)

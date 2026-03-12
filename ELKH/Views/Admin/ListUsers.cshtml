@@ -129,9 +129,9 @@
                                                 .OrderBy(r => rolePriority.IndexOf(r))
                                                 .ToList();
 
-                                                string filterRole = ViewBag.RoleFilter as string;
+                                                string? filterRole = ViewBag.RoleFilter as string;
 
-                                                string displayRole;
+                                                                string? displayRole;
 
                                                 if (!string.IsNullOrEmpty(filterRole) && sortedRoles.Contains(filterRole))
                                                 {
