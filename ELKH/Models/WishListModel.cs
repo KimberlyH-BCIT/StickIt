@@ -32,5 +32,6 @@ namespace ELKH.Models
         public ICollection<WishListItemModel> WishListItems { get; set; } = new List<WishListItemModel>();
         //Relationship with Product
         public ICollection<ProductModel>? Products { get; set; }
+
     }
 }

@@ -119,7 +119,8 @@ namespace ELKH.Services
             var product = await _db.Products.FindAsync(itemId);
             if (product == null) return 0;
 
-            if ((product.StockQuantity) < quantity) return -1;
+
+            if ((product.StockQuantity ?? 0) < quantity) return -1;
 
             var defaultContact = await _contactRepo.GetDefaultByUserIdAsync(user.PkRegisteredUserId);
             int contactId = defaultContact?.PkContactId ?? 0;
@@ -149,7 +150,9 @@ namespace ELKH.Services
                     Quantity    = quantity
                 });
 
-                product.StockQuantity = (product.StockQuantity) - quantity;
+
+                product.StockQuantity = (product.StockQuantity ?? 0) - quantity;
+
 
                 await _db.SaveChangesAsync();
                 await transaction.CommitAsync();
@@ -280,7 +283,9 @@ namespace ELKH.Services
                 foreach (var c in items)
                 {
                     if (!products.TryGetValue(c.FkProductID, out var p) ||
-                        (p.StockQuantity) < c.Quantity)
+
+                        (p.StockQuantity ?? 0) < c.Quantity)
+
                     {
                         return -1;
                     }
@@ -321,7 +326,9 @@ namespace ELKH.Services
                             Quantity = c.Quantity
                         });
                         products[c.FkProductID].StockQuantity =
-                            (products[c.FkProductID].StockQuantity) - c.Quantity;
+
+                            (products[c.FkProductID].StockQuantity ?? 0) - c.Quantity;
+
                     }
 
                     // Step 11: Clear the cart (order is now placed)

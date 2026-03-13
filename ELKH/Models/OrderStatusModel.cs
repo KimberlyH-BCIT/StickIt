@@ -23,5 +23,6 @@ namespace ELKH.Models
         /// </summary>
         public int FkOrderId { get; set; }
         public OrderModel? Order { get; set; }   
+
     }
 }

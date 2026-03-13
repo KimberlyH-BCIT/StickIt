@@ -7,6 +7,7 @@ using Microsoft.EntityFrameworkCore;
 
 namespace ELKH.Controllers
 {
+   
     [Authorize(Roles = "Admin,Manager")]
     public class ManagerController : Controller
     {
@@ -81,7 +82,7 @@ namespace ELKH.Controllers
                 Description   = p.Description,
                 Price         = p.Price,
                 DiscountPercent = p.DiscountPercent,
-                StockQuantity = p.StockQuantity,
+                StockQuantity = (int)p.StockQuantity,
                 IsActive      = p.IsActive,
                 CategoryId    = p.FkCategoryId,
                 CategoryName  = p.Category?.CategoryName ?? "",
@@ -141,7 +142,7 @@ namespace ELKH.Controllers
                 Description     = p.Description,
                 Price           = p.Price,
                 DiscountPercent = p.DiscountPercent,
-                StockQuantity   = p.StockQuantity,
+                StockQuantity   = (int)p.StockQuantity,
                 IsActive        = p.IsActive,
                 CategoryId      = p.FkCategoryId,
                 CategoryName    = p.Category?.CategoryName ?? "",

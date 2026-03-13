@@ -56,7 +56,6 @@ namespace ELKH.Controllers
                 UserEmail      = o.RegisteredUser.Email,
                 DeliveryStatus = o.DeliveryStatus,
             }).ToList();
-
             return View(orderVM);
         }
 

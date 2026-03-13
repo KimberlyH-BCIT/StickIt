@@ -51,7 +51,12 @@ namespace ELKH.Models
         /// Foreign key to the customer who placed the order.
         /// </summary>
         public int FkRegisteredUserId { get; set; }
-        public RegisteredUserModel? RegisteredUser { get; set; }
+
+        /// <summary>
+        /// Navigation property to the customer who placed the order.
+        /// Used for order history and customer analytics.
+        /// </summary>
+        public RegisteredUserModel RegisteredUser { get; set; } = null!;
 
         /// <summary>
         /// Collection of line items included in this order.
@@ -59,16 +64,17 @@ namespace ELKH.Models
         /// </summary>
         public ICollection<OrderItemModel> OrderItems { get; set; } = new List<OrderItemModel>();
 
-        // Relationship with Transaction
-        public TransactionModel? Transaction { get; set; }          
+        //Relationship with Transaction
+        public TransactionModel Transaction { get; set; } = new TransactionModel();
 
-        // Order Status Relationship
-        public OrderStatusModel? OrderStatuses { get; set; }
+        //Order Status Relationship
+        public OrderStatusModel OrderStatuses { get; set; } = new OrderStatusModel();
 
         /// <summary>
         /// Foreign key to the shipping/delivery address for this order.
         /// </summary>
         public int FkContactId { get; set; }
-        public ContactDetailModel? ContactDetail { get; set; }       
+        public ContactDetailModel ContactDetail { get; set; } = new ContactDetailModel();
+        public OrderStatusModel OrderStatusDetail { get; set; } = new OrderStatusModel();
     }
 }

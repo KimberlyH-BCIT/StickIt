@@ -27,6 +27,7 @@ namespace ELKH.Mapping
                 .ForMember(d => d.ProductName, o => o.MapFrom(s => s.Name))
                 .ForMember(d => d.CategoryName, o => o.MapFrom(s => s.Category != null ? s.Category.CategoryName : "Unknown"))
                 .ForMember(d => d.Thumbnail, o => o.MapFrom(s => s.ProductImage.Select(pi => pi.ProductImageURL).FirstOrDefault() ?? string.Empty))
+
                 .ForMember(d => d.AverageRating, o => o.MapFrom(s => s.ProductRatings.Any() ? s.ProductRatings.Average(r => r.Rating) : 0));
 
             // ProductVM -> ProductModel

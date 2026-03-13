@@ -23,5 +23,9 @@ namespace ELKH.Models
 
         //Products list
         public ICollection<ProductModel>? Products { get; set; }
+        /// <summary>
+        /// Collection of products in this category.
+        /// </summary>
+        public ICollection<ProductModel> Product { get; set; } = new List<ProductModel>();
     }
 }

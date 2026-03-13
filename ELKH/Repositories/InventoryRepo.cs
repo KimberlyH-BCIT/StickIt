@@ -1,131 +1,115 @@
 ﻿using ELKH.Data;
 using ELKH.Models;
 using ELKH.ViewModels;
-using Microsoft.AspNetCore.Http.HttpResults;
-using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
-using static System.Net.Mime.MediaTypeNames;
 
 namespace ELKH.Repositories
 {
-    /// <summary>
-    /// Repository for inventory management operations including product queries,
-    /// stock quantity updates, and product image uploads.
-    /// </summary>
     public class InventoryRepo
     {
         private readonly ApplicationDbContext _context;
         private readonly ImageStoreContext _imageDb;
+
         public InventoryRepo(ApplicationDbContext context, ImageStoreContext imageDb)
         {
             _context = context;
             _imageDb = imageDb;
         }
 
-        /// <summary>Returns all products without any includes (lightweight listing query).</summary>
         public async Task<IEnumerable<ProductModel>> GetAllProduct()
         {
             return await _context.Products.ToListAsync();
         }
 
-
-        public async Task<List<ImageModel>> GetProductImages(int id)
+        public async Task<List<string>> GetProductImages(int id)
         {
-            return await _imageDb.Images.Where(pi => pi.FkProductId == id)
-                                               .ToListAsync();
+            return await _context.ProductImages
+                .Where(pi => pi.FkProductId == id)
+                .Select(pi => pi.ProductImageURL)
+                .ToListAsync();
         }
 
-        /// <summary>
-        /// Updates the stock quantity for a single product and returns the updated view model.
-        /// Throws <see cref="NullReferenceException"/> if no product with <paramref name="productId"/> exists.
-        /// </summary>
         public async Task<ProductVM> EditProductQuantity(int productId, int quantityAmount)
         {
-            var products = await _context.Products.Where(p => p.PkProductId == productId)
-                                                  .FirstOrDefaultAsync();
-            products.StockQuantity = quantityAmount;
+            var product = await _context.Products
+                .FirstOrDefaultAsync(p => p.PkProductId == productId);
+
+            if (product == null)
+                throw new NullReferenceException("Product not found");
+
+            product.StockQuantity = quantityAmount;
 
             await _context.SaveChangesAsync();
 
-            var vm = new ProductVM
+            return new ProductVM
             {
-                ProductId = products.PkProductId,
-                ProductName = products.Name,
-                Description = products.Description,
-                Price = products.Price,
-                StockQuantity = products.StockQuantity,
-                IsActive = products.IsActive
+                ProductId = product.PkProductId,
+                ProductName = product.Name,
+                Description = product.Description,
+                Price = product.Price,
+                StockQuantity = product.StockQuantity ?? 0,
+                IsActive = product.IsActive
             };
-
-            return vm;
         }
+
         public async Task<bool> UploadImage(int productId, IFormFile file)
         {
-            if (file != null && file.Length > 0)
+            if (file == null || file.Length == 0)
+                return false;
+
+            using var stream = new MemoryStream();
+            await file.CopyToAsync(stream);
+
+            var image = new ImageModel
             {
-                // Convert the file to a byte array.
-                using var stream = new MemoryStream();
-                file.CopyTo(stream);
-                var imageBytes = stream.ToArray();
+                FileName = file.FileName,
+                Description = "",
+                FileType = file.ContentType,
+                ImageData = stream.ToArray(),
+                FkProductId = productId
+            };
 
-                // Create a new Image instance.
-                var image = new ImageModel
-                {
-                    FileName = file.FileName,
-                    Description = "",
-                    FileType = file.ContentType,
-                    ImageData = imageBytes,
-                    FkProductId = productId
-                };
+            _imageDb.Images.Add(image);
 
-                // Add to database context and save.
-                _imageDb.Images.Add(image);
-                bool isSaved = _imageDb.SaveChanges() > 0;
-                if (!isSaved)
-                {
-                    return false;
-                }
-                return true;
-            }
-            return false;
+            return await _imageDb.SaveChangesAsync() > 0;
         }
 
-                //    // Use a GUID-based file name to prevent collisions and avoid exposing
-                //    // the original upload name (which could contain path traversal characters).
-                //    var fileName = Guid.NewGuid().ToString() +
-                //                   Path.GetExtension(vm.ProductImage.FileName);
+        public async Task<bool> AddProductImage(ProductImageVM vm)
+        {
+            if (vm == null || vm.ProductImage == null)
+                return false;
 
-                //    // Resolve the physical path to wwwroot/images at runtime via IWebHostEnvironment.
-                //    var uploadPath = Path.Combine(_env.WebRootPath, "images");
+            const long maxBytes = 10 * 1024 * 1024;
 
-                //    // Create the images directory on first use if it does not already exist.
-                //    if (!Directory.Exists(uploadPath))
-                //        Directory.CreateDirectory(uploadPath);
+            var allowedTypes = new HashSet<string>
+            {
+                "image/jpeg",
+                "image/png",
+                "image/gif",
+                "image/webp"
+            };
 
-                //    var filePath = Path.Combine(uploadPath, fileName);
+            if (!allowedTypes.Contains(vm.ProductImage.ContentType))
+                return false;
 
-                //    // Stream the upload directly to disk to avoid holding the entire file in memory.
-                //    using (var stream = new FileStream(filePath, FileMode.Create))
-                //    {
-                //        await vm.ProductImage.CopyToAsync(stream);
-                //    }
+            if (vm.ProductImage.Length > maxBytes)
+                return false;
 
-                //    // Create DB record - set the required navigation property 'Product'
-                //    var image = new ProductImageModel
-                //    {
-                //        ProductImageURL = "/images/" + fileName,
-                //        FkProductId = product.PkProductId,
-                //        Product = product
-                //    };
+            using var stream = new MemoryStream();
+            await vm.ProductImage.CopyToAsync(stream);
 
-                //    product.ProductImages.Add(image);
+            var image = new ImageModel
+            {
+                FileName = vm.ProductImage.FileName,
+                Description = "",
+                FileType = vm.ProductImage.ContentType,
+                ImageData = stream.ToArray(),
+                FkProductId = vm.FkProductId
+            };
 
-                //    await _context.SaveChangesAsync();
+            _imageDb.Images.Add(image);
 
-                //    return true;
-                //}
-                //    return false;
-                //}
+            return await _imageDb.SaveChangesAsync() > 0;
+        }
     }
-} 
-
+}

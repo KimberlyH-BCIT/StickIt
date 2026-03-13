@@ -81,6 +81,7 @@ public int? StockQuantity { get; set; } = 0;
         /// </summary>
         public CategoryModel? Category { get; set; }
 
+
         /// <summary>
         /// Collection of images associated with this product.
         /// Used for product galleries and thumbnails.

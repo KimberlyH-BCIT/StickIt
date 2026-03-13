@@ -1,40 +1,10 @@
-using ELKH.Repositories;
 using ELKH.ViewModels;
 using Microsoft.AspNetCore.Authorization;
-using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
-using System.ComponentModel.DataAnnotations;
-using System.Data;
 
 namespace ELKH.Controllers
 {
-    /// <summary>
-    /// Admin controller for ASP.NET Core Identity role management.
-    /// Provides CRUD operations for roles and role-assignment for individual users.
-    /// </summary>
-    /// <remarks>
-    /// TABLE OF CONTENTS
-    /// ================================================================================
-    /// 1. Constructor &amp; Dependencies
-    /// 2. Role Listing
-    ///    - ListRoles()                          // GET: All roles
-    /// 3. Role Creation
-    ///    - CreateRole() GET                     // GET: New role form
-    ///    - CreateRole() POST                    // POST: Persist new role
-    /// 4. Role Editing
-    ///    - EditRole(roleId) GET                 // GET: Edit role form
-    ///    - EditRole(model) POST                 // POST: Persist role name change
-    /// 5. Role Assignment
-    ///    - AssignRoles(roleName) GET            // GET: Assignment form (optionally pre-filtered)
-    ///    - AssignRoles(model) POST              // POST: Assign role to a user by email
-    /// ================================================================================
-    ///
-    /// All endpoints require the Admin role.
-    /// Role mutations delegate directly to <see cref="RoleManager{TRole}"/> so that
-    /// Identity's own validation and concurrency handling are exercised.
-    /// </remarks>
-    
     [Authorize(Roles = "Admin")]
     public class AdminRoleController : Controller
     {
@@ -49,55 +19,56 @@ namespace ELKH.Controllers
             _roleManager = roleManager;
         }
 
-        // =====================================================================
-        // Role Listing
-        // =====================================================================
-
-        /// <summary>Displays all application roles with their IDs and names.</summary>
+        // ================= LIST ROLES =================
         public IActionResult ListRoles()
         {
             var roles = _roleManager.Roles
-                .Select(r => new RoleVM { RoleId = r.Id, RoleName = r.Name })
-                .ToList();
+                .Select(r => new RoleVM
+                {
+                    RoleId = r.Id,
+                    RoleName = r.Name
+                }).ToList();
 
             return View(roles);
         }
 
-        // ================= CREATE =================
-        public IActionResult CreateRole() => View();
+        // ================= CREATE ROLE =================
+        public IActionResult CreateRole()
+        {
+            return View();
+        }
 
-        /// <summary>Persists the new role to the Identity store. Re-displays the form with errors on failure.</summary>
         [HttpPost]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> CreateRole(RoleVM model)
         {
-            if (ModelState.IsValid)
+            if (!ModelState.IsValid) return View(model);
+
+            var result = await _roleManager.CreateAsync(new IdentityRole(model.RoleName!));
+
+            if (result.Succeeded)
             {
-                var result = await _roleManager.CreateAsync(new IdentityRole(model.RoleName!));
-                if (result.Succeeded)
-                {
-                    TempData["Success"] = "Role created successfully.";
-                    return RedirectToAction("ListRoles");
-                }
-                foreach (var error in result.Errors)
-                    ModelState.AddModelError("", error.Description);
+                TempData["Success"] = "Role created successfully.";
+                return RedirectToAction("ListRoles");
             }
+
+            foreach (var error in result.Errors)
+                ModelState.AddModelError("", error.Description);
+
             return View(model);
         }
 
-        // =====================================================================
-        // Role Editing
-        // =====================================================================
-
-        /// <summary>
-        /// Renders the edit form for an existing role.
-        /// Returns <see cref="NotFoundResult"/> when no role with <paramref name="roleId"/> exists.
-        /// </summary>
+        // ================= EDIT ROLE =================
         public async Task<IActionResult> EditRole(string roleId)
         {
             var role = await _roleManager.FindByIdAsync(roleId);
             if (role == null) return NotFound();
-            return View(new RoleVM { RoleId = role.Id, RoleName = role.Name });
+
+            return View(new RoleVM
+            {
+                RoleId = role.Id,
+                RoleName = role.Name
+            });
         }
 
         [HttpPost]
@@ -110,6 +81,7 @@ namespace ELKH.Controllers
             if (role == null) return NotFound();
 
             role.Name = model.RoleName;
+
             var result = await _roleManager.UpdateAsync(role);
 
             if (result.Succeeded)
@@ -117,43 +89,43 @@ namespace ELKH.Controllers
                 TempData["Success"] = "Role updated successfully.";
                 return RedirectToAction("ListRoles");
             }
+
             foreach (var error in result.Errors)
                 ModelState.AddModelError("", error.Description);
 
             return View(model);
         }
 
+        // ================= ASSIGN ROLE =================
         public async Task<IActionResult> AssignRoles(string? userId, string? returnTo, string? roleId)
         {
-            // Pre-fill email only when we already know the user
-            string? prefilledEmail = null;
+            string? email = null;
+
             if (!string.IsNullOrEmpty(userId))
             {
                 var user = await _userManager.FindByIdAsync(userId);
                 if (user == null) return NotFound();
-                prefilledEmail = user.Email;
+                email = user.Email;
             }
 
-            // Lock role when coming from RoleUsers page
-            bool isRoleLocked = returnTo == "RoleDetails" && !string.IsNullOrEmpty(roleId);
-            string? preselectedRoleName = null;
-            if (isRoleLocked)
+            bool lockRole = returnTo == "RoleDetails" && !string.IsNullOrEmpty(roleId);
+            string? roleName = null;
+
+            if (lockRole)
             {
-                var role = await _roleManager.FindByIdAsync(roleId!);
-                preselectedRoleName = role?.Name;
+                var role = await _roleManager.FindByIdAsync(roleId);
+                roleName = role?.Name;
             }
 
             var model = new AssignRoleVM
             {
-                UserId      = userId,
-                Email       = prefilledEmail,
-                ReturnTo    = returnTo,
-                RoleId      = roleId,
-                IsRoleLocked = isRoleLocked,
-                RoleName    = preselectedRoleName,
-                Roles       = _roleManager.Roles
-                                .Select(r => new RoleVM { RoleId = r.Id, RoleName = r.Name })
-                                .ToList()
+                UserId = userId,
+                Email = email,
+                ReturnTo = returnTo,
+                RoleId = roleId,
+                IsRoleLocked = lockRole,
+                RoleName = roleName,
+                Roles = GetRoles()
             };
 
             return View(model);
@@ -168,29 +140,30 @@ namespace ELKH.Controllers
             if (string.IsNullOrEmpty(model.Email))
             {
                 ModelState.AddModelError("", "Please enter user email.");
-                await ReloadRoles(model);
+                model.Roles = GetRoles();
                 return View(model);
             }
 
             if (string.IsNullOrEmpty(model.RoleName))
             {
                 ModelState.AddModelError("", "Please select a role.");
-                await ReloadRoles(model);
+                model.Roles = GetRoles();
                 return View(model);
             }
 
             var user = await _userManager.FindByEmailAsync(model.Email);
+
             if (user == null)
             {
                 ModelState.AddModelError("", "User not found.");
-                await ReloadRoles(model);
+                model.Roles = GetRoles();
                 return View(model);
             }
 
             if (await _userManager.IsInRoleAsync(user, model.RoleName))
             {
-                ModelState.AddModelError("", "User is already assigned to this role.");
-                await ReloadRoles(model);
+                ModelState.AddModelError("", "User already has this role.");
+                model.Roles = GetRoles();
                 return View(model);
             }
 
@@ -210,15 +183,8 @@ namespace ELKH.Controllers
             }
 
             TempData["Error"] = "Failed to assign role.";
-            await ReloadRoles(model);
+            model.Roles = GetRoles();
             return View(model);
-        }
-
-        private async Task ReloadRoles(AssignRoleVM model)
-        {
-            model.Roles = _roleManager.Roles
-                .Select(r => new RoleVM { RoleId = r.Id, RoleName = r.Name })
-                .ToList();
         }
 
         // ================= VIEW USERS IN ROLE =================
@@ -229,17 +195,18 @@ namespace ELKH.Controllers
             var role = await _roleManager.FindByIdAsync(roleId);
             if (role == null) return NotFound();
 
-            var usersInRole = new List<IdentityUser>();
+            var users = new List<IdentityUser>();
+
             foreach (var user in _userManager.Users)
             {
                 if (await _userManager.IsInRoleAsync(user, role.Name))
-                    usersInRole.Add(user);
+                    users.Add(user);
             }
 
             ViewBag.RoleId = role.Id;
             ViewBag.RoleName = role.Name;
 
-            return View(usersInRole);
+            return View(users);
         }
 
         [HttpPost]
@@ -256,53 +223,62 @@ namespace ELKH.Controllers
             }
 
             var result = await _userManager.RemoveFromRoleAsync(user, role.Name!);
-            TempData[result.Succeeded ? "Success" : "Error"] = result.Succeeded
-                ? "User removed from role successfully."
-                : "Failed to remove user from role.";
+
+            TempData[result.Succeeded ? "Success" : "Error"] =
+                result.Succeeded ? "User removed from role." : "Failed to remove user.";
 
             return RedirectToAction("RoleUsers", new { roleId });
         }
 
-        // ================= DELETE =================
+        // ================= DELETE ROLE =================
         public async Task<IActionResult> DeleteRole(string roleId)
         {
             var role = await _roleManager.FindByIdAsync(roleId);
             if (role == null) return NotFound();
-            return View(new RoleVM { RoleId = role.Id, RoleName = role.Name });
+
+            return View(new RoleVM
+            {
+                RoleId = role.Id,
+                RoleName = role.Name
+            });
         }
 
         [HttpPost]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> DeleteRole(RoleVM model)
         {
-            try
+            var role = await _roleManager.FindByIdAsync(model.RoleId);
+            if (role == null)
             {
-                var role = await _roleManager.FindByIdAsync(model.RoleId);
-                if (role == null)
-                {
-                    TempData["Error"] = "Role not found.";
-                    return RedirectToAction("ListRoles");
-                }
-
-                var usersInRole = await _userManager.GetUsersInRoleAsync(role.Name!);
-                if (usersInRole.Any())
-                {
-                    TempData["Error"] = "Cannot delete role because it is assigned to users.";
-                    return RedirectToAction("ListRoles");
-                }
-
-                var result = await _roleManager.DeleteAsync(role);
-                TempData[result.Succeeded ? "Success" : "Error"] = result.Succeeded
-                    ? "Role deleted successfully."
-                    : "Failed to delete role.";
-
+                TempData["Error"] = "Role not found.";
                 return RedirectToAction("ListRoles");
             }
-            catch
+
+            var users = await _userManager.GetUsersInRoleAsync(role.Name!);
+
+            if (users.Any())
             {
-                TempData["Error"] = "An unexpected error occurred while deleting the role.";
+                TempData["Error"] = "Role cannot be deleted because it is assigned.";
                 return RedirectToAction("ListRoles");
             }
+
+            var result = await _roleManager.DeleteAsync(role);
+
+            TempData[result.Succeeded ? "Success" : "Error"] =
+                result.Succeeded ? "Role deleted successfully." : "Failed to delete role.";
+
+            return RedirectToAction("ListRoles");
+        }
+
+        // ================= HELPER =================
+        private List<RoleVM> GetRoles()
+        {
+            return _roleManager.Roles
+                .Select(r => new RoleVM
+                {
+                    RoleId = r.Id,
+                    RoleName = r.Name
+                }).ToList();
         }
     }
 }

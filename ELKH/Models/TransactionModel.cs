@@ -35,5 +35,6 @@ namespace ELKH.Models
         /// <summary>Foreign key to the shipping address used for this transaction.</summary>
         public int FkContactId { get; set; }
         public ContactDetailModel? ContactDetail { get; set; }
+
     }
 }

@@ -29,5 +29,6 @@ namespace ELKH.Models
         /// </summary>
         public int FkProductId { get; set; }
         public ProductModel? Product { get; set; }
+
     }
 }
