@@ -504,6 +504,9 @@ dependency-check-report.html
 # =====================================================================
 # END OF .GITIGNORE
 # =====================================================================
+
 app.db
-app.db-shm
-app.db-wal
+*.db
+*.db-wal
+*.db-shm
+.DS_Store
