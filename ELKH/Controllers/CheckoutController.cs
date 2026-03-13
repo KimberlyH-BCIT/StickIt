@@ -217,7 +217,7 @@ public class CheckoutController : Controller
         {
             contactId = vm.SelectedContactId.Value;
         }
-        else
+        catch (Exception ex)
         {
             var contact = await _db.ContactDetails
                 .FirstOrDefaultAsync(c => c.FkRegisteredUserId == regUser.PkRegisteredUserId && c.IsDefault);

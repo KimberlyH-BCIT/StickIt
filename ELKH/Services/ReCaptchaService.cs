@@ -1,5 +1,6 @@
 using System.Text.Json;
 using ELKH.Models.Options;
+using ELKH.Configuration;
 using Microsoft.Extensions.Options;
 
 namespace ELKH.Services;

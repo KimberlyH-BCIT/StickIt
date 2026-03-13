@@ -24,6 +24,7 @@ public class PayPalController : ControllerBase
     public record CaptureOrderRequest(string OrderId);
 
     [HttpPost("create-order")]
+    [ValidateAntiForgeryToken]
     public async Task<IActionResult> CreateOrder([FromBody] CreateOrderRequest req)
     {
         var id = await _payPal.CreateOrderAsync(req.Total, _opts.Currency);
@@ -31,6 +32,7 @@ public class PayPalController : ControllerBase
     }
 
     [HttpPost("capture-order")]
+    [ValidateAntiForgeryToken]
     public async Task<IActionResult> CaptureOrder([FromBody] CaptureOrderRequest req)
     {
         await _payPal.CaptureOrderAsync(req.OrderId);
