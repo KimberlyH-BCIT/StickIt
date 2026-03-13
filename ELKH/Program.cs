@@ -9,6 +9,15 @@ using Microsoft.EntityFrameworkCore;
 
 var builder = WebApplication.CreateBuilder(args);
 
+// If no ASPNETCORE_ENVIRONMENT is set (e.g. running the compiled .exe directly rather
+// than through a VS launch profile or 'dotnet run'), default to Development so that
+// migrations, the developer exception page, and seeding all work as expected.
+// Override by setting the environment variable before launching in other contexts.
+if (string.IsNullOrEmpty(Environment.GetEnvironmentVariable("ASPNETCORE_ENVIRONMENT")))
+{
+    builder.Environment.EnvironmentName = "Development";
+}
+
 // -- Database and Identity
 // SQLite database with Entity Framework Core. Connection string is required
 // and will throw if missing to fail fast during startup.
@@ -149,16 +158,18 @@ app.UseApplicationEndpoints();
 // ALSO be true before migrations run outside Development — the double-guard
 // prevents accidental schema changes on a shared production database.
 //
-// Seeding: fully idempotent — each seeder checks for existing data and
-// returns immediately when the database is already populated.
+// Seeding: only runs when there are no pending migrations, i.e. the schema is
+// confirmed to be fully up-to-date. This prevents a crash when the app is
+// launched without an environment variable (e.g. running the .exe directly)
+// and migrations were therefore skipped.
 await using (var scope = app.Services.CreateAsyncScope())
 {
     var sp = scope.ServiceProvider;
     var db = sp.GetRequiredService<ApplicationDbContext>();
 
-    var applyMigrations     = app.Configuration.GetValue<bool?>("Database:ApplyMigrationsOnStartup")
-                                  ?? app.Environment.IsDevelopment();
-    var allowInProduction   = app.Configuration.GetValue<bool>("Database:AllowMigrationInProduction");
+    var applyMigrations   = app.Configuration.GetValue<bool?>("Database:ApplyMigrationsOnStartup")
+                                ?? app.Environment.IsDevelopment();
+    var allowInProduction = app.Configuration.GetValue<bool>("Database:AllowMigrationInProduction");
 
     if (applyMigrations && (app.Environment.IsDevelopment() || allowInProduction))
     {
@@ -166,12 +177,26 @@ await using (var scope = app.Services.CreateAsyncScope())
         await sp.GetRequiredService<ImageStoreContext>().Database.MigrateAsync();
     }
 
-    var userManager = sp.GetRequiredService<UserManager<IdentityUser>>();
-    var roleManager = sp.GetRequiredService<RoleManager<IdentityRole>>();
+    // Only seed when the schema is fully applied — guards against the case where
+    // the app is run as a plain .exe (no launch profile → no ASPNETCORE_ENVIRONMENT
+    // → defaults to Production → migration guard above skips → tables don't exist).
+    var pending = (await db.Database.GetPendingMigrationsAsync()).ToList();
+    if (pending.Count > 0)
+    {
+        app.Logger.LogWarning(
+            "Skipping database seeding — {Count} pending migration(s) have not been applied: {Names}. " +
+            "Run 'dotnet ef database update' or set ASPNETCORE_ENVIRONMENT=Development and restart.",
+            pending.Count, string.Join(", ", pending));
+    }
+    else
+    {
+        var userManager = sp.GetRequiredService<UserManager<IdentityUser>>();
+        var roleManager = sp.GetRequiredService<RoleManager<IdentityRole>>();
 
-    await DbSeeder.SeedProductsAsync(db);
-    await DbSeeder.SeedAdminAsync(userManager, roleManager, app.Configuration);
-    await DbSeeder.SeedCustomersAsync(db, userManager, app.Environment.WebRootPath);
+        await DbSeeder.SeedProductsAsync(db);
+        await DbSeeder.SeedAdminAsync(userManager, roleManager, app.Configuration);
+        await DbSeeder.SeedCustomersAsync(db, userManager, app.Environment.WebRootPath ?? string.Empty);
+    }
 }
 
 app.Run();

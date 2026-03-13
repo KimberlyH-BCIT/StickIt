@@ -24,6 +24,7 @@ namespace ELKH.Repositories
         // ── Read ──────────────────────────────────────────────────────────────
 
         /// <summary>Get an entity by its primary key synchronously (prefer the async overload).</summary>
+        [Obsolete("Synchronous DB access blocks a thread-pool thread. Use GetByIdAsync instead.")]
         public virtual TEntity? GetById(TKey id)
         {
             try   { return Context.Set<TEntity>().Find(id); }
@@ -46,6 +47,7 @@ namespace ELKH.Repositories
         }
 
         /// <summary>Get all entities (prefer the async overload).</summary>
+        [Obsolete("Synchronous DB access blocks a thread-pool thread. Use GetAllAsync instead.")]
         public virtual IEnumerable<TEntity> GetAll()
         {
             try   { return Context.Set<TEntity>().ToList(); }

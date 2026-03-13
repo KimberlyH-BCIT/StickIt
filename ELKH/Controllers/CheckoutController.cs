@@ -1,13 +1,11 @@
-using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using ELKH.Configuration;
+using ELKH.Data;
 using ELKH.Extensions;
 using ELKH.Models;
+using ELKH.Repositories;
 using ELKH.Services;
 using ELKH.ViewModels;
-using System.Security.Claims;
-using ELKH.Data;
-using ELKH.Repositories;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
@@ -35,10 +33,8 @@ namespace ELKH.Controllers;
 /// - Tax:      12 % of subtotal (BC PST + GST composite rate).
 /// - Shipping: $7.99 flat rate; waived when the subtotal reaches $50.00 or more.
 /// </remarks>
-[Authorize]
-public class CheckoutController : Controller
+public class CheckoutController : AuthenticatedControllerBase
 {
-    private readonly ApplicationDbContext _db;
     private readonly ICartRepo _cartRepo;
     private readonly IPayPalService _paypal;
     private readonly IOrderEmailService _orderEmail;
@@ -47,13 +43,14 @@ public class CheckoutController : Controller
 
     public CheckoutController(
         ApplicationDbContext db,
+        IUserService userService,
         ICartRepo cartRepo,
         IPayPalService paypal,
         IOrderEmailService orderEmail,
         ILogger<CheckoutController> logger,
         IOptions<PayPalOptions> paypalOpts)
+        : base(db, userService)
     {
-        _db         = db;
         _cartRepo   = cartRepo;
         _paypal     = paypal;
         _orderEmail = orderEmail;
@@ -64,11 +61,7 @@ public class CheckoutController : Controller
     [HttpGet]
     public async Task<IActionResult> Index()
     {
-        var email = User.FindFirstValue(ClaimTypes.Email) ?? User.Identity?.Name;
-        if (string.IsNullOrWhiteSpace(email))
-            return RedirectToPage("/Account/Login", new { area = "Identity" });
-
-        var regUser = await _db.RegisteredUsers.FirstOrDefaultAsync(u => u.Email == email);
+        var regUser = await GetCurrentUserAsync();
         if (regUser == null)
             return RedirectToAction("Index", "Cart");
 
@@ -95,17 +88,15 @@ public class CheckoutController : Controller
 
     [HttpPost]
     [ValidateAntiForgeryToken]
-    [Microsoft.AspNetCore.RateLimiting.EnableRateLimiting(RateLimitPolicies.Checkout)]
+    [Microsoft.AspNetCore.RateLimiting.EnableRateLimiting(Checkout)]
     public async Task<IActionResult> ProcessPayment(CheckoutVM vm)
     {
         if (!ModelState.IsValid) return View("Index", vm);
 
-        var email = User.FindFirstValue(ClaimTypes.Email) ?? User.Identity?.Name;
-        if (string.IsNullOrWhiteSpace(email))
-            return RedirectToPage("/Account/Login", new { area = "Identity" });
-
-        var regUser = await _db.RegisteredUsers.FirstOrDefaultAsync(u => u.Email == email);
+        var regUser = await GetCurrentUserAsync();
         if (regUser is null) return RedirectToAction("Index", "Cart");
+
+        var email = regUser.Email;
 
         var cartItems = (await _cartRepo.GetByUserIdAsync(regUser.PkRegisteredUserId)).ToList();
         if (!cartItems.Any()) return RedirectToAction("Index", "Cart");
@@ -117,10 +108,13 @@ public class CheckoutController : Controller
         var total    = subtotal + tax + shipping;
 
         // ── 1. Process PayPal payment ────────────────────────────────────────
+        // Generate an idempotency key for this checkout attempt. Passing the same
+        // key on retry prevents PayPal from creating a duplicate order.
+        var idempotencyKey = Guid.NewGuid().ToString();
         string paypalOrderId;
         try
         {
-            paypalOrderId = await _paypal.CreateOrderAsync(total, _currency);
+            paypalOrderId = await _paypal.CreateOrderAsync(total, _currency, idempotencyKey);
             await _paypal.CaptureOrderAsync(paypalOrderId);
         }
         catch (Exception ex)

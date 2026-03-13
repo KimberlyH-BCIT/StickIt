@@ -53,10 +53,18 @@ public class CheckoutControllerTests
                 It.IsAny<string>(), It.IsAny<string>(), It.IsAny<int>()))
             .Returns(Task.CompletedTask);
 
+        // UserService resolves the current user from the DB via email — same lookup
+        // the base controller helper performs, but through the cached service layer.
+        // Use Returns(async) with a lambda so the DB is queried lazily when the mock
+        // is invoked (not eagerly at setup time before SaveChangesAsync has run).
+        var userSvc = new Mock<IUserService>();
+        userSvc.Setup(u => u.GetByEmailAsync(email))
+               .Returns(() => Task.FromResult(db.RegisteredUsers.FirstOrDefault(u => u.Email == email)));
+
         var opts = Options.Create(new PayPalOptions { Currency = "CAD" });
 
         var ctrl = new CheckoutController(
-            db, cartRepo.Object, payPal, orderEmail.Object,
+            db, userSvc.Object, cartRepo.Object, payPal, orderEmail.Object,
             NullLogger<CheckoutController>.Instance, opts);
 
         // Simulate an authenticated user with email claim
@@ -117,7 +125,7 @@ public class CheckoutControllerTests
         await db.SaveChangesAsync();
 
         var payPal = new Mock<IPayPalService>();
-        payPal.Setup(p => p.CreateOrderAsync(It.IsAny<decimal>(), It.IsAny<string>()))
+        payPal.Setup(p => p.CreateOrderAsync(It.IsAny<decimal>(), It.IsAny<string>(), It.IsAny<string?>()))
               .ReturnsAsync("PAYPAL-ORDER-ID");
         payPal.Setup(p => p.CaptureOrderAsync(It.IsAny<string>()))
               .Returns(Task.CompletedTask);
@@ -155,7 +163,7 @@ public class CheckoutControllerTests
         await db.SaveChangesAsync();
 
         var payPal = new Mock<IPayPalService>();
-        payPal.Setup(p => p.CreateOrderAsync(It.IsAny<decimal>(), It.IsAny<string>()))
+        payPal.Setup(p => p.CreateOrderAsync(It.IsAny<decimal>(), It.IsAny<string>(), It.IsAny<string?>()))
               .ThrowsAsync(new Exception("network error"));
 
         var ctrl = BuildController(db, payPal.Object, new[] { cartRow });
@@ -205,6 +213,66 @@ public class CheckoutControllerTests
 
         var view = Assert.IsType<ViewResult>(result);
         Assert.Equal("Index", view.ViewName);
-        payPal.Verify(p => p.CreateOrderAsync(It.IsAny<decimal>(), It.IsAny<string>()), Times.Never);
+        payPal.Verify(p => p.CreateOrderAsync(It.IsAny<decimal>(), It.IsAny<string>(), It.IsAny<string?>()), Times.Never);
+    }
+
+    /// <summary>
+    /// ProcessPayment must recalculate pricing server-side.
+    /// Even if the submitted CheckoutVM carries a manipulated Total the controller
+    /// ignores it and derives the total from live cart data — verifying that the
+    /// PayPal CreateOrderAsync call receives the correct server-calculated value.
+    /// </summary>
+    [Fact]
+    public async Task ProcessPayment_PriceTampering_UsesServerSideCalculation()
+    {
+        const decimal unitPrice = 10m;
+        const int     qty       = 2;
+
+        var db = CreateDb("Checkout_PriceTamper");
+        db.RegisteredUsers.Add(new RegisteredUserModel { PkRegisteredUserId = 1, Email = "buyer@test.com" });
+        db.ContactDetails.Add(new ContactDetailModel { PkContactId = 1, FkRegisteredUserId = 1, FirstName = "Jane", IsDefault = true });
+        db.Products.Add(new ProductModel { PkProductId = 1, Name = "Sticker", Price = unitPrice, StockQuantity = 10, IsActive = true });
+        var cartRow = new CartModel { FkRegisteredUserId = 1, FkProductID = 1, Quantity = qty, TotalPrice = unitPrice * qty };
+        db.Carts.Add(cartRow);
+        await db.SaveChangesAsync();
+
+        decimal capturedTotal = 0m;
+        var payPal = new Mock<IPayPalService>();
+        payPal.Setup(p => p.CreateOrderAsync(It.IsAny<decimal>(), It.IsAny<string>(), It.IsAny<string>()))
+              .Callback<decimal, string, string?>((t, _, _) => capturedTotal = t)
+              .ReturnsAsync("PAYPAL-ORDER-ID");
+        payPal.Setup(p => p.CaptureOrderAsync(It.IsAny<string>())).Returns(Task.CompletedTask);
+
+        // Attempt to tamper: submit a VM with a suspiciously low total.
+        var tamperedVm = new CheckoutVM { Total = 0.01m };
+        var ctrl = BuildController(db, payPal.Object, new[] { cartRow });
+
+        await ctrl.ProcessPayment(tamperedVm);
+
+        // Server-calculated: subtotal = 20, tax = 2.40, shipping = 7.99 → 30.39
+        var expectedSubtotal = unitPrice * qty;
+        var expectedTotal    = expectedSubtotal + expectedSubtotal * 0.12m + 7.99m;
+        Assert.Equal(expectedTotal, capturedTotal);
+    }
+
+    /// <summary>
+    /// When the cart repo returns no items (empty enumerable) the controller
+    /// must redirect to the Cart index without attempting any payment.
+    /// </summary>
+    [Fact]
+    public async Task ProcessPayment_EmptyCartRepo_NeverCallsPayPal()
+    {
+        var db = CreateDb("Checkout_EmptyCartNoPay");
+        db.RegisteredUsers.Add(new RegisteredUserModel { PkRegisteredUserId = 1, Email = "buyer@test.com" });
+        await db.SaveChangesAsync();
+
+        var payPal = new Mock<IPayPalService>();
+        var ctrl   = BuildController(db, payPal.Object, Array.Empty<CartModel>());
+
+        await ctrl.ProcessPayment(new CheckoutVM());
+
+        payPal.Verify(p =>
+            p.CreateOrderAsync(It.IsAny<decimal>(), It.IsAny<string>(), It.IsAny<string>()),
+            Times.Never);
     }
 }

@@ -2,6 +2,7 @@ using System.Net.Http.Headers;
 using System.Text;
 using System.Text.Json;
 using ELKH.Configuration;
+using Microsoft.Extensions.Caching.Memory;
 using Microsoft.Extensions.Options;
 
 namespace ELKH.Services;
@@ -10,11 +11,16 @@ public class PayPalService : IPayPalService
 {
     private readonly HttpClient _http;
     private readonly PayPalOptions _opts;
+    private readonly IMemoryCache _cache;
 
-    public PayPalService(HttpClient http, IOptions<PayPalOptions> opts)
+    // Cache key is environment-scoped so sandbox and live tokens never collide.
+    private string TokenCacheKey => $"paypal_oauth_token_{_opts.Environment}";
+
+    public PayPalService(HttpClient http, IOptions<PayPalOptions> opts, IMemoryCache cache)
     {
-        _http = http;
-        _opts = opts.Value;
+        _http  = http;
+        _opts  = opts.Value;
+        _cache = cache;
     }
 
     private string BaseUrl =>
@@ -24,6 +30,11 @@ public class PayPalService : IPayPalService
 
     public async Task<string> GetAccessTokenAsync()
     {
+        // PayPal OAuth tokens are valid for ~9 hours. Cache for 8 hours to give
+        // a comfortable safety margin before the token is rejected mid-request.
+        if (_cache.TryGetValue(TokenCacheKey, out string? cached) && cached != null)
+            return cached;
+
         var auth = Convert.ToBase64String(Encoding.UTF8.GetBytes($"{_opts.ClientId}:{_opts.Secret}"));
         using var req = new HttpRequestMessage(HttpMethod.Post, $"{BaseUrl}/v1/oauth2/token");
         req.Headers.Authorization = new AuthenticationHeaderValue("Basic", auth);
@@ -34,10 +45,13 @@ public class PayPalService : IPayPalService
 
         var json = await res.Content.ReadAsStringAsync();
         using var doc = JsonDocument.Parse(json);
-        return doc.RootElement.GetProperty("access_token").GetString()!;
+        var token = doc.RootElement.GetProperty("access_token").GetString()!;
+
+        _cache.Set(TokenCacheKey, token, TimeSpan.FromHours(8));
+        return token;
     }
 
-    public async Task<string> CreateOrderAsync(decimal total, string currency)
+    public async Task<string> CreateOrderAsync(decimal total, string currency, string? idempotencyKey = null)
     {
         var token = await GetAccessTokenAsync();
 
@@ -60,6 +74,9 @@ public class PayPalService : IPayPalService
         using var req = new HttpRequestMessage(HttpMethod.Post, $"{BaseUrl}/v2/checkout/orders");
         req.Headers.Authorization = new AuthenticationHeaderValue("Bearer", token);
         req.Headers.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
+        // PayPal deduplicates requests with the same PayPal-Request-Id within a short window.
+        // This prevents double-charges when a network error causes the client to retry.
+        req.Headers.Add("PayPal-Request-Id", idempotencyKey ?? Guid.NewGuid().ToString());
         req.Content = new StringContent(JsonSerializer.Serialize(body), Encoding.UTF8, "application/json");
 
         var res = await _http.SendAsync(req);

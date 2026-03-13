@@ -53,9 +53,9 @@ namespace ELKH.Controllers
                 StockDownCount = await _context.Products.CountAsync(p => p.StockQuantity <= 100),
             };
 
-            // Top 5 products for dashboard widget
-            var orderItems = await _context.OrderItems
-                .Include(oi => oi.Product)
+            // Top 5 products by units sold — grouped and aggregated in the database,
+            // not loaded into memory first.
+            ViewBag.TopProducts = await _context.OrderItems
                 .Select(oi => new
                 {
                     oi.FkProductId,
@@ -63,19 +63,16 @@ namespace ELKH.Controllers
                     ProductPrice = oi.Product == null ? 0m : oi.Product.Price,
                     oi.Quantity
                 })
-                .ToListAsync();
-
-            ViewBag.TopProducts = orderItems
-                .GroupBy(oi => new { oi.FkProductId, oi.ProductName, oi.ProductPrice })
+                .GroupBy(x => new { x.FkProductId, x.ProductName, x.ProductPrice })
                 .Select(g => new TopProductVM
                 {
                     ProductName = g.Key.ProductName,
-                    UnitsSold   = g.Sum(oi => oi.Quantity),
-                    Revenue     = g.Sum(oi => oi.Quantity * g.Key.ProductPrice)
+                    UnitsSold   = g.Sum(x => x.Quantity),
+                    Revenue     = g.Sum(x => x.Quantity * g.Key.ProductPrice)
                 })
                 .OrderByDescending(p => p.UnitsSold)
                 .Take(5)
-                .ToList();
+                .ToListAsync();
 
             return View(vm);
         }
