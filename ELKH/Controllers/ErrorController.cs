@@ -49,7 +49,7 @@ public class ErrorController : Controller
     /// </summary>
     [Route("/Error/{statusCode:int}")]
     [ResponseCache(Duration = 0, Location = ResponseCacheLocation.None, NoStore = true)]
-    public IActionResult StatusCode(int statusCode)
+    public new IActionResult StatusCode(int statusCode)
     {
         _logger.LogWarning("HTTP {StatusCode} on {Path}", statusCode, HttpContext.Request.Path);
         ViewBag.StatusCode = statusCode;
