@@ -119,7 +119,7 @@ namespace ELKH.Services
             var product = await _db.Products.FindAsync(itemId);
             if (product == null) return 0;
 
-            if ((product.StockQuantity ?? 0) < quantity) return -1;
+            if ((product.StockQuantity) < quantity) return -1;
 
             var defaultContact = await _contactRepo.GetDefaultByUserIdAsync(user.PkRegisteredUserId);
             int contactId = defaultContact?.PkContactId ?? 0;
@@ -146,14 +146,20 @@ namespace ELKH.Services
                 {
                     FkOrderId   = order.PkOrderId,
                     FkProductId = itemId,
-                    Quantity    = quantity
+                    Quantity    = quantity,
+                    UnitPrice   = effective
                 });
 
-                product.StockQuantity = (product.StockQuantity ?? 0) - quantity;
+                product.StockQuantity = (product.StockQuantity) - quantity;
 
                 await _db.SaveChangesAsync();
                 await transaction.CommitAsync();
                 return order.PkOrderId;
+            }
+            catch (Microsoft.EntityFrameworkCore.DbUpdateConcurrencyException)
+            {
+                await transaction.RollbackAsync();
+                return -1; // another request updated stock first
             }
             catch
             {
@@ -280,7 +286,7 @@ namespace ELKH.Services
                 foreach (var c in items)
                 {
                     if (!products.TryGetValue(c.FkProductID, out var p) ||
-                        (p.StockQuantity ?? 0) < c.Quantity)
+                        (p.StockQuantity) < c.Quantity)
                     {
                         return -1;
                     }
@@ -318,10 +324,11 @@ namespace ELKH.Services
                         { 
                             FkOrderId = order.PkOrderId,
                             FkProductId = c.FkProductID,
-                            Quantity = c.Quantity
+                            Quantity = c.Quantity,
+                            UnitPrice = products[c.FkProductID].GetEffectivePrice()
                         });
                         products[c.FkProductID].StockQuantity =
-                            (products[c.FkProductID].StockQuantity ?? 0) - c.Quantity;
+                            (products[c.FkProductID].StockQuantity) - c.Quantity;
                     }
 
                     // Step 11: Clear the cart (order is now placed)
@@ -332,6 +339,11 @@ namespace ELKH.Services
 
                     await transaction.CommitAsync();
                     return order.PkOrderId;
+                }
+                catch (Microsoft.EntityFrameworkCore.DbUpdateConcurrencyException)
+                {
+                    await transaction.RollbackAsync();
+                    return -1; // concurrent order modified stock first
                 }
                 catch
                 {

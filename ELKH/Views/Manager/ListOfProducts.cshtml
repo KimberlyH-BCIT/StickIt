@@ -1,78 +1,207 @@
-﻿@model IEnumerable<ELKH.ViewModels.ProductVM>
+@model List<ELKH.ViewModels.ProductVM>
 
 @{
-    ViewData["Title"] = "ListOfProducts";
+    ViewData["Title"] = "Products";
     Layout = "~/Views/Shared/_Layout.cshtml";
+
+    string stockFilter  = ViewBag.StockFilter  as string ?? "";
+    string activeFilter = ViewBag.ActiveFilter as string ?? "";
+
+    string filterLabel = (stockFilter, activeFilter) switch
+    {
+        ("low", _) => "🔴 Low Stock (< 50 units)",
+        ("stocked", _) => "🟢 Well Stocked (≥ 50 units)",
+        (_,         "active")   => "✅ Active Products",
+        (_,         "inactive") => "⛔ Inactive Products",
+        _                       => ""
+    };
 }
 
-<h1>ListOfProducts</h1>
+<div class="container-fluid mt-4 px-4 pb-5">
 
-<p>
-    <a asp-action="Create">Create New</a>
-</p>
-<table class="table">
-    <thead>
-        <tr>
-            <th>
-                @Html.DisplayNameFor(model => model.ProductId)
-            </th>
-            <th>
-                @Html.DisplayNameFor(model => model.ProductName)
-            </th>
-            <th>
-                @Html.DisplayNameFor(model => model.Description)
-            </th>
-            <th>
-                @Html.DisplayNameFor(model => model.Price)
-            </th>
-            <th>
-                @Html.DisplayNameFor(model => model.StockQuantity)
-            </th>
-            <th>
-                @Html.DisplayNameFor(model => model.IsActive)
-            </th>
-            <th>
-                @Html.DisplayNameFor(model => model.CategoryId)
-            </th>
-            <th>
-                @Html.DisplayNameFor(model => model.CategoryName)
-            </th>
-            <th></th>
-        </tr>
-    </thead>
-    <tbody>
-@foreach (var item in Model) {
-        <tr>
-            <td>
-                @Html.DisplayFor(modelItem => item.ProductId)
-            </td>
-            <td>
-                @Html.DisplayFor(modelItem => item.ProductName)
-            </td>
-            <td>
-                @Html.DisplayFor(modelItem => item.Description)
-            </td>
-            <td>
-                @Html.DisplayFor(modelItem => item.Price)
-            </td>
-            <td>
-                @Html.DisplayFor(modelItem => item.StockQuantity)
-            </td>
-            <td>
-                @Html.DisplayFor(modelItem => item.IsActive)
-            </td>
-            <td>
-                @Html.DisplayFor(modelItem => item.CategoryId)
-            </td>
-            <td>
-                @Html.DisplayFor(modelItem => item.CategoryName)
-            </td>
-            <td>
-                @Html.ActionLink("Edit", "Edit", new { /* id=item.PrimaryKey */ }) |
-                @Html.ActionLink("Details", "Details", new { /* id=item.PrimaryKey */ }) |
-                @Html.ActionLink("Delete", "Delete", new { /* id=item.PrimaryKey */ })
-            </td>
-        </tr>
-}
-    </tbody>
-</table>
+    <div class="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-2">
+        <div>
+            <h2 class="fw-bold text-primary mb-0">Products</h2>
+            @if (!string.IsNullOrEmpty(filterLabel))
+            {
+                <span class="badge bg-secondary bg-opacity-10 text-secondary border mt-1">
+                    Filtered: @filterLabel
+                </span>
+            }
+        </div>
+        <a asp-action="Index" class="btn btn-outline-primary rounded-pill px-4">← Dashboard</a>
+    </div>
+
+    @if (TempData["Success"] != null)
+    {
+        <div class="alert alert-success alert-dismissible fade show rounded-3" role="alert">
+            ✅ @TempData["Success"]
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
+    }
+
+    <!-- ── Filter Bar ─────────────────────────────────────────── -->
+    <div class="card border-0 shadow-sm rounded-4 mb-4">
+        <div class="card-body p-4">
+            <form method="get" class="d-flex gap-2 mb-3">
+                <input type="hidden" name="stockFilter"  value="@stockFilter" />
+                <input type="hidden" name="activeFilter" value="@activeFilter" />
+                <input type="text" name="search" value="@ViewBag.Search"
+                       class="form-control rounded-pill"
+                       placeholder="Search by name or category..." />
+                <button type="submit" class="btn btn-primary rounded-pill px-4">Search</button>
+                @if (!string.IsNullOrEmpty(ViewBag.Search as string) || !string.IsNullOrEmpty(stockFilter) || !string.IsNullOrEmpty(activeFilter))
+                {
+                    <a asp-action="ListOfProducts" class="btn btn-outline-secondary rounded-pill px-3">Clear All</a>
+                }
+            </form>
+
+            <div class="d-flex flex-wrap gap-2 align-items-center">
+                <span class="text-muted small">Stock:</span>
+                <a asp-action="ListOfProducts" asp-route-search="@ViewBag.Search" asp-route-activeFilter="@activeFilter"
+                   class="btn btn-sm rounded-pill px-3 @(stockFilter == "" ? "btn-secondary" : "btn-outline-secondary")">All</a>
+                <a asp-action="ListOfProducts" asp-route-search="@ViewBag.Search" asp-route-stockFilter="stocked" asp-route-activeFilter="@activeFilter"
+                   class="btn btn-sm rounded-pill px-3 @(stockFilter == "stocked" ? "btn-success" : "btn-outline-success")">🟢 Well Stocked</a>
+                <a asp-action="ListOfProducts" asp-route-search="@ViewBag.Search" asp-route-stockFilter="medium" asp-route-activeFilter="@activeFilter"
+                   class="btn btn-sm rounded-pill px-3 @(stockFilter == "medium" ? "btn-warning" : "btn-outline-warning")">🟡 Medium</a>
+                <a asp-action="ListOfProducts" asp-route-search="@ViewBag.Search" asp-route-stockFilter="low" asp-route-activeFilter="@activeFilter"
+                   class="btn btn-sm rounded-pill px-3 @(stockFilter == "low" ? "btn-danger" : "btn-outline-danger")">🔴 Low Stock</a>
+
+                <span class="text-muted small ms-3">Status:</span>
+                <a asp-action="ListOfProducts" asp-route-search="@ViewBag.Search" asp-route-stockFilter="@stockFilter"
+                   class="btn btn-sm rounded-pill px-3 @(activeFilter == "" ? "btn-secondary" : "btn-outline-secondary")">All</a>
+                <a asp-action="ListOfProducts" asp-route-search="@ViewBag.Search" asp-route-stockFilter="@stockFilter" asp-route-activeFilter="active"
+                   class="btn btn-sm rounded-pill px-3 @(activeFilter == "active" ? "btn-success" : "btn-outline-success")">✅ Active</a>
+                <a asp-action="ListOfProducts" asp-route-search="@ViewBag.Search" asp-route-stockFilter="@stockFilter" asp-route-activeFilter="inactive"
+                   class="btn btn-sm rounded-pill px-3 @(activeFilter == "inactive" ? "btn-secondary" : "btn-outline-secondary")">⛔ Inactive</a>
+            </div>
+        </div>
+    </div>
+
+    <!-- ── Table ──────────────────────────────────────────────── -->
+    <div class="card border-0 shadow-sm rounded-4">
+        <div class="card-body p-0">
+            <div class="table-responsive">
+                <table class="table table-hover align-middle mb-0">
+                    <thead class="table-light">
+                        <tr>
+                            <th class="ps-4" style="width:50px;">#</th>
+                            <th>Product</th>
+                            <th>Category</th>
+                            <th class="text-end">Price</th>
+                            <th class="text-center">Stock</th>
+                            <th class="text-center">Status</th>
+                            <th class="text-center" style="width:110px;">Action</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @if (Model.Any())
+                        {
+                            @foreach (var p in Model)
+                            {
+                                string stockClass = p.StockQuantity == 0 ? "bg-secondary"
+                                : p.StockQuantity < 50 ? "bg-danger"
+                                : "bg-success";
+
+                                string stockIcon = p.StockQuantity == 0 ? "⚪"
+                                : p.StockQuantity < 50 ? "🔴"
+                                : "🟢";
+
+                                <tr class="@(p.StockQuantity == 0 ? "table-secondary" : p.StockQuantity < 50 ? "table-danger" : "")">
+                                    <td class="ps-4 text-muted small">@p.ProductId</td>
+
+                                    <td>
+                                        <div class="d-flex align-items-center gap-2">
+                                            @if (!string.IsNullOrEmpty(p.Thumbnail))
+                                            {
+                                                <img src="@p.Thumbnail" alt=""
+                                                     style="width:36px;height:36px;object-fit:cover;border-radius:6px;border:1px solid #e5e7eb;" />
+                                            }
+                                            else
+                                            {
+                                                <div style="width:36px;height:36px;background:#f3f4f6;border-radius:6px;display:flex;align-items:center;justify-content:center;font-size:.85rem;border:1px solid #e5e7eb;">
+                                                    📦
+                                                </div>
+                                            }
+                                            <span class="fw-semibold">@p.ProductName</span>
+                                        </div>
+                                    </td>
+
+                                    <td>
+                                        <span class="badge bg-secondary bg-opacity-10 text-secondary border px-2">
+                                            @p.CategoryName
+                                        </span>
+                                    </td>
+
+                                    <td class="text-end fw-semibold">$@p.Price.ToString("N2")</td>
+
+                                    <td class="text-center">
+                                        <span class="badge @stockClass px-2 py-1 rounded-pill">
+                                            @stockIcon @p.StockQuantity
+                                        </span>
+                                    </td>
+
+                                    <!-- Clickable active toggle -->
+                                    <td class="text-center">
+                                        <form asp-action="ToggleActive" method="post" class="d-inline">
+                                            @Html.AntiForgeryToken()
+                                            <input type="hidden" name="id"           value="@p.ProductId" />
+                                            <input type="hidden" name="stockFilter"  value="@stockFilter" />
+                                            <input type="hidden" name="activeFilter" value="@activeFilter" />
+                                            <input type="hidden" name="search"       value="@ViewBag.Search" />
+                                            <button type="submit"
+                                                    class="badge border-0 px-2 py-1 rounded-pill @(p.IsActive ? "bg-success" : "bg-secondary")"
+                                                    style="cursor:pointer;" title="Click to toggle">
+                                                @(p.IsActive ? "✅ Active" : "⛔ Inactive")
+                                            </button>
+                                        </form>
+                                    </td>
+
+                                    <td class="text-center">
+                                        <a asp-action="ProductDetails"
+                                           asp-route-id="@p.ProductId"
+                                           class="btn btn-sm btn-outline-primary rounded-pill px-3">
+                                            Details
+                                        </a>
+                                    </td>
+                                </tr>
+                            }
+                        }
+                        else
+                        {
+                            <tr>
+                                <td colspan="7" class="text-center text-muted py-5">
+                                    <span style="font-size:2.5rem;">📦</span>
+                                    <p class="mt-2 mb-0">No products match the current filter.</p>
+                                    <a asp-action="ListOfProducts" class="btn btn-sm btn-outline-secondary mt-2 rounded-pill">
+                                        Clear filters
+                                    </a>
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    @if (ViewBag.TotalPages > 1)
+    {
+        <nav class="mt-4">
+            <ul class="pagination justify-content-center">
+                @for (int i = 1; i <= ViewBag.TotalPages; i++)
+                {
+                    <li class="page-item @(ViewBag.CurrentPage == i ? "active" : "")">
+                        <a class="page-link rounded-pill mx-1"
+                           asp-action="ListOfProducts"
+                           asp-route-page="@i"
+                           asp-route-search="@ViewBag.Search"
+                           asp-route-stockFilter="@stockFilter"
+                           asp-route-activeFilter="@activeFilter">@i</a>
+                    </li>
+                }
+            </ul>
+        </nav>
+    }
+
+</div>

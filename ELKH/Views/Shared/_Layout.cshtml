@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="en">
 <head>
     @using Microsoft.AspNetCore.Identity
@@ -16,16 +16,17 @@
     }
     <meta name="csrf-token" content="@csrfToken" />
     <link rel="icon" type="image/png" href="~/logo-stickit.png" />
-    <title>@ViewData["Title"] - ELKH</title>
+<title>@ViewData["Title"] - ELKH</title>
     <script type="importmap"></script>
     <link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.min.css" />
     <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
     <link rel="stylesheet" href="~/ELKH.styles.css" asp-append-version="true" />
 </head>
+
 <body>
 <header class="site-header bg-white box-shadow mb-3">
 
-    @* ① Top bar: brand + login greeting *@
+    @* â‘  Top bar: brand + login greeting *@
     <div class="header-top border-bottom py-2">
         <div class="container-fluid d-flex align-items-center justify-content-between flex-wrap gap-2">
             <a class="navbar-brand mb-0 h1" asp-area="" asp-controller="Home" asp-action="Index">ELKH</a>
@@ -36,7 +37,7 @@
         </div>
     </div>
 
-        @* ② Search bar centered *@
+        @* â‘¡ Search bar centered *@
         <div class="header-search py-2">
             <div class="container-fluid d-flex justify-content-center">
                 <div class="header-search-wrap position-relative">
@@ -45,7 +46,7 @@
                                type="search"
                                name="q"
                                class="form-control"
-                               placeholder="Search products…"
+                               placeholder="Search productsâ€¦"
                                autocomplete="off"
                                aria-label="Search products" />
                         <button type="submit" class="btn btn-outline-secondary ms-2">Search</button>
@@ -57,7 +58,7 @@
             </div>
         </div>
 
-        @* ③ Nav strip — sits at the bottom of the header, separated by border-top *@
+        @* â‘¢ Nav strip â€” sits at the bottom of the header, separated by border-top *@
         <nav class="header-nav border-top">
             <div class="container-fluid d-flex align-items-center">
                 <button class="nav-hamburger flex-shrink-0 me-2"
@@ -69,24 +70,24 @@
                     <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" fill="currentColor" viewBox="0 0 16 16" aria-hidden="true">
                         <path fill-rule="evenodd" d="M2.5 12a.5.5 0 0 1 .5-.5h10a.5.5 0 0 1 0 1H3a.5.5 0 0 1-.5-.5zm0-4a.5.5 0 0 1 .5-.5h10a.5.5 0 0 1 0 1H3a.5.5 0 0 1-.5-.5zm0-4a.5.5 0 0 1 .5-.5h10a.5.5 0 0 1 0 1H3a.5.5 0 0 1-.5-.5z"/>
                     </svg>
-                </button>
-                @if (User.IsInRole("Admin"))
-                {
-                    <ul class="navbar-nav flex-row flex-grow-1 justify-content-evenly mb-0">
-                        <li class="nav-item">
-                            <a class="nav-link text-dark fw-semibold" asp-controller="Admin" asp-action="Index">Home</a>
-                        </li>
-                        <li class="nav-item">
-                            <a class="nav-link text-dark" asp-controller="Home" asp-action="Index">View as Customer</a>
-                        </li>
-                        <li class="nav-item">
-                            <a class="nav-link text-dark" asp-controller="Manager" asp-action="Index">View as Manager</a>
-                        </li>
-                        <li class="nav-item">
-                            <a class="nav-link text-dark" asp-controller="Staff" asp-action="Index">View as Staff</a>
-                        </li>
-                    </ul>
-                }
+</button>
+@if (User.IsInRole("Admin"))
+{
+    <ul class="navbar-nav flex-row flex-grow-1 justify-content-evenly mb-0">
+        <li class="nav-item">
+            <a class="nav-link text-dark fw-semibold" asp-controller="Admin" asp-action="Index">Home</a>
+        </li>
+        <li class="nav-item">
+            <a class="nav-link text-dark" asp-controller="Home" asp-action="Index">View as Customer</a>
+        </li>
+        <li class="nav-item">
+            <a class="nav-link text-dark" asp-controller="Manager" asp-action="Index">View as Manager</a>
+        </li>
+        <li class="nav-item">
+            <a class="nav-link text-dark" asp-controller="Staff" asp-action="Index">View as Staff</a>
+        </li>
+    </ul>
+}
                 else
                 {
                     <ul class="navbar-nav flex-row flex-grow-1 justify-content-evenly mb-0">
@@ -96,6 +97,15 @@
                         <li class="nav-item">
                             <a class="nav-link text-dark" asp-area="" asp-controller="Product" asp-action="Index">Products</a>
                         </li>
+                        @if (User.IsInRole("Staff"))
+                        {
+                            <li class="nav-item">
+                                <a class="nav-link text-dark" asp-area="" asp-controller="OrderHistory" asp-action="Index">Order History</a>
+                            </li>
+                            <li class="nav-item">
+                                <a class="nav-link text-dark" asp-area="" asp-controller="Inventory" asp-action="Index">Inventory</a>
+                            </li>
+                        }
                         @if (SignInManager.IsSignedIn(User))
                         {
                             <li class="nav-item">
@@ -118,7 +128,7 @@
 
     </header>
 
-    @* Off-canvas sidebar — opened by the hamburger button in the nav strip *@
+    @* Off-canvas sidebar â€” opened by the hamburger button in the nav strip *@
     <div class="offcanvas offcanvas-start" tabindex="-1" id="navOffcanvas" aria-labelledby="navOffcanvasTitle">
         <div class="offcanvas-header border-bottom">
             <a class="navbar-brand mb-0 h1" asp-area="" asp-controller="Home" asp-action="Index" id="navOffcanvasTitle">ELKH</a>
@@ -138,7 +148,7 @@
                         <a class="nav-link text-dark px-3 py-2" asp-controller="Manager" asp-action="Index">View as Manager</a>
                     </li>
                     <li class="nav-item border-bottom">
-                        <a class="nav-link text-dark px-3 py-2" asp-controller="Staff" asp-action="Index">View as Staff</a>
+                        <a class="nav-link text-dark px-3 py-2" asp-controller="Home" asp-action="Index">View as Staff</a>
                     </li>
                 }
                 else
@@ -176,23 +186,22 @@
             @RenderSection("title",false)
         </div>
         @{
-            // TempData["Message"] uses the application-wide "level, text" convention.
-            // Controllers write this value through the SetSuccessMessage / SetWarningMessage /
-            // SetErrorMessage helpers in AuthenticatedControllerBase (or directly as raw strings
-            // in controllers that do not inherit from it, e.g. OrderHistoryController).
-            // Format:  "<level>, <display text>"  — e.g. "success, Order placed successfully"
-            // The level token is compared case-insensitively and mapped to a Bootstrap alert class.
             var raw = TempData["Message"] as string;
             if (!string.IsNullOrEmpty(raw))
             {
                 var parts = raw.Split(',', 2);
                 var level = parts.Length > 0 ? parts[0].Trim().ToLower() : "info";
                 var text = parts.Length > 1 ? parts[1].Trim() : string.Empty;
-                var alertClass = "alert-secondary";
-                if (level == "success") { alertClass = "alert-success"; }
-                else if (level == "danger" || level == "error") { alertClass = "alert-danger"; }
-                else if (level == "warning") { alertClass = "alert-warning"; }
-                else if (level == "info") { alertClass = "alert-info"; }
+                var alertClass = level switch
+                {
+                    "success" => "alert-success",
+                    "danger" or "error" => "alert-danger",
+                    "warning" => "alert-warning",
+                    "info" => "alert-info",
+                    _ => "alert-secondary"
+                };
+                if (!string.IsNullOrEmpty(text))
+                {
         <div class="row">
             <div class="col-12">
                 <div class="alert @alertClass alert-dismissible fade show" role="alert">
@@ -201,11 +210,13 @@
                 </div>
             </div>
         </div>
+                }
             }
         }
         <main role="main" class="pb-3">
             @RenderBody()
         </main>
+
     </div>
 
     <footer style="background:#111;">
@@ -264,15 +275,13 @@
             <hr class="border-secondary my-4" />
 
             <div class="d-flex justify-content-between align-items-center flex-wrap gap-2">
-                <div>© @DateTime.Now.Year - ELKH</div>
+                <div>Â© @DateTime.Now.Year - ELKH</div>
                 <div class="d-flex gap-3">
                     <a class="text-white-50 text-decoration-none" asp-controller="Home" asp-action="Privacy">Privacy</a>
                     <a class="text-white-50 text-decoration-none" href="#">Terms</a>
                 </div>
             </div>
         </div>
-    </footer>
-
     <!-- Wishlist sign-in prompt (shared across all pages; shown when a guest clicks any wishlist button) -->
     <div class="modal fade" id="wishlistSignInModal" tabindex="-1"
          aria-labelledby="wishlistSignInModalLabel" aria-hidden="true">
@@ -308,5 +317,6 @@
     <script src="~/js/site.js" asp-append-version="true"></script>
     @await Html.PartialAsync("_ValidationScriptsPartial")
     @await RenderSectionAsync("Scripts", required: false)
+
 </body>
 </html>

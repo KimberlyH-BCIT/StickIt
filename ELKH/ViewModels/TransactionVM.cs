@@ -1,11 +1,11 @@
 ﻿using ELKH.Models;
 using System.ComponentModel.DataAnnotations;
 
-namespace ELKH.ViewModels
-{
+namespace ELKH.ViewModels;
     public class TransactionVM
-        {
-         public int PkTransactionId { get; set; }
+    {
+        public string FirstName { get; set; } = string.Empty;
+        public int PkTransactionId { get; set; }
         [Display(Name = "Transaction Status")]
         public string TransactionStatus { get; set; } = string.Empty;
         [DisplayFormat(DataFormatString = "{0:F2}")]
@@ -13,11 +13,10 @@ namespace ELKH.ViewModels
         [Display(Name = "Transaction Time")]
         public DateTime TransactionDate { get; set; } = DateTime.Now;
         [Display(Name = "Delivery Fee")]
-        public decimal DeliberyFee { get; set; } = 0;
+        public decimal DeliveryFee { get; set; } = 0;
 
         //Relationship with Order
         public int FkOrderId { get; set; }
         public OrderModel Order { get; set; } = new OrderModel();
     }
-    
-}
+   

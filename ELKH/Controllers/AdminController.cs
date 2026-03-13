@@ -13,37 +13,10 @@ using Microsoft.Extensions.Logging;
 
 namespace ELKH.Controllers
 {
-    /// <summary>
-    /// Admin console controller providing administrative tools and utilities.
-    /// Handles system maintenance, cache management, and search indexing.
-    /// </summary>
-    /// <remarks>
-    /// TABLE OF CONTENTS
-    /// ================================================================================
-    /// 1. Fields & Constructor
-    /// 2. Dashboard
-    ///    - Index()                               // GET: Admin dashboard
-    /// 3. User Management
-    ///    - ListUsers()                           // GET: List all users
-    ///    - ManageUserRole()                      // GET: Manage user roles
-    ///    - CustomerAccountDetails()              // GET: Customer account details
-    ///    - StaffAccountDetails()                 // GET: Staff account details
-    ///    - ManageSales()                         // GET: Manage sales
-    /// 4. Search Index Management
-    ///    - ReindexFTS()                          // POST: Rebuild full-text search index
-    ///    - ReindexHealth()                       // GET: Check reindex service status
-    /// 5. Cache Management
-    ///    - CacheStats()                          // GET: Cache statistics
-    ///    - ClearFuzzyCache()                     // POST: Clear fuzzy search cache
-    /// ================================================================================
-    ///
-    /// All endpoints require Admin role authorization.
-    /// Routes: /Admin/{action}
-    /// </remarks>
     [Authorize(Roles = "Admin")]
     public class AdminController : Controller
     {
-        private readonly IRole_repo _roleRepo;
+        private readonly IRoleRepository _roleRepo;
         private readonly ApplicationDbContext _context;
         private readonly IMemoryCache _cache;
         private readonly ILogger<AdminController> _logger;
@@ -51,7 +24,7 @@ namespace ELKH.Controllers
         private readonly UserManager<IdentityUser> _userManager;
 
         public AdminController(
-            IRole_repo roleRepo,
+            IRoleRepository roleRepo,
             ApplicationDbContext context,
             IMemoryCache cache,
             ILogger<AdminController> logger,
@@ -65,81 +38,278 @@ namespace ELKH.Controllers
             _reindexService = reindexService;
             _userManager = userManager;
         }
-
-        /// <summary>Renders the admin dashboard with live order counts and stock-level statistics.</summary>
+        /// <summary>Renders the admin dashboard with top products and stock stats.</summary>
         public async Task<IActionResult> Index()
         {
-            // Define rolling time windows used by the order-volume KPI cards.
-            var now      = DateTime.UtcNow;
+            var now = DateTime.UtcNow;
             var weekAgo  = now.AddDays(-7);
             var monthAgo = now.AddDays(-30);
 
             var vm = new SalesVM
             {
-                // Count orders placed within each rolling window.
                 WeeklyTotalOrders  = await _context.Orders.CountAsync(o => o.CreatedAt >= weekAgo),
                 MonthlyTotalOrders = await _context.Orders.CountAsync(o => o.CreatedAt >= monthAgo),
-
-                // Split inventory into well-stocked (> 100 units) vs low-stock (≤ 100 units) buckets.
-                StockUpCount       = await _context.Products.CountAsync(p => p.StockQuantity > 100),
-                StockDownCount     = await _context.Products.CountAsync(p => p.StockQuantity <= 100),
+                StockUpCount   = await _context.Products.CountAsync(p => p.StockQuantity > 100),
+                StockDownCount = await _context.Products.CountAsync(p => p.StockQuantity <= 100),
             };
+
+            // Top 5 products for dashboard widget
+            var orderItems = await _context.OrderItems
+                .Include(oi => oi.Product)
+                .Select(oi => new
+                {
+                    oi.FkProductId,
+                    ProductName  = oi.Product == null ? "Unknown" : oi.Product.Name,
+                    ProductPrice = oi.Product == null ? 0m : oi.Product.Price,
+                    oi.Quantity
+                })
+                .ToListAsync();
+
+            ViewBag.TopProducts = orderItems
+                .GroupBy(oi => new { oi.FkProductId, oi.ProductName, oi.ProductPrice })
+                .Select(g => new TopProductVM
+                {
+                    ProductName = g.Key.ProductName,
+                    UnitsSold   = g.Sum(oi => oi.Quantity),
+                    Revenue     = g.Sum(oi => oi.Quantity * g.Key.ProductPrice)
+                })
+                .OrderByDescending(p => p.UnitsSold)
+                .Take(5)
+                .ToList();
+
             return View(vm);
         }
 
-        /// <summary>
-        /// Renders the user listing page with every Identity user and their assigned roles.
-        /// Roles are fetched per-user via UserManager because ASP.NET Core Identity does not
-        /// expose a single query that returns both users and roles; the list is small enough
-        /// that the extra round-trips are acceptable.
-        /// </summary>
-        public async Task<IActionResult> ListUsers()
+        /*============================== List Of All Users ==============================*/
+        public async Task<IActionResult> ListUsers(string search, string roleFilter, int page = 1)
         {
-            var users  = _userManager.Users.ToList();
-            var vmList = new List<UserListVM>();
-            foreach (var u in users)
+            const int pageSize = 5;
+
+            // Candidate set: either all users in the requested role (single query)
+            // or the full user table narrowed by the email search predicate in the DB.
+            IList<IdentityUser> candidates;
+
+            bool hasRoleFilter = !string.IsNullOrEmpty(roleFilter) && roleFilter != "All";
+
+            if (hasRoleFilter)
             {
-                var roles = await _userManager.GetRolesAsync(u);
-                vmList.Add(new UserListVM
+                // Single server-side query: returns only users assigned to this role.
+                candidates = await _userManager.GetUsersInRoleAsync(roleFilter);
+
+                // Apply optional email search in-memory on the (already small) role-member list.
+                if (!string.IsNullOrEmpty(search))
                 {
-                    Id    = u.Id,
-                    Email = u.Email ?? string.Empty,
+                    candidates = candidates
+                        .Where(u => u.Email?.Contains(search, StringComparison.OrdinalIgnoreCase) ?? false)
+                        .ToList();
+                }
+            }
+            else
+            {
+                // Push the email filter to the database; avoid loading all users into memory.
+                IQueryable<IdentityUser> query = _userManager.Users;
+                if (!string.IsNullOrEmpty(search))
+                    query = query.Where(u => u.Email != null && u.Email.Contains(search));
+
+                candidates = await query.ToListAsync();
+            }
+
+            int totalUsers = candidates.Count;
+
+            // Materialise only the current page before the per-user role look-ups.
+            var pageUsers = candidates
+                .Skip((page - 1) * pageSize)
+                .Take(pageSize)
+                .ToList();
+
+            // GetRolesAsync is called only for the paged slice (≤ pageSize users).
+            var userList = new List<UserListVM>(pageUsers.Count);
+            foreach (var user in pageUsers)
+            {
+                var roles = await _userManager.GetRolesAsync(user);
+                userList.Add(new UserListVM
+                {
+                    Id    = user.Id,
+                    Email = user.Email ?? string.Empty,
                     Roles = roles.ToList()
                 });
             }
-            return View(vmList);
+
+            ViewBag.CurrentPage = page;
+            ViewBag.TotalPages  = (int)Math.Ceiling((double)totalUsers / pageSize);
+            ViewBag.Search      = search;
+            ViewBag.RoleFilter  = roleFilter;
+
+            return View(userList);
         }
 
-        /// <summary>
-        /// Renders the role management page, pre-populating the view model
-        /// with all roles retrieved from <see cref="IRole_repo"/>.
-        /// </summary>
-        public IActionResult ManageUserRole()
+        /*============================== Account Details ==============================*/
+        [HttpGet]
+        public async Task<IActionResult> AccountDetails(string id)
         {
-            ManageRoleVM manageRoleVM = new ManageRoleVM();
+            if (string.IsNullOrEmpty(id))
+            {
+                return NotFound();
+            }
 
-            manageRoleVM.Roles = _roleRepo.GetAllRoles();
+            var user = await _userManager.FindByIdAsync(id);
+            if (user == null) return NotFound();
 
-            return View(manageRoleVM);
+            var roles = await _userManager.GetRolesAsync(user);
+
+            // Resolve the application-side RegisteredUser by email so we can look up
+            // the contact detail via the canonical FK (FkRegisteredUserId) rather than
+            // the Identity GUID string, which may not be populated on all rows.
+            var registeredUser = await _context.RegisteredUsers
+                .FirstOrDefaultAsync(r => r.Email == user.Email);
+            var contact = registeredUser is null
+                ? null
+                : await _context.ContactDetails
+                    .FirstOrDefaultAsync(c => c.FkRegisteredUserId == registeredUser.PkRegisteredUserId);
+
+            var vm = new AccountDetailsVM
+            {
+                User = new UserListVM
+                {
+                    Id = user.Id,
+                    Name = user.UserName ?? "",
+                    Email = user.Email ?? "",
+                    Roles = roles.ToList()
+                },
+                Contact = contact == null ? null : new ContactDetailVM
+                {
+                    ContactId = contact.PkContactId,
+                    FirstName = contact.FirstName,
+                    LastName = contact.LastName,
+                    PhoneNumber = contact.PhoneNumber,
+                    Street = contact.Street,
+                    City = contact.City,
+                    Province = contact.Province,
+                    PostCode = contact.PostCode,
+                    Country = contact.Country,
+                    IsDefault = contact.IsDefault
+                }
+            };
+
+            return View(vm);
         }
 
-        /// <summary>Renders the customer account details page (shell view).</summary>
-        public IActionResult CustomerAccountDetails()
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> RemoveRole(string userId, string role)
         {
-            return View();
+            if (string.IsNullOrEmpty(userId) || string.IsNullOrEmpty(role))
+            {
+                return NotFound();
+            }
+
+            var user = await _userManager.FindByIdAsync(userId);
+
+            if (user == null)
+            {
+                return NotFound();
+            }
+
+            await _userManager.RemoveFromRoleAsync(user, role);
+            return RedirectToAction("AccountDetails", new { id = userId });
         }
 
-        /// <summary>Renders the staff account details page (shell view).</summary>
-        public IActionResult StaffAccountDetails()
+        /*============================== Manage Sales ==============================*/
+        public async Task<IActionResult> ManageSales()
         {
-            return View();
-        }
+            var now = DateTime.UtcNow;
+            var weekStart = now.AddDays(-6).Date;
+            var monthStart = new DateTime(now.Year, now.Month, 1);
+            var yearStart = now.AddMonths(-11).Date;
 
+            // ── Fetch into memory first so decimal Sum() works with SQLite ──
+            var allTransactions = await _context.Transactions
+                .Where(t => t.TransactionDate >= yearStart)
+                .Select(t => new { t.TransactionDate, t.Amount })
+                .ToListAsync();
+
+            var weeklyTx = allTransactions.Where(t => t.TransactionDate.Date >= weekStart).ToList();
+            var monthlyTx = allTransactions.Where(t => t.TransactionDate >= monthStart).ToList();
+
+            // ── Summary cards ─────────────────────────────────────────────
+            decimal weeklyGross = weeklyTx.Any() ? weeklyTx.Sum(t => t.Amount) : 0m;
+            decimal monthlyGross = monthlyTx.Any() ? monthlyTx.Sum(t => t.Amount) : 0m;
+            int weeklyOrders = weeklyTx.Count;
+            int monthlyOrders = monthlyTx.Count;
+            int totalOrders = await _context.Orders.CountAsync();
+
+            // ── Weekly chart: last 7 days ─────────────────────────────────
+            var weeklyLabels = new List<string>();
+            var weeklySalesData = new List<decimal>();
+
+            for (int d = 6; d >= 0; d--)
+            {
+                var day = now.AddDays(-d).Date;
+                var dayTx = allTransactions.Where(t => t.TransactionDate.Date == day).ToList();
+                weeklyLabels.Add(day.ToString("ddd dd"));
+                weeklySalesData.Add(dayTx.Any() ? dayTx.Sum(t => t.Amount) : 0m);
+            }
+
+            // ── Monthly chart: last 12 months ─────────────────────────────
+            var monthlyLabels = new List<string>();
+            var monthlySalesData = new List<decimal>();
+
+            for (int m = 11; m >= 0; m--)
+            {
+                var month = now.AddMonths(-m);
+                var monthTx = allTransactions
+                    .Where(t => t.TransactionDate.Year == month.Year
+                             && t.TransactionDate.Month == month.Month)
+                    .ToList();
+                monthlyLabels.Add(month.ToString("MMM yyyy"));
+                monthlySalesData.Add(monthTx.Any() ? monthTx.Sum(t => t.Amount) : 0m);
+            }
+
+            // ── Top 5 products ────────────────────────────────────────────
+            var orderItems = await _context.OrderItems
+                .Include(oi => oi.Product) // use correct navigation property
+                .Select(oi => new
+                {
+                    oi.FkProductId,
+                    ProductName = oi.Product == null ? "Unknown" : oi.Product.Name,
+                    ProductPrice = oi.Product == null ? 0m : oi.Product.Price,
+                    oi.Quantity
+                })
+                .ToListAsync();
+
+            var topProducts = orderItems
+                .GroupBy(oi => new { oi.FkProductId, oi.ProductName, oi.ProductPrice })
+                .Select(g => new TopProductVM
+                {
+                    ProductName = g.Key.ProductName,
+                    UnitsSold = g.Sum(oi => oi.Quantity),
+                    Revenue = g.Sum(oi => oi.Quantity * g.Key.ProductPrice)
+                })
+                .OrderByDescending(p => p.UnitsSold)
+                .Take(5)
+                .ToList();
+
+            var vm = new SalesVM
+            {
+                WeeklyGrossSales = weeklyGross,
+                MonthlyGrossSales = monthlyGross,
+                WeeklyTotalOrders = weeklyOrders,
+                MonthlyTotalOrders = monthlyOrders,
+                TotalOrdersAllTime = totalOrders,
+                WeeklyLabels = weeklyLabels,
+                WeeklySalesData = weeklySalesData,
+                MonthlyLabels = monthlyLabels,
+                MonthlySalesData = monthlySalesData,
+                TopProducts = topProducts
+            };
+
+            return View(vm);
+        }
         /// <summary>Renders the sales management page (shell view).</summary>
-        public IActionResult ManageSales()
-        {
-            return View();
-        }
+        //public IActionResult ManageSales()
+        //{
+        //    return View();
+        //}
 
         // =====================================================================
         // Search Index Management
@@ -206,7 +376,7 @@ WHERE PkProductId NOT IN (SELECT rowid FROM ProductFTS);
             if (svc == null)
                 return Json(new { success = false, message = "service unavailable" });
 
-            var suggestionCount = _context.Set<FuzzySuggestionModel>().Count();
+            var suggestionCount = _context.FuzzySuggestions.Count();
 
             return Json(new
             {
@@ -232,8 +402,8 @@ WHERE PkProductId NOT IN (SELECT rowid FROM ProductFTS);
         {
             try
             {
-                var count = _context.Set<CachedFuzzyKeyModel>().Count();
-                var lastClear = _context.Set<AuditEntryModel>()
+                var count = _context.CachedFuzzyKeys.Count();
+                var lastClear = _context.AuditEntries
                     .Where(a => a.Action == "ClearFuzzyCache")
                     .OrderByDescending(a => a.Timestamp)
                     .Select(a => a.Timestamp)
@@ -250,7 +420,10 @@ WHERE PkProductId NOT IN (SELECT rowid FROM ProductFTS);
                         lastDuration = _reindexService.LastDuration;
                     }
                 }
-                catch { }
+                catch (Exception ex)
+                {
+                    _logger.LogWarning(ex, "Could not read reindex service metrics");
+                }
 
                 return Json(new
                 {
@@ -261,8 +434,9 @@ WHERE PkProductId NOT IN (SELECT rowid FROM ProductFTS);
                     lastDuration
                 });
             }
-            catch
+            catch (Exception ex)
             {
+                _logger.LogError(ex, "Failed to retrieve reindex health status");
                 return Json(new { success = false });
             }
         }
@@ -275,7 +449,7 @@ WHERE PkProductId NOT IN (SELECT rowid FROM ProductFTS);
         /// <returns>JSON result with the number of cache entries cleared.</returns>
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public IActionResult ClearFuzzyCache([FromBody] ClearCachePayload payload)
+        public async Task<IActionResult> ClearFuzzyCache([FromBody] ClearCachePayload payload)
         {
             // Step 1: Validate reason is provided (required for audit trail)
             if (string.IsNullOrWhiteSpace(payload?.Reason))
@@ -286,7 +460,7 @@ WHERE PkProductId NOT IN (SELECT rowid FROM ProductFTS);
             var reason = payload.Reason;
 
             // Step 2: Load persisted cache keys and clear them
-            var keys = _context.Set<CachedFuzzyKeyModel>().ToList();
+            var keys = _context.CachedFuzzyKeys.ToList();
             var registryCount = 0;
 
             if (keys.Any())
@@ -301,10 +475,13 @@ WHERE PkProductId NOT IN (SELECT rowid FROM ProductFTS);
                 // Remove persisted registry
                 try
                 {
-                    _context.Set<CachedFuzzyKeyModel>().RemoveRange(keys);
-                    _context.SaveChanges();
+                    _context.CachedFuzzyKeys.RemoveRange(keys);
+                    await _context.SaveChangesAsync();
                 }
-                catch { }
+                catch (Exception ex)
+                {
+                    _logger.LogWarning(ex, "Failed to persist CachedFuzzyKey removal for {Count} keys", keys.Count);
+                }
 
                 // Step 3: Log for monitoring
                 _logger.LogInformation(
@@ -325,9 +502,12 @@ WHERE PkProductId NOT IN (SELECT rowid FROM ProductFTS);
                         Reason = reason
                     };
                     _context.Add(audit);
-                    _context.SaveChanges();
+                    await _context.SaveChangesAsync();
                 }
-                catch { /* swallow to not fail admin action */ }
+                catch (Exception ex)
+                {
+                    _logger.LogWarning(ex, "Failed to persist ClearFuzzyCache audit entry");
+                }
             }
 
             return Ok(new { success = true, cleared = registryCount });
@@ -352,3 +532,4 @@ WHERE PkProductId NOT IN (SELECT rowid FROM ProductFTS);
         public string? Reason { get; set; }
     }
 }
+

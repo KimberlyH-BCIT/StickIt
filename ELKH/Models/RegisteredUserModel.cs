@@ -16,6 +16,7 @@ namespace ELKH.Models
         public int PkRegisteredUserId { get; set; }
 
         [Required]
+        [MaxLength(256)]
         public string Email { get; set; } = string.Empty;
 
         /// <summary>Cart items currently held by this user.</summary>
@@ -27,7 +28,7 @@ namespace ELKH.Models
         /// <summary>Saved delivery addresses belonging to this user.</summary>
         public ICollection<ContactDetailModel>? ContactDetails { get; set; }
 
-        /// <summary>Product ratings submitted by this user.</summary>
+        //Relationship With ProductRating
         public ICollection<ProductRatingModel>? ProductRatings { get; set; }
 
         /// <summary>

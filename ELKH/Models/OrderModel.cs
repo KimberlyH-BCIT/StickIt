@@ -20,6 +20,7 @@ namespace ELKH.Models
         /// Updated throughout the order lifecycle.
         /// </summary>
         [Display(Name = "Order Status")]
+        [MaxLength(50)]
         public string OrderStatus { get; set; } = string.Empty;
 
         /// <summary>
@@ -41,6 +42,7 @@ namespace ELKH.Models
         /// Separate from order status to track fulfillment independently.
         /// </summary>
         [Display(Name ="Delivery Status")]
+        [MaxLength(50)]
         public string DeliveryStatus { get; set; } = string.Empty;
 
         // =====================================================================
@@ -51,12 +53,7 @@ namespace ELKH.Models
         /// Foreign key to the customer who placed the order.
         /// </summary>
         public int FkRegisteredUserId { get; set; }
-
-        /// <summary>
-        /// Navigation property to the customer who placed the order.
-        /// Used for order history and customer analytics.
-        /// </summary>
-        public RegisteredUserModel RegisteredUser { get; set; } = null!;
+        public RegisteredUserModel? RegisteredUser { get; set; }
 
         /// <summary>
         /// Collection of line items included in this order.
@@ -64,27 +61,13 @@ namespace ELKH.Models
         /// </summary>
         public ICollection<OrderItemModel> OrderItems { get; set; } = new List<OrderItemModel>();
 
-        /// <summary>
-        /// Payment transaction details for this order.
-        /// Contains payment method, status, and transaction ID.
-        /// </summary>
+        //Relationship with Transaction
         public TransactionModel? Transaction { get; set; }
-
-        /// <summary>
-        /// Detailed order status tracking information.
-        /// Extended status information beyond the simple OrderStatus string.
-        /// </summary>
-        public OrderStatusModel? OrderStatusDetail { get; set; }
 
         /// <summary>
         /// Foreign key to the shipping/delivery address for this order.
         /// </summary>
         public int FkContactId { get; set; }
-
-        /// <summary>
-        /// Navigation property to the shipping/delivery address.
-        /// Contains customer name, address, and contact information for delivery.
-        /// </summary>
-        public ContactDetailModel ContactDetail { get; set; } = null!;
+        public ContactDetailModel? ContactDetail { get; set; }
     }
 }

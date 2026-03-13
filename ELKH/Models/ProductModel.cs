@@ -1,4 +1,5 @@
-﻿using System.ComponentModel;
+﻿using System.Collections.Generic;
+using System.ComponentModel;
 using System.ComponentModel.DataAnnotations;
 
 namespace ELKH.Models
@@ -20,18 +21,21 @@ namespace ELKH.Models
         /// Display name of the product as shown to customers.
         /// </summary>
         [Required]
+        [MaxLength(100)]
         public string Name { get; set; } = string.Empty;
 
         /// <summary>
         /// Normalized version of the product name for search and indexing.
         /// Stored in lowercase with diacritics removed for efficient fuzzy matching.
         /// </summary>
+        [MaxLength(100)]
         public string NameNormalized { get; set; } = string.Empty;
 
         /// <summary>
         /// Detailed product description shown on product detail pages.
         /// </summary>
         [Required]
+        [MaxLength(2000)]
         public string Description { get; set; } = string.Empty;
 
         /// <summary>
@@ -54,6 +58,7 @@ namespace ELKH.Models
         /// Decremented when orders are placed, incremented when restocked.
         /// </summary>
         [DisplayName("Stock Quantities")]
+        [ConcurrencyCheck]
 public int? StockQuantity { get; set; } = 0;
 
 /// <summary>
@@ -71,35 +76,26 @@ public int? StockQuantity { get; set; } = 0;
         /// Foreign key to the product's category (required).
         /// </summary>
         public int FkCategoryId { get; set; }
-
         /// <summary>
         /// Navigation property to the product's category.
         /// Used for category filtering and display.
         /// </summary>
-        public CategoryModel Category { get; set; } = null!;
+        public CategoryModel? Category { get; set; }
 
         /// <summary>
         /// Collection of images associated with this product.
         /// Used for product galleries and thumbnails.
         /// </summary>
-        public ICollection<ProductImageModel> ProductImages { get; set; } = new List<ProductImageModel>();
+        public ICollection<ProductImageModel>? ProductImage { get; set; }
 
-        /// <summary>
-        /// Collection of shopping cart entries that include this product.
-        /// </summary>
-        public ICollection<CartModel> Carts { get; set; } = new List<CartModel>();
+        //Cart Relationship
+        public ICollection<CartModel>? Carts { get; set; }
 
-        /// <summary>
-        /// Collection of order line items for this product.
-        /// Tracks all orders that included this product.
-        /// </summary>
-        public ICollection<OrderItemModel> OrderItems { get; set; } = new List<OrderItemModel>();
+        //OriderItem Relationship
+        public ICollection<OrderItemModel>? OrderItems { get; set; }
 
-        /// <summary>
-        /// Collection of customer ratings and reviews for this product.
-        /// Used to calculate average rating and display customer feedback.
-        /// </summary>
-        public ICollection<ProductRatingModel> ProductRatings { get; set; } = new List<ProductRatingModel>();
+        //Product Rating Relationship
+        public ICollection<ProductRatingModel>? ProductRatings { get; set; }
 
         /// <summary>
         /// Collection of wishlist entries for this product.

@@ -1,96 +1,226 @@
-﻿using Microsoft.AspNetCore.Authorization;
-using Microsoft.AspNetCore.Http;
+using ELKH.Data;
+using ELKH.ViewModels;
+using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
 
 namespace ELKH.Controllers
 {
-    /// <summary>
-    /// Manager console controller — routes accessible to both Admin and Manager roles.
-    /// </summary>
-    /// <remarks>
-    /// TABLE OF CONTENTS
-    /// ================================================================================
-    /// 1. Inventory / Product management
-    ///    - Index()                   // Dashboard landing page
-    ///    - ListOfProducts()          // Product catalogue list
-    ///    - AddNewProduct()           // New product form
-    ///    - ProductDetails(id)        // Single-product detail view
-    ///    - UpdateProductDetails(id)  // Edit product form
-    ///    - DeleteProduct(id)         // Delete confirmation
-    /// 2. Staff management
-    ///    - ListOfStaffAccount()      // Staff account listing
-    /// 3. Financials
-    ///    - ListAllTransactions()     // Transaction listing
-    /// ================================================================================
-    ///
-    /// All actions are currently view-only stubs that delegate rendering to their
-    /// corresponding Razor views. Business logic will be wired in a future iteration
-    /// once the service layer contracts are finalised.
-    /// </remarks>
     [Authorize(Roles = "Admin,Manager")]
     public class ManagerController : Controller
     {
-        // =====================================================================
-        // Inventory / Product management
-        // =====================================================================
+        private readonly ApplicationDbContext _context;
+        private readonly UserManager<IdentityUser> _userManager;
 
-        /// <summary>Manager dashboard landing page.</summary>
-        // GET: Manager
-        public ActionResult Index()
+        public ManagerController(ApplicationDbContext context, UserManager<IdentityUser> userManager)
         {
+            _context     = context;
+            _userManager = userManager;
+        }
+
+        // ================= DASHBOARD =================
+        public async Task<IActionResult> Index()
+        {
+            var now      = DateTime.UtcNow;
+            var weekAgo  = now.AddDays(-7);
+            var monthAgo = now.AddDays(-30);
+
+            ViewBag.TotalProducts    = await _context.Products.CountAsync();
+            ViewBag.ActiveProducts   = await _context.Products.CountAsync(p => p.IsActive);
+            ViewBag.InactiveProducts = await _context.Products.CountAsync(p => !p.IsActive);
+            ViewBag.StockUpCount     = await _context.Products.CountAsync(p => p.StockQuantity > 20);
+            ViewBag.StockDownCount   = await _context.Products.CountAsync(p => p.StockQuantity <= 20);
+            ViewBag.LowStockCount    = await _context.Products.CountAsync(p => p.StockQuantity <= 5);
+            ViewBag.WeeklyOrders     = await _context.Orders.CountAsync(o => o.CreatedAt >= weekAgo);
+            ViewBag.MonthlyOrders    = await _context.Orders.CountAsync(o => o.CreatedAt >= monthAgo);
+            ViewBag.TotalStaff       = (await _userManager.GetUsersInRoleAsync("Staff")).Count
+                                     + (await _userManager.GetUsersInRoleAsync("Manager")).Count;
+
             return View();
         }
 
-        /// <summary>Displays the full product catalogue for inventory review.</summary>
-        public ActionResult ListOfProducts()
+        // ================= LIST PRODUCTS =================
+        public async Task<IActionResult> ListOfProducts(string search, string stockFilter, string activeFilter, int page = 1)
         {
-            return View();
+            int pageSize = 8;
+
+            var query = _context.Products
+                .Include(p => p.Category)
+                .Include(p => p.ProductImage)
+                .AsQueryable();
+
+            if (!string.IsNullOrEmpty(search))
+                query = query.Where(p => p.Name.Contains(search) ||
+                                         (p.Category != null && p.Category.CategoryName.Contains(search)));
+
+            if (stockFilter == "low")
+                query = query.Where(p => p.StockQuantity <= 5);
+            else if (stockFilter == "medium")
+                query = query.Where(p => p.StockQuantity > 5 && p.StockQuantity <= 20);
+            else if (stockFilter == "stocked")
+                query = query.Where(p => p.StockQuantity > 20);
+
+            if (activeFilter == "active")
+                query = query.Where(p => p.IsActive);
+            else if (activeFilter == "inactive")
+                query = query.Where(p => !p.IsActive);
+
+            int total = await query.CountAsync();
+
+            var rawProducts = await query
+                .OrderBy(p => p.StockQuantity)
+                .Skip((page - 1) * pageSize)
+                .Take(pageSize)
+                .ToListAsync();
+
+            var products = rawProducts.Select(p => new ProductVM
+            {
+                ProductId     = p.PkProductId,
+                ProductName   = p.Name,
+                Description   = p.Description,
+                Price         = p.Price,
+                DiscountPercent = p.DiscountPercent,
+                StockQuantity = p.StockQuantity,
+                IsActive      = p.IsActive,
+                CategoryId    = p.FkCategoryId,
+                CategoryName  = p.Category?.CategoryName ?? "",
+                // Pull first image URL — empty string if none
+                Thumbnail     = p.ProductImage?.FirstOrDefault()?.ProductImageURL ?? ""
+            }).ToList();
+
+            ViewBag.CurrentPage  = page;
+            ViewBag.TotalPages   = (int)Math.Ceiling((double)total / pageSize);
+            ViewBag.Search       = search;
+            ViewBag.StockFilter  = stockFilter;
+            ViewBag.ActiveFilter = activeFilter;
+
+            return View(products);
         }
 
-        /// <summary>Renders the form for adding a new product to the catalogue.</summary>
-        public ActionResult AddNewProduct()
+        // ================= TOGGLE ACTIVE =================
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> ToggleActive(int id, string? stockFilter, string? activeFilter, string? search, int page = 1)
         {
-            return View();
+            var p = await _context.Products.FindAsync(id);
+            if (p == null) return NotFound();
+
+            p.IsActive = !p.IsActive;
+            await _context.SaveChangesAsync();
+            TempData["Success"] = $"'{p.Name}' is now {(p.IsActive ? "Active" : "Inactive")}.";
+
+            return RedirectToAction("ListOfProducts", new { search, stockFilter, activeFilter, page });
         }
 
-        /// <summary>Displays detail for a single product identified by <paramref name="id"/>.</summary>
-        public ActionResult ProductDetails(int id)
+        // ================= PRODUCT DETAILS =================
+        public async Task<IActionResult> ProductDetails(int id)
         {
-            return View();
+            var p = await _context.Products
+                .Include(p => p.Category)
+                .Include(p => p.ProductImage)
+                .Include(p => p.ProductRatings)
+                .FirstOrDefaultAsync(p => p.PkProductId == id);
+
+            if (p == null) return NotFound();
+
+            // Compute average rating
+            double avgRating = 0;
+            int ratingCount  = 0;
+            if (p.ProductRatings != null && p.ProductRatings.Any())
+            {
+                var approved = p.ProductRatings.Where(r => r.Approved && !r.IsDeleted).ToList();
+                ratingCount  = approved.Count;
+                avgRating    = ratingCount > 0 ? approved.Average(r => r.Rating) : 0;
+            }
+
+            var vm = new ProductVM
+            {
+                ProductId       = p.PkProductId,
+                ProductName     = p.Name,
+                Description     = p.Description,
+                Price           = p.Price,
+                DiscountPercent = p.DiscountPercent,
+                StockQuantity   = p.StockQuantity,
+                IsActive        = p.IsActive,
+                CategoryId      = p.FkCategoryId,
+                CategoryName    = p.Category?.CategoryName ?? "",
+                Thumbnail       = p.ProductImage?.FirstOrDefault()?.ProductImageURL ?? "",
+                AverageRating   = avgRating
+            };
+
+            // Pass ratings to view via ViewBag
+            ViewBag.Ratings     = p.ProductRatings?
+                .Where(r => r.Approved && !r.IsDeleted)
+                .OrderByDescending(r => r.RatedTime)
+                .ToList() ?? new List<ELKH.Models.ProductRatingModel>();
+            ViewBag.RatingCount = ratingCount;
+
+            return View(vm);
         }
 
-        /// <summary>Renders the edit form for the product identified by <paramref name="id"/>.</summary>
-        public ActionResult UpdateProductDetails(int id)
+
+        // ================= TRANSACTIONS =================
+        public async Task<IActionResult> ListAllTransactions(string search, int page = 1)
         {
-            return View();
+            int pageSize = 10;
+            var query    = _context.Transactions.AsQueryable();
+
+            if (!string.IsNullOrEmpty(search))
+                query = query.Where(t => t.TransactionStatus.Contains(search));
+
+            int total = await query.CountAsync();
+
+            var transactions = await query
+                .OrderByDescending(t => t.TransactionDate)
+                .Skip((page - 1) * pageSize)
+                .Take(pageSize)
+                .Select(t => new TransactionVM
+                {
+                    PkTransactionId   = t.PkTransactionId,
+                    TransactionStatus = t.TransactionStatus,
+                    Amount            = t.Amount,
+                    TransactionDate   = t.TransactionDate,
+                    DeliveryFee       = t.DeliveryFee,
+                    FkOrderId         = t.FkOrderId
+                })
+                .ToListAsync();
+
+            ViewBag.CurrentPage = page;
+            ViewBag.TotalPages  = (int)Math.Ceiling((double)total / pageSize);
+            ViewBag.Search      = search;
+
+            return View(transactions);
         }
 
-        /// <summary>Renders the delete confirmation page for the product identified by <paramref name="id"/>.</summary>
-        public ActionResult DeleteProduct(int id)
+        // ================= STAFF ACCOUNTS =================
+        public async Task<IActionResult> ListOfStaffAccount(string search)
         {
-            return View();
-        }
+            var staffRoles = new[] { "Manager", "Staff", "Admin" };
+            var allUsers   = _userManager.Users.ToList();
+            var staffList  = new List<UserListVM>();
 
-        // =====================================================================
-        // Staff management
-        // =====================================================================
+            foreach (var user in allUsers)
+            {
+                var roles = await _userManager.GetRolesAsync(user);
+                if (roles.Any(r => staffRoles.Contains(r)))
+                    staffList.Add(new UserListVM
+                    {
+                        Id    = user.Id,
+                        Email = user.Email ?? "",
+                        Name  = user.UserName ?? "",
+                        Roles = roles.ToList()
+                    });
+            }
 
-        /// <summary>Displays all staff accounts for the manager to review.</summary>
-        public ActionResult ListOfStaffAccount()
-        {
-            return View();
-        }
+            if (!string.IsNullOrEmpty(search))
+                staffList = staffList
+                    .Where(u => u.Email.Contains(search, StringComparison.OrdinalIgnoreCase)
+                             || u.Roles.Any(r => r.Contains(search, StringComparison.OrdinalIgnoreCase)))
+                    .ToList();
 
-        // =====================================================================
-        // Financials
-        // =====================================================================
-
-        /// <summary>Displays all transactions for the manager to review.</summary>
-        public ActionResult ListAllTransactions()
-        {
-            return View();
+            ViewBag.Search = search;
+            return View(staffList);
         }
     }
-
 }
-         

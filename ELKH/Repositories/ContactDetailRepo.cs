@@ -41,14 +41,14 @@ namespace ELKH.Repositories
         /// Add a new contact detail with default address logic.
         /// If marked as default, unsets other defaults for the same user.
         /// </summary>
-        public override async Task<bool> AddAsync(ContactDetailModel contact)
+        public override async Task<bool> AddAndSaveAsync(ContactDetailModel contact)
         {
             try
             {
-                // If this is being set as default, unset other defaults for this user
-                if (contact.IsDefault)
+                // Only unset other defaults if this contact belongs to a registered user
+                if (contact.IsDefault && contact.FkRegisteredUserId.HasValue)
                 {
-                    await UnsetOtherDefaultsAsync(contact.FkRegisteredUserId, contact.PkContactId);
+                    await UnsetOtherDefaultsAsync(contact.FkRegisteredUserId.Value, contact.PkContactId);
                 }
 
                 Context.ContactDetails.Add(contact);
@@ -66,7 +66,7 @@ namespace ELKH.Repositories
         /// <summary>
         /// Update an existing contact detail with default address logic.
         /// </summary>
-        public override async Task<bool> UpdateAsync(ContactDetailModel contact)
+        public override async Task<bool> UpdateAndSaveAsync(ContactDetailModel contact)
         {
             try
             {
@@ -78,9 +78,9 @@ namespace ELKH.Repositories
                 }
 
                 // If this is being set as default, unset other defaults for this user
-                if (contact.IsDefault && !existing.IsDefault)
+                if (contact.IsDefault && !existing.IsDefault && contact.FkRegisteredUserId.HasValue)
                 {
-                    await UnsetOtherDefaultsAsync(contact.FkRegisteredUserId, contact.PkContactId);
+                    await UnsetOtherDefaultsAsync(contact.FkRegisteredUserId.Value, contact.PkContactId);
                 }
 
                 existing.FirstName = contact.FirstName;

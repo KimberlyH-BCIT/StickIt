@@ -1,5 +1,6 @@
 ﻿using ELKH.Data;
 using ELKH.Models;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 
 namespace ELKH.Repositories;
@@ -20,18 +21,13 @@ public class RegisteredUserProfileRepo : RepositoryBase<UserProfileModel, string
     /// <summary>
     /// Add a new user profile with duplicate prevention.
     /// </summary>
-    public override void Add(UserProfileModel profile)
+    public override async Task<bool> AddAndSaveAsync(UserProfileModel profile)
     {
-        // Guard against duplicates
-        bool exists = Context.UserProfiles.Any(u => u.PkEmail == profile.PkEmail);
-
+        bool exists = await Context.UserProfiles.AnyAsync(u => u.PkEmail == profile.PkEmail);
         if (!exists)
-        {
-            base.AddAndSave(profile);
-        }
-        else
-        {
-            Logger.LogWarning("UserProfile NOT added — a profile already exists for: {Email}", profile.PkEmail);
-        }
+            return await base.AddAndSaveAsync(profile);
+
+        Logger.LogWarning("UserProfile NOT added — a profile already exists for: {Email}", profile.PkEmail);
+        return false;
     }
 }

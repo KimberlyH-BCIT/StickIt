@@ -1,8 +1,9 @@
-﻿using ELKH.Repositories;
+﻿using System.Linq;
+using ELKH.Models;
+using ELKH.Repositories;
 using ELKH.ViewModels;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore.Metadata.Internal;
 
 namespace ELKH.Controllers
 {
@@ -10,21 +11,18 @@ namespace ELKH.Controllers
     /// Admin controller for inventory management: listing products, adjusting stock
     /// quantities, and managing product images.
     /// </summary>
-    [Authorize(Roles = "Admin")]
-    public class InventoryController : Controller
-    {
-        private readonly InventoryRepo _inventoryRepo;
+[Authorize(Roles = "Admin")]
+public class InventoryController : Controller
+{
+    private readonly IInventoryRepo _inventoryRepo;
 
-        public InventoryController(InventoryRepo inventoryRepo)
+        public InventoryController(IInventoryRepo inventoryRepo)
         {
             _inventoryRepo = inventoryRepo;
         }
 
-        /// <summary>
-        /// GET: /Inventory
-        /// Lists all products with their current stock quantities and active status.
-        /// </summary>
-        public async Task<IActionResult> Index()
+
+public async Task<IActionResult> Index()
         {
             var products = await _inventoryRepo.GetAllProduct();
 
@@ -32,73 +30,104 @@ namespace ELKH.Controllers
             {
                 PkProductId = p.PkProductId,
                 ProductName = p.Name,
-                Quantity    = p.StockQuantity ?? 0,
-                IsActive    = p.IsActive
+                Quantity = p.StockQuantity,
             }).ToList();
 
             return View(inventoryList);
         }
 
-        /// <summary>
-        /// POST: /Inventory/EditProductAmount
-        /// Updates the stock quantity for a single product and redirects to the inventory listing.
-        /// </summary>
-        /// <param name="productId">Primary key of the product to update.</param>
-        /// <param name="quantity">New stock quantity to set.</param>
-        [HttpPost]
-        public async Task<IActionResult> EditProductAmount(int productId, int quantity)
+[HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> EditProductAmount(int productId, int quantityId)
         {
-            await _inventoryRepo.EditProductQuantity(productId, quantity);
+            await _inventoryRepo.EditProductQuantity(productId, quantityId);
 
             return RedirectToAction(nameof(Index));
         }
 
-        /// <summary>
-        /// GET: /Inventory/ProductImages/{productId}
-        /// Displays all images currently associated with a product.
-        /// </summary>
-        public async Task<IActionResult> ProductImages(int productId)
+        //Pass
+        public async Task<IActionResult> ProductImages(int Id)
         {
-            var productImages = await _inventoryRepo.GetProductImages(productId);
 
-            return View(productImages);
+            ViewBag.ProductId = Id;
+            // GetProductImages likely returns List<ImageModel>
+            var productImages = await _inventoryRepo.GetProductImages(Id);
+
+            if (productImages == null)
+            {
+                return NotFound();
+            }
+
+var vmList = productImages.Select(pi => new ProductImageVM
+{
+    FileName = pi.FileName,
+    Description = pi.Description,
+    ImageData = pi.ImageData
+}).ToList();
+
+            return View(vmList);
         }
 
-        /// <summary>
-        /// GET: /Inventory/AddImage/{productId}
-        /// Renders the upload form pre-filled with the target product ID.
-        /// </summary>
-        public async Task<IActionResult> AddImage(int productId)
-        {
-            var vm = new ProductImageVM
-            {
-                FkProductId = productId
-            };
+public async Task<IActionResult> AddImage(int productId)
+{
+    var vm = new ImageModel();
+    ViewBag.ProductId = productId;
 
             return View(vm);
         }
 
-        /// <summary>
-        /// POST: /Inventory/AddImage
-        /// Saves an uploaded image file to <c>wwwroot/images</c> and records
-        /// its URL in the database via <see cref="InventoryRepo.AddProductImage"/>.
-        /// Re-displays the form with validation errors when the model is invalid.
-        /// </summary>
+
+        //Pass
         [HttpPost]
-        public async Task<IActionResult> AddImage(ProductImageVM vm)
+        [ValidateAntiForgeryToken]
+        [RequestSizeLimit(5 * 1024 * 1024)]
+        [RequestFormLimits(MultipartBodyLengthLimit = 5 * 1024 * 1024)]
+        public async Task<IActionResult> AddImage(int productId, IFormFile file)
         {
             if (!ModelState.IsValid)
             {
-                return View(vm);
+                ViewBag.ProductId = productId;
+                return View("AddImage");
             }
 
-            var success = await _inventoryRepo.AddProductImage(vm);
-
-            if (success)
+            if (file == null || file.Length == 0)
             {
-                return RedirectToAction(nameof(ProductImages));
+                ModelState.AddModelError("", "Please select a file.");
+                ViewBag.ProductId = productId;
+                return View("AddImage");
             }
-            return View(vm);
+
+            var allowedExtensions = new HashSet<string>(StringComparer.OrdinalIgnoreCase)
+                { ".jpg", ".jpeg", ".png", ".gif", ".webp", ".bmp" };
+            var ext = Path.GetExtension(file.FileName);
+            if (!allowedExtensions.Contains(ext))
+            {
+                ModelState.AddModelError("", "Only image files are allowed (jpg, jpeg, png, gif, webp, bmp).");
+                ViewBag.ProductId = productId;
+                return View("AddImage");
+            }
+
+            var allowedMimeTypes = new HashSet<string>(StringComparer.OrdinalIgnoreCase)
+                { "image/jpeg", "image/png", "image/gif", "image/webp", "image/bmp" };
+            if (!allowedMimeTypes.Contains(file.ContentType))
+            {
+                ModelState.AddModelError("", "The uploaded file has an invalid content type.");
+                ViewBag.ProductId = productId;
+                return View("AddImage");
+            }
+
+            var addImageRepo = await _inventoryRepo.UploadImage(productId, file);
+
+            if (addImageRepo)
+            {
+                return RedirectToAction("ProductImages", new { id = productId });
+            }
+
+            ModelState.AddModelError("", "The file could not be saved. Ensure it is a valid image under 5 MB.");
+            ViewBag.ProductId = productId;
+            return View("AddImage");
         }
+
+      
     }
 }

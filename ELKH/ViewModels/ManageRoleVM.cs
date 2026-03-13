@@ -2,6 +2,6 @@
 {
     public class ManageRoleVM
     {
-            public List<RoleVM> Roles { get; set; }
+            public List<RoleVM> Roles { get; set; } = new List<RoleVM>();
     }
 }

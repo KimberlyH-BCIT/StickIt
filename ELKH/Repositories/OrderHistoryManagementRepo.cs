@@ -10,7 +10,7 @@ namespace ELKH.Repositories
     /// Provides queries that eager-load only the navigation properties
     /// required by each view, avoiding unnecessary over-fetching.
     /// </summary>
-    public class OrderHistoryManagementRepo
+    public class OrderHistoryManagementRepo : IOrderHistoryManagementRepo
     {
         private ApplicationDbContext _context;
 
@@ -42,7 +42,7 @@ namespace ELKH.Repositories
         public async Task<OrderModel?> OrderDetails(string email, int orderId)
         {
             return await _context.Orders
-                .Where(o => o.PkOrderId == orderId && o.RegisteredUser.Email == email)
+                .Where(o => o.PkOrderId == orderId && o.RegisteredUser!.Email == email)
                 .Include(o => o.Transaction)
                 .Include(o => o.OrderItems)
                     .ThenInclude(oi => oi.Product)

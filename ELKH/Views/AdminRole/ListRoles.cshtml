@@ -1,4 +1,4 @@
-﻿@model IEnumerable<ELKH.ViewModels.RoleVM>
+@model IEnumerable<ELKH.ViewModels.RoleVM>
 
 @{
     ViewData["Title"] = "Manage Roles";
@@ -7,7 +7,6 @@
 
 <div class="container mt-5">
 
-    <!-- Alerts -->
     @if (TempData["Success"] != null)
     {
         <div class="alert alert-success alert-dismissible fade show text-center" role="alert">
@@ -23,17 +22,24 @@
             <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
         </div>
     }
-
-    <!-- Title -->
-    <div class="text-center mb-4">
+    <div class="d-flex justify-content-between align-items-center mb-4">
         <h2 class="fw-bold text-primary">Manage Roles</h2>
-    </div>
 
-    <!-- Top Buttons -->
+        <a asp-controller="Admin"
+           asp-action="Index"
+           class="btn btn-outline-secondary rounded-pill px-4">
+            ← Back to Dashboard
+        </a>
+    </div>
+ 
     <div class="d-flex justify-content-center mb-4">
         <div style="width:700px;">
-
             <div class="d-flex justify-content-center gap-3">
+
+                @*
+                    "Assign User To Role" from the top — no specific user or role yet.
+                    userId is intentionally omitted; the admin will type the email on the form.
+                *@
                 <a asp-controller="AdminRole"
                    asp-action="AssignRoles"
                    class="btn btn-primary px-5">
@@ -45,35 +51,29 @@
                    class="btn btn-primary px-5">
                     + Create New Role
                 </a>
-            </div>
 
+            </div>
         </div>
     </div>
 
-    <!-- Table -->
     <div class="d-flex justify-content-center">
         <div class="card shadow-sm" style="width:700px;">
             <div class="card-body p-0">
 
                 <table class="table table-hover align-middle mb-0 text-center">
-
                     <thead class="table-primary">
                         <tr>
                             <th class="text-start ps-4">Role Name</th>
                             <th style="width:350px;">Actions</th>
                         </tr>
                     </thead>
-
                     <tbody>
                         @if (Model != null && Model.Any())
                         {
                             foreach (var item in Model)
                             {
                                 <tr>
-                                    <td class="text-start ps-4 fw-semibold">
-                                        @item.RoleName
-                                    </td>
-
+                                    <td class="text-start ps-4 fw-semibold">@item.RoleName</td>
                                     <td>
                                         <div class="d-flex justify-content-center flex-wrap gap-2">
 
@@ -89,8 +89,14 @@
                                                 Edit
                                             </a>
 
+                                            @*
+                                                "Assign User" per row — role is known but not the user.
+                                                Pass roleId + returnTo=RoleDetails so the form locks the role
+                                                and redirects back to this role's user list after assigning.
+                                            *@
                                             <a asp-action="AssignRoles"
-                                               asp-route-roleName="@item.RoleName"
+                                               asp-route-roleId="@item.RoleId"
+                                               asp-route-returnTo="RoleDetails"
                                                class="btn btn-sm btn-outline-primary">
                                                 Assign User
                                             </a>
@@ -109,13 +115,10 @@
                         else
                         {
                             <tr>
-                                <td colspan="2" class="text-center p-4 text-muted">
-                                    No roles found.
-                                </td>
+                                <td colspan="2" class="text-center p-4 text-muted">No roles found.</td>
                             </tr>
                         }
                     </tbody>
-
                 </table>
 
             </div>

@@ -1,4 +1,5 @@
 ﻿using System.ComponentModel.DataAnnotations;
+using System.Collections.Generic;
 
 namespace ELKH.Models
 {
@@ -18,44 +19,52 @@ namespace ELKH.Models
         /// First name of the contact/recipient.
         /// </summary>
         [Display(Name ="First Name")]
+        [MaxLength(100)]
         public string FirstName { get; set; } = string.Empty;
 
         /// <summary>
         /// Last name of the contact/recipient.
         /// </summary>
         [Display(Name = "Last Name")]
+        [MaxLength(100)]
         public string LastName { get; set; } = string.Empty;
 
         /// <summary>
         /// Phone number for delivery or contact purposes.
         /// </summary>
         [Display(Name = "Phone Number")]
+        [MaxLength(30)]
         public string PhoneNumber { get; set; } = string.Empty;
 
         /// <summary>
         /// Street address (line 1).
         /// </summary>
+        [MaxLength(200)]
         public string Street { get; set; } = string.Empty;
 
         /// <summary>
         /// City or locality.
         /// </summary>
+        [MaxLength(100)]
         public string City { get; set; } = string.Empty;
 
         /// <summary>
         /// Province, state, or region.
         /// </summary>
+        [MaxLength(100)]
         public string Province { get; set; } = string.Empty;
 
         /// <summary>
         /// Postal or ZIP code.
         /// </summary>
         [Display(Name ="Postcode")]
+        [MaxLength(20)]
         public string PostCode { get; set; } = string.Empty;
 
         /// <summary>
         /// Country (default: Canada).
         /// </summary>
+        [MaxLength(100)]
         public string Country { get; set; } = "Canada";
 
         /// <summary>
@@ -64,28 +73,14 @@ namespace ELKH.Models
         [Display(Name ="Is Default Address")]
         public bool IsDefault { get; set; } = true;
 
-        // =====================================================================
-        // Relationships
-        // =====================================================================
+// Relationship with RegisteredUser
+public int? FkRegisteredUserId { get; set; }
+public RegisteredUserModel? RegisteredUser { get; set; }
 
-        /// <summary>
-        /// Foreign key to the registered user who owns this contact detail.
-        /// </summary>
-        public int FkRegisteredUserId { get; set; }
+// Relationship with Transaction
+public ICollection<TransactionModel>? Transactions { get; set; }
 
-        /// <summary>
-        /// Navigation property to the registered user who owns this contact detail.
-        /// </summary>
-        public RegisteredUserModel RegisteredUser { get; set; } = null!;
-
-        /// <summary>
-        /// Collection of transactions (payments) associated with this contact detail.
-        /// </summary>
-        public ICollection<TransactionModel> Transactions { get; set; } = new List<TransactionModel>();
-
-        /// <summary>
-        /// Collection of orders shipped to this contact detail.
-        /// </summary>
-        public ICollection<OrderModel> Orders { get; set; } = new List<OrderModel>();
+// Relationship with Order
+public ICollection<OrderModel> Orders { get; set; } = new List<OrderModel>();
     }
 }

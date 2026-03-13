@@ -1,6 +1,7 @@
 using ELKH.Data;
 using ELKH.Models;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Logging;
 
 namespace ELKH.Repositories;
 
@@ -16,15 +17,20 @@ public class CartRepo : ICartRepo
 {
     #region Fields & Constructor
     private readonly ApplicationDbContext _context;
+    private readonly ILogger<CartRepo> _logger;
 
-    public CartRepo(ApplicationDbContext context) => _context = context;
+    public CartRepo(ApplicationDbContext context, ILogger<CartRepo> logger)
+    {
+        _context = context;
+        _logger  = logger;
+    }
     #endregion
 
     #region Read
     public async Task<IEnumerable<CartModel>> GetByUserIdAsync(int registeredUserId) =>
         await _context.Carts
             .Include(c => c.Product)
-                .ThenInclude(p => p.ProductImages)
+                .ThenInclude(p => p!.ProductImage)
             .Where(c => c.FkRegisteredUserId == registeredUserId)
             .ToListAsync();
 
@@ -42,8 +48,9 @@ public class CartRepo : ICartRepo
             await _context.SaveChangesAsync();
             return true;
         }
-        catch
+        catch (DbUpdateException ex)
         {
+            _logger.LogError(ex, "Database error adding cart item for user {UserId}", cart.FkRegisteredUserId);
             return false;
         }
     }
@@ -55,13 +62,14 @@ public class CartRepo : ICartRepo
             var existing = await _context.Carts.FindAsync(cart.PkCartId);
             if (existing is null) return false;
 
-            existing.Quantity = cart.Quantity;
+            existing.Quantity   = cart.Quantity;
             existing.TotalPrice = cart.TotalPrice;
             await _context.SaveChangesAsync();
             return true;
         }
-        catch
+        catch (DbUpdateException ex)
         {
+            _logger.LogError(ex, "Database error updating cart item {CartId}", cart.PkCartId);
             return false;
         }
     }

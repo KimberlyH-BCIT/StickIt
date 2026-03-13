@@ -1,33 +1,28 @@
-using System.Net.Mail;
-using System.Net;
-using System.Threading.Tasks;
-using Microsoft.Extensions.Configuration;
+using MailKit.Net.Smtp;
+using MailKit.Security;
+using MimeKit;
 using Microsoft.Extensions.Logging;
 
 namespace ELKH.Services
 {
     /// <summary>
-    /// Production SMTP email sender backed by <see cref="System.Net.Mail.SmtpClient"/>.
+    /// Production SMTP email sender backed by MailKit's <see cref="SmtpClient"/>.
     /// Reads host, port, credentials, and SSL settings from <see cref="ELKH.Configuration.EmailOptions"/>.
     /// Degrades gracefully when the SMTP host is not configured (logs and returns without throwing).
     /// </summary>
     public class SmtpEmailSender : IEmailSender
     {
-        private readonly IConfiguration _config;
         private readonly ILogger<SmtpEmailSender> _logger;
-
         private readonly ELKH.Configuration.EmailOptions _options;
 
         /// <summary>
         /// Initializes a new instance of <see cref="SmtpEmailSender"/>.
         /// </summary>
-        /// <param name="config">Application configuration (retained for potential future use).</param>
         /// <param name="options">Strongly-typed SMTP settings bound from <c>appsettings.json</c>.</param>
         /// <param name="logger">Logger for delivery diagnostics and graceful skip notifications.</param>
-        public SmtpEmailSender(IConfiguration config, Microsoft.Extensions.Options.IOptions<ELKH.Configuration.EmailOptions> options, ILogger<SmtpEmailSender> logger)
+        public SmtpEmailSender(Microsoft.Extensions.Options.IOptions<ELKH.Configuration.EmailOptions> options, ILogger<SmtpEmailSender> logger)
         {
-            _config = config;
-            _logger = logger;
+            _logger  = logger;
             _options = options.Value;
         }
 
@@ -45,28 +40,31 @@ namespace ELKH.Services
                 return;
             }
 
-            var port = _options.Port;
-            var user = _options.User;
-            var pass = _options.Pass;
             var fromAddr = from ?? _options.From;
 
-            using var client = new SmtpClient(host, port)
-            {
-                EnableSsl = _options.EnableSsl,
-            };
+            var message = new MimeMessage();
+            message.From.Add(MailboxAddress.Parse(fromAddr));
+            foreach (var address in to)
+                message.To.Add(MailboxAddress.Parse(address));
+            message.Subject = subject;
+            message.Body    = new TextPart("html") { Text = body };
 
-            if (!string.IsNullOrEmpty(user) && !string.IsNullOrEmpty(pass))
-            {
-                client.Credentials = new NetworkCredential(user, pass);
-            }
+            // Choose the correct socket security based on port convention:
+            //   465  → implicit TLS (SslOnConnect)
+            //   587  → STARTTLS upgrade (StartTls)
+            //   other with SSL off → no encryption
+            var socketOptions = _options.EnableSsl
+                ? (_options.Port == 465 ? SecureSocketOptions.SslOnConnect : SecureSocketOptions.StartTls)
+                : SecureSocketOptions.None;
 
-            var msg = new MailMessage();
-            msg.From = new MailAddress(fromAddr);
-            foreach (var a in to) msg.To.Add(a);
-            msg.Subject = subject;
-            msg.Body = body;
+            using var client = new SmtpClient();
+            await client.ConnectAsync(host, _options.Port, socketOptions);
 
-            await client.SendMailAsync(msg);
+            if (!string.IsNullOrEmpty(_options.User) && !string.IsNullOrEmpty(_options.Pass))
+                await client.AuthenticateAsync(_options.User, _options.Pass);
+
+            await client.SendAsync(message);
+            await client.DisconnectAsync(quit: true);
         }
     }
 }

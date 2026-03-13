@@ -25,6 +25,14 @@ namespace ELKH.Extensions
         /// </remarks>
         public static IApplicationBuilder UseApplicationMiddleware(this IApplicationBuilder app)
         {
+            // 0. Exception handler — must be first so it catches errors from all subsequent middleware.
+            //    In Development the developer exception page is used instead (configured in Program.cs).
+            app.UseExceptionHandler("/Error");
+
+            // Status-code pages: 404, 403, 429, etc. are re-executed through /Error/{statusCode}
+            // so users see a consistent branded error page rather than a blank response.
+            app.UseStatusCodePagesWithReExecute("/Error/{0}");
+
             // 1. Security Headers — set on every response before any content is written.
             //    Added first so headers are present even on error pages and redirects.
             app.UseSecurityHeaders();
@@ -35,16 +43,19 @@ namespace ELKH.Extensions
             // 3. Response Compression — compress before caching so cached responses are already compressed
             app.UseResponseCompression();
 
-            // 4. Output Cache — cache compressed responses with tag-based invalidation
+            // 4. Rate Limiting — reject excess requests before they hit the cache or business logic
+            app.UseRateLimiter();
+
+            // 5. Output Cache — cache compressed responses with tag-based invalidation
             app.UseOutputCache();
 
-            // 5. Routing — endpoint routing resolution (must precede auth middleware)
+            // 6. Routing — endpoint routing resolution (must precede auth middleware)
             app.UseRouting();
 
-            // 6. Authentication — establish the user's identity from cookies/tokens
+            // 7. Authentication — establish the user's identity from cookies/tokens
             app.UseAuthentication();
 
-            // 7. Authorization — enforce access policies against the established identity
+            // 8. Authorization — enforce access policies against the established identity
             app.UseAuthorization();
 
             return app;
@@ -79,6 +90,24 @@ namespace ELKH.Extensions
                 // Opt out of browser features this application does not use.
                 context.Response.Headers["Permissions-Policy"] = "camera=(), microphone=(), geolocation=()";
 
+                // Prevent Adobe Flash and PDF readers from making cross-domain requests.
+                context.Response.Headers["X-Permitted-Cross-Domain-Policies"] = "none";
+
+                // Primary browser-side XSS defence: restrict sources for scripts, styles,
+                // images, and other resource types to same-origin by default.
+                // PayPal SDK is loaded from www.paypal.com; it communicates with the PayPal
+                // checkout page (www.paypal.com) and the sandbox/live API (api-m.*.paypal.com).
+                // 'unsafe-inline' for style-src is required by Bootstrap/inline styles.
+                context.Response.Headers["Content-Security-Policy"] =
+                    "default-src 'self'; " +
+                    "script-src 'self' https://www.paypal.com https://www.sandbox.paypal.com; " +
+                    "style-src 'self' 'unsafe-inline'; " +
+                    "img-src 'self' data: https://www.paypalobjects.com; " +
+                    "font-src 'self'; " +
+                    "connect-src 'self' https://api-m.paypal.com https://api-m.sandbox.paypal.com; " +
+                    "frame-src https://www.paypal.com https://www.sandbox.paypal.com; " +
+                    "frame-ancestors 'self';";
+
                 await next();
             });
         }
@@ -94,18 +123,21 @@ namespace ELKH.Extensions
         /// </remarks>
         public static WebApplication UseApplicationEndpoints(this WebApplication app)
         {
-            // Static assets with cache-busting fingerprints (.NET 10 MapStaticAssets)
-            app.MapStaticAssets();
+            // Area route — must be registered before the default route so that
+            // controllers decorated with [Area] (e.g. AuditController, MetricsController)
+            // are reachable at /{area}/{controller}/{action}.
+            app.MapControllerRoute(
+                name: "areas",
+                pattern: "{area:exists}/{controller=Home}/{action=Index}/{id?}");
 
-            // Default MVC route — areas are handled by the [Area] attribute on controllers
+            // Default MVC route
             app.MapControllerRoute(
                 name: "default",
                 pattern: "{controller=Home}/{action=Index}/{id?}")
                 .WithStaticAssets();
 
             // Convention-based Razor Pages routing
-            app.MapRazorPages()
-               .WithStaticAssets();
+            app.MapRazorPages();
 
             // Unauthenticated health check for uptime monitoring and container readiness probes
             app.MapHealthChecks("/health");
