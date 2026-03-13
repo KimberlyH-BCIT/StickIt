@@ -54,6 +54,13 @@ namespace ELKH.ViewModels
         [MaxLength(20)]
         public string PostCode { get; set; } = string.Empty;
 
+        /// <summary>Alias for PostCode for consistency with other view models.</summary>
+        public string PostalCode
+        {
+            get => PostCode;
+            set => PostCode = value;
+        }
+
         /// <summary>Country (default: Canada).</summary>
         [Required]
         [Display(Name = "Country")]

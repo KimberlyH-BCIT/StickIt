@@ -15,7 +15,7 @@ namespace ELKH.Controllers;
 
 /// <summary>
 /// Shopping cart management controller for authenticated users.
-/// Handles cart operations (add, remove, checkout) and order placement with inventory management.
+/// Handles cart operations (add, remove) and quick purchase functionality.
 /// </summary>
 /// <remarks>
 /// All endpoints require authentication (inherited from AuthenticatedControllerBase).
@@ -23,12 +23,11 @@ namespace ELKH.Controllers;
 /// Cart operations:
 /// - GET /Cart - Display current user's cart items
 /// - POST /Cart/AddToCart - Add product to cart with quantity validation
-/// - POST /Cart/BuyNow - Quick purchase (add to cart and redirect to checkout)
+/// - POST /Cart/BuyNow - Quick purchase (bypasses cart, creates order immediately)
 /// - POST /Cart/RemoveFromCart - Remove item from cart
 ///
-/// Checkout operations:
-/// - GET /Cart/Checkout - Display checkout page with cart summary and total
-/// - POST /Cart/PlaceOrder - Process order, decrement inventory, clear cart
+/// Checkout flow:
+/// - Users proceed to checkout via CheckoutController which handles PayPal payment processing
 ///
 /// Business logic delegation:
 /// - All cart operations delegated to ICartService for separation of concerns
@@ -143,48 +142,5 @@ public class CartController : AuthenticatedControllerBase
         // Removal is delegated to the service which enforces ownership and consistency checks.
         await _cartService.RemoveFromCartAsync(email, cartId);
         return RedirectToAction(nameof(Index));
-    }
-
-    // ---------------------------------------------------------------------
-    // Checkout and ordering endpoints
-    // ---------------------------------------------------------------------
-    // GET: /Cart/Checkout
-    public async Task<IActionResult> Checkout()
-    {
-        var authResult = RequireAuthenticatedUser(out var email);
-        if (authResult != null) return authResult;
-
-        // Gather items and compute totals for the checkout view. Keep presentation concerns here
-        // while the service remains responsible for pricing/business calculations.
-        var items = await _cartService.GetCartItemsAsync(email);
-        var total = items.Sum(i => i.TotalPrice);
-        ViewBag.Total = total;
-        ViewBag.Items = items;
-        return View();
-    }
-
-    // POST: /Cart/PlaceOrder
-    [HttpPost]
-    [ValidateAntiForgeryToken]
-    public async Task<IActionResult> PlaceOrder()
-    {
-        var authResult = RequireAuthenticatedUser(out var email);
-        if (authResult != null) return authResult;
-
-        var orderId = await _cartService.PlaceOrderAsync(email);
-        switch (orderId)
-        {
-            case -2:
-                SetWarningMessage("Please add a delivery address to your account before placing an order.");
-                return RedirectToAction("Addresses", "User");
-            case -1:
-                SetWarningMessage("One or more items in your cart are out of stock. Please update your cart.");
-                return RedirectToAction(nameof(Index));
-            case 0:
-                return RedirectToAction(nameof(Index));
-            default:
-                SetSuccessMessage("Order placed successfully");
-                return RedirectToAction("Details", "Order", new { id = orderId });
-        }
     }
 }
