@@ -71,7 +71,7 @@ Generated\ Files/
 # End-to-End Testing (Playwright)
 # =====================================================================
 # Playwright writes test artifacts, traces, and screenshots here.
-# These are CI/CD outputs — they must not be committed to source control.
+# These are CI/CD outputs â€” they must not be committed to source control.
 test-results/
 playwright-report/
 blob-report/
@@ -310,11 +310,11 @@ _pkginfo.txt
 **/secrets.json
 secrets.*
 
-# All environment-specific appsettings overrides — NEVER commit production credentials.
+# All environment-specific appsettings overrides â€” NEVER commit production credentials.
 # The base appsettings.json (no environment suffix) is intentionally tracked.
 appsettings.*.json
 
-# FileEmailSender output directory — may contain Identity confirmation tokens
+# FileEmailSender output directory â€” may contain Identity confirmation tokens
 # and other sensitive email content written during local development.
 SavedEmails/
 **/SavedEmails/
@@ -504,6 +504,9 @@ dependency-check-report.html
 # =====================================================================
 # END OF .GITIGNORE
 # =====================================================================
+
 app.db
-app.db-shm
-app.db-wal
+*.db
+*.db-wal
+*.db-shm
+.DS_Store

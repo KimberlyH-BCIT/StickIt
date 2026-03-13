@@ -101,6 +101,31 @@ namespace ELKH.Services
                 return pre;
             }
 
+            // --- Tier 2.5: Tag search (if no suggestions found) ---
+            // Search for products by tags if the query didn't match product names
+            var tagMatches = await _db.Products
+                .Where(p => p.Tags.Contains(normQ) && p.IsActive)
+                .OrderBy(p => p.Name)
+                .Take(_searchOptions?.Value?.Fuzzy?.TopResults ?? 10)
+                .Select(p => new SearchResultDto
+                {
+                    Id = p.PkProductId,
+                    Name = p.Name,
+                    Price = p.Price,
+                    Thumbnail = p.ProductImage!.Select(pi => pi.ProductImageURL).FirstOrDefault() ?? string.Empty
+                })
+                .ToListAsync();
+
+            if (tagMatches.Any())
+            {
+                using (var entry = _cache.CreateEntry(cacheKey))
+                {
+                    entry.Value = tagMatches;
+                    entry.SlidingExpiration = TimeSpan.FromMinutes(5);
+                }
+                return tagMatches;
+            }
+
             // --- Tier 3: FTS query via raw ADO.NET ---
             // EF Core does not support SQLite FTS5 MATCH natively, so we drop down to a raw
             // DbCommand. The token + "*" suffix enables prefix matching (e.g. "lap*" matches "laptop").
@@ -146,13 +171,24 @@ LIMIT 10;";
             var normQuery = normQ;
             var prefix = normQuery.Length >= 3 ? normQuery.Substring(0, 3) : normQuery;
             var candidates = await _db.Products
-                .Select(p => new { p.PkProductId, p.Name, p.Price, p.NameNormalized, Thumbnail = p.ProductImage!.Select(pi => pi.ProductImageURL).FirstOrDefault() })
-                .Where(p => p.NameNormalized.Contains(prefix) || p.NameNormalized.StartsWith(normQuery))
+                .Select(p => new { p.PkProductId, p.Name, p.Price, p.NameNormalized, p.Tags, Thumbnail = p.ProductImage!.Select(pi => pi.ProductImageURL).FirstOrDefault() })
+                .Where(p => p.NameNormalized.Contains(prefix) || p.NameNormalized.StartsWith(normQuery) || p.Tags.Contains(normQuery))
                 .Take(_searchOptions?.Value?.Fuzzy?.CandidateLimit ?? 200)
                 .ToListAsync();
 
             // Score candidates with TokenSetRatio (handles word-order variation) and take the top results.
-            var scoredPre = candidates.Select(c => new { c.PkProductId, c.Name, c.Price, c.Thumbnail, Score = FuzzySharp.Fuzz.TokenSetRatio(normQuery, c.NameNormalized ?? string.Empty) })
+            // Also score against tags for better discoverability
+            var scoredPre = candidates.Select(c => new
+            {
+                c.PkProductId,
+                c.Name,
+                c.Price,
+                c.Thumbnail,
+                Score = Math.Max(
+                    FuzzySharp.Fuzz.TokenSetRatio(normQuery, c.NameNormalized ?? string.Empty),
+                    FuzzySharp.Fuzz.TokenSetRatio(normQuery, c.Tags ?? string.Empty)
+                )
+            })
                 .OrderByDescending(x => x.Score)
                 .Take(_searchOptions?.Value?.Fuzzy?.TopResults ?? 10)
                 .ToList();

@@ -39,6 +39,14 @@ namespace ELKH.Models
         public string Description { get; set; } = string.Empty;
 
         /// <summary>
+        /// Comma-separated tags for improved search discoverability.
+        /// Tags are derived from category and product characteristics.
+        /// Example: "halloween,spooky,seasonal,decoration"
+        /// </summary>
+        [MaxLength(500)]
+        public string Tags { get; set; } = string.Empty;
+
+        /// <summary>
         /// Base price of the product before any discount is applied.
         /// Always non-negative. Displayed with 2 decimal places.
         /// </summary>

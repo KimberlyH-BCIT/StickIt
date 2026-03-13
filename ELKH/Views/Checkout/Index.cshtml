@@ -35,33 +35,63 @@
                             <i class="bi bi-geo-alt me-2"></i>Shipping Address
                         </h5>
 
+                        @if (Model.SavedAddresses.Any())
+                        {
+                            <div class="mb-4">
+                                <label class="form-label fw-semibold">Select a saved address</label>
+                                <select class="form-select" id="addressSelector">
+                                    <option value="">-- Enter new address --</option>
+                                    @foreach (var addr in Model.SavedAddresses)
+                                    {
+                                        var isSelected = addr.ContactId == Model.SelectedContactId;
+                                        var badgeText = addr.IsDefault ? " [Default]" : "";
+                                        <option value="@addr.ContactId" 
+                                                data-fullname="@addr.FirstName @addr.LastName"
+                                                data-phone="@addr.PhoneNumber"
+                                                data-street="@addr.Street"
+                                                data-city="@addr.City"
+                                                data-province="@addr.Province"
+                                                data-postalcode="@addr.PostalCode"
+                                                data-country="@addr.Country"
+                                                selected="@isSelected">
+                                            @addr.FirstName @addr.LastName - @addr.Street, @addr.City, @addr.Province@(badgeText)
+                                        </option>
+                                    }
+                                </select>
+                                <small class="text-muted">Or enter a new address below</small>
+                            </div>
+                            <hr class="mb-4" />
+                        }
+
+                        <input type="hidden" asp-for="SelectedContactId" id="selectedContactId" />
+
                         <div class="mb-3">
                             <label asp-for="FullName" class="form-label"></label>
-                            <input asp-for="FullName" class="form-control" placeholder="Jane Doe" />
+                            <input asp-for="FullName" class="form-control" placeholder="Jane Doe" id="fullName" />
                             <span asp-validation-for="FullName" class="text-danger small"></span>
                         </div>
 
                         <div class="mb-3">
                             <label asp-for="PhoneNumber" class="form-label"></label>
-                            <input asp-for="PhoneNumber" class="form-control" placeholder="604-555-0100" />
+                            <input asp-for="PhoneNumber" class="form-control" placeholder="604-555-0100" id="phoneNumber" />
                             <span asp-validation-for="PhoneNumber" class="text-danger small"></span>
                         </div>
 
                         <div class="mb-3">
                             <label asp-for="Street" class="form-label"></label>
-                            <input asp-for="Street" class="form-control" placeholder="123 Sticker Lane" />
+                            <input asp-for="Street" class="form-control" placeholder="123 Sticker Lane" id="street" />
                             <span asp-validation-for="Street" class="text-danger small"></span>
                         </div>
 
                         <div class="row">
                             <div class="col-md-6 mb-3">
                                 <label asp-for="City" class="form-label"></label>
-                                <input asp-for="City" class="form-control" />
+                                <input asp-for="City" class="form-control" id="city" />
                                 <span asp-validation-for="City" class="text-danger small"></span>
                             </div>
                             <div class="col-md-6 mb-3">
                                 <label asp-for="Province" class="form-label"></label>
-                                <input asp-for="Province" class="form-control" placeholder="BC" />
+                                <input asp-for="Province" class="form-control" placeholder="BC" id="province" />
                                 <span asp-validation-for="Province" class="text-danger small"></span>
                             </div>
                         </div>
@@ -69,12 +99,12 @@
                         <div class="row">
                             <div class="col-md-6 mb-3">
                                 <label asp-for="PostalCode" class="form-label"></label>
-                                <input asp-for="PostalCode" class="form-control" placeholder="V6B 1A1" />
+                                <input asp-for="PostalCode" class="form-control" placeholder="V6B 1A1" id="postalCode" />
                                 <span asp-validation-for="PostalCode" class="text-danger small"></span>
                             </div>
                             <div class="col-md-6 mb-3">
                                 <label asp-for="Country" class="form-label"></label>
-                                <input asp-for="Country" class="form-control" />
+                                <input asp-for="Country" class="form-control" id="country" />
                                 <span asp-validation-for="Country" class="text-danger small"></span>
                             </div>
                         </div>
@@ -112,11 +142,22 @@
                             <span>Total</span><span>$@Model.Total.ToString("F2")</span>
                         </div>
 
-                        <button type="submit" class="btn btn-dark w-100 btn-lg">
-                            <i class="bi bi-check-circle me-2"></i>Place Order
-                        </button>
-                        <a asp-controller="Cart" asp-action="Index" class="btn btn-outline-secondary w-100 mt-2">
-                            Back to Cart
+                        <h6 class="text-center mb-3 text-muted">
+                            <i class="bi bi-lock me-1"></i>Secure Payment with PayPal
+                        </h6>
+
+                        <!-- PayPal Button Container -->
+                        <div id="paypal-button-container"></div>
+
+                        <div class="text-center mt-3">
+                            <small class="text-muted">
+                                <i class="bi bi-shield-check me-1"></i>
+                                Your payment is processed securely through PayPal
+                            </small>
+                        </div>
+
+                        <a asp-controller="Cart" asp-action="Index" class="btn btn-outline-secondary w-100 mt-3">
+                            <i class="bi bi-arrow-left me-1"></i>Back to Cart
                         </a>
                     </div>
                 </div>
@@ -127,4 +168,113 @@
 
 @section Scripts {
     @await Html.PartialAsync("_ValidationScriptsPartial")
+
+    <!-- PayPal SDK -->
+    <script src="https://www.paypal.com/sdk/js?client-id=@ViewBag.PayPalClientId&currency=@ViewBag.Currency&disable-funding=paylater"></script>
+
+    <script>
+        // Address selector functionality
+        document.getElementById('addressSelector')?.addEventListener('change', function() {
+            const selected = this.options[this.selectedIndex];
+            if (selected.value) {
+                document.getElementById('selectedContactId').value = selected.value;
+                document.getElementById('fullName').value = selected.dataset.fullname || '';
+                document.getElementById('phoneNumber').value = selected.dataset.phone || '';
+                document.getElementById('street').value = selected.dataset.street || '';
+                document.getElementById('city').value = selected.dataset.city || '';
+                document.getElementById('province').value = selected.dataset.province || '';
+                document.getElementById('postalCode').value = selected.dataset.postalcode || '';
+                document.getElementById('country').value = selected.dataset.country || 'Canada';
+            } else {
+                // Clear fields for new address
+                document.getElementById('selectedContactId').value = '';
+                document.getElementById('fullName').value = '';
+                document.getElementById('phoneNumber').value = '';
+                document.getElementById('street').value = '';
+                document.getElementById('city').value = '';
+                document.getElementById('province').value = '';
+                document.getElementById('postalCode').value = '';
+                document.getElementById('country').value = 'Canada';
+            }
+        });
+
+        // PayPal button integration
+        paypal.Buttons({
+            style: {
+                layout: 'vertical',
+                color: 'gold',
+                shape: 'rect',
+                label: 'paypal'
+            },
+            createOrder: async function () {
+                // Validate form before creating PayPal order
+                const form = document.querySelector('form');
+                if (!form.checkValidity()) {
+                    alert('Please fill in all required shipping address fields.');
+                    form.reportValidity();
+                    return Promise.reject();
+                }
+
+                // Use Total from model
+                const total = @Model.Total.ToString("F2", System.Globalization.CultureInfo.InvariantCulture);
+
+                const res = await fetch("/paypal/create-order", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ total: total })
+                });
+
+                if (!res.ok) {
+                    throw new Error('Failed to create PayPal order');
+                }
+
+                const data = await res.json();
+                return data.id;
+            },
+
+            onApprove: async function (data) {
+                try {
+                    // Capture payment via API
+                    const res = await fetch("/paypal/capture-order", {
+                        method: "POST",
+                        headers: { "Content-Type": "application/json" },
+                        body: JSON.stringify({ orderId: data.orderID })
+                    });
+
+                    if (!res.ok) {
+                        throw new Error('Failed to capture PayPal payment');
+                    }
+
+                    // Add PayPal order ID to form as hidden input
+                    const form = document.querySelector('form');
+                    let paypalOrderIdInput = document.getElementById('paypalOrderId');
+                    if (!paypalOrderIdInput) {
+                        paypalOrderIdInput = document.createElement('input');
+                        paypalOrderIdInput.type = 'hidden';
+                        paypalOrderIdInput.name = 'paypalOrderId';
+                        paypalOrderIdInput.id = 'paypalOrderId';
+                        form.appendChild(paypalOrderIdInput);
+                    }
+                    paypalOrderIdInput.value = data.orderID;
+
+                    // Change form action to Finalize and submit
+                    form.action = '/Checkout/Finalize';
+                    form.submit();
+                } catch (error) {
+                    console.error('Payment processing error:', error);
+                    alert('Payment capture failed. Please contact support.');
+                }
+            },
+
+            onError: function(err) {
+                console.error('PayPal error:', err);
+                alert('Payment failed. Please try again or contact support if the issue persists.');
+            },
+
+            onCancel: function(data) {
+                console.log('PayPal payment cancelled:', data);
+                // User cancelled, they can try again
+            }
+        }).render('#paypal-button-container');
+    </script>
 }

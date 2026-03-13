@@ -146,7 +146,9 @@ namespace ELKH.Areas.Identity.Pages.Account
                         return RedirectToAction("Index", "Home");
                     }
 
-                    return RedirectToAction("Index", "Home");
+                    // Customer or default role - redirect to Products page
+                    _logger.LogInformation("User {Email} logged in as Customer.", Input.Email);
+                    return RedirectToAction("Index", "Product");
                 }
 
                 if (result.RequiresTwoFactor)
