@@ -97,6 +97,25 @@
                         <li class="nav-item">
                             <a class="nav-link text-dark" asp-area="" asp-controller="Product" asp-action="Index">Products</a>
                         </li>
+                        <li class="nav-item dropdown">
+                            <a class="nav-link dropdown-toggle text-dark" href="#" id="navbarCategoriesDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                                Categories
+                            </a>
+                            <ul class="dropdown-menu" aria-labelledby="navbarCategoriesDropdown">
+                                <li><a class="dropdown-item" asp-controller="Product" asp-action="Index" asp-route-category="Canadian">Canadian</a></li>
+                                <li><a class="dropdown-item" asp-controller="Product" asp-action="Index" asp-route-category="Christmas">Christmas</a></li>
+                                <li><a class="dropdown-item" asp-controller="Product" asp-action="Index" asp-route-category="Cute Animals">Cute Animals</a></li>
+                                <li><a class="dropdown-item" asp-controller="Product" asp-action="Index" asp-route-category="Easter">Easter</a></li>
+                                <li><a class="dropdown-item" asp-controller="Product" asp-action="Index" asp-route-category="Food">Food</a></li>
+                                <li><a class="dropdown-item" asp-controller="Product" asp-action="Index" asp-route-category="Halloween">Halloween</a></li>
+                                <li><a class="dropdown-item" asp-controller="Product" asp-action="Index" asp-route-category="Lunar New Year">Lunar New Year</a></li>
+                                <li><a class="dropdown-item" asp-controller="Product" asp-action="Index" asp-route-category="Nature & Floral">Nature & Floral</a></li>
+                                <li><a class="dropdown-item" asp-controller="Product" asp-action="Index" asp-route-category="New Years Eve">New Years Eve</a></li>
+                                <li><a class="dropdown-item" asp-controller="Product" asp-action="Index" asp-route-category="Thanksgiving">Thanksgiving</a></li>
+                                <li><hr class="dropdown-divider"></li>
+                                <li><a class="dropdown-item" asp-controller="Product" asp-action="Index" asp-route-category="Miscellaneous">Miscellaneous</a></li>
+                            </ul>
+                        </li>
                         @if (User.IsInRole("Staff"))
                         {
                             <li class="nav-item">
@@ -162,6 +181,38 @@
                     <li class="nav-item border-bottom">
                         <a class="nav-link text-dark px-3 py-2" asp-area="" asp-controller="Product" asp-action="Index">Products</a>
                     </li>
+
+                    @* Categories Section *@
+                    <li class="nav-item border-bottom">
+                        <div class="accordion accordion-flush" id="categoriesAccordion">
+                            <div class="accordion-item border-0">
+                                <h2 class="accordion-header" id="categoriesHeading">
+                                    <button class="accordion-button collapsed px-3 py-2 text-dark bg-white" type="button" data-bs-toggle="collapse" data-bs-target="#categoriesCollapse" aria-expanded="false" aria-controls="categoriesCollapse">
+                                        Categories
+                                    </button>
+                                </h2>
+                                <div id="categoriesCollapse" class="accordion-collapse collapse" aria-labelledby="categoriesHeading" data-bs-parent="#categoriesAccordion">
+                                    <div class="accordion-body p-0">
+                                        <ul class="list-unstyled mb-0">
+                                            <li><a class="dropdown-item py-2" asp-controller="Product" asp-action="Index" asp-route-category="Canadian">Canadian</a></li>
+                                            <li><a class="dropdown-item py-2" asp-controller="Product" asp-action="Index" asp-route-category="Christmas">Christmas</a></li>
+                                            <li><a class="dropdown-item py-2" asp-controller="Product" asp-action="Index" asp-route-category="Cute Animals">Cute Animals</a></li>
+                                            <li><a class="dropdown-item py-2" asp-controller="Product" asp-action="Index" asp-route-category="Easter">Easter</a></li>
+                                            <li><a class="dropdown-item py-2" asp-controller="Product" asp-action="Index" asp-route-category="Food">Food</a></li>
+                                            <li><a class="dropdown-item py-2" asp-controller="Product" asp-action="Index" asp-route-category="Halloween">Halloween</a></li>
+                                            <li><a class="dropdown-item py-2" asp-controller="Product" asp-action="Index" asp-route-category="Lunar New Year">Lunar New Year</a></li>
+                                            <li><a class="dropdown-item py-2" asp-controller="Product" asp-action="Index" asp-route-category="Nature & Floral">Nature & Floral</a></li>
+                                            <li><a class="dropdown-item py-2" asp-controller="Product" asp-action="Index" asp-route-category="New Years Eve">New Years Eve</a></li>
+                                            <li><a class="dropdown-item py-2" asp-controller="Product" asp-action="Index" asp-route-category="Thanksgiving">Thanksgiving</a></li>
+                                            <li><hr class="my-1"></li>
+                                            <li><a class="dropdown-item py-2" asp-controller="Product" asp-action="Index" asp-route-category="Miscellaneous">Miscellaneous</a></li>
+                                        </ul>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </li>
+
                     <li class="nav-item border-bottom">
                         <a class="nav-link text-dark px-3 py-2" asp-area="" asp-controller="Home" asp-action="Privacy">Privacy</a>
                     </li>
