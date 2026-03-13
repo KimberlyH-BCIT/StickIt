@@ -1,5 +1,6 @@
 using System.Security.Claims;
 using ELKH.Data;
+using ELKH.Extensions;
 using ELKH.Models;
 using ELKH.Repositories;
 using ELKH.Services;
@@ -62,7 +63,28 @@ public class CartController : AuthenticatedControllerBase
 
         // Delegate retrieval to the cart service and render the view with model data.
         var items = await _cartService.GetCartItemsAsync(email);
-        return View(items);
+
+        // Map CartModel list to CartVM
+        var cartVM = new ViewModels.CartVM
+        {
+            Items = items.Select(c => new ViewModels.CartItemVM
+            {
+                CartItemId = c.PkCartId,
+                ProductId = c.FkProductID,
+                ProductName = c.Product?.Name ?? "Unknown",
+                UnitPrice = c.Product?.GetEffectivePrice() ?? 0,
+                Quantity = c.Quantity,
+                ImageUrl = c.Product?.ProductImage?.FirstOrDefault()?.ProductImageURL,
+                LineTotal = c.TotalPrice
+            }).ToList()
+        };
+
+        // Calculate summary values
+        cartVM.Tax = cartVM.Subtotal * 0.12m; // 12% tax
+        cartVM.ShippingCost = cartVM.Subtotal >= 50 ? 0 : 5.99m;
+        cartVM.Total = cartVM.Subtotal + cartVM.Tax + cartVM.ShippingCost;
+
+        return View(cartVM);
     }
 
     // ---------------------------------------------------------------------
