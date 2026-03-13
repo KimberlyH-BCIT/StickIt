@@ -2,6 +2,9 @@ using ELKH.Data;
 using ELKH.Extensions;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.AspNetCore.Identity.UI.Services;
+
+using ELKH.Services;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -19,9 +22,13 @@ builder.Services.AddDatabaseDeveloperPageExceptionFilter();
 // Users must confirm their email before they can sign in.
 // AddRoles<IdentityRole>() is required for [Authorize(Roles = "...")] to function —
 // without it, role claims are never populated and role-based access always fails.
-builder.Services.AddDefaultIdentity<IdentityUser>(options => options.SignIn.RequireConfirmedAccount = true)
-    .AddRoles<IdentityRole>()
-    .AddEntityFrameworkStores<ApplicationDbContext>();
+builder.Services.AddIdentity<IdentityUser, IdentityRole>(options =>
+    {
+        options.SignIn.RequireConfirmedAccount = false;
+    })
+    .AddEntityFrameworkStores<ApplicationDbContext>()
+    .AddDefaultTokenProviders()
+    .AddDefaultUI();
 
 // -- Health Checks (for monitoring and deployment readiness)
 // Exposes /health endpoint for load balancers, monitoring tools, and container orchestrators
@@ -79,6 +86,8 @@ builder.Services.AddBackgroundServices();  // FuzzyReindexService, FuzzyHelperSe
 builder.Services.AddApplicationServices(); // UserService, SearchService, RatingService, ModerationService, ProductService, CartService
 builder.Services.AddEmailServices();       // SmtpEmailSender, EmailSenderAdapter, IEmailSender
 builder.Services.AddRepositories();        // All repository implementations with base class inheritance
+
+
 
 // -- Mapping
 // AutoMapper for DTO/ViewModel conversions. Profile defined in Mapping/AutoMapperProfile.cs

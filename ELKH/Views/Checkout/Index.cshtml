@@ -2,6 +2,7 @@
 @{
     ViewData["Title"] = "Checkout";
     Layout = "~/Views/Shared/_Layout.cshtml";
+    var paypalClientId = ViewBag.PayPalClientId as string ?? "";
 }
 
 @section title {
@@ -23,11 +24,10 @@
         </div>
     }
 
-    <form asp-action="ProcessPayment" method="post">
+    <form id="checkoutForm" asp-action="ProcessPayment" method="post">
         @Html.AntiForgeryToken()
-        <div class="row g-4">
 
-            <!-- Shipping Form -->
+        <div class="row g-4">
             <div class="col-lg-7">
                 <div class="card shadow-sm">
                     <div class="card-body">
@@ -78,11 +78,14 @@
                                 <span asp-validation-for="Country" class="text-danger small"></span>
                             </div>
                         </div>
+
+                        <div class="alert alert-info mt-3 mb-0">
+                            Complete your shipping details, then pay with PayPal.
+                        </div>
                     </div>
                 </div>
             </div>
 
-            <!-- Order Summary -->
             <div class="col-lg-5">
                 <div class="card shadow-sm">
                     <div class="card-body">
@@ -98,10 +101,12 @@
 
                         <hr />
                         <div class="d-flex justify-content-between mb-1">
-                            <span>Subtotal</span><span>$@Model.Subtotal.ToString("F2")</span>
+                            <span>Subtotal</span>
+                            <span>$@Model.Subtotal.ToString("F2")</span>
                         </div>
                         <div class="d-flex justify-content-between mb-1">
-                            <span>Tax (12%)</span><span>$@Model.Tax.ToString("F2")</span>
+                            <span>Tax (12%)</span>
+                            <span>$@Model.Tax.ToString("F2")</span>
                         </div>
                         <div class="d-flex justify-content-between mb-2">
                             <span>Shipping</span>
@@ -109,13 +114,17 @@
                         </div>
                         <hr />
                         <div class="d-flex justify-content-between fw-bold fs-5 mb-4">
-                            <span>Total</span><span>$@Model.Total.ToString("F2")</span>
+                            <span>Total</span>
+                            <span>$@Model.Total.ToString("F2")</span>
                         </div>
 
-                        <button type="submit" class="btn btn-dark w-100 btn-lg">
+                        <div id="paypal-button-container" class="mb-3"></div>
+
+                        <button type="submit" class="btn btn-dark w-100 btn-lg mb-2">
                             <i class="bi bi-check-circle me-2"></i>Place Order
                         </button>
-                        <a asp-controller="Cart" asp-action="Index" class="btn btn-outline-secondary w-100 mt-2">
+
+                        <a asp-controller="Cart" asp-action="Index" class="btn btn-outline-secondary w-100">
                             Back to Cart
                         </a>
                     </div>
@@ -127,4 +136,55 @@
 
 @section Scripts {
     @await Html.PartialAsync("_ValidationScriptsPartial")
+
+    @if (!string.IsNullOrWhiteSpace(paypalClientId))
+    {
+        <script src="https://www.paypal.com/sdk/js?client-id=@paypalClientId&currency=CAD"></script>
+        <script>
+            (function () {
+                const form = document.getElementById("checkoutForm");
+                const total = "@Model.Total.ToString("F2")";
+
+                function formIsValid() {
+                    if (!form) return false;
+                    return form.reportValidity();
+                }
+
+                paypal.Buttons({
+                    style: {
+                        layout: "vertical",
+                        color: "gold",
+                        shape: "rect",
+                        label: "paypal"
+                    },
+
+                    onClick: function () {
+                        return formIsValid();
+                    },
+
+                    createOrder: function (data, actions) {
+                        return actions.order.create({
+                            purchase_units: [{
+                                amount: {
+                                    currency_code: "CAD",
+                                    value: total
+                                }
+                            }]
+                        });
+                    },
+
+                    onApprove: function (data, actions) {
+                        return actions.order.capture().then(function () {
+                            form.submit();
+                        });
+                    },
+
+                    onError: function (err) {
+                        console.error("PayPal error:", err);
+                        alert("PayPal payment could not be started.");
+                    }
+                }).render("#paypal-button-container");
+            })();
+        </script>
+    }
 }

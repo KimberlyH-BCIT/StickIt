@@ -1,14 +1,9 @@
-using System.Security.Claims;
-using ELKH.Data;
+using System.Linq;
+using System.Threading.Tasks;
 using ELKH.Models;
-using ELKH.Repositories;
 using ELKH.Services;
 using ELKH.ViewModels;
-using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
-using System.Threading.Tasks;
-using System.Linq;
 
 namespace ELKH.Controllers;
 
@@ -16,32 +11,8 @@ namespace ELKH.Controllers;
 /// Shopping cart management controller for authenticated users.
 /// Handles cart operations (add, remove, checkout) and order placement with inventory management.
 /// </summary>
-/// <remarks>
-/// All endpoints require authentication (inherited from AuthenticatedControllerBase).
-///
-/// Cart operations:
-/// - GET /Cart - Display current user's cart items
-/// - POST /Cart/AddToCart - Add product to cart with quantity validation
-/// - POST /Cart/BuyNow - Quick purchase (add to cart and redirect to checkout)
-/// - POST /Cart/RemoveFromCart - Remove item from cart
-///
-/// Checkout operations:
-/// - GET /Cart/Checkout - Display checkout page with cart summary and total
-/// - POST /Cart/PlaceOrder - Process order, decrement inventory, clear cart
-///
-/// Business logic delegation:
-/// - All cart operations delegated to ICartService for separation of concerns
-/// - Controller focuses on HTTP concerns (validation, authorization, result shaping)
-/// - Service layer handles business rules (inventory checks, price calculations)
-///
-/// Security:
-/// - User email retrieved from authenticated context via AuthenticatedControllerBase
-/// - All operations scoped to current user's cart
-/// - Anti-forgery tokens required for all POST operations
-/// </remarks>
 public class CartController : AuthenticatedControllerBase
 {
-    // Dependency: cart service implements domain logic for cart management and ordering.
     private readonly ICartService _cartService;
 
     public CartController(ICartService cartService, IUserService userService)
@@ -50,35 +21,40 @@ public class CartController : AuthenticatedControllerBase
         _cartService = cartService;
     }
 
-    // ---------------------------------------------------------------------
-    // Viewing endpoints
-    // ---------------------------------------------------------------------
     // GET: /Cart
     public async Task<IActionResult> Index()
     {
         var authResult = RequireAuthenticatedUser(out var email);
         if (authResult != null) return authResult;
 
-        // Delegate retrieval to the cart service and render the view with model data.
-        var items = await _cartService.GetCartItemsAsync(email);
-        return View(items);
+        var cartItems = await _cartService.GetCartItemsAsync(email);
+
+        var vm = new CartVM
+        {
+            Items = cartItems.Select(c => new CartItemVM
+            {
+                CartItemId = c.PkCartId,
+                ProductName = c.Product?.Name ?? string.Empty,
+                ImageUrl = c.Product?.ProductImages?.FirstOrDefault()?.ProductImageURL ?? string.Empty,
+                UnitPrice = c.Product?.Price ?? 0,
+                Quantity = c.Quantity,
+                LineTotal = c.TotalPrice
+            }).ToList()
+        };
+
+        return View(vm);
     }
 
-    // ---------------------------------------------------------------------
-    // Cart modification endpoints (mutating operations)
-    // ---------------------------------------------------------------------
     // POST: /Cart/AddToCart
     [HttpPost]
     [ValidateAntiForgeryToken]
     public async Task<IActionResult> AddToCart(int itemId, int quantity)
     {
-        // Validate input early to avoid unnecessary work.
         if (quantity <= 0) return BadRequest("Quantity must be positive.");
 
         var authResult = RequireAuthenticatedUser(out var email);
         if (authResult != null) return authResult;
 
-        // Service performs the actual add-to-cart business logic including inventory checks.
         await _cartService.AddToCartAsync(email, itemId, quantity);
         return RedirectToAction(nameof(Index));
     }
@@ -117,22 +93,16 @@ public class CartController : AuthenticatedControllerBase
         var authResult = RequireAuthenticatedUser(out var email);
         if (authResult != null) return authResult;
 
-        // Removal is delegated to the service which enforces ownership and consistency checks.
         await _cartService.RemoveFromCartAsync(email, cartId);
         return RedirectToAction(nameof(Index));
     }
 
-    // ---------------------------------------------------------------------
-    // Checkout and ordering endpoints
-    // ---------------------------------------------------------------------
     // GET: /Cart/Checkout
     public async Task<IActionResult> Checkout()
     {
         var authResult = RequireAuthenticatedUser(out var email);
         if (authResult != null) return authResult;
 
-        // Gather items and compute totals for the checkout view. Keep presentation concerns here
-        // while the service remains responsible for pricing/business calculations.
         var items = await _cartService.GetCartItemsAsync(email);
         var total = items.Sum(i => i.TotalPrice);
         ViewBag.Total = total;

@@ -63,29 +63,16 @@ namespace ELKH.Extensions
         /// </summary>
         public static IServiceCollection AddEmailServices(this IServiceCollection services)
         {
-            // Register concrete implementations
             services.AddScoped<SmtpEmailSender>();
             services.AddScoped<EmailSenderAdapter>();
             services.AddScoped<FileEmailSender>();
 
-            // Choose the effective IEmailSender implementation based on environment.
-            // In Development, use FileEmailSender to save emails to disk rather than sending
-            // them over the network. In other environments, use the EmailSenderAdapter
-            // which delegates to SmtpEmailSender.
             services.AddScoped<IEmailSender>(sp =>
-            {
-                var env = sp.GetRequiredService<Microsoft.Extensions.Hosting.IHostEnvironment>();
-                if (env.IsDevelopment()) return sp.GetRequiredService<FileEmailSender>();
-                return sp.GetRequiredService<EmailSenderAdapter>();
-            });
+                sp.GetRequiredService<EmailSenderAdapter>());
 
             services.AddScoped<Microsoft.AspNetCore.Identity.UI.Services.IEmailSender>(sp =>
-            {
-                var env = sp.GetRequiredService<Microsoft.Extensions.Hosting.IHostEnvironment>();
-                if (env.IsDevelopment()) return sp.GetRequiredService<FileEmailSender>();
-                return sp.GetRequiredService<EmailSenderAdapter>();
-            });
-            
+                sp.GetRequiredService<EmailSenderAdapter>());
+
             return services;
         }
 

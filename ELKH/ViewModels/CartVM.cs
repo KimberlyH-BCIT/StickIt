@@ -1,3 +1,5 @@
+using ELKH.Models;
+
 namespace ELKH.ViewModels;
 
 
@@ -15,6 +17,7 @@ public class CartItemVM
 
 public class CartVM
 {
+    public List<CartModel> CartItems { get; set; } = new();
     public List<CartItemVM> Items { get; set; } = new();
     public decimal Subtotal => Items.Sum(i => i.LineTotal);
     public decimal Tax { get; set; }
