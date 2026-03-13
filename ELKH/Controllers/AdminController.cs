@@ -54,7 +54,7 @@ namespace ELKH.Controllers
 
             return View(vm);
         }
-
+        /*============================== List Of All Users ==============================*/
         public async Task<IActionResult> ListUsers(string search, string roleFilter, int page = 1)
         {
             int pageSize = 5;
@@ -95,6 +95,7 @@ namespace ELKH.Controllers
             return View(pagedUsers);
         }
 
+        /*============================== Account Details ==============================*/
         [HttpGet]
         public async Task<IActionResult> AccountDetails(string id)
         {
@@ -145,8 +146,100 @@ namespace ELKH.Controllers
 
             return RedirectToAction("AccountDetails", new { id = userId });
         }
+        /*============================== Manage Sales ==============================*/
+        public async Task<IActionResult> ManageSales()
+        {
+            var now = DateTime.Now;
+            var weekStart = now.AddDays(-6).Date;
+            var monthStart = new DateTime(now.Year, now.Month, 1);
+            var yearStart = now.AddMonths(-11).Date;
 
-        [HttpPost]
+            // ── Fetch into memory first so decimal Sum() works with SQLite ──
+            var allTransactions = await _context.Transactions
+                .Where(t => t.TransactionDate >= yearStart)
+                .Select(t => new { t.TransactionDate, t.Amount })
+                .ToListAsync();
+
+            var weeklyTx = allTransactions.Where(t => t.TransactionDate.Date >= weekStart).ToList();
+            var monthlyTx = allTransactions.Where(t => t.TransactionDate >= monthStart).ToList();
+
+            // ── Summary cards ─────────────────────────────────────────────
+            decimal weeklyGross = weeklyTx.Any() ? weeklyTx.Sum(t => t.Amount) : 0m;
+            decimal monthlyGross = monthlyTx.Any() ? monthlyTx.Sum(t => t.Amount) : 0m;
+            int weeklyOrders = weeklyTx.Count;
+            int monthlyOrders = monthlyTx.Count;
+            int totalOrders = await _context.Orders.CountAsync();
+
+            // ── Weekly chart: last 7 days ─────────────────────────────────
+            var weeklyLabels = new List<string>();
+            var weeklySalesData = new List<decimal>();
+
+            for (int d = 6; d >= 0; d--)
+            {
+                var day = now.AddDays(-d).Date;
+                var dayTx = allTransactions.Where(t => t.TransactionDate.Date == day).ToList();
+                weeklyLabels.Add(day.ToString("ddd dd"));
+                weeklySalesData.Add(dayTx.Any() ? dayTx.Sum(t => t.Amount) : 0m);
+            }
+
+            // ── Monthly chart: last 12 months ─────────────────────────────
+            var monthlyLabels = new List<string>();
+            var monthlySalesData = new List<decimal>();
+
+            for (int m = 11; m >= 0; m--)
+            {
+                var month = now.AddMonths(-m);
+                var monthTx = allTransactions
+                    .Where(t => t.TransactionDate.Year == month.Year
+                             && t.TransactionDate.Month == month.Month)
+                    .ToList();
+                monthlyLabels.Add(month.ToString("MMM yyyy"));
+                monthlySalesData.Add(monthTx.Any() ? monthTx.Sum(t => t.Amount) : 0m);
+            }
+
+            // ── Top 5 products ────────────────────────────────────────────
+            var orderItems = await _context.OrderItems
+                .Include(oi => oi.Product) // use correct navigation property
+                .Select(oi => new
+                {
+                    oi.FkProductId,
+                    ProductName = oi.Product == null ? "Unknown" : oi.Product.Name,
+                    ProductPrice = oi.Product == null ? 0m : oi.Product.Price,
+                    oi.Quantity
+                })
+                .ToListAsync();
+
+            var topProducts = orderItems
+                .GroupBy(oi => new { oi.FkProductId, oi.ProductName, oi.ProductPrice })
+                .Select(g => new TopProductVM
+                {
+                    ProductName = g.Key.ProductName,
+                    UnitsSold = g.Sum(oi => oi.Quantity),
+                    Revenue = g.Sum(oi => oi.Quantity * g.Key.ProductPrice)
+                })
+                .OrderByDescending(p => p.UnitsSold)
+                .Take(5)
+                .ToList();
+
+            var vm = new SalesVM
+            {
+                WeeklyGrossSales = weeklyGross,
+                MonthlyGrossSales = monthlyGross,
+                WeeklyTotalOrders = weeklyOrders,
+                MonthlyTotalOrders = monthlyOrders,
+                TotalOrdersAllTime = totalOrders,
+                WeeklyLabels = weeklyLabels,
+                WeeklySalesData = weeklySalesData,
+                MonthlyLabels = monthlyLabels,
+                MonthlySalesData = monthlySalesData,
+                TopProducts = topProducts
+            };
+
+            return View(vm);
+        }
+
+
+[HttpPost]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> ReindexFTS([FromBody] ReindexPayload? payload)
         {

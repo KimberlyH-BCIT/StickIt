@@ -1,7 +1,6 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk.Web">
 
 	<PropertyGroup>
-
 		<TargetFramework>net10.0</TargetFramework>
 		<Nullable>enable</Nullable>
 		<ImplicitUsings>enable</ImplicitUsings>
@@ -24,12 +23,13 @@
 
 	<ItemGroup>
 		<Folder Include="Views\Audit\" />
+		<Folder Include="wwwroot\images\" />
 	</ItemGroup>
 
-	<!-- Exclude e2e and tests folders from the .NET build (Playwright/TS files) -->
+	<!-- Exclude test folders from build -->
 	<ItemGroup>
 		<None Remove="e2e\**\*" />
 		<None Remove="tests\**\*" />
-		<Folder Include="wwwroot\images\" />
 	</ItemGroup>
+
 </Project>

@@ -1,5 +1,5 @@
+@model List<ELKH.ViewModels.UserListVM>
 
-﻿@model List<ELKH.ViewModels.UserListVM>
 @{
     ViewData["Title"] = "All Users";
     Layout = "~/Views/Shared/_Layout.cshtml";
@@ -7,7 +7,6 @@
     var filterRoles = new[] { "All", "Admin", "Manager", "Staff", "Customer" };
 }
 
-<<<<<<< HEAD
 <div class="container mt-4 pb-5">
 
     <div class="d-flex justify-content-between align-items-center mb-4">
@@ -255,44 +254,3 @@
     </script>
 
 }
-=======
-<div class="d-flex align-items-center justify-content-between mb-4">
-    <h2 class="mb-0">All Users</h2>
-    <span class="badge bg-secondary fs-6">@Model.Count total</span>
-</div>
-
-<div class="table-responsive">
-    <table class="table table-hover align-middle">
-        <thead class="table-dark">
-            <tr>
-                <th>#</th>
-                <th>Email</th>
-                <th>Roles</th>
-            </tr>
-        </thead>
-        <tbody>
-            @for (int i = 0; i < Model.Count; i++)
-            {
-                var user = Model[i];
-                <tr>
-                    <td class="text-muted">@(i + 1)</td>
-                    <td>@user.Email</td>
-                    <td>
-                        @if (user.Roles.Count > 0)
-                        {
-                            foreach (var role in user.Roles)
-                            {
-                                <span class="badge @(role == "Admin" ? "bg-danger" : "bg-primary") me-1">@role</span>
-                            }
-                        }
-                        else
-                        {
-                            <span class="text-muted">Customer</span>
-                        }
-                    </td>
-                </tr>
-            }
-        </tbody>
-    </table>
-</div>
->>>>>>> master
