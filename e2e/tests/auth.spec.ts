@@ -19,8 +19,8 @@ async function logout(page: Page) {
   await page.waitForURL(/Login|\/$/);
 }
 
-const ADMIN_EMAIL = process.env.E2E_EMAIL    ?? (() => { throw new Error('E2E_EMAIL not set — copy e2e/.env.example to e2e/.env'); })();
-const ADMIN_PASS  = process.env.E2E_PASSWORD ?? (() => { throw new Error('E2E_PASSWORD not set — copy e2e/.env.example to e2e/.env'); })();
+const ADMIN_EMAIL = 'admin@stickit.dev';
+const ADMIN_PASS  = 'Admin@2025!';
 
 test.describe('Authentication', () => {
   test('login with valid credentials redirects away from login page', async ({ page }) => {

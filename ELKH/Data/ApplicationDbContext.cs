@@ -10,17 +10,6 @@ namespace ELKH.Data
     /// Manages all entity sets, relationships, indexes, and custom model configuration.
     /// Inherits from IdentityDbContext to support ASP.NET Core Identity features.
     /// </summary>
-    /// <remarks>
-    /// Two database contexts are registered in this application:
-    /// <list type="bullet">
-    ///   <item><see cref="ApplicationDbContext"/> — main application data (users, products, orders, cart …).</item>
-    ///   <item><c>ImageStoreContext</c> — binary image storage, kept in a separate SQLite file.</item>
-    /// </list>
-    /// Never inject both contexts into the same service or controller action and write to them
-    /// inside a single logical transaction — EF Core does not span transactions across
-    /// separate <see cref="DbContext"/> instances, so partial failures will leave the databases
-    /// in an inconsistent state.
-    /// </remarks>
     public class ApplicationDbContext : IdentityDbContext
     {
         /// <summary>
@@ -34,7 +23,7 @@ namespace ELKH.Data
 
         public DbSet<ProductModel> Products { get; set; }
         public DbSet<CategoryModel> Categories { get; set; }
-        public DbSet<ProductImageModel> ProductImages { get; set; }
+        public DbSet<ProductImageModel> ProductImage { get; set; }
         public DbSet<RegisteredUserModel> RegisteredUsers { get; set; }
         public DbSet<CartModel> Carts { get; set; }
         public DbSet<OrderModel> Orders { get; set; }

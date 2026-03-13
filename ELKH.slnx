@@ -1,4 +1,3 @@
 <Solution>
   <Project Path="ELKH/ELKH.csproj" />
-  <Project Path="ELKH.Tests/ELKH.Tests.csproj" />
 </Solution>

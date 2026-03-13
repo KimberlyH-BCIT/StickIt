@@ -1,10 +1,4 @@
 import { defineConfig, devices } from '@playwright/test';
-import * as dotenv from 'dotenv';
-import * as path from 'path';
-
-// Load e2e/.env so credentials are available as process.env variables.
-// The .env file is git-ignored — copy .env.example to .env to get started.
-dotenv.config({ path: path.resolve(__dirname, '.env') });
 
 export default defineConfig({
   testDir: './tests',

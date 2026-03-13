@@ -1,12 +1,9 @@
 import { test, expect, Page } from '@playwright/test';
 
-const E2E_EMAIL    = process.env.E2E_EMAIL    ?? (() => { throw new Error('E2E_EMAIL not set — copy e2e/.env.example to e2e/.env'); })();
-const E2E_PASSWORD = process.env.E2E_PASSWORD ?? (() => { throw new Error('E2E_PASSWORD not set — copy e2e/.env.example to e2e/.env'); })();
-
 async function loginAsCustomer(page: Page) {
   await page.goto('/Identity/Account/Login');
-  await page.fill('#Input_Email',    E2E_EMAIL);
-  await page.fill('#Input_Password', E2E_PASSWORD);
+  await page.fill('#Input_Email',    'admin@stickit.dev');
+  await page.fill('#Input_Password', 'Admin@2025!');
   await page.click('button[type="submit"]');
   await page.waitForURL(/^(?!.*Login)/);
 }
