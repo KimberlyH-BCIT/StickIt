@@ -4,27 +4,30 @@
     ViewData["Title"] = "All Users";
     Layout = "~/Views/Shared/_Layout.cshtml";
 
-    var filterRoles = new[] { "All", "Admin", "Manager", "Staff", "Customer" };
+    var filterRoles = ViewBag.Roles as List<string>;
 }
 
-<div class="container mt-4 pb-5">
+<div class="container-fluid mt-4 pb-5">
 
-    <div class="d-flex justify-content-between align-items-center mb-4">
-        <h2 class="fw-bold text-primary">All Users</h2>
+    <div class="d-flex justify-content-between align-items-center mb-4" style="max-width:1100px;margin:auto;">
+        <h2 class="fw-bold text-primary mb-0">All Users</h2>
 
-        <a asp-action="Index" class="btn btn-outline-primary rounded-pill px-4">
+        <a asp-action="Index"
+               class="btn btn-outline-primary rounded-pill px-4">
             ← Back to Dashboard
         </a>
     </div>
 
-    <div class="card shadow-sm border-0 mb-4 rounded-4">
+
+    <div class="card shadow-sm border-0 mb-4 rounded-4" style="max-width:1100px;margin:auto;">
         <div class="card-body p-4">
 
-            <form method="get" class="mb-4">
+            <form method="get" class="mb-3">
+
                 <input type="hidden" name="roleFilter" value="@ViewBag.RoleFilter" />
 
                 <div class="d-flex justify-content-center">
-                    <div class="input-group" style="max-width:500px;">
+                    <div class="input-group" style="max-width:520px;">
 
                         <input type="text"
                                name="search"
@@ -32,7 +35,8 @@
                                class="form-control rounded-start-pill"
                                placeholder="Search by email or role…" />
 
-                        <button type="submit" class="btn btn-primary rounded-end-pill px-4">
+                        <button type="submit"
+                                class="btn btn-primary rounded-end-pill px-4">
                             Search
                         </button>
 
@@ -42,7 +46,7 @@
             </form>
 
 
-            <div class="d-flex justify-content-center flex-wrap gap-2">
+            <div class="d-flex justify-content-center flex-wrap gap-2 mt-3">
 
                 @foreach (var role in filterRoles)
                 {
@@ -58,10 +62,10 @@
                     };
 
                     <a asp-action="ListUsers"
-                       asp-route-roleFilter="@(role == "All" ? "" : role)"
-                       asp-route-search="@ViewBag.Search"
-                       asp-route-page="1"
-                       class="role-badge @roleClass @(active ? "active-role" : "")">
+                           asp-route-roleFilter="@(role == "All" ? "" : role)"
+                           asp-route-search="@ViewBag.Search"
+                           asp-route-page="1"
+                           class="role-badge @roleClass @(active ? "active-role" : "")">
                         @role
                     </a>
                 }
@@ -75,8 +79,7 @@
 
     <div class="d-flex justify-content-center">
 
-        <div class="card shadow-sm border-0 rounded-4" style="max-width:900px;width:100%;">
-
+        <div class="card shadow-sm border-0 rounded-4" style="max-width:1100px;width:100%;">
             <div class="card-body p-0">
 
                 <div class="table-responsive">
@@ -86,13 +89,13 @@
                         <thead class="table-light">
                             <tr>
 
-                                <th style="width:80px;" class="ps-3">ID</th>
+                                <th style="width:180px;" class="ps-3">ID</th>
 
-                                <th class="text-start">Email</th>
+                                <th class="text-start" style="width:450px;">Email</th>
 
                                 <th style="width:200px;">Roles</th>
 
-                                <th style="width:120px;">Action</th>
+                                <th style="width:140px;"></th>
 
                             </tr>
                         </thead>
@@ -106,17 +109,23 @@
 
                                     <tr>
 
-                                        <td class="ps-3">
+                                        <td class="ps-4">
+
                                             <span class="text-muted small font-monospace"
                                                   title="@user.Id"
                                                   data-bs-toggle="tooltip"
-                                                  style="cursor:default;">
-                                                @user.Id.Substring(0, Math.Min(6, user.Id.Length))…
+                                                  style="display:inline-block;width:120px;text-align:left;">
+
+                                                @user.Id.Substring(0, 8)...
+
                                             </span>
+
                                         </td>
 
 
-                                        <td class="text-start">@user.Email</td>
+                                        <td class="text-start" style="max-width:450px;">
+                                            @user.Email
+                                        </td>
 
 
                                         <td>
@@ -157,7 +166,8 @@
                                             @if (displayRole != null)
                                             {
 
-                                                <span class="role-badge @roleClass">
+                                                <span class="role-badge @roleClass"
+                                                      style="min-width:90px;display:inline-flex;justify-content:center;">
                                                     @displayRole
                                                 </span>
 
@@ -169,7 +179,10 @@
                                             }
                                             else
                                             {
-                                                <span class="role-badge role-none">No Role</span>
+                                                <span class="role-badge role-none"
+                                                      style="min-width:90px;display:inline-flex;justify-content:center;">
+                                                    No Role
+                                                </span>
                                             }
 
                                         </td>
@@ -178,9 +191,9 @@
                                         <td>
 
                                             <a asp-controller="Admin"
-                                               asp-action="AccountDetails"
-                                               asp-route-id="@user.Id"
-                                               class="btn btn-sm btn-outline-primary rounded-pill px-3">
+                                                   asp-action="AccountDetails"
+                                                   asp-route-id="@user.Id"
+                                                   class="btn btn-sm btn-outline-primary rounded-pill px-3">
                                                 Details
                                             </a>
 
@@ -192,12 +205,19 @@
                             }
                             else
                             {
+
                                 <tr>
+
                                     <td colspan="4" class="text-center text-muted py-5">
+
                                         <span style="font-size:2rem;">🔍</span><br />
+
                                         No users found matching your search.
+
                                     </td>
+
                                 </tr>
+
                             }
 
                         </tbody>
@@ -205,14 +225,17 @@
                     </table>
 
                 </div>
+
             </div>
         </div>
+
     </div>
 
 
 
     @if (ViewBag.TotalPages > 1)
     {
+
         <nav class="mt-4">
 
             <ul class="pagination justify-content-center flex-wrap">
@@ -223,11 +246,13 @@
                     <li class="page-item @(ViewBag.CurrentPage == i ? "active" : "")">
 
                         <a class="page-link rounded-pill mx-1"
-                           asp-action="ListUsers"
-                           asp-route-page="@i"
-                           asp-route-search="@ViewBag.Search"
-                           asp-route-roleFilter="@ViewBag.RoleFilter">
+                               asp-action="ListUsers"
+                               asp-route-page="@i"
+                               asp-route-search="@ViewBag.Search"
+                               asp-route-roleFilter="@ViewBag.RoleFilter">
+
                             @i
+
                         </a>
 
                     </li>
@@ -237,6 +262,7 @@
             </ul>
 
         </nav>
+
     }
 
 </div>
@@ -248,7 +274,7 @@
     <script>
 
         document.querySelectorAll('[data-bs-toggle="tooltip"]').forEach(el=>{
-        new bootstrap.Tooltip(el);
+            new bootstrap.Tooltip(el);
         });
 
     </script>

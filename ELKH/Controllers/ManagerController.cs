@@ -7,7 +7,7 @@ using Microsoft.EntityFrameworkCore;
 
 namespace ELKH.Controllers
 {
-   
+
     [Authorize(Roles = "Admin,Manager")]
     public class ManagerController : Controller
     {
@@ -41,7 +41,8 @@ namespace ELKH.Controllers
             return View();
         }
 
-        // ================= LIST PRODUCTS =================
+        // ================= LIST PRODUCTS =================//
+        [HttpGet]
         public async Task<IActionResult> ListOfProducts(string search, string stockFilter, string activeFilter, int page = 1)
         {
             int pageSize = 8;
@@ -52,8 +53,12 @@ namespace ELKH.Controllers
                 .AsQueryable();
 
             if (!string.IsNullOrEmpty(search))
-                query = query.Where(p => p.Name.Contains(search) ||
-                                         p.Category.CategoryName.Contains(search));
+            {
+                query = query.Where(p =>
+                    p.Name.Contains(search) ||
+                    (p.Category != null && p.Category.CategoryName.Contains(search))
+                );
+            }
 
             if (stockFilter == "low")
                 query = query.Where(p => p.StockQuantity <= 5);
@@ -77,23 +82,22 @@ namespace ELKH.Controllers
 
             var products = rawProducts.Select(p => new ProductVM
             {
-                ProductId     = p.PkProductId,
-                ProductName   = p.Name,
-                Description   = p.Description,
-                Price         = p.Price,
+                ProductId = p.PkProductId,
+                ProductName = p.Name,
+                Description = p.Description,
+                Price = p.Price,
                 DiscountPercent = p.DiscountPercent,
                 StockQuantity = (int)p.StockQuantity,
-                IsActive      = p.IsActive,
-                CategoryId    = p.FkCategoryId,
-                CategoryName  = p.Category?.CategoryName ?? "",
-                // Pull first image URL — empty string if none
-                Thumbnail     = p.ProductImage?.FirstOrDefault()?.ProductImageURL ?? ""
+                IsActive = p.IsActive,
+                CategoryId = p.FkCategoryId,
+                CategoryName = p.Category?.CategoryName ?? "",
+                Thumbnail = p.ProductImage.Select(i => i.ProductImageURL).FirstOrDefault() ?? ""
             }).ToList();
 
-            ViewBag.CurrentPage  = page;
-            ViewBag.TotalPages   = (int)Math.Ceiling((double)total / pageSize);
-            ViewBag.Search       = search;
-            ViewBag.StockFilter  = stockFilter;
+            ViewBag.CurrentPage = page;
+            ViewBag.TotalPages = (int)Math.Ceiling((double)total / pageSize);
+            ViewBag.Search = search;
+            ViewBag.StockFilter = stockFilter;
             ViewBag.ActiveFilter = activeFilter;
 
             return View(products);

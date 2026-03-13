@@ -87,10 +87,24 @@ namespace ELKH.Controllers
             }
 
             int totalUsers = userList.Count;
-            var pagedUsers = userList.Skip((page - 1) * pageSize).Take(pageSize).ToList();
+
+            var pagedUsers = userList
+                .Skip((page - 1) * pageSize)
+                .Take(pageSize)
+                .ToList();
 
             ViewBag.CurrentPage = page;
             ViewBag.TotalPages = (int)Math.Ceiling((double)totalUsers / pageSize);
+
+            var roleNames = await _context.Roles
+                .Select(r => r.Name)
+                .ToListAsync();
+
+            roleNames.Insert(0, "All");
+
+            ViewBag.Roles = roleNames;
+            ViewBag.RoleFilter = roleFilter;
+            ViewBag.Search = search;
 
             return View(pagedUsers);
         }
