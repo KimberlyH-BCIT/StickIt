@@ -1,11 +1,225 @@
 @model ELKH.ViewModels.SalesVM
+
 @{
     ViewData["Title"] = "Admin Dashboard";
     Layout = "~/Views/Shared/_Layout.cshtml";
+    var topProducts = ViewBag.TopProducts as List<ELKH.ViewModels.TopProductVM>
+                      ?? new List<ELKH.ViewModels.TopProductVM>();
 }
 
-<h2 class="mb-4">Admin Dashboard</h2>
+<div class="container-fluid px-4 mt-4 pb-5">
 
+    <!-- ── Header ────────────────────────────────────────────── -->
+    <div class="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-2">
+        <div>
+            <h2 class="fw-bold mb-0">Admin Dashboard</h2>
+            <p class="text-muted mb-0 small">Full system access · @DateTime.Now.ToString("dddd, MMMM d yyyy")</p>
+        </div>
+        <!-- View-as shortcuts -->
+        <div class="d-flex gap-2 flex-wrap">
+            <a asp-controller="Manager" asp-action="Index"
+               class="btn btn-sm btn-outline-secondary rounded-pill px-3">
+                👔 View as Manager
+            </a>
+            <a asp-controller="Staff" asp-action="Index"
+               class="btn btn-sm btn-outline-secondary rounded-pill px-3">
+                🧑‍💼 View as Staff
+            </a>
+            <a asp-controller="Home" asp-action="Index"
+               class="btn btn-sm btn-outline-secondary rounded-pill px-3">
+                🛒 View as Customer
+            </a>
+        </div>
+    </div>
+
+    <!-- ── 3 Main Action Cards ────────────────────────────────── -->
+    <div class="row g-4 mb-5">
+
+        <!-- Manage Roles -->
+        <div class="col-md-4">
+            <a asp-controller="AdminRole" asp-action="ListRoles" class="text-decoration-none">
+                <div class="card border-0 shadow-sm rounded-4 h-100 admin-card">
+                    <div class="card-body p-4 d-flex align-items-center gap-4">
+                        <div class="admin-icon-wrap bg-primary bg-opacity-10 rounded-4 p-3">
+                            <span style="font-size:2.4rem;">🔐</span>
+                        </div>
+                        <div>
+                            <h5 class="fw-bold mb-1 text-dark">Manage Roles</h5>
+                            <p class="text-muted small mb-2">Assign and remove user roles</p>
+                            <span class="badge bg-primary bg-opacity-10 text-primary px-3 py-1 rounded-pill small">
+                                Roles & Permissions
+                            </span>
+                        </div>
+                    </div>
+                    <div class="card-footer bg-primary text-white text-center py-2 rounded-bottom-4 fw-semibold small">
+                        Go to Role Management →
+                    </div>
+                </div>
+            </a>
+        </div>
+
+        <!-- Manage Accounts -->
+        <div class="col-md-4">
+            <a asp-controller="Admin" asp-action="ListUsers" class="text-decoration-none">
+                <div class="card border-0 shadow-sm rounded-4 h-100 admin-card">
+                    <div class="card-body p-4 d-flex align-items-center gap-4">
+                        <div class="admin-icon-wrap bg-success bg-opacity-10 rounded-4 p-3">
+                            <span style="font-size:2.4rem;">👤</span>
+                        </div>
+                        <div>
+                            <h5 class="fw-bold mb-1 text-dark">Manage Accounts</h5>
+                            <p class="text-muted small mb-2">View, edit, and manage all users</p>
+                            <span class="badge bg-success bg-opacity-10 text-success px-3 py-1 rounded-pill small">
+                                User Management
+                            </span>
+                        </div>
+                    </div>
+                    <div class="card-footer bg-success text-white text-center py-2 rounded-bottom-4 fw-semibold small">
+                        Go to User Accounts →
+                    </div>
+                </div>
+            </a>
+        </div>
+
+        <!-- Manage Sales -->
+        <div class="col-md-4">
+            <a asp-controller="Admin" asp-action="ManageSales" class="text-decoration-none">
+                <div class="card border-0 shadow-sm rounded-4 h-100 admin-card">
+                    <div class="card-body p-4 d-flex align-items-center gap-4">
+                        <div class="admin-icon-wrap bg-warning bg-opacity-10 rounded-4 p-3">
+                            <span style="font-size:2.4rem;">📊</span>
+                        </div>
+                        <div>
+                            <h5 class="fw-bold mb-1 text-dark">Manage Sales</h5>
+                            <p class="text-muted small mb-2">Daily, weekly, monthly & yearly stats</p>
+                            <span class="badge bg-warning bg-opacity-25 text-warning px-3 py-1 rounded-pill small">
+                                Sales Analytics
+                            </span>
+                        </div>
+                    </div>
+                    <div class="card-footer bg-warning text-dark text-center py-2 rounded-bottom-4 fw-semibold small">
+                        Go to Sales Dashboard →
+                    </div>
+                </div>
+            </a>
+        </div>
+
+    </div>
+
+    <!-- ── Top 5 Products ─────────────────────────────────────── -->
+    <div class="card border-0 shadow-sm rounded-4 mb-4">
+        <div class="card-body p-4">
+            <h5 class="fw-bold mb-4">🏆 Top 5 Products by Units Sold</h5>
+
+            @if (topProducts.Any())
+            {
+                <div class="table-responsive">
+                    <table class="table table-hover align-middle mb-0 text-center">
+                        <thead class="table-light">
+                            <tr>
+                                <th style="width:60px;">Rank</th>
+                                <th class="text-start">Product</th>
+                                <th>Units Sold</th>
+                                <th>Revenue</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @{ int rank = 1; }
+                            @foreach (var p in topProducts)
+                            {
+                                <tr>
+                                    <td>
+                                        @if (rank == 1)     { <span class="badge bg-warning text-dark fs-6">🥇</span> }
+                                        else if (rank == 2) { <span class="badge bg-secondary fs-6">🥈</span> }
+                                        else if (rank == 3) { <span class="badge bg-danger bg-opacity-75 fs-6">🥉</span> }
+                                        else                { <span class="fw-semibold text-muted">@rank</span> }
+                                    </td>
+                                    <td class="text-start fw-semibold">@p.ProductName</td>
+                                    <td>
+                                        <span class="badge bg-primary bg-opacity-10 text-primary px-3 py-2">
+                                            @p.UnitsSold units
+                                        </span>
+                                    </td>
+                                    <td class="text-success fw-bold">$@p.Revenue.ToString("N2")</td>
+                                </tr>
+                                rank++;
+                            }
+                        </tbody>
+                    </table>
+                </div>
+            }
+            else
+            {
+                <div class="text-center text-muted py-5">
+                    <span style="font-size:3rem;">📦</span>
+                    <p class="mt-2">No sales data yet. Products appear here once orders are placed.</p>
+                </div>
+            }
+        </div>
+    </div>
+
+    <!-- ── Search Index & Cache Tools ───────────────────────────── -->
+    <div class="card border-0 shadow-sm rounded-4">
+        <div class="card-body p-4">
+            <h5 class="fw-bold mb-1">🔍 Search Index & Cache Tools</h5>
+            <p class="text-muted small mb-4">Manage the fuzzy search index and clear stale cache entries.</p>
+
+            <div class="row g-4">
+
+                <!-- Search Index -->
+                <div class="col-md-6">
+                    <div class="p-3 bg-light rounded-3">
+                        <h6 class="fw-semibold mb-3">Search Index</h6>
+                        <p class="text-muted small">Use the button below to clear fuzzy autocomplete cache.</p>
+                        <div class="mb-3">
+                            <input id="clearReason" type="text" class="form-control mb-2"
+                                   placeholder="Reason for clearing (optional)" />
+                            <button onclick="clearCache()" class="btn btn-danger btn-sm rounded-pill px-4">
+                                Clear Fuzzy Cache
+                            </button>
+                        </div>
+                        <div class="mb-3">
+                            <input id="reindexReason" type="text" class="form-control mb-2"
+                                   placeholder="Reason for reindexing (required)" />
+                            <button onclick="reindexFTS()" class="btn btn-primary btn-sm rounded-pill px-4">
+                                Reindex FTS
+                            </button>
+                        </div>
+                        <p class="small text-muted mb-0">
+                            View <a asp-controller="Admin" asp-action="AuditIndex">audit log</a> for recent actions.
+                        </p>
+                    </div>
+                </div>
+
+                <!-- Cache Stats -->
+                <div class="col-md-6">
+                    <div class="p-3 bg-light rounded-3 h-100">
+                        <h6 class="fw-semibold mb-3">Cache Stats</h6>
+                        <p class="small mb-1">
+                            Persisted fuzzy keys: <strong id="cacheKeyCount">—</strong>
+                        </p>
+                        <p class="small mb-3">
+                            Last clear: <strong id="lastClear">—</strong>
+                        </p>
+                        <button onclick="refreshStats()" class="btn btn-outline-secondary btn-sm rounded-pill px-4 mb-3">
+                            Refresh
+                        </button>
+                        <p class="small mb-1">
+                            Reindex status: <span id="reindexStatus">Loading…</span>
+                        </p>
+                        <div id="reindexMetrics" class="small text-muted d-none">
+                            <p class="mb-0">Suggestion rows: <strong id="suggestionCount">—</strong></p>
+                            <p class="mb-0">Run count: <strong id="runCount">—</strong></p>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+
+            <!-- Result toast -->
+            <div id="cacheResult" class="alert mt-3 d-none" role="alert"></div>
+        </div>
+</div>
 <div class="row g-3 mb-4">
     <div class="col-sm-6 col-xl-3">
         <div class="card border-0 shadow-sm h-100">
@@ -73,6 +287,91 @@
     </div>
 </div>
 
+<<<<<<< HEAD
+<style>
+    .admin-card {
+        transition: transform .18s ease, box-shadow .18s ease;
+        cursor: pointer;
+    }
+    .admin-card:hover {
+        transform: translateY(-4px);
+        box-shadow: 0 8px 24px rgba(0,0,0,.12) !important;
+    }
+    .admin-icon-wrap {
+        min-width: 64px;
+        min-height: 64px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+</style>
+
+@section Scripts {
+<script>
+    const token = document.querySelector('input[name="__RequestVerificationToken"]')?.value ?? '';
+
+    async function refreshStats() {
+        try {
+            const r = await fetch('/Admin/CacheStats');
+            const d = await r.json();
+            if (d.success) {
+                document.getElementById('cacheKeyCount').textContent = d.keys ?? 0;
+                document.getElementById('lastClear').textContent = d.lastClear
+                    ? new Date(d.lastClear).toLocaleString() : 'never';
+                if (d.lastRun) {
+                    document.getElementById('reindexStatus').textContent =
+                        'Last run: ' + new Date(d.lastRun).toLocaleString() +
+                        (d.lastDuration ? ' (duration: ' + d.lastDuration + ')' : '');
+                }
+            }
+            const h = await (await fetch('/Admin/ReindexHealth')).json();
+            if (h.success) {
+                document.getElementById('suggestionCount').textContent = h.suggestionCount ?? 0;
+                document.getElementById('runCount').textContent = h.runCount ?? 0;
+                document.getElementById('reindexMetrics').classList.remove('d-none');
+            }
+        } catch(e) { console.error(e); }
+    }
+
+    async function clearCache() {
+        const reason = document.getElementById('clearReason').value;
+        const r = await fetch('/Admin/ClearFuzzyCache', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', 'RequestVerificationToken': token },
+            body: JSON.stringify({ reason })
+        });
+        const d = await r.json();
+        showResult(d.success
+            ? `✅ Cleared ${d.cleared} cache entries.`
+            : `❌ ${d.message ?? 'Error clearing cache.'}`, d.success);
+        refreshStats();
+    }
+
+    async function reindexFTS() {
+        const reason = document.getElementById('reindexReason').value;
+        if (!reason.trim()) { showResult('❌ Reason is required for reindexing.', false); return; }
+        const r = await fetch('/Admin/ReindexFTS', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', 'RequestVerificationToken': token },
+            body: JSON.stringify({ reason })
+        });
+        const d = await r.json();
+        showResult(d.success ? '✅ Reindex complete.' : '❌ Reindex failed.', d.success);
+        refreshStats();
+    }
+
+    function showResult(msg, ok) {
+        const el = document.getElementById('cacheResult');
+        el.className = `alert mt-3 ${ok ? 'alert-success' : 'alert-danger'}`;
+        el.textContent = msg;
+        el.classList.remove('d-none');
+        setTimeout(() => el.classList.add('d-none'), 5000);
+    }
+
+    // Load stats on page load
+    refreshStats();
+</script>
+}
 <hr />
 
 <h4>Search Index &amp; Cache Tools</h4>

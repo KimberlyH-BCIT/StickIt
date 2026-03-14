@@ -1,12 +1,30 @@
 ﻿@model IEnumerable<ProductImageVM>
 
+
+@{
+    ViewData["Title"] = "Edit Image";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+
+
+<div class="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-2">
+    <h2 class="fw-bold text-primary mb-0">Add Product</h2>
+    <a asp-action="Index" class="btn btn-outline-primary rounded-pill px-4">
+        Go Back To Product List
+    </a>
+    <a asp-action="EditProduct" asp-route-Id="@ViewBag.ProductId" class="btn btn-outline-primary rounded-pill px-4">
+        Go Back To Edit
+    </a>
+</div>
+
+
 <table>
     <thead>
         <tr>
             <th>Images</th>
             <th>Action</th>
             <th>
-                <a asp-action="AddImage" asp-controller="Inventory" asp-route-productId="@ViewBag.ProductId">Add Image</a>
+                <a asp-action="AddImage" asp-controller="Inventory" asp-route-Id="@ViewBag.ProductId">Add Image</a>
             </th>
         </tr>
     </thead>

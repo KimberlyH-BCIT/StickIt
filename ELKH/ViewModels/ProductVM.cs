@@ -27,7 +27,7 @@ namespace ELKH.ViewModels
         [Required(ErrorMessage = "Please enter a price.")]
         [Display(Name = "Price")]
         [DataType(DataType.Currency)]
-        [DisplayFormat(DataFormatString = "{0:C}", ApplyFormatInEditMode = true)]
+        //[DisplayFormat(DataFormatString = "{0:C}", ApplyFormatInEditMode = true)]
         [Range(0, double.MaxValue, ErrorMessage = "Price must be non-negative")]
         public decimal Price { get; set; }
 

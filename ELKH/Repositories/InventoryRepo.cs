@@ -3,6 +3,7 @@ using ELKH.Models;
 using ELKH.ViewModels;
 using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Mvc.ModelBinding;
 using Microsoft.EntityFrameworkCore;
 using static System.Net.Mime.MediaTypeNames;
 
@@ -26,6 +27,36 @@ namespace ELKH.Repositories
         public async Task<IEnumerable<ProductModel>> GetAllProduct()
         {
             return await _context.Products.ToListAsync();
+        }
+
+        public async Task<bool> EditProduct(ProductVM vm)
+        {
+            var product = await GetProductById(vm.ProductId);
+
+            if(product == null)
+            {
+                return false;
+            }
+
+            product.Name = vm.ProductName;
+            product.Description = vm.Description;
+            product.Price = vm.Price;
+            product.FkCategoryId = vm.CategoryId;
+            product.StockQuantity = vm.StockQuantity;
+            product.DiscountPercent = vm.DiscountPercent;
+
+            await _context.SaveChangesAsync();
+
+            return true;
+        }
+
+        public async Task<ProductModel> GetProductById (int Id)
+        {
+
+            var productModel = await _context.Products.Include(p=> p.Category)
+                                                      .FirstOrDefaultAsync(p => p.PkProductId == Id);
+
+            return productModel;
         }
 
 
@@ -102,6 +133,38 @@ namespace ELKH.Repositories
             _imageDb.Images.Remove(findImageById);
             _imageDb.SaveChanges();
             return true;
+        }
+
+        public async Task<int> AddProduct(ProductVM vm)
+        {
+
+            var mapToProductModel = new ProductModel
+            {
+                Name = vm.ProductName,
+                NameNormalized = vm.Description,
+                Price = vm.Price,
+                DiscountPercent = vm.DiscountPercent,
+                StockQuantity = vm.StockQuantity,
+                IsActive = vm.IsActive,
+                FkCategoryId = vm.CategoryId
+            };
+
+            await _context.Products.AddAsync(mapToProductModel);
+            await _context.SaveChangesAsync();
+
+
+
+            return mapToProductModel.PkProductId;
+
+        }
+
+        public async Task<List<CategoryModel>> GetAllCategories()
+        {
+
+            var categories = await _context.Categories.ToListAsync();
+
+            return categories;
+            
         }
     }
 } 

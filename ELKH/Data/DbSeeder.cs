@@ -59,11 +59,11 @@ public static class DbSeeder
 
             P("Shiba Inu Doge Die-Cut Sticker",
               "Classic internet-icon Shiba Inu in die-cut form. Very sticker. Much wow.",
-              2.49m, 0, 200, die),
+              2.49m, 0, 200,  die),
 
             P("Cactus Friends Die-Cut Sticker",
               "A cheerful cactus trio perfect for laptops, water bottles, and planners.",
-              1.99m, 10, 175, die),
+              1.99m, 10, 175,  die),
 
             P("Vintage Camera Die-Cut Sticker",
               "Retro 35 mm film camera rendered in warm pastel tones. Great for photographers.",
@@ -71,7 +71,7 @@ public static class DbSeeder
 
             P("Astronaut Floating Die-Cut Sticker",
               "A tiny astronaut drifting through a pastel galaxy. Approx. 7 cm tall.",
-              2.99m, 0, 160, die),
+              2.99m, 0, 160,die),
 
             P("Boba Tea Die-Cut Sticker",
               "Brown sugar milk tea with tapioca pearls. UV-resistant ink keeps colours vivid.",
@@ -79,11 +79,11 @@ public static class DbSeeder
 
             P("Avocado Toast Die-Cut Sticker",
               "Trendy avocado toast slice with a smiling face. Dishwasher-safe laminate.",
-              1.99m, 0, 140, die),
+              1.99m, 0, 140,die),
 
             P("Retro Cassette Die-Cut Sticker",
               "80s-style audio cassette tape in neon colours. Perfect for notebooks and guitar cases.",
-              2.99m, 0, 130, die),
+              2.99m, 0, 130,die),
 
             // ── Holographic (6) ─────────────────────────────────────────
             P("Rainbow Galaxy Holographic Sticker",
@@ -104,11 +104,11 @@ public static class DbSeeder
 
             P("Northern Lights Holographic Sticker",
               "Aurora borealis waves captured in a colour-shifting holographic print.",
-              4.49m, 10, 80, holo),
+              4.49m, 10, 80,holo ),
 
             P("Butterfly Wings Holographic Sticker",
               "Iridescent butterfly wings that appear to move when tilted. 9 cm wingspan.",
-              3.99m, 0, 110, holo),
+              3.99m, 0, 110,holo),
 
             // ── Waterproof (6) ──────────────────────────────────────────
             P("Ocean Waves Waterproof Sticker",
@@ -121,11 +121,11 @@ public static class DbSeeder
 
             P("City Skyline Waterproof Sticker",
               "Generic modern cityscape at dusk. Weatherproof vinyl with UV coating.",
-              4.49m, 0, 85, water),
+              4.49m, 0, 85,water),
 
             P("Compass Rose Waterproof Sticker",
               "Vintage nautical compass rose in antique gold. Great for adventure gear.",
-              3.99m, 15, 95, water),
+              3.99m, 15, 95,water),
 
             P("Deep Sea Fish Waterproof Sticker",
               "Bioluminescent anglerfish glowing in the deep ocean dark. Waterproof UV ink.",
@@ -133,7 +133,7 @@ public static class DbSeeder
 
             P("Sunset Palm Waterproof Sticker",
               "Tropical palm silhouette against a gradient sunset. Fade-resistant outdoor vinyl.",
-              3.99m, 0, 100, water),
+              3.99m, 0, 100,water),
 
             // ── Sheet Packs (5) ─────────────────────────────────────────
             P("Cottagecore Sheet Pack (20 Stickers)",
@@ -188,7 +188,7 @@ public static class DbSeeder
 
             P("Wildflower Meadow Sticker",
               "Loose watercolour wildflowers — daisies, lavender, poppies — on a white field.",
-              3.49m, 0, 120, nature),
+              3.49m, 0, 120,nature),
 
             P("Autumn Leaves Sticker",
               "Four falling autumn leaves in crimson, amber, rust, and gold.",
@@ -209,7 +209,7 @@ public static class DbSeeder
 
             P("Pixel Sword & Shield Sticker",
               "8-bit fantasy weapon set — longsword and kite shield in silver and blue pixels.",
-              2.99m, 10, 120, gaming),
+              2.99m, 10, 120,gaming),
 
             P("Game Over Screen Sticker",
               "Retro arcade GAME OVER text on a black background with glowing red letters.",
@@ -245,7 +245,6 @@ public static class DbSeeder
         Price            = price,
         DiscountPercent  = discountPercent,
         StockQuantity    = stock,
-        IsActive         = true,
         FkCategoryId     = category.PkCategoryId,
         Category         = category
     };

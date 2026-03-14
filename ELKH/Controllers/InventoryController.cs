@@ -4,6 +4,8 @@ using ELKH.Repositories;
 using ELKH.ViewModels;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Mvc.Rendering;
+using SQLitePCL;
 
 namespace ELKH.Controllers
 {
@@ -33,10 +35,80 @@ namespace ELKH.Controllers
                 PkProductId = p.PkProductId,
                 ProductName = p.Name,
                 Quantity = p.StockQuantity,
+                IsActive = p.IsActive
             }).ToList();
 
             return View(inventoryList);
         }
+
+        public async Task<IActionResult> EditProduct(int Id)
+        {
+            //Fetch product by Id
+            var getProduct = await _inventoryRepo.GetProductById(Id);
+            var categories = await _inventoryRepo.GetAllCategories();
+
+            
+
+            //Convert Entity to VM
+            var mapToVM = new ProductVM
+            {
+                ProductId = Id,
+                ProductName = getProduct.Name,
+                Description = getProduct.Description,
+                Price = getProduct.Price,
+                DiscountPercent = getProduct.DiscountPercent,
+                StockQuantity = getProduct.StockQuantity,
+                IsActive = getProduct.IsActive,
+                CategoryId = getProduct.FkCategoryId
+            };
+
+            ViewBag.Categories = new SelectList(categories, "PkCategoryId", "CategoryName");
+            ViewBag.Id = Id;
+            return View(mapToVM);
+        }
+
+        [HttpPost]
+        public async Task<IActionResult> EditProduct(ProductVM vm)
+        {
+            if (!ModelState.IsValid)
+            {
+                var categories = await _inventoryRepo.GetAllCategories();
+                ViewBag.Categories = new SelectList(categories, "PkCategoryId", "CategoryName");
+
+                return RedirectToAction("EditProduct", new { Id = vm.ProductId });
+            }
+
+            await _inventoryRepo.EditProduct(vm);
+
+            return RedirectToAction("Index");
+        }
+
+        public async Task<IActionResult> AddProduct()
+        {
+            // Initialize a non-null view model so tag helpers that read Model values
+            // (for example SelectTagHelper when using asp-for) do not throw.
+            var vm = new ProductVM();
+            var categories = await _inventoryRepo.GetAllCategories();
+            ViewBag.Categories = new SelectList(categories, "PkCategoryId", "CategoryName");
+            return View(vm);
+        }
+
+        [HttpPost]
+        public async Task<IActionResult> AddProduct(ProductVM vm)
+        {
+            if (!ModelState.IsValid)
+            {
+                var categories = await _inventoryRepo.GetAllCategories();
+                ViewBag.Categories = new SelectList(categories, "CategoryId", "Category");
+
+                return View(vm);
+            }
+
+            var saveToDataBase = await _inventoryRepo.AddProduct(vm);
+
+            return RedirectToAction("AddImage", new { productId = saveToDataBase});
+        }
+
         [HttpPost]
         public async Task<IActionResult> EditProductAmount(int productId, int quantityId)
         {
@@ -44,6 +116,8 @@ namespace ELKH.Controllers
 
             return RedirectToAction(nameof(Index));
         }
+
+
 
         //Pass
         public async Task<IActionResult> ProductImages(int Id)
@@ -72,12 +146,11 @@ namespace ELKH.Controllers
         }
 
         // GET: show add-image form for a specific product
-        public async Task<IActionResult> AddImage(int productId)
+        public async Task<IActionResult> AddImage(int Id)
         {
-            var vm = new ImageModel();
-            ViewBag.ProductId = productId;
+            ViewBag.ProductId = Id;
 
-            return View(vm);
+            return View();
         }
 
 
@@ -87,7 +160,7 @@ namespace ELKH.Controllers
         {
             if (!ModelState.IsValid)
             {
-                return View("AddImage");
+                return RedirectToAction("AddImage", new { Id = productId });
             }
 
             var addImageRepo = await _inventoryRepo.UploadImage(productId, file);

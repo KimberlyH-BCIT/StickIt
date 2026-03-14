@@ -4,7 +4,7 @@ using Microsoft.AspNetCore.Mvc;
 
 namespace ELKH.Controllers
 {
-    //[Authorize(Roles = "Staff")]
+    [Authorize(Roles = "Staff,Admin")]
     public class OrdersHistoryStaffController : Controller
     {
         private readonly OrderHistoryStaffRepo _repo;
@@ -22,9 +22,9 @@ namespace ELKH.Controllers
             return View(orders);
         }
 
-        public async Task<IActionResult> OrderDetail(int orderId)
+        public async Task<IActionResult> OrderDetail(int? orderId, int? transactionId)
         {
-            var details = await _repo.OrderDetails(orderId);
+            var details = await _repo.OrderDetails(orderId, transactionId);
 
             return View(details);
         }
