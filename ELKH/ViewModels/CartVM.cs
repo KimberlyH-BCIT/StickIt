@@ -24,5 +24,5 @@ public class CartVM
     public decimal ShippingCost { get; set; }
     public decimal Total { get; set; }
     public bool IsEmpty => !Items.Any();
-    public string ShippingNote => ShippingCost == 0 ? "Free shipping!" : "Free shipping on orders over $50";
+    
 }

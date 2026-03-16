@@ -22,6 +22,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 using Microsoft.AspNetCore.WebUtilities;
 using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Options;
 
 namespace ELKH.Areas.Identity.Pages.Account
 {
@@ -46,19 +47,23 @@ namespace ELKH.Areas.Identity.Pages.Account
         private readonly IEmailSender _emailSender;
         private readonly ApplicationDbContext _context;
         private readonly IContactDetailRepo _contactRepository;
+        private readonly ReCaptchaOptions _reCaptchaOptions;
+        
+        public string ReCaptchaSiteKey { get; set; } = "";
 
         public RegisterModel(
             UserManager<IdentityUser> userManager,
-            
             IUserStore<IdentityUser> userStore,
             SignInManager<IdentityUser> signInManager,
             ILogger<RegisterModel> logger,
             IEmailSender emailSender,
             ApplicationDbContext context,
-            IContactDetailRepo contactRepository)
+            IContactDetailRepo contactRepository,
+            IOptions<ReCaptchaOptions> reCaptchaOptions
+        )
         {
             _userManager = userManager;
-            
+
             _userStore = userStore;
             _emailStore = GetEmailStore();
             _signInManager = signInManager;
@@ -66,6 +71,9 @@ namespace ELKH.Areas.Identity.Pages.Account
             _emailSender = emailSender;
             _context = context;
             _contactRepository = contactRepository;
+
+            _reCaptchaOptions = reCaptchaOptions.Value;
+            ReCaptchaSiteKey = _reCaptchaOptions.SiteKey;
         }
 
         /// <summary>

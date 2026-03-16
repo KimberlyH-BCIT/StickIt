@@ -1,16 +1,11 @@
 using System.Linq;
 using System.Threading.Tasks;
-using ELKH.Models;
 using ELKH.Services;
 using ELKH.ViewModels;
 using Microsoft.AspNetCore.Mvc;
 
 namespace ELKH.Controllers;
 
-/// <summary>
-/// Shopping cart management controller for authenticated users.
-/// Handles cart operations (add, remove, checkout) and order placement with inventory management.
-/// </summary>
 public class CartController : AuthenticatedControllerBase
 {
     private readonly ICartService _cartService;
@@ -29,18 +24,33 @@ public class CartController : AuthenticatedControllerBase
 
         var cartItems = await _cartService.GetCartItemsAsync(email);
 
-        var vm = new CartVM
+        var items = cartItems.Select(c =>
         {
-            Items = cartItems.Select(c => new CartItemVM
+            var qty = c.Quantity;
+            var unit = c.Product?.Price ?? 0m;          // use product price for display
+            var line = unit * qty;                      // compute line total consistently
+
+            return new CartItemVM
             {
                 CartItemId = c.PkCartId,
-                ProductName = c.Product?.Name ?? string.Empty,
-                ImageUrl = c.Product?.ProductImages?.FirstOrDefault()?.ProductImageURL ?? string.Empty,
-                UnitPrice = c.Product?.Price ?? 0,
-                Quantity = c.Quantity,
-                LineTotal = c.TotalPrice
-            }).ToList()
+                ProductId = c.FkProductID,              // if your CartModel field name differs, adjust
+                ProductName = c.Product?.Name ?? "",
+                ImageUrl = c.Product?.ProductImages?.FirstOrDefault()?.ProductImageURL,
+                UnitPrice = unit,
+                Quantity = qty,
+                LineTotal = line
+            };
+        }).ToList();
+
+        var vm = new CartVM
+        {
+            Items = items
         };
+
+        // Subtotal is computed by vm.Subtotal (read-only)
+        vm.Tax = vm.Subtotal * 0.12m;
+        vm.ShippingCost = vm.Subtotal >= 50m ? 0m : 7.99m;
+        vm.Total = vm.Subtotal + vm.Tax + vm.ShippingCost;
 
         return View(vm);
     }
@@ -85,10 +95,24 @@ public class CartController : AuthenticatedControllerBase
         }
     }
 
-    // POST: /Cart/RemoveFromCart
+    // POST: /Cart/Update
     [HttpPost]
     [ValidateAntiForgeryToken]
-    public async Task<IActionResult> RemoveFromCart(int cartId)
+    public async Task<IActionResult> Update(int cartId, int quantity)
+    {
+        if (quantity < 1) quantity = 1;
+
+        var authResult = RequireAuthenticatedUser(out var email);
+        if (authResult != null) return authResult;
+
+        await _cartService.UpdateQuantityAsync(email, cartId, quantity);
+        return RedirectToAction(nameof(Index));
+    }
+
+    // POST: /Cart/Remove  (matches your view asp-action="Remove")
+    [HttpPost]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> Remove(int cartId)
     {
         var authResult = RequireAuthenticatedUser(out var email);
         if (authResult != null) return authResult;
@@ -97,17 +121,17 @@ public class CartController : AuthenticatedControllerBase
         return RedirectToAction(nameof(Index));
     }
 
-    // GET: /Cart/Checkout
-    public async Task<IActionResult> Checkout()
+    // POST: /Cart/Clear  (matches your view asp-action="Clear")
+    [HttpPost]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> Clear()
     {
         var authResult = RequireAuthenticatedUser(out var email);
         if (authResult != null) return authResult;
 
-        var items = await _cartService.GetCartItemsAsync(email);
-        var total = items.Sum(i => i.TotalPrice);
-        ViewBag.Total = total;
-        ViewBag.Items = items;
-        return View();
+        await _cartService.ClearCartAsync(email);
+        SetSuccessMessage("Cart cleared.");
+        return RedirectToAction(nameof(Index));
     }
 
     // POST: /Cart/PlaceOrder

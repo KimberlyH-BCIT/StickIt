@@ -4,6 +4,8 @@ using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.AspNetCore.Identity.UI.Services;
 
+using ELKH.Models;
+
 using ELKH.Services;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -18,13 +20,17 @@ var connectionString = builder.Configuration.GetConnectionString("DefaultConnect
 builder.Services.AddDbContext<ApplicationDbContext>(options => options.UseSqlite(connectionString));
 builder.Services.AddDatabaseDeveloperPageExceptionFilter();
 
+builder.Services.Configure<ReCaptchaOptions>(builder.Configuration.GetSection("ReCaptcha"));
+builder.Services.AddHttpClient<ReCaptchaService>();
+builder.Services.AddScoped<IReCaptchaService>(sp => sp.GetRequiredService<ReCaptchaService>());
+
 // ASP.NET Core Identity with email confirmation requirement.
 // Users must confirm their email before they can sign in.
 // AddRoles<IdentityRole>() is required for [Authorize(Roles = "...")] to function —
 // without it, role claims are never populated and role-based access always fails.
 builder.Services.AddIdentity<IdentityUser, IdentityRole>(options =>
     {
-        options.SignIn.RequireConfirmedAccount = false;
+        options.SignIn.RequireConfirmedAccount = true;
     })
     .AddEntityFrameworkStores<ApplicationDbContext>()
     .AddDefaultTokenProviders()

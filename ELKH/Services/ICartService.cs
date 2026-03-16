@@ -10,6 +10,8 @@ namespace ELKH.Services
     /// </summary>
     public interface ICartService
     {
+        Task UpdateQuantityAsync(string userEmail, int cartId, int quantity);
+        Task ClearCartAsync(string email);
         /// <summary>
         /// Adds a product to the user's shopping cart with the specified quantity.
         /// </summary>
@@ -88,4 +90,5 @@ namespace ELKH.Services
         /// </remarks>
         Task<List<CartModel>> GetCartItemsAsync(string userEmail);
     }
+    
 }

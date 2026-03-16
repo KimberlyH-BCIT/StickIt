@@ -75,6 +75,14 @@
                     <span asp-validation-for="Input.Country" class="text-danger"></span>
                 </div>
             </div>
+            
+            
+            <div class="mb-3">
+                <div class="g-recaptcha" data-sitekey="@Model.ReCaptchaSiteKey"></div>
+                
+                <span class="text-danger">@Html.ValidationMessage("ReCaptcha")</span>
+            </div>
+            
             <button id="registerSubmit" type="submit" class="w-100 btn btn-lg btn-primary">Register</button>
         </form>
     </div>
@@ -110,6 +118,9 @@
     </div>
 </div>
 
+
+
 @section Scripts {
     <partial name="_ValidationScriptsPartial" />
+    <script src="https://www.google.com/recaptcha/api.js" async defer></script>
 }

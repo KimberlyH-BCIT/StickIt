@@ -14,20 +14,37 @@ using Microsoft.AspNetCore.Identity.UI.Services;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 using Microsoft.Extensions.Logging;
+using ELKH.Services;
+using ELKH.Models;
+using Microsoft.Extensions.Options;
 
 namespace ELKH.Areas.Identity.Pages.Account
 {
+    
     public class LoginModel : PageModel
     {
         private readonly SignInManager<IdentityUser> _signInManager;
         private readonly ILogger<LoginModel> _logger;
         private readonly UserManager<IdentityUser> _userManager;
+        
+        private readonly IReCaptchaService _reCaptcha;
+        private readonly ReCaptchaOptions _reCaptchaOptions;
+        
+        public string ReCaptchaSiteKey { get; set; } = "";
 
-        public LoginModel(SignInManager<IdentityUser> signInManager, ILogger<LoginModel> logger)
+        public LoginModel(
+            SignInManager<IdentityUser> signInManager,
+            ILogger<LoginModel> logger,
+            IReCaptchaService reCaptcha,
+            IOptions<ReCaptchaOptions> reCaptchaOptions)
         {
             _signInManager = signInManager;
             _logger = logger;
             _userManager = signInManager.UserManager;
+
+            _reCaptcha = reCaptcha;
+            _reCaptchaOptions = reCaptchaOptions.Value;
+            ReCaptchaSiteKey = _reCaptchaOptions.SiteKey;
         }
 
         /// <summary>
@@ -105,6 +122,15 @@ namespace ELKH.Areas.Identity.Pages.Account
 
         public async Task<IActionResult> OnPostAsync(string returnUrl = null)
         {
+            var token = Request.Form["g-recaptcha-response"].ToString();
+            var ok = await _reCaptcha.VerifyAsync(token, HttpContext.Connection.RemoteIpAddress?.ToString());
+
+            if (!ok)
+            {
+                ModelState.AddModelError("ReCaptcha", "Please complete the reCAPTCHA.");
+                return Page();
+            }
+            
             returnUrl ??= Url.Content("~/");
 
             ExternalLogins = (await _signInManager.GetExternalAuthenticationSchemesAsync()).ToList();
