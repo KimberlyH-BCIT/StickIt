@@ -61,5 +61,7 @@ namespace ELKH.ViewModels
         /// <summary>Average customer rating (1-5 stars).</summary>
         [Display(Name = "Average Rating")]
         public double AverageRating { get; set; } = 0;
+
+        public ICollection<ReviewDisplayVM>? ProductReviews { get; set; }
     }
 }

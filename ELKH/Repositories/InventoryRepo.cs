@@ -54,9 +54,24 @@ namespace ELKH.Repositories
         {
 
             var productModel = await _context.Products.Include(p=> p.Category)
+                                                      .Include(p=> p.ProductRatings)
+                                                      .ThenInclude(pr => pr.RegisteredUser)
                                                       .FirstOrDefaultAsync(p => p.PkProductId == Id);
 
             return productModel;
+        }
+
+        public async Task<bool> DeleteProductReview(int reviewId)
+        {
+            var review = await _context.ProductRatings.FirstOrDefaultAsync(pr => pr.PkRatingId == reviewId);
+            if(review == null)
+            {
+                return false;
+            }
+
+            _context.ProductRatings.Remove(review);
+            await _context.SaveChangesAsync();
+            return true;
         }
 
 
@@ -166,6 +181,7 @@ namespace ELKH.Repositories
             return categories;
             
         }
+
     }
 } 
 

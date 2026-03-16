@@ -2,7 +2,7 @@
 
 
 @{
-    ViewData["Title"] = "Edit Image";
+    ViewData["Title"] = "Product Images";
     Layout = "~/Views/Shared/_Layout.cshtml";
 }
 
@@ -18,37 +18,92 @@
 </div>
 
 
-<table>
-    <thead>
-        <tr>
-            <th>Images</th>
-            <th>Action</th>
-            <th>
-                <a asp-action="AddImage" asp-controller="Inventory" asp-route-Id="@ViewBag.ProductId">Add Image</a>
-            </th>
-        </tr>
-    </thead>
-    <tbody>
-        @foreach (var image in Model)
-        {
-            <tr>
-                <td>
-                    @if (image?.ImageData != null)
-                    {
-                        <img src="data:image/jpeg;base64,@System.Convert.ToBase64String(image.ImageData)" style="max-width:200px;max-height:200px;" />
-                    }
-                </td>
-                <td>
-                    <form method="post" asp-action="DeleteImage" onsubmit="return TrackUserInput()">
-                        <input type="hidden" name="productId" value="@ViewBag.ProductId" />
-                        <input type="hidden" name="imageId" value="@image.ImageId" />
-                        <button type="submit">Delete Image</button>
-                    </form>
-                </td>
-            </tr>
-        }
-    </tbody>
-</table>
+<div class="container-fluid mt-4 px-4 pb-5">
+
+    <!-- Header -->
+    <div class="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-2">
+
+        <a asp-action="AddImage"
+               asp-controller="Inventory"
+               asp-route-Id="@ViewBag.ProductId"
+               class="btn btn-outline-primary rounded-pill px-4">
+            Add Image
+        </a>
+    </div>
+
+    <!-- Image Table -->
+    <div class="card border-0 shadow-sm rounded-4">
+        <div class="card-body p-0">
+
+            <div class="table-responsive">
+                <table class="table table-hover align-middle mb-0">
+
+                    <thead class="table-light">
+                        <tr>
+                            <th class="ps-4">Image</th>
+                            <th class="text-center">Actions</th>
+                        </tr>
+                    </thead>
+
+                    <tbody>
+
+                        @if (Model.Any())
+                        {
+                            foreach (var image in Model)
+                            {
+                                <tr>
+
+                                    <!-- Image -->
+                                    <td class="ps-4">
+                                        @if (image?.ImageData != null)
+                                        {
+                                            <img src="data:image/jpeg;base64,@System.Convert.ToBase64String(image.ImageData)"
+                                                 class="rounded shadow-sm"
+                                                 style="max-width:150px; max-height:150px;" />
+                                        }
+                                    </td>
+
+                                    <!-- Actions -->
+                                    <td class="text-center">
+
+                                        <form method="post"
+                                              asp-action="DeleteImage"
+                                              onsubmit="return TrackUserInput()"
+                                              class="d-inline">
+
+                                            <input type="hidden" name="productId" value="@ViewBag.ProductId" />
+                                            <input type="hidden" name="imageId" value="@image.ImageId" />
+
+                                            <button type="submit"
+                                                    class="btn btn-sm btn-outline-danger rounded-pill px-3">
+                                                Delete
+                                            </button>
+
+                                        </form>
+
+                                    </td>
+
+                                </tr>
+                            }
+                        }
+                        else
+                        {
+                            <tr>
+                                <td colspan="2" class="text-center text-muted py-4">
+                                    No images uploaded for this product.
+                                </td>
+                            </tr>
+                        }
+
+                    </tbody>
+
+                </table>
+            </div>
+
+        </div>
+    </div>
+
+</div>
 
 <script>
     function TrackUserInput(){

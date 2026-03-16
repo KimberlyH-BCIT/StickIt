@@ -14,7 +14,7 @@ namespace ELKH.Controllers
     /// quantities, and managing product images.
     /// </summary>
     
-    //[Authorize(Roles = "Admin")]
+    [Authorize(Roles = "Admin, Staff")]
     public class InventoryController : Controller
     {
         private readonly InventoryRepo _inventoryRepo;
@@ -47,7 +47,7 @@ namespace ELKH.Controllers
             var getProduct = await _inventoryRepo.GetProductById(Id);
             var categories = await _inventoryRepo.GetAllCategories();
 
-            
+
 
             //Convert Entity to VM
             var mapToVM = new ProductVM
@@ -59,7 +59,16 @@ namespace ELKH.Controllers
                 DiscountPercent = getProduct.DiscountPercent,
                 StockQuantity = getProduct.StockQuantity,
                 IsActive = getProduct.IsActive,
-                CategoryId = getProduct.FkCategoryId
+                CategoryId = getProduct.FkCategoryId,
+                ProductReviews = getProduct.ProductRatings?.Select(pr => new ReviewDisplayVM
+                {
+                    RatingId = pr.PkRatingId,
+                    Rating = pr.Rating,
+                    Description = pr.Description,
+                    CreatedAt = pr.RatedTime,
+                    LastEditedAt = pr.LastEditedAt,
+                    ReviewerFirstName = pr.RegisteredUser.Email
+                }).ToList()
             };
 
             ViewBag.Categories = new SelectList(categories, "PkCategoryId", "CategoryName");
@@ -81,6 +90,15 @@ namespace ELKH.Controllers
             await _inventoryRepo.EditProduct(vm);
 
             return RedirectToAction("Index");
+        }
+
+        [HttpPost]
+        public async Task<IActionResult> DeleteProductReview(int reviewId, int productId)
+        {
+
+            await _inventoryRepo.DeleteProductReview(reviewId);
+
+            return RedirectToAction("EditProduct", new { Id = productId });
         }
 
         public async Task<IActionResult> AddProduct()
@@ -181,6 +199,12 @@ namespace ELKH.Controllers
                 return RedirectToAction("ProductImages", new { id = productId });
             }
             return View("Index");
+        }
+
+        [HttpPost]
+        public async Task<IActionResult> DeleteProductReview(int reviewId)
+        {
+            return View();
         }
     }
 }
