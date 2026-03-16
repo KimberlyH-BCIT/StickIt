@@ -182,6 +182,8 @@ try
             var db = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
             db.Database.Migrate();
 
+            await DbSeeder.SeedTestTransactionsAsync(db);
+
             // Ensure UserActivityLog columns exist (idempotent — SQLite throws if column
             // already exists, so the exception is swallowed and execution continues).
             foreach (var sql in new[]

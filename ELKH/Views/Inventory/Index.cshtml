@@ -1,4 +1,4 @@
-﻿@model List<InventoryVM>
+﻿@model PagedResult<InventoryVM>
 
 @{
     ViewData["Title"] = "Inventory";
@@ -14,6 +14,20 @@
         <a asp-action="AddProduct" class="btn btn-outline-primary rounded-pill px-4">
             Add Product
         </a>
+
+        @for (int i = 1; i <= Model.AllPages; i++)
+        {
+            <li class="page-item @(i == Model.CurrentPage ? "active" : "") ">
+                <a class="page-link" asp-action="Index" asp-route-page="@i">@i</a>
+            </li>
+        }
+
+        <form asp-action="Index" method="get" class="mb-3">
+            <div class="input-group">
+                <input class="form-control" type="search" name="searchString" value="@ViewBag.SearchString" placeholder="Search Product Name" />
+                <button class="btn btn-secondary">Search</button>
+            </div>
+        </form>
     </div>
 
     <!-- Inventory Table -->
@@ -35,9 +49,9 @@
 
                     <tbody>
 
-                        @if (Model.Any())
+                        @if (Model.Items.Any())
                         {
-                            foreach (var pro in Model)
+                            foreach (var pro in Model.Items)
                             {
                                 string stockClass =
                                 pro.Quantity == 0 ? "bg-secondary"
@@ -73,20 +87,6 @@
 
                                         <div class="d-flex justify-content-center gap-2 flex-wrap">
 
-                                            <!-- Edit Images -->
-                                            @* <a asp-controller="Inventory"
-                                                   asp-action="ProductImages"
-                                                   asp-route-id="@pro.PkProductId"
-                                                   class="btn btn-sm btn-outline-primary rounded-pill px-3">
-                                                Images
-                                            </a>
-
-                                            <!-- Toggle Quantity Edit -->
-                                            <button class="btn btn-sm btn-outline-secondary rounded-pill editQuantityBtn"
-                                                    data-id="@pro.PkProductId">
-                                                Edit Qty
-                                            </button> *@
-
                                             <a asp-controller="Inventory"
                                                    asp-action="EditProduct"
                                                    asp-route-id="@pro.PkProductId"
@@ -95,34 +95,6 @@
                                             </a>
 
                                         </div>
-
-                                        <!-- Hidden Quantity Edit Area -->
-                                        @* <div class="editQuantityArea mt-2 d-none"
-                                             data-id="@pro.PkProductId">
-
-                                            <form method="post"
-                                                  asp-action="EditProductAmount"
-                                                  asp-controller="Inventory"
-                                                  class="d-flex justify-content-center gap-2">
-
-                                                <input type="hidden"
-                                                       name="productId"
-                                                       value="@pro.PkProductId" />
-
-                                                <input type="number"
-                                                       name="quantityId"
-                                                       value="@pro.Quantity"
-                                                       class="form-control form-control-sm"
-                                                       style="max-width:100px" />
-
-                                                <button type="submit"
-                                                        class="btn btn-sm btn-success rounded-pill">
-                                                    Update
-                                                </button> 
-
-
-                                            </form> 
-                                    </div>*@
 
                                     </td>
 

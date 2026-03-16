@@ -74,30 +74,105 @@
     </div>
 </div>
 
-<table>
-    <thead>
-        <tr>
-            <td>Reviews</td>
-            <td>Action</td>
-        </tr>
-    </thead>
-    <tbody>
-        @foreach(var review in Model.ProductReviews)
-        {
-            <tr>
-                <td>
-                    <div>
-                        <p>@review.ReviewerFirstName</p>
-                        <p>@review.Rating</p>
-                        <p>@review.Description</p>
-                        <p>@review.CreatedAt</p>
-                        <p>@review.LastEditedAt</p>
-                    </div>
-                </td>
-                <td>
-                    <a asp-controller="Inventory" asp-action="DeleteProductReview" asp-route-reviewId="@review.RatingId" asp-route-productId="@ViewBag.Id">Delete Review</a>
-                </td>
-            </tr>
-        }
-    </tbody>
-</table>
+<div class="container-fluid mt-4 px-4 pb-5">
+
+    <!-- Header -->
+    <div class="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-2">
+        <h2 class="fw-bold text-primary mb-0">Product Reviews</h2>
+    </div>
+
+    <!-- Reviews Table -->
+    <div class="card border-0 shadow-sm rounded-4">
+        <div class="card-body p-0">
+
+            <div class="table-responsive">
+                <table class="table table-hover align-middle mb-0">
+
+                    <thead class="table-light">
+                        <tr>
+                            <th class="ps-4">Reviewer</th>
+                            <th>Rating</th>
+                            <th>Review</th>
+                            <th>Created</th>
+                            <th>Edited</th>
+                            <th class="text-center">Action</th>
+                        </tr>
+                    </thead>
+
+                    <tbody>
+                            @foreach (var review in Model.ProductReviews)
+                            {
+                                <tr>
+
+                                    <!-- Reviewer -->
+                                    <td class="ps-4 fw-semibold">
+                                        @review.ReviewerFirstName
+                                    </td>
+
+                                    <!-- Rating -->
+                                    <td>
+                                        <span class="badge bg-warning text-dark rounded-pill px-3 py-1">
+                                            ⭐ @review.Rating
+                                        </span>
+                                    </td>
+
+                                    <!-- Description -->
+                                    <td class="text-muted" style="max-width:350px;">
+                                        @review.Description
+                                    </td>
+
+                                    <!-- Created -->
+                                    <td class="small text-muted">
+                                        @review.CreatedAt
+                                    </td>
+
+                                    <!-- Edited -->
+                                    <td class="small text-muted">
+                                        @review.LastEditedAt
+                                    </td>
+
+                                    <!-- Delete -->
+                                    <td class="text-center">
+
+                                        <form method="post"
+                                              asp-action="DeleteProductReview"
+                                              onsubmit="return TrackerUserInput()"
+                                              class="d-inline">
+
+                                            <input type="hidden" name="reviewId" value="@review.RatingId" />
+                                            <input type="hidden" name="productId" value="@ViewBag.Id" />
+
+                                            <button type="submit"
+                                                    class="btn btn-sm btn-outline-danger rounded-pill px-3">
+                                                Delete
+                                            </button>
+
+                                        </form>
+
+                                    </td>
+
+                                </tr>
+                            }
+                        
+                            <tr>
+                                <td colspan="6" class="text-center text-muted py-4">
+                                    No reviews available for this product.
+                                </td>
+                            </tr>
+                        
+
+                    </tbody>
+
+                </table>
+            </div>
+
+        </div>
+    </div>
+
+</div>
+
+<script>
+    function TrackerUserInput(){
+        return confirm("Are you sure you want to delete?")
+    }
+</script>

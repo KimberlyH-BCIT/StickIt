@@ -52,6 +52,7 @@
                             <th class="text-end">Amount</th>
                             <th class="text-end">Delivery Fee</th>
                             <th>Date</th>
+                            <th>Action</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -77,6 +78,9 @@
                                     <td class="text-end fw-semibold text-success">$@t.Amount.ToString("N2")</td>
                                     <td class="text-end text-muted">$@t.DeliberyFee.ToString("N2")</td>
                                     <td class="text-muted small">@t.TransactionDate.ToString("MMM dd, yyyy h:mm tt")</td>
+                                    <td>
+                                        <a asp-controller="OrdersHistoryStaff" asp-action="OrderDetail" asp-route-transactionId="@t.PkTransactionId">Details</a>
+                                    </td>
                                 </tr>
                             }
                         }

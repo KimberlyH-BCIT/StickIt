@@ -7,7 +7,13 @@ namespace ELKH.ViewModels
     public class PagedResult<T>
     {
         public List<T> Items { get; init; } = new();
-        public int TotalCount { get; init; }
+        public int CurrentPage { get; set; }
+        public int PageSize { get; set; }
+        public int TotalItems { get; set; }
+        public int AllPages => (int)Math.Ceiling((double)TotalItems / PageSize);
+
+
         public int TotalPages { get; init; }
+        public int TotalCount { get; init; }
     }
 }

@@ -24,9 +24,44 @@ namespace ELKH.Repositories
         }
 
         /// <summary>Returns all products without any includes (lightweight listing query).</summary>
-        public async Task<IEnumerable<ProductModel>> GetAllProduct()
+        public async Task<PagedResult<InventoryVM>> GetAllProduct(string? searchString, int page = 1, int pageSize = 10)
         {
-            return await _context.Products.ToListAsync();
+            // 1. Start with the base query
+            var query = _context.Products.AsQueryable();
+
+            // 2. Apply filtering (build on 'query')
+            if (!string.IsNullOrEmpty(searchString))
+            {
+                var search = searchString.ToLower();
+                query = query.Where(p => p.Name.ToLower().Contains(search)
+                                      || p.Description.ToLower().Contains(search));
+            }
+
+            // 3. Count the filtered results
+            var countProducts = await query.CountAsync();
+
+            // 4. Order, Paginate, and PROJECT directly to VM
+            var items = await query
+                .OrderBy(p => p.PkProductId)
+                .Skip((page - 1) * pageSize)
+                .Take(pageSize)
+                .Select(p => new InventoryVM // Mapping here saves database bandwidth
+                {
+                    PkProductId = p.PkProductId,
+                    ProductName = p.Name,
+                    Quantity = p.StockQuantity,
+                    IsActive = p.IsActive,
+                })
+                .ToListAsync();
+
+            // 5. Return the result
+            return new PagedResult<InventoryVM>
+            {
+                Items = items,
+                PageSize = pageSize,
+                CurrentPage = page,
+                TotalItems = countProducts
+            };
         }
 
         public async Task<bool> EditProduct(ProductVM vm)

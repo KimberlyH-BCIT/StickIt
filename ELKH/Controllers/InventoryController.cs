@@ -26,19 +26,15 @@ namespace ELKH.Controllers
         }
 
 
-        public async Task<IActionResult> Index()
+        public async Task<IActionResult> Index(string? searchString, int page = 1)
         {
-            var products = await _inventoryRepo.GetAllProduct();
+            int pageSize = 10;
+            ViewData["CurrentFilter"] = searchString;
 
-            var inventoryList = products.Select(p => new InventoryVM
-            {
-                PkProductId = p.PkProductId,
-                ProductName = p.Name,
-                Quantity = p.StockQuantity,
-                IsActive = p.IsActive
-            }).ToList();
+            var products = await _inventoryRepo.GetAllProduct(searchString,page,pageSize);
 
-            return View(inventoryList);
+
+            return View(products);
         }
 
         public async Task<IActionResult> EditProduct(int Id)
@@ -201,10 +197,5 @@ namespace ELKH.Controllers
             return View("Index");
         }
 
-        [HttpPost]
-        public async Task<IActionResult> DeleteProductReview(int reviewId)
-        {
-            return View();
-        }
     }
 }
