@@ -123,7 +123,8 @@ namespace ELKH.Controllers
             return RedirectToAction("AddImage", new { productId = saveToDataBase});
         }
 
-        [HttpPost]
+[HttpPost]
+        [ValidateAntiForgeryToken]
         public async Task<IActionResult> EditProductAmount(int productId, int quantityId)
         {
             await _inventoryRepo.EditProductQuantity(productId, quantityId);
@@ -131,6 +132,9 @@ namespace ELKH.Controllers
             return RedirectToAction(nameof(Index));
         }
 
+        //Pass
+        public async Task<IActionResult> ProductImages(int Id)
+        {
 
 
         //Pass

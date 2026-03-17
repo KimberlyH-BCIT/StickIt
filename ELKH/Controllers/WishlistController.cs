@@ -13,11 +13,13 @@ namespace ELKH.Controllers
     public class WishlistController : AuthenticatedControllerBase
     {
         private readonly IWishlistService _wishlistService;
+        private readonly ILogger<WishlistController> _logger;
 
-        public WishlistController(IWishlistService wishlistService, IUserService userService)
-            : base(userService)
+        public WishlistController(IWishlistService wishlistService, IUserService userService, ILogger<WishlistController> logger, ELKH.Data.ApplicationDbContext db)
+            : base(db, userService)
         {
             _wishlistService = wishlistService;
+            _logger = logger;
         }
 
         /// <summary>

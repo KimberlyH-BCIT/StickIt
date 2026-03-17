@@ -3,6 +3,7 @@ using ELKH.Services;
 using ELKH.ViewModels;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.Extensions.Logging;
 
 namespace ELKH.Controllers
 {
@@ -12,15 +13,6 @@ namespace ELKH.Controllers
     [Authorize(Roles = "Admin")]
     public class OrderHistoryController : Controller
     {
-        private readonly OrderHistoryManagementRepo _orderManagementRepo;
-        private readonly IOrderEmailService _orderEmail;
-        private readonly IRegisteredUserProfileRepo _profileRepo;
-
-        /// <summary>
-        /// Server-side allowlist for the delivery status dropdown.
-        /// Must stay in sync with the <c>statusOptions</c> array in <c>Views/OrderHistory/Index.cshtml</c>.
-        /// Any value not in this set is rejected before it reaches the database.
-        /// </summary>
         private static readonly HashSet<string> ValidDeliveryStatuses =
         [
             "Pending",
@@ -30,14 +22,21 @@ namespace ELKH.Controllers
             "Cancelled"
         ];
 
+        private readonly IOrderHistoryManagementRepo _orderManagementRepo;
+        private readonly IOrderEmailService _orderEmail;
+        private readonly IRegisteredUserProfileRepo _profileRepo;
+        private readonly ILogger<OrderHistoryController> _logger;
+
         public OrderHistoryController(
-            OrderHistoryManagementRepo orderManagementRepo,
+            IOrderHistoryManagementRepo orderManagementRepo,
             IOrderEmailService orderEmail,
-            IRegisteredUserProfileRepo profileRepo)
+            IRegisteredUserProfileRepo profileRepo,
+            ILogger<OrderHistoryController> logger)
         {
             _orderManagementRepo = orderManagementRepo;
             _orderEmail          = orderEmail;
             _profileRepo         = profileRepo;
+            _logger              = logger;
         }
 
         /// <summary>
@@ -53,7 +52,7 @@ namespace ELKH.Controllers
             var orderVM = orders.Select(o => new OrderDetailsVM
             {
                 OrderId        = o.PkOrderId,
-                UserEmail      = o.RegisteredUser.Email,
+                UserEmail      = o.RegisteredUser?.Email ?? string.Empty,
                 DeliveryStatus = o.DeliveryStatus,
             }).ToList();
 
@@ -82,17 +81,18 @@ namespace ELKH.Controllers
 
             // Map the full domain model to a flat VM consumed by the view.
             // Transaction and RegisteredUser are included by GetByIdAsync.
+            // Transaction may be null for orders that have not yet been paid (Pending status).
             var detailsVM = new OrderDetailsVM
             {
                 OrderId       = details.PkOrderId,
-                UserEmail     = details.RegisteredUser.Email,
-                TransactionId = details.Transaction.PkTransactionId,
+                UserEmail     = details.RegisteredUser?.Email ?? string.Empty,
+                TransactionId = details.Transaction?.PkTransactionId ?? 0,
                 OrderItems    = details.OrderItems.Select(oi => new OrderItemVM
                 {
-                    ProductId    = oi.Product.PkProductId,
+                    ProductId    = oi.Product?.PkProductId ?? 0,
                     Quantity     = oi.Quantity,
-                    ProductName  = oi.Product.Name,
-                    ProductPrice = oi.Product.Price
+                    ProductName  = oi.Product?.Name ?? string.Empty,
+                    ProductPrice = oi.Product?.Price ?? 0m
                 }).ToList()
             };
             return View(detailsVM);

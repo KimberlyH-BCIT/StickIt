@@ -15,5 +15,6 @@ namespace ELKH.ViewModels
 
         public int TotalPages { get; init; }
         public int TotalCount { get; init; }
+        public int TotalPages { get; init; }
     }
 }

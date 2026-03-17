@@ -23,11 +23,10 @@ namespace ELKH.ViewModels
         [StringLength(1000, ErrorMessage = "Description cannot exceed 1000 characters.")]
         public string Description { get; set; } = string.Empty;
 
-        /// <summary>Product price (non-negative, formatted as currency).</summary>
-        [Required(ErrorMessage = "Please enter a price.")]
+        [Required]
         [Display(Name = "Price")]
         [DataType(DataType.Currency)]
-        //[DisplayFormat(DataFormatString = "{0:C}", ApplyFormatInEditMode = true)]
+        [DisplayFormat(DataFormatString = "{0:C}", ApplyFormatInEditMode = true)]
         [Range(0, double.MaxValue, ErrorMessage = "Price must be non-negative")]
         public decimal Price { get; set; }
 
@@ -61,7 +60,5 @@ namespace ELKH.ViewModels
         /// <summary>Average customer rating (1-5 stars).</summary>
         [Display(Name = "Average Rating")]
         public double AverageRating { get; set; } = 0;
-
-        public ICollection<ReviewDisplayVM>? ProductReviews { get; set; }
     }
 }

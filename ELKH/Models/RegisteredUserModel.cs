@@ -16,6 +16,7 @@ namespace ELKH.Models
         public int PkRegisteredUserId { get; set; }
 
         [Required]
+        [MaxLength(256)]
         public string Email { get; set; } = string.Empty;
 
         /// <summary>Cart items currently held by this user.</summary>

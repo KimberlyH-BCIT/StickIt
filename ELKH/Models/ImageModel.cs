@@ -21,5 +21,5 @@ public partial class ImageModel
     //Foreign key to Product (no navigation to keep ImageStoreContext isolated)
     public int FkProductId { get; set; }
     
-    public string? ProductImageURL { get; set; }
+    public string ProductImageURL { get; set; } = null!;
 }

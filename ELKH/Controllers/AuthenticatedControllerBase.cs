@@ -1,19 +1,21 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using ELKH.Data;
 using ELKH.Services;
 
 namespace ELKH.Controllers
 {
     /// <summary>
-    /// Base controller for authenticated endpoints that need user information.
-    /// Provides common helper methods to reduce boilerplate in derived controllers.
+    /// Base controller for authenticated endpoints. Inherits cart-count injection
+    /// from <see cref="BaseController"/> and adds user-identity helper methods.
     /// </summary>
     [Authorize]
-    public abstract class AuthenticatedControllerBase : Controller
+    public abstract class AuthenticatedControllerBase : BaseController
     {
         protected readonly IUserService UserService;
 
-        protected AuthenticatedControllerBase(IUserService userService)
+        protected AuthenticatedControllerBase(ApplicationDbContext db, IUserService userService)
+            : base(db)
         {
             UserService = userService;
         }

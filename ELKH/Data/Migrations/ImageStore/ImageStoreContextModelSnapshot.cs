@@ -47,6 +47,7 @@ namespace ELKH.Data.Migrations.ImageStore
                         .HasColumnName("imageData");
 
                     b.Property<string>("ProductImageURL")
+                        .IsRequired()
                         .HasColumnType("TEXT");
 
                     b.HasKey("ImageId");

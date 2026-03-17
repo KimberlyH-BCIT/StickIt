@@ -1,4 +1,4 @@
-﻿using ELKH.Data;
+using ELKH.Data;
 using ELKH.ViewModels;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
@@ -7,7 +7,6 @@ using Microsoft.EntityFrameworkCore;
 
 namespace ELKH.Controllers
 {
-
     [Authorize(Roles = "Admin,Manager")]
     public class ManagerController : Controller
     {
@@ -16,26 +15,26 @@ namespace ELKH.Controllers
 
         public ManagerController(ApplicationDbContext context, UserManager<IdentityUser> userManager)
         {
-            _context = context;
+            _context     = context;
             _userManager = userManager;
         }
 
         // ================= DASHBOARD =================
         public async Task<IActionResult> Index()
         {
-            var now = DateTime.UtcNow;
-            var weekAgo = now.AddDays(-7);
+            var now      = DateTime.UtcNow;
+            var weekAgo  = now.AddDays(-7);
             var monthAgo = now.AddDays(-30);
 
-            ViewBag.TotalProducts = await _context.Products.CountAsync();
-            ViewBag.ActiveProducts = await _context.Products.CountAsync(p => p.IsActive);
+            ViewBag.TotalProducts    = await _context.Products.CountAsync();
+            ViewBag.ActiveProducts   = await _context.Products.CountAsync(p => p.IsActive);
             ViewBag.InactiveProducts = await _context.Products.CountAsync(p => !p.IsActive);
-            ViewBag.StockUpCount = await _context.Products.CountAsync(p => p.StockQuantity > 20);
-            ViewBag.StockDownCount = await _context.Products.CountAsync(p => p.StockQuantity <= 20);
-            ViewBag.LowStockCount = await _context.Products.CountAsync(p => p.StockQuantity <= 5);
-            ViewBag.WeeklyOrders = await _context.Orders.CountAsync(o => o.CreatedAt >= weekAgo);
-            ViewBag.MonthlyOrders = await _context.Orders.CountAsync(o => o.CreatedAt >= monthAgo);
-            ViewBag.TotalStaff = (await _userManager.GetUsersInRoleAsync("Staff")).Count
+            ViewBag.StockUpCount     = await _context.Products.CountAsync(p => p.StockQuantity > 20);
+            ViewBag.StockDownCount   = await _context.Products.CountAsync(p => p.StockQuantity <= 20);
+            ViewBag.LowStockCount    = await _context.Products.CountAsync(p => p.StockQuantity <= 5);
+            ViewBag.WeeklyOrders     = await _context.Orders.CountAsync(o => o.CreatedAt >= weekAgo);
+            ViewBag.MonthlyOrders    = await _context.Orders.CountAsync(o => o.CreatedAt >= monthAgo);
+            ViewBag.TotalStaff       = (await _userManager.GetUsersInRoleAsync("Staff")).Count
                                      + (await _userManager.GetUsersInRoleAsync("Manager")).Count;
 
             return View();
@@ -53,7 +52,7 @@ namespace ELKH.Controllers
 
             if (!string.IsNullOrEmpty(search))
                 query = query.Where(p => p.Name.Contains(search) ||
-                                         p.Category.CategoryName.Contains(search));
+                                         (p.Category != null && p.Category.CategoryName.Contains(search)));
 
             if (stockFilter == "low")
                 query = query.Where(p => p.StockQuantity <= 5);
@@ -77,23 +76,23 @@ namespace ELKH.Controllers
 
             var products = rawProducts.Select(p => new ProductVM
             {
-                ProductId = p.PkProductId,
-                ProductName = p.Name,
-                Description = p.Description,
-                Price = p.Price,
+                ProductId     = p.PkProductId,
+                ProductName   = p.Name,
+                Description   = p.Description,
+                Price         = p.Price,
                 DiscountPercent = p.DiscountPercent,
-                StockQuantity = (int)p.StockQuantity,
-                IsActive = p.IsActive,
-                CategoryId = p.FkCategoryId,
-                CategoryName = p.Category?.CategoryName ?? "",
+                StockQuantity = p.StockQuantity,
+                IsActive      = p.IsActive,
+                CategoryId    = p.FkCategoryId,
+                CategoryName  = p.Category?.CategoryName ?? "",
                 // Pull first image URL — empty string if none
-                Thumbnail = p.ProductImage?.FirstOrDefault()?.ProductImageURL ?? ""
+                Thumbnail     = p.ProductImage?.FirstOrDefault()?.ProductImageURL ?? ""
             }).ToList();
 
-            ViewBag.CurrentPage = page;
-            ViewBag.TotalPages = (int)Math.Ceiling((double)total / pageSize);
-            ViewBag.Search = search;
-            ViewBag.StockFilter = stockFilter;
+            ViewBag.CurrentPage  = page;
+            ViewBag.TotalPages   = (int)Math.Ceiling((double)total / pageSize);
+            ViewBag.Search       = search;
+            ViewBag.StockFilter  = stockFilter;
             ViewBag.ActiveFilter = activeFilter;
 
             return View(products);
@@ -127,31 +126,31 @@ namespace ELKH.Controllers
 
             // Compute average rating
             double avgRating = 0;
-            int ratingCount = 0;
+            int ratingCount  = 0;
             if (p.ProductRatings != null && p.ProductRatings.Any())
             {
                 var approved = p.ProductRatings.Where(r => r.Approved && !r.IsDeleted).ToList();
-                ratingCount = approved.Count;
-                avgRating = ratingCount > 0 ? approved.Average(r => r.Rating) : 0;
+                ratingCount  = approved.Count;
+                avgRating    = ratingCount > 0 ? approved.Average(r => r.Rating) : 0;
             }
 
             var vm = new ProductVM
             {
-                ProductId = p.PkProductId,
-                ProductName = p.Name,
-                Description = p.Description,
-                Price = p.Price,
+                ProductId       = p.PkProductId,
+                ProductName     = p.Name,
+                Description     = p.Description,
+                Price           = p.Price,
                 DiscountPercent = p.DiscountPercent,
-                StockQuantity = (int)p.StockQuantity,
-                IsActive = p.IsActive,
-                CategoryId = p.FkCategoryId,
-                CategoryName = p.Category?.CategoryName ?? "",
-                Thumbnail = p.ProductImage?.FirstOrDefault()?.ProductImageURL ?? "",
-                AverageRating = avgRating
+                StockQuantity   = p.StockQuantity,
+                IsActive        = p.IsActive,
+                CategoryId      = p.FkCategoryId,
+                CategoryName    = p.Category?.CategoryName ?? "",
+                Thumbnail       = p.ProductImage?.FirstOrDefault()?.ProductImageURL ?? "",
+                AverageRating   = avgRating
             };
 
             // Pass ratings to view via ViewBag
-            ViewBag.Ratings = p.ProductRatings?
+            ViewBag.Ratings     = p.ProductRatings?
                 .Where(r => r.Approved && !r.IsDeleted)
                 .OrderByDescending(r => r.RatedTime)
                 .ToList() ?? new List<ELKH.Models.ProductRatingModel>();
@@ -165,7 +164,7 @@ namespace ELKH.Controllers
         public async Task<IActionResult> ListAllTransactions(string search, int page = 1)
         {
             int pageSize = 10;
-            var query = _context.Transactions.AsQueryable();
+            var query    = _context.Transactions.AsQueryable();
 
             if (!string.IsNullOrEmpty(search))
                 query = query.Where(t => t.TransactionStatus.Contains(search));
@@ -178,18 +177,18 @@ namespace ELKH.Controllers
                 .Take(pageSize)
                 .Select(t => new TransactionVM
                 {
-                    PkTransactionId = t.PkTransactionId,
+                    PkTransactionId   = t.PkTransactionId,
                     TransactionStatus = t.TransactionStatus,
-                    Amount = t.Amount,
-                    TransactionDate = t.TransactionDate,
-                    DeliberyFee = t.DeliveryFee,
-                    FkOrderId = t.FkOrderId
+                    Amount            = t.Amount,
+                    TransactionDate   = t.TransactionDate,
+                    DeliveryFee       = t.DeliveryFee,
+                    FkOrderId         = t.FkOrderId
                 })
                 .ToListAsync();
 
             ViewBag.CurrentPage = page;
-            ViewBag.TotalPages = (int)Math.Ceiling((double)total / pageSize);
-            ViewBag.Search = search;
+            ViewBag.TotalPages  = (int)Math.Ceiling((double)total / pageSize);
+            ViewBag.Search      = search;
 
             return View(transactions);
         }
@@ -198,8 +197,8 @@ namespace ELKH.Controllers
         public async Task<IActionResult> ListOfStaffAccount(string search)
         {
             var staffRoles = new[] { "Manager", "Staff", "Admin" };
-            var allUsers = _userManager.Users.ToList();
-            var staffList = new List<UserListVM>();
+            var allUsers   = _userManager.Users.ToList();
+            var staffList  = new List<UserListVM>();
 
             foreach (var user in allUsers)
             {
@@ -207,9 +206,9 @@ namespace ELKH.Controllers
                 if (roles.Any(r => staffRoles.Contains(r)))
                     staffList.Add(new UserListVM
                     {
-                        Id = user.Id,
+                        Id    = user.Id,
                         Email = user.Email ?? "",
-                        Name = user.UserName ?? "",
+                        Name  = user.UserName ?? "",
                         Roles = roles.ToList()
                     });
             }

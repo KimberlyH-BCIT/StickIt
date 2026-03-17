@@ -5,7 +5,6 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using System.ComponentModel.DataAnnotations;
-using System.Data;
 
 namespace ELKH.Controllers
 {
@@ -34,7 +33,6 @@ namespace ELKH.Controllers
     /// Role mutations delegate directly to <see cref="RoleManager{TRole}"/> so that
     /// Identity's own validation and concurrency handling are exercised.
     /// </remarks>
-    
     [Authorize(Roles = "Admin")]
     public class AdminRoleController : Controller
     {
@@ -63,8 +61,15 @@ namespace ELKH.Controllers
             return View(roles);
         }
 
-        // ================= CREATE =================
-        public IActionResult CreateRole() => View();
+// =====================================================================
+// Role Creation
+// =====================================================================
+
+/// <summary>Renders the form for creating a new role.</summary>
+public IActionResult CreateRole()
+{
+    return View();
+}
 
         /// <summary>Persists the new role to the Identity store. Re-displays the form with errors on failure.</summary>
         [HttpPost]
@@ -100,6 +105,7 @@ namespace ELKH.Controllers
             return View(new RoleVM { RoleId = role.Id, RoleName = role.Name });
         }
 
+        /// <summary>Persists a role-name change to the Identity store. Re-displays the form with errors on failure.</summary>
         [HttpPost]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> EditRole(RoleVM model)
@@ -123,7 +129,7 @@ namespace ELKH.Controllers
             return View(model);
         }
 
-        public async Task<IActionResult> AssignRoles(string? userId, string? returnTo, string? roleId)
+public async Task<IActionResult> AssignRoles(string? userId, string? returnTo, string? roleId)
         {
             // Pre-fill email only when we already know the user
             string? prefilledEmail = null;
@@ -158,7 +164,9 @@ namespace ELKH.Controllers
 
             return View(model);
         }
-
+/// <summary>
+/// Assigns a role to the user identified by <c>model.Email</c>.
+/// </summary>
         [HttpPost]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> AssignRoles(AssignRoleVM model)
@@ -187,7 +195,7 @@ namespace ELKH.Controllers
                 return View(model);
             }
 
-            if (await _userManager.IsInRoleAsync(user, model.RoleName))
+            if (await _userManager.IsInRoleAsync(user, model.RoleName!))
             {
                 ModelState.AddModelError("", "User is already assigned to this role.");
                 await ReloadRoles(model);
@@ -213,7 +221,7 @@ namespace ELKH.Controllers
             await ReloadRoles(model);
             return View(model);
         }
-
+/// <summary>Repopulates the role drop-down on the assignment form after a validation failure.</summary>
         private async Task ReloadRoles(AssignRoleVM model)
         {
             model.Roles = _roleManager.Roles
@@ -229,12 +237,8 @@ namespace ELKH.Controllers
             var role = await _roleManager.FindByIdAsync(roleId);
             if (role == null) return NotFound();
 
-            var usersInRole = new List<IdentityUser>();
-            foreach (var user in _userManager.Users)
-            {
-                if (await _userManager.IsInRoleAsync(user, role.Name))
-                    usersInRole.Add(user);
-            }
+            // Single query instead of one IsInRoleAsync call per user.
+            var usersInRole = await _userManager.GetUsersInRoleAsync(role.Name!);
 
             ViewBag.RoleId = role.Id;
             ViewBag.RoleName = role.Name;

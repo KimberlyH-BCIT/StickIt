@@ -2,6 +2,8 @@ using ELKH.Data;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Filters;
+using Microsoft.EntityFrameworkCore;
+using System.Security.Claims;
 
 namespace ELKH.Controllers;
 
@@ -25,7 +27,7 @@ public class BaseController : Controller
     protected readonly ApplicationDbContext _db;
     protected readonly UserManager<IdentityUser> _userManager;
 
-    public BaseController(ApplicationDbContext db, UserManager<IdentityUser> userManager)
+    public BaseController(ApplicationDbContext db)
     {
         _db = db;
         _userManager = userManager;
@@ -38,14 +40,19 @@ public class BaseController : Controller
         // may return null; in that case we simply skip setting the cart count.
         if (User.Identity?.IsAuthenticated == true)
         {
-            var identityUser = await _userManager.GetUserAsync(User);
-            if (identityUser?.Email is not null)
+            // Read email directly from claims — avoids an extra UserManager round-trip on every request.
+            var email = User.FindFirstValue(ClaimTypes.Email)
+                     ?? User.FindFirstValue(ClaimTypes.Name);
+
+            if (!string.IsNullOrEmpty(email))
             {
-                var registered = _db.RegisteredUsers.FirstOrDefault(u => u.Email == identityUser.Email);
+                var registered = await _db.RegisteredUsers
+                    .FirstOrDefaultAsync(u => u.Email == email);
+
                 ViewBag.CartCount = registered is not null
-                    ? _db.Carts
+                    ? await _db.Carts
                         .Where(c => c.FkRegisteredUserId == registered.PkRegisteredUserId)
-                        .Sum(c => (int?)c.Quantity) ?? 0
+                        .SumAsync(c => (int?)c.Quantity) ?? 0
                     : 0;
             }
         }

@@ -76,7 +76,7 @@ namespace ELKH.Controllers
             // Start with the full AuditEntryModel set as a composable IQueryable.
             // Filters are appended as deferred WHERE clauses — no query is sent to the
             // database until ToListAsync() or CountAsync() is called further below.
-            var q = _db.Set<AuditEntryModel>().AsQueryable();
+            var q = _db.AuditEntries.AsQueryable();
             var req = Request.Query;
 
             // --- Date range filters (both boundaries are inclusive) ---
@@ -164,7 +164,7 @@ namespace ELKH.Controllers
         /// </returns>
         public async Task<IActionResult> Details(int id)
         {
-            var entry = await _db.Set<AuditEntryModel>().FindAsync(id);
+            var entry = await _db.AuditEntries.FindAsync(id);
             if (entry is null) return NotFound();
             return View(entry);
         }

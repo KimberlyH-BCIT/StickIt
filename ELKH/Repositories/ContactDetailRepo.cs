@@ -41,7 +41,7 @@ namespace ELKH.Repositories
         /// Add a new contact detail with default address logic.
         /// If marked as default, unsets other defaults for the same user.
         /// </summary>
-        public override async Task<bool> AddAsync(ContactDetailModel contact)
+        public override async Task<bool> AddAndSaveAsync(ContactDetailModel contact)
         {
             try
             {
@@ -66,7 +66,7 @@ namespace ELKH.Repositories
         /// <summary>
         /// Update an existing contact detail with default address logic.
         /// </summary>
-        public override async Task<bool> UpdateAsync(ContactDetailModel contact)
+        public override async Task<bool> UpdateAndSaveAsync(ContactDetailModel contact)
         {
             try
             {

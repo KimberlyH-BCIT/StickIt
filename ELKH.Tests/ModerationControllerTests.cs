@@ -1,9 +1,10 @@
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Http;
+using Microsoft.Extensions.Logging.Abstractions;
 using Moq;
 using Xunit;
-using ELKH.Areas.Admin.Controllers;
+using ELKH.Controllers;
 using ELKH.Services;
 
 namespace ELKH.Tests;
@@ -27,7 +28,7 @@ public class ModerationControllerTests
 
         var mockModeration = new Moq.Mock<IModerationService>();
 
-        var controller = new ModerationController(mockRating.Object, mockModeration.Object);
+        var controller = new ModerationController(mockRating.Object, mockModeration.Object, NullLogger<ModerationController>.Instance);
         controller.ControllerContext = new ControllerContext { HttpContext = new DefaultHttpContext() };
         controller.Request.Headers["X-Requested-With"] = "XMLHttpRequest";
 
@@ -48,9 +49,9 @@ public class ModerationControllerTests
     {
         var mockRating = new Moq.Mock<IRatingService>();
         var mockModeration = new Moq.Mock<IModerationService>();
-        mockModeration.Setup(m => m.FlagAsync(2, "note", "mod")).ReturnsAsync(new ModerationResult { Success = true });
+        mockModeration.Setup(m => m.FlagAsync(2, "note", It.IsAny<string>())).ReturnsAsync(new ModerationResult { Success = true });
 
-        var controller = new ModerationController(mockRating.Object, mockModeration.Object);
+        var controller = new ModerationController(mockRating.Object, mockModeration.Object, NullLogger<ModerationController>.Instance);
         controller.ControllerContext = new ControllerContext { HttpContext = new DefaultHttpContext() };
         controller.Request.Headers["X-Requested-With"] = "XMLHttpRequest";
 

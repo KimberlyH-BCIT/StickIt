@@ -32,8 +32,8 @@ public class OrderRepo : IOrderRepo
     public async Task<OrderModel?> GetByIdWithItemsAsync(int id) =>
         await _context.Orders
             .Include(o => o.OrderItems)
-            .ThenInclude(i => i.Product)
-            .ThenInclude(p => p.ProductImages)
+            .ThenInclude(i => i.Product!)
+            .ThenInclude(p => p.ProductImage)
             .Include(o => o.ContactDetail)
             .Include(o => o.Transaction)
             .FirstOrDefaultAsync(o => o.PkOrderId == id);

@@ -122,23 +122,23 @@ namespace ELKH.Repositories
         /// </summary>
         public async Task<ProductVM> EditProductQuantity(int productId, int quantityAmount)
         {
-            var products = await _context.Products.Where(p => p.PkProductId == productId)
-                                                  .FirstOrDefaultAsync();
-            products.StockQuantity = quantityAmount;
+            var product = await _context.Products
+                                        .Where(p => p.PkProductId == productId)
+                                        .FirstOrDefaultAsync()
+                         ?? throw new KeyNotFoundException($"Product {productId} not found.");
 
+            product.StockQuantity = quantityAmount;
             await _context.SaveChangesAsync();
 
-            var vm = new ProductVM
+            return new ProductVM
             {
-                ProductId = products.PkProductId,
-                ProductName = products.Name,
-                Description = products.Description,
-                Price = products.Price,
-                StockQuantity = products.StockQuantity,
-                IsActive = products.IsActive
+                ProductId     = product.PkProductId,
+                ProductName   = product.Name,
+                Description   = product.Description,
+                Price         = product.Price,
+                StockQuantity = product.StockQuantity,
+                IsActive      = product.IsActive
             };
-
-            return vm;
         }
         public async Task<bool> UploadImage(int productId, IFormFile file)
         {

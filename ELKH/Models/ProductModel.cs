@@ -21,19 +21,30 @@ namespace ELKH.Models
         /// Display name of the product as shown to customers.
         /// </summary>
         [Required]
+        [MaxLength(100)]
         public string Name { get; set; } = string.Empty;
 
         /// <summary>
         /// Normalized version of the product name for search and indexing.
         /// Stored in lowercase with diacritics removed for efficient fuzzy matching.
         /// </summary>
+        [MaxLength(100)]
         public string NameNormalized { get; set; } = string.Empty;
 
         /// <summary>
         /// Detailed product description shown on product detail pages.
         /// </summary>
         [Required]
+        [MaxLength(2000)]
         public string Description { get; set; } = string.Empty;
+
+        /// <summary>
+        /// Comma-separated tags for improved search discoverability.
+        /// Tags are derived from category and product characteristics.
+        /// Example: "halloween,spooky,seasonal,decoration"
+        /// </summary>
+        [MaxLength(500)]
+        public string Tags { get; set; } = string.Empty;
 
         /// <summary>
         /// Base price of the product before any discount is applied.
@@ -55,6 +66,7 @@ namespace ELKH.Models
         /// Decremented when orders are placed, incremented when restocked.
         /// </summary>
         [DisplayName("Stock Quantities")]
+        [ConcurrencyCheck]
 public int? StockQuantity { get; set; } = 0;
 
 /// <summary>
@@ -72,9 +84,6 @@ public int? StockQuantity { get; set; } = 0;
         /// Foreign key to the product's category (required).
         /// </summary>
         public int FkCategoryId { get; set; }
-
-        //Product Image Relationship
-        public ICollection<ImageModel>? ProductImages { get; set; }
         /// <summary>
         /// Navigation property to the product's category.
         /// Used for category filtering and display.

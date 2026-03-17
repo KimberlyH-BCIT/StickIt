@@ -20,6 +20,7 @@ namespace ELKH.Models
         /// Updated throughout the order lifecycle.
         /// </summary>
         [Display(Name = "Order Status")]
+        [MaxLength(50)]
         public string OrderStatus { get; set; } = string.Empty;
 
         /// <summary>
@@ -41,6 +42,7 @@ namespace ELKH.Models
         /// Separate from order status to track fulfillment independently.
         /// </summary>
         [Display(Name ="Delivery Status")]
+        [MaxLength(50)]
         public string DeliveryStatus { get; set; } = string.Empty;
 
         // =====================================================================
@@ -59,16 +61,13 @@ namespace ELKH.Models
         /// </summary>
         public ICollection<OrderItemModel> OrderItems { get; set; } = new List<OrderItemModel>();
 
-        // Relationship with Transaction
-        public TransactionModel? Transaction { get; set; }          
-
-        // Order Status Relationship
-        public OrderStatusModel? OrderStatuses { get; set; }
+        //Relationship with Transaction
+        public TransactionModel? Transaction { get; set; }
 
         /// <summary>
         /// Foreign key to the shipping/delivery address for this order.
         /// </summary>
         public int FkContactId { get; set; }
-        public ContactDetailModel? ContactDetail { get; set; }       
+        public ContactDetailModel? ContactDetail { get; set; }
     }
 }

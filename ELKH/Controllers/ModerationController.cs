@@ -1,5 +1,6 @@
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Authorization;
+using Microsoft.Extensions.Logging;
 using System.Threading.Tasks;
 using ELKH.Services;
 using ELKH.ViewModels;
@@ -17,16 +18,13 @@ namespace ELKH.Controllers
     {
         private readonly IRatingService _ratingService;
         private readonly IModerationService _moderationService;
+        private readonly ILogger<ModerationController> _logger;
 
-        /// <summary>
-        /// Initializes a new instance of <see cref="ModerationController"/> with the required services.
-        /// </summary>
-        /// <param name="ratingService">Service for retrieving and updating product ratings.</param>
-        /// <param name="moderationService">Service for performing moderation operations such as flagging.</param>
-        public ModerationController(IRatingService ratingService, IModerationService moderationService)
+        public ModerationController(IRatingService ratingService, IModerationService moderationService, ILogger<ModerationController> logger)
         {
             _ratingService = ratingService;
             _moderationService = moderationService;
+            _logger = logger;
         }
 
         /// <summary>

@@ -22,6 +22,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 using Microsoft.AspNetCore.WebUtilities;
 using Microsoft.Extensions.Logging;
+using static ELKH.Extensions.RateLimitPolicies;
 
 namespace ELKH.Areas.Identity.Pages.Account
 {
@@ -181,6 +182,7 @@ namespace ELKH.Areas.Identity.Pages.Account
         /// 5. Sends an email-confirmation link; redirects to confirmation page or signs in directly
         ///    depending on <c>RequireConfirmedAccount</c> setting.
         /// </summary>
+        [Microsoft.AspNetCore.RateLimiting.EnableRateLimiting(ELKH.Extensions.RateLimitPolicies.Auth)]
         public async Task<IActionResult> OnPostAsync(string returnUrl = null)
         {
             returnUrl ??= Url.Content("~/");
@@ -225,17 +227,14 @@ namespace ELKH.Areas.Identity.Pages.Account
                         PostCode = Input.PostCode,
                         Country = Input.Country,
                         IsDefault = true,
-                        UserId = user.Id,
                         FkRegisteredUserId = registeredUser.PkRegisteredUserId
                     };
-                    await _contactRepository.AddAsync(contact);
+                    await _contactRepository.AddAndSaveAsync(contact);
 
                     // Assign the Customer role to every new registrant.
                     const string customerRole = "Customer";
                     if (!await _roleManager.RoleExistsAsync(customerRole))
-                    {
                         await _roleManager.CreateAsync(new IdentityRole(customerRole));
-                    }
                     await _userManager.AddToRoleAsync(user, customerRole);
 
                     _logger.LogInformation("User created a new account with password.");
@@ -259,7 +258,8 @@ namespace ELKH.Areas.Identity.Pages.Account
                     else
                     {
                         await _signInManager.SignInAsync(user, isPersistent: false);
-                        return LocalRedirect(returnUrl);
+                        // Redirect new customers to the product catalog
+                        return RedirectToAction("Index", "Product");
                     }
                 }
                 foreach (var error in result.Errors)

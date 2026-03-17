@@ -4,16 +4,16 @@
     ViewData["Title"] = "Products";
     Layout = "~/Views/Shared/_Layout.cshtml";
 
-    string stockFilter = ViewBag.StockFilter as string ?? "";
+    string stockFilter  = ViewBag.StockFilter  as string ?? "";
     string activeFilter = ViewBag.ActiveFilter as string ?? "";
 
     string filterLabel = (stockFilter, activeFilter) switch
     {
         ("low", _) => "🔴 Low Stock (< 50 units)",
         ("stocked", _) => "🟢 Well Stocked (≥ 50 units)",
-        (_, "active") => "✅ Active Products",
-        (_, "inactive") => "⛔ Inactive Products",
-        _ => ""
+        (_,         "active")   => "✅ Active Products",
+        (_,         "inactive") => "⛔ Inactive Products",
+        _                       => ""
     };
 }
 
@@ -44,7 +44,7 @@
     <div class="card border-0 shadow-sm rounded-4 mb-4">
         <div class="card-body p-4">
             <form method="get" class="d-flex gap-2 mb-3">
-                <input type="hidden" name="stockFilter" value="@stockFilter" />
+                <input type="hidden" name="stockFilter"  value="@stockFilter" />
                 <input type="hidden" name="activeFilter" value="@activeFilter" />
                 <input type="text" name="search" value="@ViewBag.Search"
                        class="form-control rounded-pill"
@@ -145,10 +145,10 @@
                                     <td class="text-center">
                                         <form asp-action="ToggleActive" method="post" class="d-inline">
                                             @Html.AntiForgeryToken()
-                                            <input type="hidden" name="id" value="@p.ProductId" />
-                                            <input type="hidden" name="stockFilter" value="@stockFilter" />
+                                            <input type="hidden" name="id"           value="@p.ProductId" />
+                                            <input type="hidden" name="stockFilter"  value="@stockFilter" />
                                             <input type="hidden" name="activeFilter" value="@activeFilter" />
-                                            <input type="hidden" name="search" value="@ViewBag.Search" />
+                                            <input type="hidden" name="search"       value="@ViewBag.Search" />
                                             <button type="submit"
                                                     class="badge border-0 px-2 py-1 rounded-pill @(p.IsActive ? "bg-success" : "bg-secondary")"
                                                     style="cursor:pointer;" title="Click to toggle">
@@ -159,8 +159,8 @@
 
                                     <td class="text-center">
                                         <a asp-action="ProductDetails"
-                                               asp-route-id="@p.ProductId"
-                                               class="btn btn-sm btn-outline-primary rounded-pill px-3">
+                                           asp-route-id="@p.ProductId"
+                                           class="btn btn-sm btn-outline-primary rounded-pill px-3">
                                             Details
                                         </a>
                                     </td>

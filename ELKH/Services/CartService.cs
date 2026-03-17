@@ -146,7 +146,8 @@ namespace ELKH.Services
                 {
                     FkOrderId   = order.PkOrderId,
                     FkProductId = itemId,
-                    Quantity    = quantity
+                    Quantity    = quantity,
+                    UnitPrice   = effective
                 });
 
                 product.StockQuantity = (product.StockQuantity) - quantity;
@@ -154,6 +155,11 @@ namespace ELKH.Services
                 await _db.SaveChangesAsync();
                 await transaction.CommitAsync();
                 return order.PkOrderId;
+            }
+            catch (Microsoft.EntityFrameworkCore.DbUpdateConcurrencyException)
+            {
+                await transaction.RollbackAsync();
+                return -1; // another request updated stock first
             }
             catch
             {
@@ -318,7 +324,8 @@ namespace ELKH.Services
                         { 
                             FkOrderId = order.PkOrderId,
                             FkProductId = c.FkProductID,
-                            Quantity = c.Quantity
+                            Quantity = c.Quantity,
+                            UnitPrice = products[c.FkProductID].GetEffectivePrice()
                         });
                         products[c.FkProductID].StockQuantity =
                             (products[c.FkProductID].StockQuantity) - c.Quantity;
@@ -332,6 +339,11 @@ namespace ELKH.Services
 
                     await transaction.CommitAsync();
                     return order.PkOrderId;
+                }
+                catch (Microsoft.EntityFrameworkCore.DbUpdateConcurrencyException)
+                {
+                    await transaction.RollbackAsync();
+                    return -1; // concurrent order modified stock first
                 }
                 catch
                 {

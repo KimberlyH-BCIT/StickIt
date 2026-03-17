@@ -14,6 +14,7 @@ using Microsoft.AspNetCore.Identity.UI.Services;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 using Microsoft.Extensions.Logging;
+using static ELKH.Extensions.RateLimitPolicies;
 
 namespace ELKH.Areas.Identity.Pages.Account
 {
@@ -103,6 +104,7 @@ namespace ELKH.Areas.Identity.Pages.Account
             ReturnUrl = returnUrl;
         }
 
+        [Microsoft.AspNetCore.RateLimiting.EnableRateLimiting(Auth)]
         public async Task<IActionResult> OnPostAsync(string returnUrl = null)
         {
             returnUrl ??= Url.Content("~/");
@@ -141,10 +143,12 @@ namespace ELKH.Areas.Identity.Pages.Account
 
                     if (await _userManager.IsInRoleAsync(user, "Staff"))
                     {
-                        return RedirectToAction("Index", "Staff");
+                        return RedirectToAction("Index", "Home");
                     }
 
-                    return RedirectToAction("Index", "Home");
+                    // Customer or default role - redirect to Products page
+                    _logger.LogInformation("User {Email} logged in as Customer.", Input.Email);
+                    return RedirectToAction("Index", "Product");
                 }
 
                 if (result.RequiresTwoFactor)
