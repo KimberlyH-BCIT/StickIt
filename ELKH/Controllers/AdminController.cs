@@ -9,13 +9,14 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Caching.Memory;
 using Microsoft.Extensions.Logging;
+using Microsoft.Graph;
 
 namespace ELKH.Controllers
 {
     [Authorize(Roles = "Admin")]
     public class AdminController : Controller
     {
-        private readonly IRole_repo _roleRepo;
+        private readonly IRoleRepository _roleRepo;
         private readonly ApplicationDbContext _context;
         private readonly IMemoryCache _cache;
         private readonly ILogger<AdminController> _logger;
@@ -23,7 +24,7 @@ namespace ELKH.Controllers
         private readonly UserManager<IdentityUser> _userManager;
 
         public AdminController(
-            IRole_repo roleRepo,
+            IRoleRepository roleRepo,
             ApplicationDbContext context,
             IMemoryCache cache,
             ILogger<AdminController> logger,
@@ -37,7 +38,7 @@ namespace ELKH.Controllers
             _reindexService = reindexService;
             _userManager = userManager;
         }
-
+        /// <summary>Renders the admin dashboard with top products and stock stats.</summary>
         public async Task<IActionResult> Index()
         {
             var now = DateTime.UtcNow;
@@ -46,80 +47,127 @@ namespace ELKH.Controllers
 
             var vm = new SalesVM
             {
-                WeeklyTotalOrders = await _context.Orders.CountAsync(o => o.CreatedAt >= weekAgo),
+                WeeklyTotalOrders  = await _context.Orders.CountAsync(o => o.CreatedAt >= weekAgo),
                 MonthlyTotalOrders = await _context.Orders.CountAsync(o => o.CreatedAt >= monthAgo),
-                StockUpCount = await _context.Products.CountAsync(p => p.StockQuantity > 100),
-                StockDownCount = await _context.Products.CountAsync(p => p.StockQuantity <= 100),
+
+                // Split inventory into well-stocked (> 100 units) vs low-stock (≤ 100 units) buckets.
+                StockUpCount       = await _context.Product.CountAsync(p => p.StockQuantity > 100),
+                StockDownCount     = await _context.Product.CountAsync(p => p.StockQuantity <= 100),
             };
+
+            // Top 5 products for dashboard widget
+            var orderItems = await _context.OrderItems
+                .Include(oi => oi.Product)
+                .Select(oi => new
+                {
+                    oi.FkProductId,
+                    ProductName  = oi.Product == null ? "Unknown" : oi.Product.Name,
+                    ProductPrice = oi.Product == null ? 0m : oi.Product.Price,
+                    oi.Quantity
+                })
+                .ToListAsync();
+
+            ViewBag.TopProducts = orderItems
+                .GroupBy(oi => new { oi.FkProductId, oi.ProductName, oi.ProductPrice })
+                .Select(g => new TopProductVM
+                {
+                    ProductName = g.Key.ProductName,
+                    UnitsSold   = g.Sum(oi => oi.Quantity),
+                    Revenue     = g.Sum(oi => oi.Quantity * g.Key.ProductPrice)
+                })
+                .OrderByDescending(p => p.UnitsSold)
+                .Take(5)
+                .ToList();
 
             return View(vm);
         }
+
         /*============================== List Of All Users ==============================*/
         public async Task<IActionResult> ListUsers(string search, string roleFilter, int page = 1)
         {
-            int pageSize = 5;
-            var users = _userManager.Users.ToList();
-            var userList = new List<UserListVM>();
+            const int pageSize = 5;
 
-            foreach (var user in users)
+            // Candidate set: either all users in the requested role (single query)
+            // or the full user table narrowed by the email search predicate in the DB.
+            IList<IdentityUser> candidates;
+
+            bool hasRoleFilter = !string.IsNullOrEmpty(roleFilter) && roleFilter != "All";
+
+            if (hasRoleFilter)
             {
-                var roles = await _userManager.GetRolesAsync(user);
+                // Single server-side query: returns only users assigned to this role.
+                candidates = await _userManager.GetUsersInRoleAsync(roleFilter);
 
-                userList.Add(new UserListVM
+                // Apply optional email search in-memory on the (already small) role-member list.
+                if (!string.IsNullOrEmpty(search))
                 {
-                    Id = user.Id,
-                    Email = user.Email,
-                    Roles = roles.ToList()
-                });
+                    candidates = candidates
+                        .Where(u => u.Email?.Contains(search, StringComparison.OrdinalIgnoreCase) ?? false)
+                        .ToList();
+                }
             }
-
-            if (!string.IsNullOrEmpty(search))
+            else
             {
-                userList = userList
-                    .Where(u => u.Email.Contains(search, StringComparison.OrdinalIgnoreCase)
-                             || u.Roles.Any(r => r.Contains(search, StringComparison.OrdinalIgnoreCase)))
-                    .ToList();
+                // Push the email filter to the database; avoid loading all users into memory.
+                IQueryable<IdentityUser> query = _userManager.Users;
+                if (!string.IsNullOrEmpty(search))
+                    query = query.Where(u => u.Email != null && u.Email.Contains(search));
+
+                candidates = await query.ToListAsync();
             }
 
-            if (!string.IsNullOrEmpty(roleFilter) && roleFilter != "All")
-            {
-                userList = userList.Where(u => u.Roles.Contains(roleFilter)).ToList();
-            }
+            int totalUsers = candidates.Count;
 
-            int totalUsers = userList.Count;
-
-            var pagedUsers = userList
+            // Materialise only the current page before the per-user role look-ups.
+            var pageUsers = candidates
                 .Skip((page - 1) * pageSize)
                 .Take(pageSize)
                 .ToList();
 
+            // GetRolesAsync is called only for the paged slice (≤ pageSize users).
+            var userList = new List<UserListVM>(pageUsers.Count);
+            foreach (var user in pageUsers)
+            {
+                var roles = await _userManager.GetRolesAsync(user);
+                userList.Add(new UserListVM
+                {
+                    Id    = user.Id,
+                    Email = user.Email ?? string.Empty,
+                    Roles = roles.ToList()
+                });
+            }
+
             ViewBag.CurrentPage = page;
-            ViewBag.TotalPages = (int)Math.Ceiling((double)totalUsers / pageSize);
+            ViewBag.TotalPages  = (int)Math.Ceiling((double)totalUsers / pageSize);
+            ViewBag.Search      = search;
+            ViewBag.RoleFilter  = roleFilter;
 
-            var roleNames = await _context.Roles
-                .Select(r => r.Name)
-                .ToListAsync();
-
-            roleNames.Insert(0, "All");
-
-            ViewBag.Roles = roleNames;
-            ViewBag.RoleFilter = roleFilter;
-            ViewBag.Search = search;
-
-            return View(pagedUsers);
+            return View(userList);
         }
 
         /*============================== Account Details ==============================*/
         [HttpGet]
         public async Task<IActionResult> AccountDetails(string id)
         {
-            if (string.IsNullOrEmpty(id)) return NotFound();
+            if (string.IsNullOrEmpty(id))
+            {
+                return NotFound();
+            }
 
             var user = await _userManager.FindByIdAsync(id);
             if (user == null) return NotFound();
 
             var roles = await _userManager.GetRolesAsync(user);
-            var contact = await _context.ContactDetails.FirstOrDefaultAsync(c => c.UserId == user.Id);
+
+            // Resolve the application-side RegisteredUser by email so we can look up
+            // the contact detail via the canonical FK (FkRegisteredUserId) rather than
+            // the Identity GUID string, which may not be populated on all rows.
+            var registeredUser = await _context.RegisteredUsers
+                .FirstOrDefaultAsync(r => r.Email == user.Email);
+            var contact = registeredUser is null
+                ? null
+                : await _context.ContactDetails
+                    .FirstOrDefaultAsync(c => c.FkRegisteredUserId == registeredUser.PkRegisteredUserId);
 
             var vm = new AccountDetailsVM
             {
@@ -144,10 +192,9 @@ namespace ELKH.Controllers
                     IsDefault = contact.IsDefault
                 }
             };
-
             return View(vm);
         }
-
+   
         public async Task<IActionResult> RemoveRole(string userId, string role)
         {
             if (string.IsNullOrEmpty(userId) || string.IsNullOrEmpty(role))
@@ -160,10 +207,11 @@ namespace ELKH.Controllers
 
             return RedirectToAction("AccountDetails", new { id = userId });
         }
+
         /*============================== Manage Sales ==============================*/
         public async Task<IActionResult> ManageSales()
         {
-            var now = DateTime.Now;
+            var now = DateTime.UtcNow;
             var weekStart = now.AddDays(-6).Date;
             var monthStart = new DateTime(now.Year, now.Month, 1);
             var yearStart = now.AddMonths(-11).Date;
@@ -252,7 +300,6 @@ namespace ELKH.Controllers
             return View(vm);
         }
 
-
 [HttpPost]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> ReindexFTS([FromBody] ReindexPayload? payload)
@@ -294,7 +341,7 @@ namespace ELKH.Controllers
             if (_reindexService == null)
                 return Json(new { success = false });
 
-            var suggestionCount = _context.Set<FuzzySuggestionModel>().Count();
+            var suggestionCount = _context.FuzzySuggestions.Count();
 
             return Json(new
             {
@@ -309,32 +356,99 @@ namespace ELKH.Controllers
         [HttpGet]
         public IActionResult CacheStats()
         {
-            var count = _context.Set<CachedFuzzyKeyModel>().Count();
-
-            return Json(new
+            try
             {
-                success = true,
-                keys = count,
-                lastRun = _reindexService?.LastRun,
-                lastDuration = _reindexService?.LastDuration
-            });
+                var count = _context.CachedFuzzyKeys.Count();
+                var lastClear = _context.AuditEntries
+                    .Where(a => a.Action == "ClearFuzzyCache")
+                    .OrderByDescending(a => a.Timestamp)
+                    .Select(a => a.Timestamp)
+                    .FirstOrDefault();
+
+                // Include background service metrics if available
+                DateTime? lastRun = null;
+                TimeSpan? lastDuration = null;
+                try
+                {
+                    if (_reindexService != null)
+                    {
+                        lastRun = _reindexService.LastRun;
+                        lastDuration = _reindexService.LastDuration;
+                    }
+                }
+                catch (Exception ex)
+                {
+                    _logger.LogWarning(ex, "Could not read reindex service metrics");
+                }
+
+                return Json(new
+                {
+                    success = true,
+                    keys = count,
+                    lastClear = lastClear == default ? (DateTime?)null : lastClear,
+                    lastRun,
+                    lastDuration
+                });
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Failed to retrieve reindex health status");
+                return Json(new { success = false });
+            }
         }
 
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public IActionResult ClearFuzzyCache([FromBody] ClearCachePayload payload)
+        public async Task<IActionResult> ClearFuzzyCache([FromBody] ClearCachePayload payload)
         {
             if (string.IsNullOrWhiteSpace(payload?.Reason))
                 return BadRequest(new { success = false });
 
-            var keys = _context.Set<CachedFuzzyKeyModel>().ToList();
+            var reason = payload.Reason;
+
+            // Step 2: Load persisted cache keys and clear them
+            var keys = _context.CachedFuzzyKeys.ToList();
+            var registryCount = 0;
 
             foreach (var k in keys)
                 _cache.Remove(k.CacheKey);
 
-            _context.Set<CachedFuzzyKeyModel>().RemoveRange(keys);
-            _context.SaveChanges();
+                // Remove persisted registry
+                try
+                {
+                    _context.CachedFuzzyKeys.RemoveRange(keys);
+                    await _context.SaveChangesAsync();
+                }
+                catch (Exception ex)
+                {
+                    _logger.LogWarning(ex, "Failed to persist CachedFuzzyKey removal for {Count} keys", keys.Count);
+                }
 
+                // Step 3: Log for monitoring
+                _logger.LogInformation(
+                 "Admin {Admin} cleared {Count} fuzzy cache entries",
+                  User.Identity?.Name ?? "unknown",
+                 registryCount);
+
+                // Step 4: Persist audit entry for compliance
+                try
+                {
+                    var audit = new AuditEntryModel
+                    {
+                        Action = "ClearFuzzyCache",
+                        Actor = User.Identity?.Name ?? "unknown",
+                        Timestamp = DateTime.UtcNow,
+                        AffectedKeysCount = registryCount,
+                        Details = string.Join(',', keys.Select(k => k.CacheKey)),
+                        Reason = reason
+                    };
+                    _context.Add(audit);
+                    await _context.SaveChangesAsync();
+                }
+                catch (Exception ex)
+                {
+                    _logger.LogWarning(ex, "Failed to persist ClearFuzzyCache audit entry");
+                }
             return Ok(new { success = true, cleared = keys.Count });
         }
     }
@@ -349,3 +463,4 @@ namespace ELKH.Controllers
         public string? Reason { get; set; }
     }
 }
+

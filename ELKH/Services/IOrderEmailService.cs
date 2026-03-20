@@ -6,6 +6,7 @@ namespace ELKH.Services;
 /// </summary>
 public interface IOrderEmailService
 {
+    Task SendOrderConfirmationAsync(string customerEmail, string customerFirstName, int orderId);
     Task SendShippedAsync(string customerEmail, string customerFirstName, int orderId);
     Task SendDeliveredAsync(string customerEmail, string customerFirstName, int orderId);
 }

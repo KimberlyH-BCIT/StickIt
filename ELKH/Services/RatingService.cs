@@ -58,9 +58,7 @@ namespace ELKH.Services
         {
             return _db.ProductRatings
                 .Include(r => r.RegisteredUser)
-
                 .Include(r => r.Products);
-
         }
 
         /// <inheritdoc/>
@@ -78,11 +76,9 @@ namespace ELKH.Services
             if (query.ProductId.HasValue)
                 q = q.Where(r => r.FkProductId == query.ProductId.Value);
             if (!string.IsNullOrEmpty(query.ProductName))
-
                 q = q.Where(r => r.Products != null && r.Products.Name.Contains(query.ProductName));
-
             if (!string.IsNullOrEmpty(query.UserEmail))
-                q = q.Where(r => r.RegisteredUser.Email == query.UserEmail);
+                q = q.Where(r => r.RegisteredUser != null && r.RegisteredUser.Email == query.UserEmail);
             if (query.FromDate.HasValue)
                 q = q.Where(r => r.RatedTime >= query.FromDate.Value);
             if (query.ToDate.HasValue)
@@ -140,9 +136,7 @@ namespace ELKH.Services
             var ratings = await _db.ProductRatings
                 .AsNoTracking()
                 .Where(r => r.FkRegisteredUserId == userId && !r.IsDeleted)
-
                 .Include(r => r.Products)
-
                 .ToListAsync(ct);
 
             // Collect the order item IDs referenced by this user's ratings so we can
@@ -158,7 +152,7 @@ namespace ELKH.Services
                 ? await _db.OrderItems
                     .AsNoTracking()
                     .Where(oi => orderItemIds.Contains(oi.PkOrderItemId))
-                    .Select(oi => new { oi.PkOrderItemId, oi.Order.CreatedAt })
+                    .Select(oi => new { oi.PkOrderItemId, oi.Order!.CreatedAt })
                     .ToDictionaryAsync(x => x.PkOrderItemId, x => x.CreatedAt, ct)
                 : [];
 
@@ -166,7 +160,7 @@ namespace ELKH.Services
             {
                 RatingId     = r.PkRatingId,
                 ProductId    = r.FkProductId,
-                ProductName  = r.Products.Name,
+                ProductName  = r.Products!.Name,
                 Rating       = r.Rating,
                 Description  = r.Description,
                 RatedTime    = r.RatedTime,
@@ -189,7 +183,7 @@ namespace ELKH.Services
                 .FirstOrDefaultAsync(oi =>
                     oi.PkOrderItemId == orderItemId &&
                     oi.FkProductId   == productId   &&
-                    oi.Order.FkRegisteredUserId == userId, ct);
+                    oi.Order!.FkRegisteredUserId == userId, ct);
 
             if (orderItem is null)
                 return new RatingOperationResult { Success = false, Message = "Order item not found or access denied.", ProductId = productId };
@@ -364,9 +358,9 @@ namespace ELKH.Services
             var userOrderItems = await _db.OrderItems
                 .Include(oi => oi.Order)
                 .Where(oi => oi.FkProductId == productId
-                          && oi.Order.FkRegisteredUserId == userId
-                          && (oi.Order.DeliveryStatus == "Shipped"
-                           || oi.Order.DeliveryStatus == "Delivered"))
+                          && oi.Order!.FkRegisteredUserId == userId
+                          && (oi.Order!.DeliveryStatus == "Shipped"
+                           || oi.Order!.DeliveryStatus == "Delivered"))
                 .ToListAsync(ct);
 
             var orderItemIds = userOrderItems.Select(oi => oi.PkOrderItemId).ToList();
@@ -389,14 +383,14 @@ namespace ELKH.Services
                 if (rating == null)
                 {
                     // No rating exists for this order item — the user may submit one.
-                    eligibleItems.Add(new ViewModels.EligibleOrderItemVM { Id = oi.PkOrderItemId, Label = oi.Order.CreatedAt.ToString("g") });
+                    eligibleItems.Add(new ViewModels.EligibleOrderItemVM { Id = oi.PkOrderItemId, Label = oi.Order!.CreatedAt.ToString("g") });
                 }
                 else if (rating.IsDeleted && rating.DeletedAt.HasValue
                       && (DateTime.UtcNow - rating.DeletedAt.Value).TotalHours >= 24)
                 {
                     // The previous rating was deleted more than 24 hours ago — the cooldown
                     // has expired, so this order item becomes eligible again.
-                    eligibleItems.Add(new ViewModels.EligibleOrderItemVM { Id = oi.PkOrderItemId, Label = oi.Order.CreatedAt.ToString("g") });
+                    eligibleItems.Add(new ViewModels.EligibleOrderItemVM { Id = oi.PkOrderItemId, Label = oi.Order!.CreatedAt.ToString("g") });
                 }
                 else if (existingRating == null)
                 {

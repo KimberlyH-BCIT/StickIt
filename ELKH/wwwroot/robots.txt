@@ -1,0 +1,42 @@
+User-agent: *
+
+# Admin and internal management areas
+Disallow: /Admin
+Disallow: /Admin/
+Disallow: /Manager
+Disallow: /Manager/
+Disallow: /Inventory
+Disallow: /Inventory/
+Disallow: /Moderation
+Disallow: /Moderation/
+Disallow: /AuditLog
+Disallow: /AuditLog/
+
+# Authenticated user areas
+Disallow: /Cart
+Disallow: /Cart/
+Disallow: /Checkout
+Disallow: /Checkout/
+Disallow: /Order
+Disallow: /Order/
+Disallow: /OrderHistory
+Disallow: /OrderHistory/
+Disallow: /User
+Disallow: /User/
+Disallow: /Wishlist
+Disallow: /Wishlist/
+
+# Identity (login/register are crawlable but internal account pages are not)
+Disallow: /Identity/Account/Manage
+Disallow: /Identity/Account/Manage/
+
+# Internal API and monitoring endpoints
+Disallow: /Admin/metrics
+Disallow: /paypal/
+Disallow: /health
+
+Allow: /
+Allow: /Product
+Allow: /Product/Details/
+Allow: /Identity/Account/Login
+Allow: /Identity/Account/Register

@@ -145,10 +145,8 @@ LIMIT 10;";
             // capping the scan at CandidateLimit (default 200) to bound worst-case latency.
             var normQuery = normQ;
             var prefix = normQuery.Length >= 3 ? normQuery.Substring(0, 3) : normQuery;
-            var candidates = await _db.Products
-
-                .Select(p => new { p.PkProductId, p.Name, p.Price, p.NameNormalized, Thumbnail = p.ProductImage.Select(pi => pi.ProductImageURL).FirstOrDefault() })
-
+            var candidates = await _db.Product
+                .Select(p => new { p.PkProductId, p.Name, p.Price, p.NameNormalized, Thumbnail = p.ProductImage!.Select(pi => pi.ProductImageURL).FirstOrDefault() })
                 .Where(p => p.NameNormalized.Contains(prefix) || p.NameNormalized.StartsWith(normQuery))
                 .Take(_searchOptions?.Value?.Fuzzy?.CandidateLimit ?? 200)
                 .ToListAsync();
@@ -166,7 +164,7 @@ LIMIT 10;";
                 // bold highlight spans without any additional string parsing.
                 var tokens = token.Split(new[] { ' ' }, StringSplitOptions.RemoveEmptyEntries);
                 var positions = _fuzzyHelper.FindBestMatchPositions(tokens, x.Name ?? string.Empty);
-                var dto = new SearchResultDto { Id = x.PkProductId, Name = x.Name, Price = x.Price, Thumbnail = x.Thumbnail ?? string.Empty };
+                var dto = new SearchResultDto { Id = x.PkProductId, Name = x.Name ?? string.Empty, Price = x.Price, Thumbnail = x.Thumbnail ?? string.Empty };
                 dto.Matches.AddRange(positions);
                 resultList.Add(dto);
             }

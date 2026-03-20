@@ -194,8 +194,29 @@ body {
 .form-floating > .form-control:focus::placeholder {
     text-align: start;
 }
-.form-floating > .form-control-plaintext:focus::placeholder, .form-floating > .form-control:focus::placeholder {
-  text-align: start;
+/* Inline dark footer like <footer style="background:#111;"> */
+footer[style*="background:#111"]{
+    background: linear-gradient(180deg,
+    rgba(255, 220, 236, 0.95),
+    rgba(210, 236, 255, 0.95)) !important;
+    border-top: 1px solid rgba(255,140,198,.18) !important;
+}
+footer[style*="background:#111"] *{ color: rgba(32,50,74,.78) !important; }
+footer[style*="background:#111"] a:hover{ color: var(--mint) !important; }
+
+/* ---------- Cards / accordion polish ---------- */
+.card, .accordion-item{
+    border-radius: 18px !important;
+    border-color: rgba(255,140,198,.18) !important;
+}
+.shadow-sm{ box-shadow: 0 12px 28px rgba(20,30,60,.10) !important; }
+
+/* Focus ring */
+.btn:focus, .btn:active:focus,
+.btn-link.nav-link:focus,
+.form-control:focus,
+.form-check-input:focus{
+    box-shadow: 0 0 0 .15rem rgba(102,209,193,.25) !important;
 }
 
 .hide{
@@ -204,8 +225,6 @@ body {
 /* =====================================================
    user list role icons
 ===================================================== */
-/* ROLE BADGES */
-
 .role-badge {
     padding: 6px 16px;
     border-radius: 20px;
@@ -219,36 +238,13 @@ body {
     text-decoration: none;
 }
 
-/* ACTIVE FILTER BUTTON */
-
 .active-role {
     background: #f8f9fa;
     box-shadow: 0 2px 6px rgba(0,0,0,0.08);
 }
 
-/* ROLE COLORS */
-
-.role-admin {
-    border-color: #dc3545;
-    color: #dc3545;
-}
-
-.role-manager {
-    border-color: #0d6efd;
-    color: #0d6efd;
-}
-
-.role-staff {
-    border-color: #0dcaf0;
-    color: #0dcaf0;
-}
-
-.role-customer {
-    border-color: #6c757d;
-    color: #6c757d;
-}
-
-.role-none {
-    border-color: #adb5bd;
-    color: #adb5bd;
-}
+.role-admin    { border-color: #dc3545; color: #dc3545; }
+.role-manager  { border-color: #0d6efd; color: #0d6efd; }
+.role-staff    { border-color: #0dcaf0; color: #0dcaf0; }
+.role-customer { border-color: #6c757d; color: #6c757d; }
+.role-none     { border-color: #adb5bd; color: #adb5bd; }

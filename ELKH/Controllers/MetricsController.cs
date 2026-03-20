@@ -1,6 +1,7 @@
 using System.Text;
 using ELKH.Data;
 using ELKH.Models;
+using ELKH.Services;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.EntityFrameworkCore;
@@ -41,9 +42,9 @@ namespace ELKH.Controllers
     public class MetricsController : Controller
     {
         private readonly ApplicationDbContext _db;
-        private readonly Services.FuzzyReindexService _reindex;
+        private readonly IFuzzyReindexService _reindex;
 
-        public MetricsController(ApplicationDbContext db, Services.FuzzyReindexService reindex)
+        public MetricsController(ApplicationDbContext db, IFuzzyReindexService reindex)
         {
             _db = db;
             _reindex = reindex;
@@ -109,7 +110,7 @@ namespace ELKH.Controllers
             // Metrics endpoints should not propagate DB exceptions
             try
             {
-                var suggestionCount = await _db.Set<FuzzySuggestionModel>().CountAsync();
+                var suggestionCount = await _db.FuzzySuggestions.CountAsync();
                 sb.AppendLine("# HELP fuzzy_suggestion_count Number of precomputed fuzzy suggestion rows");
                 sb.AppendLine("# TYPE fuzzy_suggestion_count gauge");
                 sb.AppendLine($"fuzzy_suggestion_count {suggestionCount}");

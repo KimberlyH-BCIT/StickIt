@@ -6,10 +6,10 @@ namespace ELKH.Repositories
 {
     /// <summary>
     /// Base repository providing common CRUD operations for entities.
-    /// Eliminates duplicate code across repositories while allowing custom methods.
+    /// All write operations are async-only to avoid blocking thread-pool threads.
     /// </summary>
-    /// <typeparam name="TEntity">The entity type (e.g., UserProfileModel)</typeparam>
-    /// <typeparam name="TKey">The primary key type (e.g., int, string)</typeparam>
+    /// <typeparam name="TEntity">The entity type</typeparam>
+    /// <typeparam name="TKey">The primary key type</typeparam>
     public abstract class RepositoryBase<TEntity, TKey> where TEntity : class
     {
         protected readonly ApplicationDbContext Context;
@@ -21,107 +21,75 @@ namespace ELKH.Repositories
             Logger = logger;
         }
 
-        /// <summary>
-        /// Get an entity by its primary key.
-        /// </summary>
+        // ── Read ──────────────────────────────────────────────────────────────
+
+        /// <summary>Get an entity by its primary key synchronously (prefer the async overload).</summary>
         public virtual TEntity? GetById(TKey id)
         {
-            try
-            {
-                return Context.Set<TEntity>().Find(id);
-            }
+            try   { return Context.Set<TEntity>().Find(id); }
             catch (Exception ex)
             {
                 Logger.LogError(ex, "Error retrieving {EntityType} with ID {Id}", typeof(TEntity).Name, id);
-                return null;
+                throw;
             }
         }
 
-        /// <summary>
-        /// Get an entity by its primary key asynchronously.
-        /// </summary>
+        /// <summary>Get an entity by its primary key asynchronously.</summary>
         public virtual async Task<TEntity?> GetByIdAsync(TKey id)
         {
-            try
-            {
-                return await Context.Set<TEntity>().FindAsync(id);
-            }
+            try   { return await Context.Set<TEntity>().FindAsync(id); }
             catch (Exception ex)
             {
                 Logger.LogError(ex, "Error retrieving {EntityType} with ID {Id}", typeof(TEntity).Name, id);
-                return null;
+                throw;
             }
         }
 
-        /// <summary>
-        /// Get all entities of this type.
-        /// </summary>
+        /// <summary>Get all entities (prefer the async overload).</summary>
         public virtual IEnumerable<TEntity> GetAll()
         {
-            try
-            {
-                return Context.Set<TEntity>().ToList();
-            }
+            try   { return Context.Set<TEntity>().ToList(); }
             catch (Exception ex)
             {
                 Logger.LogError(ex, "Error retrieving all {EntityType}", typeof(TEntity).Name);
-                return Enumerable.Empty<TEntity>();
+                throw;
             }
         }
 
-        /// <summary>
-        /// Get all entities of this type asynchronously.
-        /// </summary>
+        /// <summary>Get all entities asynchronously.</summary>
         public virtual async Task<IEnumerable<TEntity>> GetAllAsync()
         {
-            try
-            {
-                return await Context.Set<TEntity>().ToListAsync();
-            }
+            try   { return await Context.Set<TEntity>().ToListAsync(); }
             catch (Exception ex)
             {
                 Logger.LogError(ex, "Error retrieving all {EntityType}", typeof(TEntity).Name);
-                return Enumerable.Empty<TEntity>();
+                throw;
             }
         }
 
-        /// <summary>
-        /// Add a new entity to the database.
-        /// </summary>
-        public virtual void Add(TEntity entity)
-        {
-            Context.Set<TEntity>().Add(entity);
-        }
+        // ── Write (staging only — no immediate save) ──────────────────────────
+
+        /// <summary>Stage a new entity for insertion (does not save).</summary>
+        public virtual void Add(TEntity entity) => Context.Set<TEntity>().Add(entity);
+
+        /// <summary>Stage an updated entity (does not save).</summary>
+        public virtual void Update(TEntity entity) => Context.Set<TEntity>().Update(entity);
+
+        /// <summary>Stage an entity for deletion (does not save).</summary>
+        public virtual void Delete(TEntity entity) => Context.Set<TEntity>().Remove(entity);
+
+        // ── Write + Save (async) ──────────────────────────────────────────────
 
         /// <summary>
-        /// Add a new entity and save changes immediately.
-        /// Returns true if successful, false otherwise.
+        /// Add and immediately persist an entity.
+        /// Uses <c>Add</c> (not <c>AddAsync</c>) — the async overload is only beneficial
+        /// for HiLo key generation, not the default auto-increment strategy.
         /// </summary>
-        public virtual bool AddAndSave(TEntity entity)
+        public virtual async Task<bool> AddAndSaveAsync(TEntity entity)
         {
             try
             {
                 Context.Set<TEntity>().Add(entity);
-                Context.SaveChanges();
-                Logger.LogInformation("Added new {EntityType}", typeof(TEntity).Name);
-                return true;
-            }
-            catch (Exception ex)
-            {
-                Logger.LogError(ex, "Error adding {EntityType}", typeof(TEntity).Name);
-                return false;
-            }
-        }
-
-        /// <summary>
-        /// Add a new entity and save changes asynchronously.
-        /// Returns true if successful, false otherwise.
-        /// </summary>
-        public virtual async Task<bool> AddAsync(TEntity entity)
-        {
-            try
-            {
-                await Context.Set<TEntity>().AddAsync(entity);
                 await Context.SaveChangesAsync();
                 Logger.LogInformation("Added new {EntityType}", typeof(TEntity).Name);
                 return true;
@@ -133,39 +101,8 @@ namespace ELKH.Repositories
             }
         }
 
-        /// <summary>
-        /// Update an existing entity.
-        /// </summary>
-        public virtual void Update(TEntity entity)
-        {
-            Context.Set<TEntity>().Update(entity);
-        }
-
-        /// <summary>
-        /// Update an existing entity and save changes immediately.
-        /// Returns true if successful, false otherwise.
-        /// </summary>
-        public virtual bool UpdateAndSave(TEntity entity)
-        {
-            try
-            {
-                Context.Set<TEntity>().Update(entity);
-                Context.SaveChanges();
-                Logger.LogInformation("Updated {EntityType}", typeof(TEntity).Name);
-                return true;
-            }
-            catch (Exception ex)
-            {
-                Logger.LogError(ex, "Error updating {EntityType}", typeof(TEntity).Name);
-                return false;
-            }
-        }
-
-        /// <summary>
-        /// Update an existing entity and save changes asynchronously.
-        /// Returns true if successful, false otherwise.
-        /// </summary>
-        public virtual async Task<bool> UpdateAsync(TEntity entity)
+        /// <summary>Update and immediately persist an entity.</summary>
+        public virtual async Task<bool> UpdateAndSaveAsync(TEntity entity)
         {
             try
             {
@@ -181,49 +118,17 @@ namespace ELKH.Repositories
             }
         }
 
-        /// <summary>
-        /// Delete an entity from the database.
-        /// </summary>
-        public virtual void Delete(TEntity entity)
-        {
-            Context.Set<TEntity>().Remove(entity);
-        }
-
-        /// <summary>
-        /// Delete an entity and save changes immediately.
-        /// Returns true if successful, false otherwise.
-        /// </summary>
-        public virtual bool DeleteAndSave(TEntity entity)
-        {
-            try
-            {
-                Context.Set<TEntity>().Remove(entity);
-                Context.SaveChanges();
-                Logger.LogInformation("Deleted {EntityType}", typeof(TEntity).Name);
-                return true;
-            }
-            catch (Exception ex)
-            {
-                Logger.LogError(ex, "Error deleting {EntityType}", typeof(TEntity).Name);
-                return false;
-            }
-        }
-
-        /// <summary>
-        /// Delete an entity by ID asynchronously.
-        /// Returns true if successful, false otherwise.
-        /// </summary>
+        /// <summary>Delete an entity by ID and immediately persist.</summary>
         public virtual async Task<bool> DeleteAsync(TKey id)
         {
             try
             {
                 var entity = await GetByIdAsync(id);
-                if (entity == null)
+                if (entity is null)
                 {
-                    Logger.LogWarning("Cannot delete {EntityType} with ID {Id} - not found", typeof(TEntity).Name, id);
+                    Logger.LogWarning("Cannot delete {EntityType} with ID {Id} — not found", typeof(TEntity).Name, id);
                     return false;
                 }
-
                 Context.Set<TEntity>().Remove(entity);
                 await Context.SaveChangesAsync();
                 Logger.LogInformation("Deleted {EntityType} with ID {Id}", typeof(TEntity).Name, id);
@@ -236,20 +141,24 @@ namespace ELKH.Repositories
             }
         }
 
-        /// <summary>
-        /// Save all pending changes to the database.
-        /// </summary>
-        public virtual void SaveChanges()
+        /// <summary>Delete an entity instance and immediately persist.</summary>
+        public virtual async Task<bool> DeleteAndSaveAsync(TEntity entity)
         {
-            Context.SaveChanges();
+            try
+            {
+                Context.Set<TEntity>().Remove(entity);
+                await Context.SaveChangesAsync();
+                Logger.LogInformation("Deleted {EntityType}", typeof(TEntity).Name);
+                return true;
+            }
+            catch (Exception ex)
+            {
+                Logger.LogError(ex, "Error deleting {EntityType}", typeof(TEntity).Name);
+                return false;
+            }
         }
 
-        /// <summary>
-        /// Save all pending changes to the database asynchronously.
-        /// </summary>
-        public virtual async Task SaveChangesAsync()
-        {
-            await Context.SaveChangesAsync();
-        }
+        /// <summary>Flush all pending changes asynchronously.</summary>
+        public virtual async Task SaveChangesAsync() => await Context.SaveChangesAsync();
     }
 }

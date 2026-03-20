@@ -41,13 +41,14 @@ namespace ELKH.Controllers;
 /// </remarks>
 public class CartController : AuthenticatedControllerBase
 {
-    // Dependency: cart service implements domain logic for cart management and ordering.
     private readonly ICartService _cartService;
+    private readonly ILogger<CartController> _logger;
 
-    public CartController(ICartService cartService, IUserService userService)
-        : base(userService)
+    public CartController(ICartService cartService, IUserService userService, ILogger<CartController> logger, ELKH.Data.ApplicationDbContext db)
+        : base(db, userService)
     {
         _cartService = cartService;
+        _logger = logger;
     }
 
     // ---------------------------------------------------------------------

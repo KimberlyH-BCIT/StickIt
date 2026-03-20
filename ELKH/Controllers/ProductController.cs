@@ -1,10 +1,9 @@
-﻿using ELKH.Data;
-using ELKH.Models;
+﻿using ELKH.Models;
 using ELKH.ViewModels;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc.Rendering;
-using Microsoft.EntityFrameworkCore;
+using static ELKH.Extensions.RateLimitPolicies;
 
 namespace ELKH.Controllers
 {
@@ -66,28 +65,17 @@ namespace ELKH.Controllers
     public class ProductController : Controller
     {
         #region Fields & Constructor
-        private readonly ApplicationDbContext _context;
         private readonly ELKH.Services.ISearchService _searchService;
         private readonly ELKH.Services.IProductService _productService;
         private readonly ELKH.Services.IRatingService _ratingService;
         private readonly ELKH.Services.IUserService _userService;
 
-        /// <summary>
-        /// Initializes a new instance of <see cref="ProductController"/> with all required services.
-        /// </summary>
-        /// <param name="context">EF Core database context for direct product and category queries.</param>
-        /// <param name="searchService">Full-text and fuzzy search service for product name lookups.</param>
-        /// <param name="productService">Product business logic and output-cache service.</param>
-        /// <param name="ratingService">Review submission, approval, and purchase-eligibility service.</param>
-        /// <param name="userService">Registered user lookup service for identity resolution.</param>
         public ProductController(
-            ApplicationDbContext context,
             ELKH.Services.ISearchService searchService,
             ELKH.Services.IProductService productService,
             ELKH.Services.IRatingService ratingService,
             ELKH.Services.IUserService userService)
         {
-            _context = context;
             _searchService = searchService;
             _productService = productService;
             _ratingService = ratingService;
@@ -97,17 +85,41 @@ namespace ELKH.Controllers
 
         #region Index / Details
         /// <summary>
-        /// Displays the complete list of active products, served from the output cache when available.
-        /// The cache entry is tagged <c>"products"</c> and expires after 5 minutes,
-        /// governed by the <c>ProductList</c> output-cache policy defined at startup.
+        /// Displays a filtered, paginated list of active products.
+        /// Results are served from the output cache keyed by all query parameters.
         /// </summary>
-        /// <returns>The product index view populated with all active products.</returns>
         // GET: Product/Index
         [Microsoft.AspNetCore.OutputCaching.OutputCache(PolicyName = "ProductList")]
-        public async Task<IActionResult> Index()
+        public async Task<IActionResult> Index(string? search, int? categoryId, int page = 1)
         {
-            var prods = await _productService.GetAllAsync();
-            return View(prods);
+            const int pageSize = 12;
+
+            var allProducts = (await _productService.GetAllAsync()).AsEnumerable();
+
+            // Apply filters in-memory on the cached product list.
+            if (!string.IsNullOrWhiteSpace(search))
+                allProducts = allProducts.Where(p =>
+                    p.ProductName.Contains(search, StringComparison.OrdinalIgnoreCase) ||
+                    p.Description.Contains(search, StringComparison.OrdinalIgnoreCase));
+
+            if (categoryId.HasValue)
+                allProducts = allProducts.Where(p => p.CategoryId == categoryId.Value);
+
+            var filtered    = allProducts.ToList();
+            var totalPages  = Math.Max(1, (int)Math.Ceiling(filtered.Count / (double)pageSize));
+            page            = Math.Clamp(page, 1, totalPages);
+            var pageItems   = filtered.Skip((page - 1) * pageSize).Take(pageSize).ToList();
+
+            var categories  = await _productService.GetCategoriesAsync();
+
+            ViewBag.Search     = search;
+            ViewBag.CategoryId = categoryId;
+            ViewBag.Page       = page;
+            ViewBag.TotalPages = totalPages;
+            ViewBag.Total      = filtered.Count;
+            ViewBag.Categories = new SelectList(categories, "PkCategoryId", "CategoryName", categoryId);
+
+            return View(pageItems);
         }
 
         /// <summary>
@@ -331,6 +343,7 @@ namespace ELKH.Controllers
         /// </returns>
         // GET: /Product/SearchNames?q=term
         [HttpGet]
+        [Microsoft.AspNetCore.RateLimiting.EnableRateLimiting(Search)]
         public async Task<IActionResult> SearchNames(string q)
         {
             if (string.IsNullOrWhiteSpace(q)) return Json(Array.Empty<object>());
@@ -394,12 +407,7 @@ namespace ELKH.Controllers
                 return View(vm);
             }
 
-            ProductModel product = MapToEntity(vm);
-            _context.Products.Add(product);
-            // MapToEntity already sets NameNormalized; this line re-applies it after the
-            // entity is tracked by EF Core to guard against any post-construction mutation.
-            product.NameNormalized = NormalizeName(product.Name);
-            await _context.SaveChangesAsync();
+            await _productService.CreateAsync(vm);
 
             TempData["Message"] = "success, Product created successfully";
             return RedirectToAction(nameof(Index));
@@ -419,21 +427,16 @@ namespace ELKH.Controllers
         // GET: Product/Edit
         public async Task<IActionResult> Edit(int id)
         {
-            var product = await _context.Products
-                .Include(p => p.Category)
-                .FirstOrDefaultAsync(p => p.PkProductId == id);
-
-            if (product is null)
+            var vm = await _productService.GetByIdAsync(id);
+            if (vm is null)
             {
                 TempData["Message"] = $"warning, Unable to find product ID: {id}";
                 return RedirectToAction("Index");
             }
 
-            var options = await BuildCategoryOptionsAsync(product.FkCategoryId);
+            var options = await BuildCategoryOptionsAsync(vm.CategoryId);
             ViewBag.FkCategoryId = options;
             ViewBag.CategoryId = options;
-
-            ProductVM vm = MapToVM(product);
 
             return View(vm);
         }
@@ -468,25 +471,14 @@ namespace ELKH.Controllers
                 return View(vm);
             }
 
-            var product = await _context.Products.FindAsync(vm.ProductId);
-            if (product is null)
+            var exists = await _productService.GetByIdAsync(vm.ProductId);
+            if (exists is null)
             {
                 TempData["Message"] = $"warning, Unable to find product ID: {vm.ProductId}";
                 return RedirectToAction(nameof(Index));
             }
 
-            // Assign only the fields exposed by the form. Explicit property assignment
-            // (rather than Attach + SetValues) prevents unintentionally overwriting fields
-            // that are not part of the edit view model (e.g. audit timestamps, images).
-            product.Name = vm.ProductName;
-            product.NameNormalized = NormalizeName(vm.ProductName);
-            product.Description = vm.Description;
-            product.Price = vm.Price;
-            product.StockQuantity = vm.StockQuantity;
-            product.IsActive = vm.IsActive;
-            product.FkCategoryId = vm.CategoryId;
-
-            await _context.SaveChangesAsync();
+            await _productService.UpdateAsync(vm);
 
             TempData["Message"] = "success, Product updated successfully";
             return RedirectToAction(nameof(Index));
@@ -505,18 +497,12 @@ namespace ELKH.Controllers
         // GET: Product/Delete
         public async Task<IActionResult> Delete(int id)
         {
-            var product = await _context.Products
-                .Include(p => p.Category)
-                .FirstOrDefaultAsync(p => p.PkProductId == id);
-
-            if (product is null)
+            var vm = await _productService.GetByIdAsync(id);
+            if (vm is null)
             {
                 TempData["Message"] = $"warning, Unable to find product ID: {id}";
                 return RedirectToAction(nameof(Index));
             }
-            
-            ProductVM vm = MapToVM(product);
-
             return View(vm);
         }
 
@@ -535,18 +521,16 @@ namespace ELKH.Controllers
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> DeleteConfirmed(int id)
         {
-            var product = await _context.Products.FindAsync(id);
-            if (product is not null)
+            var exists = await _productService.GetByIdAsync(id);
+            if (exists is not null)
             {
-                _context.Products.Remove(product);
-                await _context.SaveChangesAsync();
+                await _productService.DeleteAsync(id);
                 TempData["Message"] = "success, Product deleted successfully";
             }
             else
             {
                 TempData["Message"] = $"warning, Unable to find product ID: {id}";
             }
-            
             return RedirectToAction(nameof(Index));
         }
         #endregion
@@ -563,7 +547,7 @@ namespace ELKH.Controllers
         /// <returns>An alphabetically ordered list of select list items.</returns>
         private async Task<IEnumerable<SelectListItem>> BuildCategoryOptionsAsync(int? selectedId = null)
         {
-            var categories = await _context.Categories.ToListAsync();
+            var categories = await _productService.GetCategoriesAsync();
             return categories
                 .OrderBy(c => c.CategoryName)
                 .Select(c => new SelectListItem
@@ -574,91 +558,6 @@ namespace ELKH.Controllers
                 }).ToList();
         }
 
-        /// <summary>
-        /// Maps a <see cref="ProductModel"/> entity to a <see cref="ProductVM"/> view model.
-        /// The <c>Category</c> and <c>ProductRatings</c> navigation properties must be
-        /// loaded (via <c>Include</c>) before calling this method.
-        /// </summary>
-        /// <param name="p">The product entity to map.</param>
-        /// <returns>A fully populated <see cref="ProductVM"/>.</returns>
-        private ProductVM MapToVM(ProductModel p)
-        {
-            return new ProductVM
-            {
-                ProductId = p.PkProductId,
-                ProductName = p.Name,
-                Description = p.Description,
-                Price = p.Price,
-                DiscountPercent = p.DiscountPercent,
-                StockQuantity = p.StockQuantity ?? 0,
-                IsActive = p.IsActive,
-                CategoryId = p.FkCategoryId,
-                CategoryName = p.Category?.CategoryName ?? "Unknown"
-                ,
-                // Any() guard prevents the InvalidOperationException that Average() throws
-                // on an empty sequence; unrated products default to zero.
-                AverageRating = p.ProductRatings.Any() ? p.ProductRatings.Average(r => r.Rating) : 0
-            };
-        }
-
-        /// <summary>
-        /// Maps a <see cref="ProductVM"/> view model to a new <see cref="ProductModel"/> entity.
-        /// <c>NameNormalized</c> is set immediately so the entity is search-ready
-        /// before it is handed to EF Core for persistence.
-        /// </summary>
-        /// <param name="vm">The view model to map.</param>
-        /// <returns>A new <see cref="ProductModel"/> populated from the view model.</returns>
-        private ProductModel MapToEntity(ProductVM vm)
-        {
-            return new ProductModel
-            {
-                PkProductId = vm.ProductId,
-                Name = vm.ProductName,
-                NameNormalized = NormalizeName(vm.ProductName),
-                Description = vm.Description,
-                Price = vm.Price,
-                StockQuantity = vm.StockQuantity,
-                IsActive = vm.IsActive,
-                FkCategoryId = vm.CategoryId
-            };
-        }
-
-        /// <summary>
-        /// Produces a normalized, lowercase, diacritic-free version of a product name
-        /// for case-insensitive and accent-insensitive full-text search indexing.
-        /// </summary>
-        /// <param name="name">The raw product name to normalize.</param>
-        /// <returns>
-        /// A lowercase string with all Unicode combining marks (accents/diacritics) removed,
-        /// or <see cref="string.Empty"/> if <paramref name="name"/> is <see langword="null"/> or empty.
-        /// </returns>
-        /// <example>
-        /// <c>NormalizeName("Cr\u00e8me Br\u00fbl\u00e9e")</c> returns <c>"creme brulee"</c>.
-        /// </example>
-        private static string NormalizeName(string name)
-        {
-            if (string.IsNullOrEmpty(name)) return string.Empty;
-
-            // NFD (Canonical Decomposition) splits composite characters into a base letter
-            // followed by one or more separate combining-mark code points.
-            // Example: "\u00e9" (e-acute) → "e" + "\u0301" (combining acute accent).
-            var s = name.Normalize(System.Text.NormalizationForm.FormD);
-            var sb = new System.Text.StringBuilder();
-            foreach (var ch in s)
-            {
-                var uc = System.Globalization.CharUnicodeInfo.GetUnicodeCategory(ch);
-                // Drop every NonSpacingMark — these are the diacritic/accent code points
-                // that NFD separated from their base letters. Keeping only base letters
-                // effectively strips all accent marks from the string.
-                if (uc != System.Globalization.UnicodeCategory.NonSpacingMark)
-                    sb.Append(ch);
-            }
-
-            // NFC (Canonical Composition) re-combines any remaining decomposed sequences
-            // into their canonical precomposed forms, then ToLowerInvariant applies
-            // culture-independent case folding for consistent index storage.
-            return sb.ToString().Normalize(System.Text.NormalizationForm.FormC).ToLowerInvariant();
-        }
         #endregion
     }
 }

@@ -2,6 +2,7 @@ using ELKH.ViewModels;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
+using System.ComponentModel.DataAnnotations;
 
 namespace ELKH.Controllers
 {
@@ -81,7 +82,6 @@ namespace ELKH.Controllers
             if (role == null) return NotFound();
 
             role.Name = model.RoleName;
-
             var result = await _roleManager.UpdateAsync(role);
 
             if (result.Succeeded)
@@ -152,7 +152,6 @@ namespace ELKH.Controllers
             }
 
             var user = await _userManager.FindByEmailAsync(model.Email);
-
             if (user == null)
             {
                 ModelState.AddModelError("", "User not found.");
@@ -160,7 +159,7 @@ namespace ELKH.Controllers
                 return View(model);
             }
 
-            if (await _userManager.IsInRoleAsync(user, model.RoleName))
+            if (await _userManager.IsInRoleAsync(user, model.RoleName!))
             {
                 ModelState.AddModelError("", "User already has this role.");
                 model.Roles = GetRoles();
@@ -223,6 +222,9 @@ namespace ELKH.Controllers
             }
 
             var result = await _userManager.RemoveFromRoleAsync(user, role.Name!);
+            TempData[result.Succeeded ? "Success" : "Error"] = result.Succeeded
+                ? "User removed from role successfully."
+                : "Failed to remove user from role.";
 
             TempData[result.Succeeded ? "Success" : "Error"] =
                 result.Succeeded ? "User removed from role." : "Failed to remove user.";

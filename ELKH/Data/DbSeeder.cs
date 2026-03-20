@@ -14,8 +14,11 @@ public static class DbSeeder
 {
     public static async Task SeedProductsAsync(ApplicationDbContext db)
     {
-        // Skip if products already exist
-        if (await db.Products.AnyAsync()) return;
+        //Skip if products already exist
+        if (await db.Product.AnyAsync())
+        {
+            return;
+        }
 
         // ── 1. Ensure the seven categories exist ───────────────────────
         var categoryNames = new[]
@@ -220,7 +223,7 @@ public static class DbSeeder
               3.99m, 0, 95, gaming),
         };
 
-        db.Products.AddRange(products);
+        db.Product.AddRange(products);
         await db.SaveChangesAsync();
     }
 
@@ -288,20 +291,26 @@ public static class DbSeeder
         IConfiguration configuration)
     {
         const string adminRole    = "Admin";
+        const string managerRole  = "Manager";
+        const string staffRole    = "Staff";
         const string customerRole = "Customer";
 
         // Read from user-secrets / environment variables.
         // The fallback values are intentionally weak dev-only defaults;
         // they must be overridden for any shared or internet-accessible environment.
-        var adminEmail = configuration["Seed:AdminEmail"] ?? "admin@stickit.dev";
-        var adminPass  = configuration["Seed:AdminPass"]  ?? "Admin@2025!";
+        // IsNullOrWhiteSpace guards against the empty-string values in appsettings.json,
+        // which would never satisfy the ?? operator and would create a credential-less account.
+        var adminEmail = configuration["Seed:AdminEmail"];
+        if (string.IsNullOrWhiteSpace(adminEmail)) adminEmail = "admin@stickit.dev";
+        var adminPass  = configuration["Seed:AdminPass"];
+        if (string.IsNullOrWhiteSpace(adminPass))  adminPass  = "Admin@2025!";
 
-        // Ensure both roles exist regardless of whether the users already exist.
-        if (!await roleManager.RoleExistsAsync(adminRole))
-            await roleManager.CreateAsync(new IdentityRole(adminRole));
-
-        if (!await roleManager.RoleExistsAsync(customerRole))
-            await roleManager.CreateAsync(new IdentityRole(customerRole));
+        // Ensure all four roles exist regardless of whether the users already exist.
+        foreach (var role in new[] { adminRole, managerRole, staffRole, customerRole })
+        {
+            if (!await roleManager.RoleExistsAsync(role))
+                await roleManager.CreateAsync(new IdentityRole(role));
+        }
 
         var admin = await userManager.FindByEmailAsync(adminEmail);
 
@@ -343,7 +352,7 @@ public static class DbSeeder
             ? await File.ReadAllBytesAsync(avatarPath)
             : null;
 
-        var products = await db.Products.AsNoTracking().ToListAsync();
+        var products = await db.Product.AsNoTracking().ToListAsync();
         if (products.Count == 0) return;
 
         var rng = new Random(42);

@@ -14,6 +14,7 @@ using Microsoft.AspNetCore.Identity.UI.Services;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 using Microsoft.Extensions.Logging;
+using static ELKH.Extensions.RateLimitPolicies;
 
 namespace ELKH.Areas.Identity.Pages.Account
 {
@@ -103,6 +104,7 @@ namespace ELKH.Areas.Identity.Pages.Account
             ReturnUrl = returnUrl;
         }
 
+        [Microsoft.AspNetCore.RateLimiting.EnableRateLimiting(Auth)]
         public async Task<IActionResult> OnPostAsync(string returnUrl = null)
         {
             returnUrl ??= Url.Content("~/");

@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="en">
 <head>
     @using Microsoft.AspNetCore.Identity
@@ -12,156 +12,78 @@
     }
     <meta name="csrf-token" content="@csrfToken" />
     <link rel="icon" type="image/png" href="~/logo-stickit.png" />
-    <title>@ViewData["Title"] - STICK IT</title>
+<title>@ViewData["Title"] - ELKH</title>
     <script type="importmap"></script>
     <link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.min.css" />
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" />
     <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
     <link rel="stylesheet" href="~/ELKH.styles.css" asp-append-version="true" />
-
-    <style>
-        /* ── Pink Gradient Theme ─────────────────────────────── */
-        body {
-            background: #fff8fb;
-            font-family: 'Segoe UI', system-ui, sans-serif;
-        }
-
-        /* ── Navbar ──────────────────────────────────────────── */
-        .site-navbar {
-            background: linear-gradient(135deg, #e91e8c 0%, #f06292 50%, #ba68c8 100%);
-            box-shadow: 0 2px 16px rgba(233,30,140,.3);
-            position: sticky;
-            top: 0;
-            z-index: 1030;
-        }
-
-        .site-navbar .navbar-brand {
-            font-weight: 800;
-            font-size: 1.35rem;
-            color: #fff !important;
-            letter-spacing: .3px;
-            text-shadow: 0 1px 4px rgba(0,0,0,.15);
-        }
-
-        .site-navbar .nav-link {
-            color: rgba(255,255,255,.92) !important;
-            font-weight: 500;
-            padding: .4rem .8rem !important;
-            border-radius: 20px;
-            font-size: .87rem;
-            transition: background .18s;
-        }
-        .site-navbar .nav-link:hover {
-            background: rgba(255,255,255,.22);
-            color: #fff !important;
-        }
-
-        /* Search */
-        .navbar-search .form-control {
-            border-radius: 20px 0 0 20px;
-            border: none;
-            background: rgba(255,255,255,.93);
-            font-size: .87rem;
-        }
-        .navbar-search .btn-search {
-            border-radius: 0 20px 20px 0;
-            background: rgba(255,255,255,.93);
-            border: none;
-            color: #c2185b;
-            font-weight: 700;
-            padding: .375rem 1rem;
-            transition: background .18s;
-        }
-        .navbar-search .btn-search:hover { background: #fce4ec; }
-
-        /* Hamburger */
-        .nav-hamburger {
-            background: rgba(255,255,255,.18);
-            border: none;
-            border-radius: 8px;
-            color: #fff;
-            padding: .3rem .5rem;
-            cursor: pointer;
-            line-height: 1;
-            transition: background .18s;
-        }
-        .nav-hamburger:hover { background: rgba(255,255,255,.32); }
-
-        /* Cart */
-        .cart-icon-link {
-            color: #fff !important;
-            text-decoration: none;
-            padding: .3rem .5rem;
-            border-radius: 8px;
-            transition: background .18s;
-            position: relative;
-        }
-        .cart-icon-link:hover { background: rgba(255,255,255,.2); }
-        .cart-badge {
-            position: absolute;
-            top: -4px; right: -6px;
-            min-width: 17px; height: 17px;
-            padding: 0 3px;
-            border-radius: 9px;
-            background: #fff;
-            color: #c2185b;
-            font-size: .6rem;
-            font-weight: 800;
-            line-height: 17px;
-            text-align: center;
-            pointer-events: none;
-        }
-
-        /* Force login partial text white in navbar */
-        .site-navbar .navbar-text,
-        .site-navbar form a,
-        .site-navbar a { color: rgba(255,255,255,.92) !important; }
-        .site-navbar form .btn { border-color: rgba(255,255,255,.5); color: #fff; }
-        .site-navbar form .btn:hover { background: rgba(255,255,255,.2); }
-
-        /* ── Offcanvas ───────────────────────────────────────── */
-        #navOffcanvas .offcanvas-header {
-            background: linear-gradient(135deg, #e91e8c, #ba68c8);
-        }
-        #navOffcanvas .offcanvas-title { color: #fff; font-weight: 800; }
-        #navOffcanvas .btn-close { filter: invert(1); }
-        #navOffcanvas .nav-link {
-            color: #4a1030;
-            padding: .65rem 1rem;
-            font-weight: 500;
-            font-size: .9rem;
-        }
-        #navOffcanvas .nav-link:hover {
-            background: #fce4ec;
-            color: #c2185b;
-        }
-
-        /* ── Footer ──────────────────────────────────────────── */
-        .site-footer {
-            background: linear-gradient(135deg, #880e4f 0%, #ad1457 45%, #6a1b9a 100%);
-            color: rgba(255,255,255,.72);
-        }
-        .site-footer a { color: rgba(255,255,255,.6); text-decoration: none; transition: color .15s; }
-        .site-footer a:hover { color: #fff; }
-        .site-footer .footer-heading { color: #fff; font-weight: 700; margin-bottom: .55rem; font-size: .95rem; }
-        .site-footer hr { border-color: rgba(255,255,255,.15); }
-
-        /* ── Misc ────────────────────────────────────────────── */
-        main { min-height: 60vh; }
-        #productNameSuggestions {
-            z-index: 1060;
-            border-radius: 0 0 12px 12px;
-            overflow: hidden;
-        }
-    </style>
 </head>
 
 <body>
 
-    <!-- ══════════════════ NAVBAR ══════════════════ -->
-    <nav class="site-navbar navbar py-2 px-3">
-        <div class="container-fluid d-flex align-items-center gap-2 flex-nowrap">
+    @* â‘  Top bar: brand + login greeting *@
+    <div class="header-top border-bottom py-2">
+        <div class="container-fluid d-flex align-items-center justify-content-between flex-wrap gap-2">
+            <a class="navbar-brand mb-0 h1" asp-area="" asp-controller="Home" asp-action="Index">ELKH</a>
+            <div class="d-flex align-items-center flex-wrap gap-2">
+                <partial name="_LoginPartial" />
+                <partial name="_CartIconPartial" />
+            </div>
+        </div>
+    </div>
 
+        @* â‘¡ Search bar centered *@
+        <div class="header-search py-2">
+            <div class="container-fluid d-flex justify-content-center">
+                <div class="header-search-wrap position-relative">
+                    <form asp-controller="Product" asp-action="Index" method="get" class="d-flex" role="search">
+                        <input id="productNameInput"
+                               type="search"
+                               name="q"
+                               class="form-control"
+                               placeholder="Search productsâ€¦"
+                               autocomplete="off"
+                               aria-label="Search products" />
+                        <button type="submit" class="btn btn-outline-secondary ms-2">Search</button>
+                    </form>
+                    <div id="productNameSuggestions"
+                         class="list-group position-absolute w-100 shadow-sm"
+                         style="z-index:1050;display:none;"></div>
+                </div>
+            </div>
+        </div>
+
+        @* â‘¢ Nav strip â€” sits at the bottom of the header, separated by border-top *@
+        <nav class="header-nav border-top">
+            <div class="container-fluid d-flex align-items-center">
+                <button class="nav-hamburger flex-shrink-0 me-2"
+                        type="button"
+                        data-bs-toggle="offcanvas"
+                        data-bs-target="#navOffcanvas"
+                        aria-controls="navOffcanvas"
+                        aria-label="Open navigation menu">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" fill="currentColor" viewBox="0 0 16 16" aria-hidden="true">
+                        <path fill-rule="evenodd" d="M2.5 12a.5.5 0 0 1 .5-.5h10a.5.5 0 0 1 0 1H3a.5.5 0 0 1-.5-.5zm0-4a.5.5 0 0 1 .5-.5h10a.5.5 0 0 1 0 1H3a.5.5 0 0 1-.5-.5zm0-4a.5.5 0 0 1 .5-.5h10a.5.5 0 0 1 0 1H3a.5.5 0 0 1-.5-.5z"/>
+                    </svg>
+</button>
+@if (User.IsInRole("Admin"))
+{
+    <ul class="navbar-nav flex-row flex-grow-1 justify-content-evenly mb-0">
+        <li class="nav-item">
+            <a class="nav-link text-dark fw-semibold" asp-controller="Admin" asp-action="Index">Home</a>
+        </li>
+        <li class="nav-item">
+            <a class="nav-link text-dark" asp-controller="Home" asp-action="Index">View as Customer</a>
+        </li>
+        <li class="nav-item">
+            <a class="nav-link text-dark" asp-controller="Manager" asp-action="Index">View as Manager</a>
+        </li>
+        <li class="nav-item">
+            <a class="nav-link text-dark" asp-controller="Staff" asp-action="Index">View as Staff</a>
+        </li>
+    </ul>
+}
             <!-- Hamburger -->
             <button class="nav-hamburger flex-shrink-0"
                     type="button"
@@ -217,31 +139,48 @@
                 }
                 else
                 {
-                    <li class="nav-item"><a class="nav-link" asp-controller="Home"    asp-action="Index">Home</a></li>
-                    <li class="nav-item"><a class="nav-link" asp-controller="Product" asp-action="Index">Products</a></li>
-                    @if (SignInManager.IsSignedIn(User))
-                    {
-                        <li class="nav-item"><a class="nav-link" asp-controller="Wishlist" asp-action="Index">Wishlist</a></li>
-                        <li class="nav-item"><a class="nav-link" asp-controller="Order"    asp-action="MyHistory">My Orders</a></li>
-                        <li class="nav-item"><a class="nav-link" asp-controller="User"     asp-action="MyRatings">Ratings</a></li>
-                        <li class="nav-item"><a class="nav-link" asp-controller="User"     asp-action="EditProfile">Profile</a></li>
-                    }
+                    <ul class="navbar-nav flex-row flex-grow-1 justify-content-evenly mb-0">
+                        <li class="nav-item">
+                            <a class="nav-link text-dark" asp-area="" asp-controller="Home" asp-action="Index">Home</a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link text-dark" asp-area="" asp-controller="Product" asp-action="Index">Products</a>
+                        </li>
+                        @if (User.IsInRole("Staff"))
+                        {
+                            <li class="nav-item">
+                                <a class="nav-link text-dark" asp-area="" asp-controller="OrderHistory" asp-action="Index">Order History</a>
+                            </li>
+                            <li class="nav-item">
+                                <a class="nav-link text-dark" asp-area="" asp-controller="Inventory" asp-action="Index">Inventory</a>
+                            </li>
+                        }
+                        @if (SignInManager.IsSignedIn(User))
+                        {
+                            <li class="nav-item">
+                                <a class="nav-link text-dark" asp-area="" asp-controller="Wishlist" asp-action="Index">Wishlist</a>
+                            </li>
+                            <li class="nav-item">
+                                <a class="nav-link text-dark" asp-area="" asp-controller="Order" asp-action="MyHistory">My Orders</a>
+                            </li>
+                            <li class="nav-item">
+                                <a class="nav-link text-dark" asp-area="" asp-controller="User" asp-action="MyRatings">My Ratings</a>
+                            </li>
+                            <li class="nav-item">
+                                <a class="nav-link text-dark" asp-area="" asp-controller="User" asp-action="EditProfile">My Profile</a>
+                            </li>
+                        }
+                    </ul>
                 }
-            </ul>
-
-            <!-- Cart + Login always visible -->
-            <div class="d-flex align-items-center gap-1 ms-2 flex-shrink-0">
-                <partial name="_CartIconPartial" />
-                <partial name="_LoginPartial" />
             </div>
+        </nav>
 
-        </div>
-    </nav>
+    </header>
 
-    <!-- ══════════════════ OFF-CANVAS ══════════════════ -->
-    <div class="offcanvas offcanvas-start" tabindex="-1" id="navOffcanvas" aria-labelledby="navOffcanvasTitle" style="max-width:280px;">
-        <div class="offcanvas-header py-3">
-            <span class="offcanvas-title h6 mb-0" id="navOffcanvasTitle">🌸 STICK IT</span>
+    @* Off-canvas sidebar â€” opened by the hamburger button in the nav strip *@
+    <div class="offcanvas offcanvas-start" tabindex="-1" id="navOffcanvas" aria-labelledby="navOffcanvasTitle">
+        <div class="offcanvas-header border-bottom">
+            <a class="navbar-brand mb-0 h1" asp-area="" asp-controller="Home" asp-action="Index" id="navOffcanvasTitle">ELKH</a>
             <button type="button" class="btn-close" data-bs-dismiss="offcanvas" aria-label="Close"></button>
         </div>
 
@@ -261,6 +200,18 @@
             <ul class="navbar-nav flex-column">
                 @if (User.IsInRole("Admin"))
                 {
+                    <li class="nav-item border-bottom">
+                        <a class="nav-link text-dark px-3 py-2 fw-semibold" asp-controller="Admin" asp-action="Index">Home</a>
+                    </li>
+                    <li class="nav-item border-bottom">
+                        <a class="nav-link text-dark px-3 py-2" asp-controller="Home" asp-action="Index">View as Customer</a>
+                    </li>
+                    <li class="nav-item border-bottom">
+                        <a class="nav-link text-dark px-3 py-2" asp-controller="Manager" asp-action="Index">View as Manager</a>
+                    </li>
+                    <li class="nav-item border-bottom">
+                        <a class="nav-link text-dark px-3 py-2" asp-controller="Home" asp-action="Index">View as Staff</a>
+                    </li>
                     <li class="nav-item border-bottom"><a class="nav-link px-3 py-2 fw-bold" asp-controller="Admin"   asp-action="Index">🛡️ Admin Dashboard</a></li>
                     <li class="nav-item border-bottom"><a class="nav-link px-3 py-2" asp-controller="Manager" asp-action="Index">📦 Manager View</a></li>
                     <li class="nav-item border-bottom"><a class="nav-link px-3 py-2" asp-controller="Staff"   asp-action="Index">🧑‍💼 Staff View</a></li>
@@ -303,26 +254,32 @@
             var raw = TempData["Message"] as string;
             if (!string.IsNullOrEmpty(raw))
             {
-                var parts      = raw.Split(',', 2);
-                var level      = parts.Length > 0 ? parts[0].Trim().ToLower() : "info";
-                var msgText    = parts.Length > 1 ? parts[1].Trim() : "";
+                var parts = raw.Split(',', 2);
+                var level = parts.Length > 0 ? parts[0].Trim().ToLower() : "info";
+                var text = parts.Length > 1 ? parts[1].Trim() : string.Empty;
                 var alertClass = level switch
                 {
-                    "success"           => "alert-success",
+                    "success" => "alert-success",
                     "danger" or "error" => "alert-danger",
-                    "warning"           => "alert-warning",
-                    "info"              => "alert-info",
-                    _                   => "alert-secondary"
+                    "warning" => "alert-warning",
+                    "info" => "alert-info",
+                    _ => "alert-secondary"
                 };
-                if (!string.IsNullOrEmpty(msgText))
+                if (!string.IsNullOrEmpty(text))
                 {
-                    <div class="alert @alertClass alert-dismissible fade show rounded-0 mb-0 border-0 border-start border-4" role="alert">
-                        <div class="container">@msgText</div>
-                        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-                    </div>
+        <div class="row">
+            <div class="col-12">
+                <div class="alert @alertClass alert-dismissible fade show" role="alert">
+                    @text
+                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                </div>
+            </div>
+        </div>
                 }
             }
         }
+       
+               
 
         @RenderSection("title", required: false)
 
@@ -392,16 +349,14 @@
             <hr />
 
             <div class="d-flex justify-content-between align-items-center flex-wrap gap-2">
-                <div>🌸 © @DateTime.Now.Year STICK IT — Made with love 💕</div>
+                <div>Â© @DateTime.Now.Year - ELKH</div>
                 <div class="d-flex gap-3">
                     <a asp-controller="Home" asp-action="Privacy">Privacy</a>
                     <a href="#">Terms</a>
                 </div>
             </div>
         </div>
-    </footer>
-
-    <!-- Wishlist sign-in modal -->
+    <!-- Wishlist sign-in prompt (shared across all pages; shown when a guest clicks any wishlist button) -->
     <div class="modal fade" id="wishlistSignInModal" tabindex="-1"
          aria-labelledby="wishlistSignInModalLabel" aria-hidden="true">
         <div class="modal-dialog modal-dialog-centered">

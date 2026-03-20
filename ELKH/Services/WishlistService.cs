@@ -42,7 +42,7 @@ namespace ELKH.Services
                 await _db.SaveChangesAsync();
             }
 
-            var product = await _db.Products.FindAsync(productId);
+            var product = await _db.Product.FindAsync(productId);
             if (product is null)
                 return new WishlistResult { Success = false, Message = "Product not found" };
 

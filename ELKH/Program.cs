@@ -1,7 +1,9 @@
+using ELKH.Configuration;
 using ELKH.Data;
 using ELKH.Extensions;
 using ELKH.Models;
 using ELKH.Repositories;
+using ELKH.Services;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Localization;
 using Microsoft.EntityFrameworkCore;
@@ -9,16 +11,17 @@ using System.Globalization;
 
 var builder = WebApplication.CreateBuilder(args);
 
-// -- Database
+// -- Database and Identity
+// SQLite database with Entity Framework Core. Connection string is required
+// and will throw if missing to fail fast during startup.
 var connectionString = builder.Configuration.GetConnectionString("DefaultConnection")
     ?? throw new InvalidOperationException("Connection string 'DefaultConnection' not found.");
+builder.Services.AddDbContext<ApplicationDbContext>(options => options.UseSqlite(connectionString));
 
-builder.Services.AddDbContext<ApplicationDbContext>(options =>
-    options.UseSqlite(connectionString));
-
+var imageStoreConnection = builder.Configuration.GetConnectionString("ImageStoreConnection")
+    ?? throw new InvalidOperationException("Connection string 'ImageStoreConnection' not found.");
 builder.Services.AddDbContext<ImageStoreContext>(options =>
-    options.UseSqlite(builder.Configuration.GetConnectionString("ImageStoreConnection")));
-
+    options.UseSqlite(imageStoreConnection));
 builder.Services.AddDatabaseDeveloperPageExceptionFilter();
 
 // -- Identity
@@ -29,17 +32,19 @@ builder.Services.AddDefaultIdentity<IdentityUser>(options => options.SignIn.Requ
 // -- Health Checks
 builder.Services.AddHealthChecks();
 
-// -- MVC / Razor Pages
+// -- MVC / Razor
 builder.Services.AddControllersWithViews();
 builder.Services.AddRazorPages();
 
-// -- Antiforgery (CSRF)
+// Configure antiforgery to also accept the validation token from the X-CSRF-TOKEN request
+// header. This enables JSON AJAX endpoints (which cannot submit form-encoded token fields)
+// to participate in full CSRF protection alongside standard form-based flows.
 builder.Services.AddAntiforgery(options =>
 {
     options.HeaderName = "X-CSRF-TOKEN";
 });
 
-// -- Response Compression
+// -- Response Compression (reduces bandwidth by ~70%)
 builder.Services.AddResponseCompression(options =>
 {
     options.EnableForHttps = true;
@@ -58,17 +63,30 @@ builder.Services.AddResponseCompression(options =>
 builder.Services.AddMemoryCache();
 builder.Services.AddOutputCachingPolicies();
 
+// -- Rate Limiting (brute-force / enumeration protection)
+builder.Services.AddRateLimitingPolicies();
+
 // -- Configuration Options
 builder.Services.AddApplicationOptions(builder.Configuration);
 
-// -- Application Services
-builder.Services.AddBackgroundServices();
-builder.Services.AddApplicationServices();
-builder.Services.AddEmailServices();
-builder.Services.AddRepositories();
+// -- Payment and security services
+builder.Services.Configure<PayPalOptions>(builder.Configuration.GetSection("PayPal"));
+builder.Services.AddHttpClient<IPayPalService, PayPalService>();
+builder.Services.Configure<ReCaptchaOptions>(builder.Configuration.GetSection("ReCaptcha"));
+builder.Services.AddHttpClient<IReCaptchaService, ReCaptchaService>();
+
+// Register repositories whose callers inject the concrete type or interface not covered by AddRepositories()
+builder.Services.AddScoped<ICartRepo, CartRepo>();
+// -- Application Services (using extension methods for cleaner organization)
+// All service registrations are grouped by functionality in extension methods.
+// See Extensions/ServiceCollectionExtensions.cs for implementation details.
+builder.Services.AddBackgroundServices();  // FuzzyReindexService, FuzzyHelperService
+builder.Services.AddApplicationServices(); // UserService, SearchService, RatingService, ModerationService, ProductService, CartService
+builder.Services.AddEmailServices();       // SmtpEmailSender, EmailSenderAdapter, IEmailSender
+builder.Services.AddRepositories();        // All repository implementations with base class inheritance
 
 // -- Repositories
-builder.Services.AddScoped<IRole_repo, Role_repo>();
+builder.Services.AddScoped<IRoleRepository, RoleRepository>();
 builder.Services.AddScoped<OrderHistoryManagementRepo>();
 builder.Services.AddScoped<InventoryRepo>();
 builder.Services.AddScoped<RegisteredUserLogRepo>();
@@ -84,97 +102,76 @@ builder.Services.AddAutoMapper(typeof(ELKH.Mapping.AutoMapperProfile));
 // =====================================================================
 var app = builder.Build();
 
-// -- Automatic database migrations
-try
+// Warn loudly if AllowedHosts is still the development default in a non-Development environment.
+// Override via the ASPNETCORE_AllowedHosts environment variable (e.g. "yourdomain.com;www.yourdomain.com").
+if (!app.Environment.IsDevelopment())
 {
-    using var scope = app.Services.CreateScope();
-    var config = scope.ServiceProvider.GetRequiredService<Microsoft.Extensions.Configuration.IConfiguration>();
-    var env = scope.ServiceProvider.GetRequiredService<Microsoft.Extensions.Hosting.IHostEnvironment>();
-    var logger = scope.ServiceProvider.GetRequiredService<Microsoft.Extensions.Logging.ILoggerFactory>().CreateLogger("DatabaseMigration");
-
-    var explicitlyEnabled = config.GetValue<bool?>("Database:ApplyMigrationsOnStartup");
-    var productionOverride = config.GetValue<bool>("Database:AllowMigrationInProduction");
-
-    bool apply = env.IsDevelopment()
-        ? (explicitlyEnabled ?? true)
-        : (explicitlyEnabled == true && productionOverride);
-
-    if (apply)
+    var allowedHosts = app.Configuration["AllowedHosts"];
+    if (string.IsNullOrEmpty(allowedHosts) || allowedHosts == "localhost" || allowedHosts == "*")
     {
-        logger.LogInformation("Applying pending Entity Framework Core migrations...");
-        var db = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
-        db.Database.Migrate();
-
-        foreach (var sql in new[]
-        {
-            "ALTER TABLE UserLogs ADD COLUMN ActivityType TEXT NULL",
-            "ALTER TABLE UserLogs ADD COLUMN ActivityDetail TEXT NULL",
-            "ALTER TABLE UserProfiles ADD COLUMN AvatarData BLOB NULL",
-            "ALTER TABLE UserProfiles ADD COLUMN AvatarMimeType TEXT NULL"
-        })
-        {
-            try { db.Database.ExecuteSqlRaw(sql); }
-            catch { /* column already present */ }
-        }
-
-        logger.LogInformation("Database migrations applied successfully.");
-
-        await DbSeeder.SeedProductsAsync(db);
-
-        var userMgr = scope.ServiceProvider.GetRequiredService<UserManager<IdentityUser>>();
-        var webEnv = scope.ServiceProvider.GetRequiredService<Microsoft.AspNetCore.Hosting.IWebHostEnvironment>();
-        await DbSeeder.SeedCustomersAsync(db, userMgr, webEnv.WebRootPath);
-
-        var roleMgr = scope.ServiceProvider.GetRequiredService<RoleManager<IdentityRole>>();
-        await DbSeeder.SeedAdminAsync(userMgr, roleMgr, config);
-
-        logger.LogInformation("Database seeding complete.");
+        app.Logger.LogWarning(
+            "AllowedHosts is '{Value}'. Set the ASPNETCORE_AllowedHosts environment variable " +
+            "to your production domain(s) to enable host header filtering.",
+            allowedHosts ?? "(empty)");
     }
-}
-catch (Exception ex)
-{
-    using var fallbackFactory = LoggerFactory.Create(b => b.AddConsole());
-    var logger = fallbackFactory.CreateLogger("DatabaseMigration");
-    logger.LogWarning(ex, "Failed to apply database migrations on startup.");
 }
 
 // =====================================================================
 // HTTP request pipeline
 // =====================================================================
-
-var supportedCultures = new[] { new CultureInfo("en-CA") };
-app.UseRequestLocalization(new RequestLocalizationOptions
-{
-    DefaultRequestCulture = new RequestCulture("en-CA"),
-    SupportedCultures = supportedCultures,
-    SupportedUICultures = supportedCultures
-});
-
 if (app.Environment.IsDevelopment())
 {
+    // Development: show detailed error page with stack traces and DB queries.
+    app.UseDeveloperExceptionPage();
     app.UseMigrationsEndPoint();
 }
 else
 {
-    app.UseExceptionHandler("/Home/Error");
+    // HSTS: Enforce HTTPS for 30 days (prevents downgrade attacks).
+    // Exception handling and status-code pages are registered inside UseApplicationMiddleware.
     app.UseHsts();
 }
 
-app.UseSecurityHeaders();
-app.UseHttpsRedirection();
-app.UseResponseCompression();
-app.UseOutputCache();
 app.UseStaticFiles();
-app.UseRouting();
-app.UseAuthentication();
-app.UseAuthorization();
 
-app.MapControllerRoute(
-    name: "default",
-    pattern: "{controller=Home}/{action=Index}/{id?}");
+app.UseApplicationMiddleware();
 
-app.MapRazorPages();
+// =====================================================================
+// Routing and endpoints
+// =====================================================================
+app.UseApplicationEndpoints();
 
-app.MapHealthChecks("/health");
+// =====================================================================
+// Database migration and seeding
+// =====================================================================
+// Migrations: controlled by Database:ApplyMigrationsOnStartup (defaults true
+// in Development, false elsewhere). Database:AllowMigrationInProduction must
+// ALSO be true before migrations run outside Development — the double-guard
+// prevents accidental schema changes on a shared production database.
+//
+// Seeding: fully idempotent — each seeder checks for existing data and
+// returns immediately when the database is already populated.
+await using (var scope = app.Services.CreateAsyncScope())
+{
+    var sp = scope.ServiceProvider;
+    var db = sp.GetRequiredService<ApplicationDbContext>();
+
+    var applyMigrations     = app.Configuration.GetValue<bool?>("Database:ApplyMigrationsOnStartup")
+                                  ?? app.Environment.IsDevelopment();
+    var allowInProduction   = app.Configuration.GetValue<bool>("Database:AllowMigrationInProduction");
+
+    if (applyMigrations && (app.Environment.IsDevelopment() || allowInProduction))
+    {
+        await db.Database.MigrateAsync();
+        await sp.GetRequiredService<ImageStoreContext>().Database.MigrateAsync();
+    }
+
+    var userManager = sp.GetRequiredService<UserManager<IdentityUser>>();
+    var roleManager = sp.GetRequiredService<RoleManager<IdentityRole>>();
+
+    await DbSeeder.SeedProductsAsync(db);
+    await DbSeeder.SeedAdminAsync(userManager, roleManager, app.Configuration);
+    await DbSeeder.SeedCustomersAsync(db, userManager, app.Environment.WebRootPath);
+}
 
 app.Run();

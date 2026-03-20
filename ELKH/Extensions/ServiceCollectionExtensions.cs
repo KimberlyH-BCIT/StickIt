@@ -1,8 +1,10 @@
 using ELKH.Data;
 using ELKH.Repositories;
 using ELKH.Services;
+using Microsoft.AspNetCore.RateLimiting;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
+using System.Threading.RateLimiting;
 
 namespace ELKH.Extensions
 {
@@ -49,43 +51,42 @@ namespace ELKH.Extensions
         /// </summary>
         public static IServiceCollection AddRepositories(this IServiceCollection services)
         {
-            services.AddScoped<IRole_repo, Role_repo>();
+            services.AddScoped<IRoleRepository, RoleRepository>();
             services.AddScoped<IOrderManagementRepo, OrderManagementRepo>();
             services.AddScoped<IRegisteredUserLogRepo, RegisteredUserLogRepo>();
             services.AddScoped<IRegisteredUserProfileRepo, RegisteredUserProfileRepo>();
             services.AddScoped<IContactDetailRepo, ContactDetailRepo>();
+            services.AddScoped<IOrderHistoryManagementRepo, OrderHistoryManagementRepo>();
+            services.AddScoped<IInventoryRepo, InventoryRepo>();
+            services.AddScoped<IOrderRepo, OrderRepo>();
+            services.AddScoped<ITransactionRepo, TransactionRepo>();
 
             return services;
         }
 
         /// <summary>
         /// Register email services with adapter pattern for Identity compatibility.
+        /// In Development, FileEmailSender writes emails to disk. In all other environments,
+        /// SmtpEmailSender wrapped in EmailSenderAdapter is used. Only the active sender is
+        /// instantiated per request scope; the unused implementation is never created.
         /// </summary>
         public static IServiceCollection AddEmailServices(this IServiceCollection services)
         {
-            // Register concrete implementations
-            services.AddScoped<SmtpEmailSender>();
-            services.AddScoped<EmailSenderAdapter>();
-            services.AddScoped<FileEmailSender>();
-
-            // Choose the effective IEmailSender implementation based on environment.
-            // In Development, use FileEmailSender to save emails to disk rather than sending
-            // them over the network. In other environments, use the EmailSenderAdapter
-            // which delegates to SmtpEmailSender.
+            // Construct only the sender that is needed for the current environment.
             services.AddScoped<IEmailSender>(sp =>
             {
                 var env = sp.GetRequiredService<Microsoft.Extensions.Hosting.IHostEnvironment>();
-                if (env.IsDevelopment()) return sp.GetRequiredService<FileEmailSender>();
-                return sp.GetRequiredService<EmailSenderAdapter>();
+                if (env.IsDevelopment())
+                    return Microsoft.Extensions.DependencyInjection.ActivatorUtilities.CreateInstance<FileEmailSender>(sp);
+                var smtp = Microsoft.Extensions.DependencyInjection.ActivatorUtilities.CreateInstance<SmtpEmailSender>(sp);
+                return new EmailSenderAdapter(smtp);
             });
 
+            // Forward the Identity interface to the same scoped instance so both
+            // interfaces share one object per request scope.
             services.AddScoped<Microsoft.AspNetCore.Identity.UI.Services.IEmailSender>(sp =>
-            {
-                var env = sp.GetRequiredService<Microsoft.Extensions.Hosting.IHostEnvironment>();
-                if (env.IsDevelopment()) return sp.GetRequiredService<FileEmailSender>();
-                return sp.GetRequiredService<EmailSenderAdapter>();
-            });
-            
+                (Microsoft.AspNetCore.Identity.UI.Services.IEmailSender)sp.GetRequiredService<IEmailSender>());
+
             return services;
         }
 
@@ -105,8 +106,46 @@ namespace ELKH.Extensions
         }
 
         /// <summary>
-        /// Configure output caching policies for different page types.
+        /// Registers ASP.NET Core built-in rate-limiting policies.
+        /// Call <c>app.UseRateLimiter()</c> in the middleware pipeline after this.
         /// </summary>
+        public static IServiceCollection AddRateLimitingPolicies(this IServiceCollection services)
+        {
+            services.AddRateLimiter(options =>
+            {
+                options.RejectionStatusCode = StatusCodes.Status429TooManyRequests;
+
+                // Strict: 5 attempts per 60 s — protects login and registration.
+                options.AddFixedWindowLimiter(RateLimitPolicies.Auth, o =>
+                {
+                    o.PermitLimit      = 5;
+                    o.Window           = TimeSpan.FromSeconds(60);
+                    o.QueueProcessingOrder = QueueProcessingOrder.OldestFirst;
+                    o.QueueLimit       = 0;
+                });
+
+                // Checkout: 3 payment attempts per 60 s per IP.
+                options.AddFixedWindowLimiter(RateLimitPolicies.Checkout, o =>
+                {
+                    o.PermitLimit      = 3;
+                    o.Window           = TimeSpan.FromSeconds(60);
+                    o.QueueProcessingOrder = QueueProcessingOrder.OldestFirst;
+                    o.QueueLimit       = 0;
+                });
+
+                // Search autocomplete: 30 requests per 10 s (generous for live typing).
+                options.AddSlidingWindowLimiter(RateLimitPolicies.Search, o =>
+                {
+                    o.PermitLimit         = 30;
+                    o.Window              = TimeSpan.FromSeconds(10);
+                    o.SegmentsPerWindow   = 5;
+                    o.QueueProcessingOrder = QueueProcessingOrder.OldestFirst;
+                    o.QueueLimit          = 0;
+                });
+            });
+
+            return services;
+        }
         public static IServiceCollection AddOutputCachingPolicies(this IServiceCollection services)
         {
             services.AddOutputCache(options =>
@@ -116,9 +155,11 @@ namespace ELKH.Extensions
                     .Expire(TimeSpan.FromMinutes(1))
                     .SetVaryByQuery("*"));
 
-                // Policy for product listings - cache longer
+                // Policy for product listings - cache longer, vary by all query params
+                // so search/filter/page combinations each get their own cache entry.
                 options.AddPolicy("ProductList", builder => builder
                     .Expire(TimeSpan.FromMinutes(5))
+                    .SetVaryByQuery("*")
                     .Tag("products"));
 
                 // Policy for product details - cache with user variation
@@ -130,8 +171,19 @@ namespace ELKH.Extensions
                 // "OrderDetails" policy removed: order detail pages contain personal data
                 // and require a per-request ownership check, making output caching unsafe.
             });
-            
+
             return services;
         }
+    }
+}
+
+namespace ELKH.Extensions
+{
+    // ----- rate-limiting policy names (shared between registration and attributes) -----
+    public static class RateLimitPolicies
+    {
+        public const string Auth     = "auth";      // login / register
+        public const string Checkout = "checkout";  // payment endpoints
+        public const string Search   = "search";    // autocomplete
     }
 }

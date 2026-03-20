@@ -27,12 +27,12 @@ namespace ELKH.Controllers
             var weekAgo  = now.AddDays(-7);
             var monthAgo = now.AddDays(-30);
 
-            ViewBag.TotalProducts    = await _context.Products.CountAsync();
-            ViewBag.ActiveProducts   = await _context.Products.CountAsync(p => p.IsActive);
-            ViewBag.InactiveProducts = await _context.Products.CountAsync(p => !p.IsActive);
-            ViewBag.StockUpCount     = await _context.Products.CountAsync(p => p.StockQuantity > 20);
-            ViewBag.StockDownCount   = await _context.Products.CountAsync(p => p.StockQuantity <= 20);
-            ViewBag.LowStockCount    = await _context.Products.CountAsync(p => p.StockQuantity <= 5);
+            ViewBag.TotalProducts    = await _context.Product.CountAsync();
+            ViewBag.ActiveProducts   = await _context.Product.CountAsync(p => p.IsActive);
+            ViewBag.InactiveProducts = await _context.Product.CountAsync(p => !p.IsActive);
+            ViewBag.StockUpCount     = await _context.Product.CountAsync(p => p.StockQuantity > 20);
+            ViewBag.StockDownCount   = await _context.Product.CountAsync(p => p.StockQuantity <= 20);
+            ViewBag.LowStockCount    = await _context.Product.CountAsync(p => p.StockQuantity <= 5);
             ViewBag.WeeklyOrders     = await _context.Orders.CountAsync(o => o.CreatedAt >= weekAgo);
             ViewBag.MonthlyOrders    = await _context.Orders.CountAsync(o => o.CreatedAt >= monthAgo);
             ViewBag.TotalStaff       = (await _userManager.GetUsersInRoleAsync("Staff")).Count
@@ -47,7 +47,7 @@ namespace ELKH.Controllers
         {
             int pageSize = 8;
 
-            var query = _context.Products
+            var query = _context.Product
                 .Include(p => p.Category)
                 .Include(p => p.ProductImage)
                 .AsQueryable();
@@ -108,7 +108,7 @@ namespace ELKH.Controllers
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> ToggleActive(int id, string? stockFilter, string? activeFilter, string? search, int page = 1)
         {
-            var p = await _context.Products.FindAsync(id);
+            var p = await _context.Product.FindAsync(id);
             if (p == null) return NotFound();
 
             p.IsActive = !p.IsActive;
@@ -121,7 +121,7 @@ namespace ELKH.Controllers
         // ================= PRODUCT DETAILS =================
         public async Task<IActionResult> ProductDetails(int id)
         {
-            var p = await _context.Products
+            var p = await _context.Product
                 .Include(p => p.Category)
                 .Include(p => p.ProductImage)
                 .Include(p => p.ProductRatings)
@@ -186,7 +186,7 @@ namespace ELKH.Controllers
                     TransactionStatus = t.TransactionStatus,
                     Amount            = t.Amount,
                     TransactionDate   = t.TransactionDate,
-                    DeliberyFee       = t.DeliveryFee,
+                    DeliveryFee       = t.DeliveryFee,
                     FkOrderId         = t.FkOrderId
                 })
                 .ToListAsync();

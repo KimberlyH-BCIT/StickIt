@@ -21,7 +21,7 @@ namespace ELKH.Data
         {
         }
 
-        public DbSet<ProductModel> Products { get; set; }
+        public DbSet<ProductModel> Product { get; set; }
         public DbSet<CategoryModel> Categories { get; set; }
         public DbSet<ImageModel> ProductImages { get; set; }
         public DbSet<ProductImageModel> ProductImage { get; set; }
@@ -31,13 +31,14 @@ namespace ELKH.Data
         public DbSet<OrderItemModel> OrderItems { get; set; }
         public DbSet<TransactionModel> Transactions { get; set; }
         public DbSet<ContactDetailModel> ContactDetails { get; set; }
-        public DbSet<OrderStatusModel> OrderStatuses { get; set; }
         public DbSet<ProductRatingModel> ProductRatings { get; set; }
         public DbSet<WishListModel> WishLists { get; set; }
         public DbSet<WishListItemModel> WishListItems { get; set; }
         public DbSet<UserLogModel> UserLogs { get; set; }
         public DbSet<UserProfileModel> UserProfiles { get; set; }
         public DbSet<FuzzySuggestionModel> FuzzySuggestions { get; set; }
+        public DbSet<AuditEntryModel> AuditEntries { get; set; }
+        public DbSet<CachedFuzzyKeyModel> CachedFuzzyKeys { get; set; }
 
         /// <summary>
         /// Configures entity relationships, indexes, and table mappings for the application.
@@ -47,31 +48,30 @@ namespace ELKH.Data
         {
             base.OnModelCreating(modelBuilder);
 
-            // One-to-one: Order <-> OrderStatus (each order has a single status record)
-            modelBuilder.Entity<OrderModel>()
-                .HasOne(o => o.OrderStatusDetail)
-                .WithOne(static d => d.Order)
-                .HasForeignKey<OrderStatusModel>(o => o.FkOrderId);
-
             // One-to-one: RegisteredUser <-> WishList (each user has a single wishlist)
             modelBuilder.Entity<RegisteredUserModel>()
                 .HasOne(r => r.WishLists)
                 .WithOne(w => w.RegisteredUser)
                 .HasForeignKey<WishListModel>(w => w.FkUserId);
 
-            // Many-to-one: WishListItem -> WishList (join entity for many-to-many between users and products)
-            modelBuilder.Entity<WishListItemModel>()
-                .HasOne(wi => wi.WishList)
-                .WithMany(w => w.WishListItems)
-                .HasForeignKey(wi => wi.FkWishListId)
-                .OnDelete(DeleteBehavior.Cascade);
-
-            // Many-to-one: WishListItem -> Product (join entity for many-to-many between wishlists and products)
-            modelBuilder.Entity<WishListItemModel>()
-                .HasOne(wi => wi.Product)
-                .WithMany(p => p.WishListItems)
-                .HasForeignKey(wi => wi.FkProductId)
-                .OnDelete(DeleteBehavior.Cascade);
+            // Many-to-many: WishList -> Products via WishListItemModel.
+            // UsingEntity consolidates the two separate WishListItem relationship configs
+            // into a single declaration and exposes a direct Products skip-navigation on
+            // WishListModel so callers can query wishlist.Products without going through
+            // WishListItems. No schema changes — the existing join table is reused.
+            modelBuilder.Entity<WishListModel>()
+                .HasMany(w => w.Products)
+                .WithMany()
+                .UsingEntity<WishListItemModel>(
+                    r => r.HasOne(wi => wi.Product)
+                          .WithMany(p => p.WishListItems)
+                          .HasForeignKey(wi => wi.FkProductId)
+                          .OnDelete(DeleteBehavior.Cascade),
+                    l => l.HasOne(wi => wi.WishList)
+                          .WithMany(w => w.WishListItems)
+                          .HasForeignKey(wi => wi.FkWishListId)
+                          .OnDelete(DeleteBehavior.Cascade)
+                );
 
             // One-to-one: Order <-> Transaction (each order has a single payment transaction)
             modelBuilder.Entity<OrderModel>()
@@ -132,42 +132,35 @@ namespace ELKH.Data
                 .WithMany(u => u.Orders)
                 .HasForeignKey(o => o.FkRegisteredUserId);
 
-modelBuilder.Entity<ProductModel>()
-    .HasOne(p => p.Category)
-    .WithMany(c => c.Products)
-    .HasForeignKey(p => p.FkCategoryId);
+            modelBuilder.Entity<OrderModel>()
+                .HasOne(o => o.ContactDetail)
+                .WithMany()
+                .HasForeignKey(o => o.FkContactId);
 
-modelBuilder.Entity<OrderModel>()
-    .HasOne(o => o.ContactDetail)
-    .WithMany()
-    .HasForeignKey(o => o.FkContactId);
+            modelBuilder.Entity<OrderItemModel>()
+                .HasOne(oi => oi.Order)
+                .WithMany(o => o.OrderItems)
+                .HasForeignKey(oi => oi.FkOrderId);
 
-modelBuilder.Entity<OrderItemModel>()
-    .HasOne(oi => oi.Order)
-    .WithMany(o => o.OrderItems)
-    .HasForeignKey(oi => oi.FkOrderId);
+            modelBuilder.Entity<OrderItemModel>()
+                .HasOne(oi => oi.Product)
+                .WithMany()
+                .HasForeignKey(oi => oi.FkProductId);
 
-modelBuilder.Entity<OrderItemModel>()
-    .HasOne(oi => oi.Product)
-    .WithMany()
-    .HasForeignKey(oi => oi.FkProductId);
+            modelBuilder.Entity<ProductRatingModel>()
+                .HasOne(r => r.Products)
+                .WithMany(p => p.ProductRatings)
+                .HasForeignKey(r => r.FkProductId);
 
-modelBuilder.Entity<ProductRatingModel>()
+            modelBuilder.Entity<ProductRatingModel>()
+                .HasOne(r => r.RegisteredUser)
+                .WithMany(u => u.ProductRatings)
+                .HasForeignKey(r => r.FkRegisteredUserId);
 
-    .HasOne(r => r.Products)
-
-    .WithMany(p => p.ProductRatings)
-    .HasForeignKey(r => r.FkProductId);
-
-modelBuilder.Entity<ProductRatingModel>()
-    .HasOne(r => r.RegisteredUser)
-    .WithMany(u => u.ProductRatings)
-    .HasForeignKey(r => r.FkRegisteredUserId);
-
-modelBuilder.Entity<TransactionModel>()
-    .HasOne(t => t.ContactDetail)
-    .WithMany()
-    .HasForeignKey(t => t.FkContactId);
+            modelBuilder.Entity<TransactionModel>()
+                .HasOne(t => t.ContactDetail)
+                .WithMany()
+                .HasForeignKey(t => t.FkContactId);
         }
 
     }
