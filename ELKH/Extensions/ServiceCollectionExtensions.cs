@@ -12,6 +12,23 @@ namespace ELKH.Extensions
     /// Extension methods for IServiceCollection to organize service registrations.
     /// This keeps Program.cs clean and groups related services together.
     /// </summary>
+    /// <remarks>
+    /// TABLE OF CONTENTS
+    /// ==================
+    /// 1. Configuration Options
+    ///    - AddApplicationOptions() - Bind config sections (lines 23-33)
+    /// 2. Application Services
+    ///    - AddApplicationServices() - Core business logic services (lines 35-50)
+    ///    - AddBackgroundServices() - Hosted services (lines 52-63)
+    /// 3. Data Access
+    ///    - AddRepositories() - Repository pattern implementations (lines 65-80)
+    /// 4. Email Services
+    ///    - AddEmailServices() - Dev/Prod email sender with adapter (lines 82-102)
+    /// 5. Output Caching
+    ///    - AddOutputCachingPolicies() - Response caching rules (lines 104-118)
+    /// 6. Rate Limiting
+    ///    - AddRateLimitingPolicies() - Brute-force protection (lines 120-171)
+    /// </remarks>
     public static class ServiceCollectionExtensions
     {
         /// <summary>
@@ -42,6 +59,7 @@ namespace ELKH.Extensions
             services.AddScoped<ICartService, CartService>();
             services.AddScoped<IWishlistService, WishlistService>();
             services.AddScoped<IOrderEmailService, OrderEmailService>();
+            services.AddScoped<IProductMapper, ProductMapper>(); // Manual mapping instead of AutoMapper
 
             return services;
         }

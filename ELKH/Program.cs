@@ -6,6 +6,35 @@ using ELKH.Repositories;
 using ELKH.Services;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.AspNetCore.Identity.UI.Services;
+
+// =====================================================================
+// PROGRAM.CS - APPLICATION STARTUP AND CONFIGURATION
+// =====================================================================
+//
+// TABLE OF CONTENTS
+// ==================
+// 1. Service Registration (lines 17-111)
+//    - Database & Identity (lines 17-46)
+//    - Health Checks (lines 48-50)
+//    - MVC / Razor Pages (lines 52-74)
+//    - Caching & Compression (lines 76-82)
+//    - Rate Limiting (lines 84)
+//    - Configuration Options (lines 86)
+//    - Payment & Security Services (lines 88-94)
+//    - Repository Registration (lines 96-102)
+//    - Mapping (ProductMapper instead of AutoMapper) (lines 104-114)
+//
+// 2. Application Build & Configuration (lines 116-169)
+//    - Allowed Hosts Validation (lines 121-132)
+//    - HTTP Request Pipeline (lines 134-159)
+//    - Routing & Endpoints (lines 161-165)
+//
+// 3. Database Migration & Seeding (lines 167-189)
+//    - Migration Strategy (controlled by config)
+//    - Idempotent Seeding (products, admin, customers)
+//
+// =====================================================================
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -26,9 +55,13 @@ builder.Services.AddDatabaseDeveloperPageExceptionFilter();
 // Users must confirm their email before they can sign in.
 // AddRoles<IdentityRole>() is required for [Authorize(Roles = "...")] to function —
 // without it, role claims are never populated and role-based access always fails.
-builder.Services.AddDefaultIdentity<IdentityUser>(options => options.SignIn.RequireConfirmedAccount = true)
-    .AddRoles<IdentityRole>()
-    .AddEntityFrameworkStores<ApplicationDbContext>();
+builder.Services.AddIdentity<IdentityUser, IdentityRole>(options =>
+    {
+        options.SignIn.RequireConfirmedAccount = true;
+    })
+    .AddEntityFrameworkStores<ApplicationDbContext>()
+    .AddDefaultTokenProviders()
+    .AddDefaultUI();
 
 // -- Health Checks (for monitoring and deployment readiness)
 // Exposes /health endpoint for load balancers, monitoring tools, and container orchestrators
@@ -87,9 +120,20 @@ builder.Services.AddApplicationServices(); // UserService, SearchService, Rating
 builder.Services.AddEmailServices();       // SmtpEmailSender, EmailSenderAdapter, IEmailSender
 builder.Services.AddRepositories();        // All repository implementations with base class inheritance
 
+
+
 // -- Mapping
-// AutoMapper for DTO/ViewModel conversions. Profile defined in Mapping/AutoMapperProfile.cs
-builder.Services.AddAutoMapper(typeof(ELKH.Mapping.AutoMapperProfile));
+// NOTE: AutoMapper 16.x removed DI extension support and changed the API significantly.
+// AutoMapper versions 12.x-15.x have a known HIGH SEVERITY vulnerability (GHSA-rvv3-g6hj-g44x).
+// Since we only map ProductModel <-> ProductVM, we've removed AutoMapper entirely and
+// implemented manual mapping via IProductMapper/ProductMapper services.
+// 
+// Benefits: No vulnerabilities, better performance, type-safe, explicit mapping logic.
+// See Services/ProductMapper.cs for implementation and ProductService for usage.
+//
+// Future: If more complex mapping is needed, consider Mapperly (source-generated mapper)
+// which provides AutoMapper-like convenience without runtime overhead or security issues.
+
 
 // =====================================================================
 // Build application
@@ -166,12 +210,19 @@ await using (var scope = app.Services.CreateAsyncScope())
         await sp.GetRequiredService<ImageStoreContext>().Database.MigrateAsync();
     }
 
-    var userManager = sp.GetRequiredService<UserManager<IdentityUser>>();
-    var roleManager = sp.GetRequiredService<RoleManager<IdentityRole>>();
+    // Seeding can be disabled via Database:RunSeeders = false in appsettings.json
+    // or via environment variable. Useful after first run to prevent accidental reseeding.
+    var runSeeders = app.Configuration.GetValue<bool>("Database:RunSeeders", defaultValue: true);
 
-    await DbSeeder.SeedProductsAsync(db);
-    await DbSeeder.SeedAdminAsync(userManager, roleManager, app.Configuration);
-    await DbSeeder.SeedCustomersAsync(db, userManager, app.Environment.WebRootPath);
+    if (runSeeders)
+    {
+        var userManager = sp.GetRequiredService<UserManager<IdentityUser>>();
+        var roleManager = sp.GetRequiredService<RoleManager<IdentityRole>>();
+
+        await DbSeeder.SeedProductsAsync(db);
+        await DbSeeder.SeedAdminAsync(userManager, roleManager, app.Configuration);
+        await DbSeeder.SeedCustomersAsync(db, userManager, app.Environment.WebRootPath);
+    }
 }
 
 app.Run();

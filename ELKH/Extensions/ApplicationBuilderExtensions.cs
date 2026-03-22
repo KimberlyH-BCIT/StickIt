@@ -97,15 +97,17 @@ namespace ELKH.Extensions
                 // images, and other resource types to same-origin by default.
                 // PayPal SDK is loaded from www.paypal.com; it communicates with the PayPal
                 // checkout page (www.paypal.com) and the sandbox/live API (api-m.*.paypal.com).
+                // Google reCAPTCHA requires scripts from google.com and gstatic.com, frames from google.com,
+                // and 'unsafe-eval' for its internal script execution (required by reCAPTCHA v2).
                 // 'unsafe-inline' for style-src is required by Bootstrap/inline styles.
                 context.Response.Headers["Content-Security-Policy"] =
                     "default-src 'self'; " +
-                    "script-src 'self' https://www.paypal.com https://www.sandbox.paypal.com; " +
+                    "script-src 'self' 'unsafe-eval' https://www.paypal.com https://www.sandbox.paypal.com https://www.google.com https://www.gstatic.com; " +
                     "style-src 'self' 'unsafe-inline'; " +
                     "img-src 'self' data: https://www.paypalobjects.com; " +
                     "font-src 'self'; " +
-                    "connect-src 'self' https://api-m.paypal.com https://api-m.sandbox.paypal.com; " +
-                    "frame-src https://www.paypal.com https://www.sandbox.paypal.com; " +
+                    "connect-src 'self' https://api-m.paypal.com https://api-m.sandbox.paypal.com https://www.google.com; " +
+                    "frame-src https://www.paypal.com https://www.sandbox.paypal.com https://www.google.com; " +
                     "frame-ancestors 'self';";
 
                 await next();
