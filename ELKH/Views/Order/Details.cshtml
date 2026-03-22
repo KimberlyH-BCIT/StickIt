@@ -1,0 +1,103 @@
+@model OrderModel
+
+@{
+    ViewData["Title"] = $"Order #{Model.PkOrderId} Details";
+    var productVms = ViewBag.ProductVMs as List<ProductVM>;
+}
+
+<div class="container my-4">
+    <h1 class="mb-4">Order Details</h1>
+
+    <div class="card mb-4">
+        <div class="card-header">
+            <h4>Order Information</h4>
+        </div>
+        <div class="card-body">
+            <div class="row">
+                <div class="col-md-6">
+                    <p><strong>Order ID:</strong> #@Model.PkOrderId</p>
+                    <p><strong>Order Date:</strong> @Model.CreatedAt.ToString("MMMM dd, yyyy HH:mm")</p>
+                    <p><strong>Order Status:</strong> <span class="badge bg-primary">@Model.OrderStatus</span></p>
+                </div>
+                <div class="col-md-6">
+                    <p><strong>Delivery Status:</strong> <span class="badge bg-info">@Model.DeliveryStatus</span></p>
+                    <p><strong>Total Amount:</strong> <strong class="text-success">@Model.TotalAmount.ToString("C")</strong></p>
+                    @if (Model.RegisteredUser != null)
+                    {
+                        <p><strong>Customer:</strong> @Model.RegisteredUser.Email</p>
+                    }
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="card">
+        <div class="card-header">
+            <h4>Order Items</h4>
+        </div>
+        <div class="card-body">
+            @if (Model.OrderItems != null && Model.OrderItems.Any())
+            {
+                <div class="table-responsive">
+                    <table class="table table-hover">
+                        <thead>
+                            <tr>
+                                <th>Product</th>
+                                <th>SKU</th>
+                                <th class="text-center">Quantity</th>
+                                <th class="text-end">Unit Price</th>
+                                <th class="text-end">Subtotal</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @for (int i = 0; i < Model.OrderItems.Count; i++)
+                            {
+                                var item = Model.OrderItems.ElementAt(i);
+                                var product = productVms != null && i < productVms.Count ? productVms[i] : null;
+                                var subtotal = item.Quantity * item.UnitPrice;
+
+                                <tr>
+                                    <td>
+                                        @if (product != null)
+                                        {
+                                            <strong>@product.ProductName</strong>
+                                        }
+                                        else
+                                        {
+                                            <strong>Product #@item.FkProductId</strong>
+                                        }
+                                    </td>
+                                    <td>@item.FkProductId</td>
+                                    <td class="text-center">@item.Quantity</td>
+                                    <td class="text-end">@item.UnitPrice.ToString("C")</td>
+                                    <td class="text-end">@subtotal.ToString("C")</td>
+                                </tr>
+                            }
+                        </tbody>
+                        <tfoot>
+                            <tr>
+                                <td colspan="4" class="text-end"><strong>Total:</strong></td>
+                                <td class="text-end"><strong class="text-success">@Model.TotalAmount.ToString("C")</strong></td>
+                            </tr>
+                        </tfoot>
+                    </table>
+                </div>
+            }
+            else
+            {
+                <p class="text-muted">No items in this order.</p>
+            }
+        </div>
+    </div>
+
+    <div class="mt-4">
+        @if (User.IsInRole("Admin"))
+        {
+            <a asp-action="Index" class="btn btn-secondary">Back to Orders List</a>
+        }
+        else
+        {
+            <a asp-action="MyHistory" class="btn btn-secondary">Back to My Orders</a>
+        }
+    </div>
+</div>
