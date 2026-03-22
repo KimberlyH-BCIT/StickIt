@@ -22,6 +22,8 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 using Microsoft.AspNetCore.WebUtilities;
 using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Options;
+using ELKH.Configuration;
 using static ELKH.Extensions.RateLimitPolicies;
 
 namespace ELKH.Areas.Identity.Pages.Account
@@ -40,26 +42,30 @@ namespace ELKH.Areas.Identity.Pages.Account
     {
         private readonly SignInManager<IdentityUser> _signInManager;
         private readonly UserManager<IdentityUser> _userManager;
-        private readonly RoleManager<IdentityRole> _roleManager;
+        
         private readonly IUserStore<IdentityUser> _userStore;
         private readonly IUserEmailStore<IdentityUser> _emailStore;
         private readonly ILogger<RegisterModel> _logger;
         private readonly IEmailSender _emailSender;
         private readonly ApplicationDbContext _context;
         private readonly IContactDetailRepo _contactRepository;
+        private readonly ReCaptchaOptions _reCaptchaOptions;
+        
+        public string ReCaptchaSiteKey { get; set; } = "";
 
         public RegisterModel(
             UserManager<IdentityUser> userManager,
-            RoleManager<IdentityRole> roleManager,
             IUserStore<IdentityUser> userStore,
             SignInManager<IdentityUser> signInManager,
             ILogger<RegisterModel> logger,
             IEmailSender emailSender,
             ApplicationDbContext context,
-            IContactDetailRepo contactRepository)
+            IContactDetailRepo contactRepository,
+            IOptions<ReCaptchaOptions> reCaptchaOptions
+        )
         {
             _userManager = userManager;
-            _roleManager = roleManager;
+
             _userStore = userStore;
             _emailStore = GetEmailStore();
             _signInManager = signInManager;
@@ -67,6 +73,9 @@ namespace ELKH.Areas.Identity.Pages.Account
             _emailSender = emailSender;
             _context = context;
             _contactRepository = contactRepository;
+
+            _reCaptchaOptions = reCaptchaOptions.Value;
+            ReCaptchaSiteKey = _reCaptchaOptions.SiteKey;
         }
 
         /// <summary>
@@ -232,10 +241,7 @@ namespace ELKH.Areas.Identity.Pages.Account
                     await _contactRepository.AddAndSaveAsync(contact);
 
                     // Assign the Customer role to every new registrant.
-                    const string customerRole = "Customer";
-                    if (!await _roleManager.RoleExistsAsync(customerRole))
-                        await _roleManager.CreateAsync(new IdentityRole(customerRole));
-                    await _userManager.AddToRoleAsync(user, customerRole);
+                    
 
                     _logger.LogInformation("User created a new account with password.");
 
