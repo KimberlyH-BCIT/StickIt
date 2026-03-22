@@ -2,6 +2,7 @@ using MailKit.Net.Smtp;
 using MailKit.Security;
 using MimeKit;
 using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Options;
 
 namespace ELKH.Services
 {
@@ -26,15 +27,10 @@ namespace ELKH.Services
             _options = options.Value;
         }
 
-        /// <summary>
-        /// Send an email using configured SMTP settings. If the SMTP host is not
-        /// configured the method logs and returns without error to allow non-critical
-        /// notification failures to be non-fatal.
-        /// </summary>
         public async Task SendEmailAsync(string[] to, string subject, string body, string? from = null)
         {
             var host = _options.Host;
-            if (string.IsNullOrEmpty(host))
+            if (string.IsNullOrWhiteSpace(host))
             {
                 _logger.LogInformation("SMTP host not configured; skipping email notification.");
                 return;
