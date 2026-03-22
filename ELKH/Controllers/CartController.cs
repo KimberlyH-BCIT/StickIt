@@ -1,15 +1,13 @@
+using System.Linq;
 using System.Security.Claims;
+using System.Threading.Tasks;
 using ELKH.Data;
 using ELKH.Extensions;
 using ELKH.Models;
 using ELKH.Repositories;
 using ELKH.Services;
 using ELKH.ViewModels;
-using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
-using System.Threading.Tasks;
-using System.Linq;
 
 namespace ELKH.Controllers;
 
@@ -24,7 +22,9 @@ namespace ELKH.Controllers;
 /// - GET /Cart - Display current user's cart items
 /// - POST /Cart/AddToCart - Add product to cart with quantity validation
 /// - POST /Cart/BuyNow - Quick purchase (bypasses cart, creates order immediately)
-/// - POST /Cart/RemoveFromCart - Remove item from cart
+/// - POST /Cart/Update - Update item quantity in cart
+/// - POST /Cart/Remove - Remove item from cart
+/// - POST /Cart/Clear - Clear all items from cart
 ///
 /// Checkout flow:
 /// - Users proceed to checkout via CheckoutController which handles PayPal payment processing
@@ -38,6 +38,26 @@ namespace ELKH.Controllers;
 /// - User email retrieved from authenticated context via AuthenticatedControllerBase
 /// - All operations scoped to current user's cart
 /// - Anti-forgery tokens required for all POST operations
+///
+/// TABLE OF CONTENTS
+/// ==================
+/// 1. Constructor & Dependencies (lines 44-52)
+/// 2. Cart Display & Calculations
+///    - Index() - Display cart with tax/shipping calculations (lines 55-84)
+/// 3. Cart Item Management
+///    - AddToCart() - Add product with quantity validation (lines 87-98)
+///    - Update() - Modify item quantity (minimum 1) (lines 127-138)
+///    - Remove() - Remove single item from cart (lines 141-150)
+///    - Clear() - Empty entire cart (lines 153-163)
+/// 4. Order Creation
+///    - BuyNow() - Quick purchase bypassing cart (lines 101-124)
+///    - PlaceOrder() - Create order from cart items (lines 166-181)
+///
+/// Status Code Conventions:
+/// - (-2) = User has no delivery address configured
+/// - (-1) = Product out of stock / inventory insufficient
+/// - (0)  = Operation failed / database error
+/// - (>0) = Success: returns order ID
 /// </remarks>
 public class CartController : AuthenticatedControllerBase
 {
@@ -51,9 +71,6 @@ public class CartController : AuthenticatedControllerBase
         _logger = logger;
     }
 
-    // ---------------------------------------------------------------------
-    // Viewing endpoints
-    // ---------------------------------------------------------------------
     // GET: /Cart
     public async Task<IActionResult> Index()
     {
@@ -79,33 +96,33 @@ public class CartController : AuthenticatedControllerBase
         };
 
         // Calculate summary values
-        cartVM.Tax = cartVM.Subtotal * 0.12m; // 12% tax
+        // Tax: 12% (BC PST 7% + GST 5% composite rate, simplified for customer-facing display)
+        // Shipping: $5.99 flat rate, waived for orders $50.00+ to incentivize larger purchases
+        cartVM.Tax = cartVM.Subtotal * 0.12m;
         cartVM.ShippingCost = cartVM.Subtotal >= 50 ? 0 : 5.99m;
         cartVM.Total = cartVM.Subtotal + cartVM.Tax + cartVM.ShippingCost;
 
         return View(cartVM);
     }
 
-    // ---------------------------------------------------------------------
-    // Cart modification endpoints (mutating operations)
-    // ---------------------------------------------------------------------
     // POST: /Cart/AddToCart
     [HttpPost]
     [ValidateAntiForgeryToken]
     public async Task<IActionResult> AddToCart(int itemId, int quantity)
     {
-        // Validate input early to avoid unnecessary work.
         if (quantity <= 0) return BadRequest("Quantity must be positive.");
 
         var authResult = RequireAuthenticatedUser(out var email);
         if (authResult != null) return authResult;
 
-        // Service performs the actual add-to-cart business logic including inventory checks.
         await _cartService.AddToCartAsync(email, itemId, quantity);
         return RedirectToAction(nameof(Index));
     }
 
     // POST: /Cart/BuyNow
+    // Quick purchase: Add single item to cart and immediately create order.
+    // Bypasses the traditional cart viewing step for streamlined UX.
+    // Returns status codes: -2=no address, -1=out of stock, 0=error, >0=order ID
     [HttpPost]
     [ValidateAntiForgeryToken]
     public async Task<IActionResult> BuyNow(int itemId, int quantity)
@@ -131,16 +148,71 @@ public class CartController : AuthenticatedControllerBase
         }
     }
 
-    // POST: /Cart/RemoveFromCart
+    // POST: /Cart/Update
+    // Modify quantity of an existing cart item.
+    // Enforces minimum quantity of 1 (cannot reduce to zero; use Remove instead).
     [HttpPost]
     [ValidateAntiForgeryToken]
-    public async Task<IActionResult> RemoveFromCart(int cartId)
+    public async Task<IActionResult> Update(int cartId, int quantity)
+    {
+        if (quantity < 1) quantity = 1;
+
+        var authResult = RequireAuthenticatedUser(out var email);
+        if (authResult != null) return authResult;
+
+        await _cartService.UpdateQuantityAsync(email, cartId, quantity);
+        return RedirectToAction(nameof(Index));
+    }
+
+    // POST: /Cart/Remove  (matches your view asp-action="Remove")
+    [HttpPost]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> Remove(int cartId)
     {
         var authResult = RequireAuthenticatedUser(out var email);
         if (authResult != null) return authResult;
 
-        // Removal is delegated to the service which enforces ownership and consistency checks.
         await _cartService.RemoveFromCartAsync(email, cartId);
         return RedirectToAction(nameof(Index));
+    }
+
+    // POST: /Cart/Clear  (matches your view asp-action="Clear")
+    [HttpPost]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> Clear()
+    {
+        var authResult = RequireAuthenticatedUser(out var email);
+        if (authResult != null) return authResult;
+
+        await _cartService.ClearCartAsync(email);
+        SetSuccessMessage("Cart cleared.");
+        return RedirectToAction(nameof(Index));
+    }
+
+    // POST: /Cart/PlaceOrder
+    // Create order from all current cart items, verify inventory, and clear cart on success.
+    // Returns status codes: -2=no address, -1=out of stock, 0=error, >0=order ID
+    [HttpPost]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> PlaceOrder()
+    {
+        var authResult = RequireAuthenticatedUser(out var email);
+        if (authResult != null) return authResult;
+
+        var orderId = await _cartService.PlaceOrderAsync(email);
+        switch (orderId)
+        {
+            case -2:
+                SetWarningMessage("Please add a delivery address to your account before placing an order.");
+                return RedirectToAction("Addresses", "User");
+            case -1:
+                SetWarningMessage("One or more items in your cart are out of stock. Please update your cart.");
+                return RedirectToAction(nameof(Index));
+            case 0:
+                return RedirectToAction(nameof(Index));
+            default:
+                SetSuccessMessage("Order placed successfully");
+                return RedirectToAction("Details", "Order", new { id = orderId });
+        }
     }
 }

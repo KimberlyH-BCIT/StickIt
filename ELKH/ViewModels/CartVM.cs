@@ -1,3 +1,5 @@
+using ELKH.Models;
+
 namespace ELKH.ViewModels;
 
 
@@ -15,11 +17,12 @@ public class CartItemVM
 
 public class CartVM
 {
+    public List<CartModel> CartItems { get; set; } = new();
     public List<CartItemVM> Items { get; set; } = new();
     public decimal Subtotal => Items.Sum(i => i.LineTotal);
     public decimal Tax { get; set; }
     public decimal ShippingCost { get; set; }
     public decimal Total { get; set; }
     public bool IsEmpty => !Items.Any();
-    public string ShippingNote => ShippingCost == 0 ? "Free shipping!" : "Free shipping on orders over $50";
+    
 }

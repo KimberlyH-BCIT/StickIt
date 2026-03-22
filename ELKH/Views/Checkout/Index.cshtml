@@ -2,6 +2,7 @@
 @{
     ViewData["Title"] = "Checkout";
     Layout = "~/Views/Shared/_Layout.cshtml";
+    var paypalClientId = ViewBag.PayPalClientId as string ?? "";
 }
 
 @section title {
@@ -23,11 +24,10 @@
         </div>
     }
 
-    <form asp-action="ProcessPayment" method="post">
+    <form id="checkoutForm" asp-action="ProcessPayment" method="post">
         @Html.AntiForgeryToken()
-        <div class="row g-4">
 
-            <!-- Shipping Form -->
+        <div class="row g-4">
             <div class="col-lg-7">
                 <div class="card shadow-sm">
                     <div class="card-body">
@@ -108,11 +108,14 @@
                                 <span asp-validation-for="Country" class="text-danger small"></span>
                             </div>
                         </div>
+
+                        <div class="alert alert-info mt-3 mb-0">
+                            Complete your shipping details, then pay with PayPal.
+                        </div>
                     </div>
                 </div>
             </div>
 
-            <!-- Order Summary -->
             <div class="col-lg-5">
                 <div class="card shadow-sm">
                     <div class="card-body">
@@ -128,10 +131,12 @@
 
                         <hr />
                         <div class="d-flex justify-content-between mb-1">
-                            <span>Subtotal</span><span>$@Model.Subtotal.ToString("F2")</span>
+                            <span>Subtotal</span>
+                            <span>$@Model.Subtotal.ToString("F2")</span>
                         </div>
                         <div class="d-flex justify-content-between mb-1">
-                            <span>Tax (12%)</span><span>$@Model.Tax.ToString("F2")</span>
+                            <span>Tax (12%)</span>
+                            <span>$@Model.Tax.ToString("F2")</span>
                         </div>
                         <div class="d-flex justify-content-between mb-2">
                             <span>Shipping</span>
@@ -139,7 +144,8 @@
                         </div>
                         <hr />
                         <div class="d-flex justify-content-between fw-bold fs-5 mb-4">
-                            <span>Total</span><span>$@Model.Total.ToString("F2")</span>
+                            <span>Total</span>
+                            <span>$@Model.Total.ToString("F2")</span>
                         </div>
 
                         <h6 class="text-center mb-3 text-muted">
@@ -147,16 +153,21 @@
                         </h6>
 
                         <!-- PayPal Button Container -->
-                        <div id="paypal-button-container"></div>
+                        <div id="paypal-button-container" class="mb-3"></div>
 
-                        <div class="text-center mt-3">
+                        <!-- Fallback button if PayPal doesn't load -->
+                        <button type="submit" class="btn btn-dark w-100 btn-lg mb-2" id="fallbackButton">
+                            <i class="bi bi-check-circle me-2"></i>Place Order
+                        </button>
+
+                        <div class="text-center mb-3">
                             <small class="text-muted">
                                 <i class="bi bi-shield-check me-1"></i>
                                 Your payment is processed securely through PayPal
                             </small>
                         </div>
 
-                        <a asp-controller="Cart" asp-action="Index" class="btn btn-outline-secondary w-100 mt-3">
+                        <a asp-controller="Cart" asp-action="Index" class="btn btn-outline-secondary w-100">
                             <i class="bi bi-arrow-left me-1"></i>Back to Cart
                         </a>
                     </div>
@@ -169,14 +180,18 @@
 @section Scripts {
     @await Html.PartialAsync("_ValidationScriptsPartial")
 
-    <!-- PayPal SDK -->
-    <script src="https://www.paypal.com/sdk/js?client-id=@ViewBag.PayPalClientId&currency=@ViewBag.Currency&disable-funding=paylater"></script>
-
+    <!-- ═══════════════════════════════════════════════════════════════════
+         Address Selector JavaScript
+         ═════════════════════════════════════════════════════════════════
+         Functionality: When user selects a saved address from dropdown,
+         auto-populate the shipping address form fields with that address.
+         When "Enter new address" is selected, clear all fields.
+    ═══════════════════════════════════════════════════════════════════ -->
     <script>
-        // Address selector functionality
         document.getElementById('addressSelector')?.addEventListener('change', function() {
             const selected = this.options[this.selectedIndex];
             if (selected.value) {
+                // Populate form fields from data attributes
                 document.getElementById('selectedContactId').value = selected.value;
                 document.getElementById('fullName').value = selected.dataset.fullname || '';
                 document.getElementById('phoneNumber').value = selected.dataset.phone || '';
@@ -186,7 +201,7 @@
                 document.getElementById('postalCode').value = selected.dataset.postalcode || '';
                 document.getElementById('country').value = selected.dataset.country || 'Canada';
             } else {
-                // Clear fields for new address
+                // Clear fields for new address entry
                 document.getElementById('selectedContactId').value = '';
                 document.getElementById('fullName').value = '';
                 document.getElementById('phoneNumber').value = '';
@@ -197,84 +212,92 @@
                 document.getElementById('country').value = 'Canada';
             }
         });
-
-        // PayPal button integration
-        paypal.Buttons({
-            style: {
-                layout: 'vertical',
-                color: 'gold',
-                shape: 'rect',
-                label: 'paypal'
-            },
-            createOrder: async function () {
-                // Validate form before creating PayPal order
-                const form = document.querySelector('form');
-                if (!form.checkValidity()) {
-                    alert('Please fill in all required shipping address fields.');
-                    form.reportValidity();
-                    return Promise.reject();
-                }
-
-                // Use Total from model
-                const total = @Model.Total.ToString("F2", System.Globalization.CultureInfo.InvariantCulture);
-
-                const res = await fetch("/paypal/create-order", {
-                    method: "POST",
-                    headers: { "Content-Type": "application/json" },
-                    body: JSON.stringify({ total: total })
-                });
-
-                if (!res.ok) {
-                    throw new Error('Failed to create PayPal order');
-                }
-
-                const data = await res.json();
-                return data.id;
-            },
-
-            onApprove: async function (data) {
-                try {
-                    // Capture payment via API
-                    const res = await fetch("/paypal/capture-order", {
-                        method: "POST",
-                        headers: { "Content-Type": "application/json" },
-                        body: JSON.stringify({ orderId: data.orderID })
-                    });
-
-                    if (!res.ok) {
-                        throw new Error('Failed to capture PayPal payment');
-                    }
-
-                    // Add PayPal order ID to form as hidden input
-                    const form = document.querySelector('form');
-                    let paypalOrderIdInput = document.getElementById('paypalOrderId');
-                    if (!paypalOrderIdInput) {
-                        paypalOrderIdInput = document.createElement('input');
-                        paypalOrderIdInput.type = 'hidden';
-                        paypalOrderIdInput.name = 'paypalOrderId';
-                        paypalOrderIdInput.id = 'paypalOrderId';
-                        form.appendChild(paypalOrderIdInput);
-                    }
-                    paypalOrderIdInput.value = data.orderID;
-
-                    // Change form action to Finalize and submit
-                    form.action = '/Checkout/Finalize';
-                    form.submit();
-                } catch (error) {
-                    console.error('Payment processing error:', error);
-                    alert('Payment capture failed. Please contact support.');
-                }
-            },
-
-            onError: function(err) {
-                console.error('PayPal error:', err);
-                alert('Payment failed. Please try again or contact support if the issue persists.');
-            },
-
-            onCancel: function(data) {
-                console.log('PayPal payment cancelled:', data);
-                // User cancelled, they can try again
-            }
-        }).render('#paypal-button-container');
     </script>
+
+    @if (!string.IsNullOrWhiteSpace(paypalClientId))
+    {
+        <!-- PayPal SDK -->
+        <script src="https://www.paypal.com/sdk/js?client-id=@paypalClientId&currency=CAD&disable-funding=paylater"></script>
+
+        <!-- ═══════════════════════════════════════════════════════════════════
+             PayPal Integration JavaScript
+             ═════════════════════════════════════════════════════════════════
+             Client-side PayPal checkout flow (simplified approach from pr-43):
+
+             1. Render PayPal button in #paypal-button-container
+             2. onClick: Validate form before allowing PayPal to open
+             3. createOrder: Send order total to PayPal
+             4. onApprove: Capture payment, then submit form to ProcessPayment
+             5. onError: Show fallback "Place Order" button
+             6. Hide fallback button once PayPal renders successfully
+
+             This approach avoids backend PayPal API calls - payment is captured
+             entirely client-side, then server creates the order record.
+        ═══════════════════════════════════════════════════════════════════ -->
+        <script>
+            (function () {
+                const form = document.getElementById("checkoutForm");
+                const fallbackBtn = document.getElementById("fallbackButton");
+                const total = "@Model.Total.ToString("F2", System.Globalization.CultureInfo.InvariantCulture)";
+
+                // Form validation helper
+                function formIsValid() {
+                    if (!form) return false;
+                    return form.reportValidity(); // HTML5 validation
+                }
+
+                // Render PayPal button
+                paypal.Buttons({
+                    style: {
+                        layout: "vertical",
+                        color: "gold",
+                        shape: "rect",
+                        label: "paypal"
+                    },
+
+                    // Before PayPal opens, validate the shipping address form
+                    onClick: function () {
+                        if (!formIsValid()) {
+                            alert('Please fill in all required shipping address fields.');
+                            return false; // Prevent PayPal from opening
+                        }
+                        return true; // Allow PayPal to proceed
+                    },
+
+                    // Create PayPal order with cart total
+                    createOrder: function (data, actions) {
+                        return actions.order.create({
+                            purchase_units: [{
+                                amount: {
+                                    currency_code: "CAD",
+                                    value: total
+                                }
+                            }]
+                        });
+                    },
+
+                    // Payment approved by PayPal, capture the funds
+                    onApprove: function (data, actions) {
+                        return actions.order.capture().then(function () {
+                            // Payment captured successfully, submit form to create order in database
+                            form.submit();
+                        });
+                    },
+
+                    // PayPal error handler - show fallback button
+                    onError: function (err) {
+                        console.error("PayPal error:", err);
+                        alert("PayPal payment could not be started. You can use the 'Place Order' button instead.");
+                        if (fallbackBtn) fallbackBtn.style.display = 'block';
+                    }
+                }).render("#paypal-button-container").then(function() {
+                    // PayPal button rendered successfully, hide fallback button
+                    if (fallbackBtn) fallbackBtn.style.display = 'none';
+                }).catch(function(err) {
+                    console.error('PayPal button render error:', err);
+                    // Keep fallback button visible if PayPal SDK fails to load
+                });
+            })();
+        </script>
+    }
 }

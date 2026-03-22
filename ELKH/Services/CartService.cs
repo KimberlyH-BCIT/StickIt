@@ -45,6 +45,21 @@ namespace ELKH.Services
             _userService = userService;
             _contactRepo = contactRepo;
         }
+        
+        public async Task ClearCartAsync(string userEmail)
+        {
+            var user = await _userService.GetByEmailAsync(userEmail);
+            if (user == null) return;
+
+            var items = await _db.Carts
+                .Where(c => c.FkRegisteredUserId == user.PkRegisteredUserId)
+                .ToListAsync();
+
+            if (!items.Any()) return;
+
+            _db.Carts.RemoveRange(items);
+            await _db.SaveChangesAsync();
+        }
 
         // -------------------------------------------------------------------------
         /// <summary>
@@ -166,6 +181,29 @@ namespace ELKH.Services
                 await transaction.RollbackAsync();
                 throw;
             }
+        }
+        
+        public async Task UpdateQuantityAsync(string userEmail, int cartId, int quantity)
+        {
+            if (quantity < 1) quantity = 1;
+
+            var user = await _userService.GetByEmailAsync(userEmail);
+            if (user == null) return;
+
+            var item = await _db.Carts.FirstOrDefaultAsync(c =>
+                c.PkCartId == cartId && c.FkRegisteredUserId == user.PkRegisteredUserId);
+
+            if (item == null) return;
+
+            // update qty
+            item.Quantity = quantity;
+
+            // keep TotalPrice in sync with displayed price
+            var product = await _db.Products.FindAsync(item.FkProductID);
+            var unit = product?.GetEffectivePrice() ?? 0m; 
+            item.TotalPrice = unit * quantity;
+
+            await _db.SaveChangesAsync();
         }
 
 
@@ -352,4 +390,5 @@ namespace ELKH.Services
                 }
             }
     }
+    
 }
