@@ -1,3 +1,55 @@
+
+/* =====================================================
+   STICKIT SITE STYLESHEET
+
+   TABLE OF CONTENTS
+   ==================
+   1. BASE SETTINGS................................................ lines 6-34
+      - HTML/Body base styles
+      - Responsive font sizing
+      - Gradient background
+      - Main container (.kawaii-container)
+
+   2. NAVBAR...................................................... lines 36-70
+      - Navbar styling (.kawaii-navbar)
+      - Logo styling
+      - Brand and link styles with hover effects
+
+   3. HERO SECTION................................................ lines 72-118
+      - Hero box container with border
+      - Hero image, title, subtitle
+      - Brand text and description
+
+   4. BUTTONS.................................................... lines 120-151
+      - Purple kawaii buttons (.kawaii-btn-purple)
+      - Pink kawaii buttons (.kawaii-btn-pink)
+
+   5. STICKIT THEME (Pastel + Mint).......................... lines 152-265
+      - Theme CSS variables and color tokens
+      - Mint gradient buttons (.stickit-btn, .stickit-btn-outline)
+      - Bootstrap button overrides for mint theme
+      - Navbar and footer pastel styling
+
+   6. PASTEL REPLACEMENTS FOR DARK BLOCKS.................... lines 266-288
+      - Overrides for .bg-dark and dark inline styles
+      - Converts dark backgrounds to soft pastel gradients
+
+   7. FOOTER..................................................... lines 290-301
+      - Kawaii footer styling with rounded corners
+
+   8. DECORATIVE ELEMENTS........................................ lines 303-311
+      - Top gradient bar
+
+   9. FORM IMPROVEMENTS.......................................... lines 313-344
+      - Focus states for buttons and inputs
+      - Placeholder animations
+      - Footer inline style overrides
+
+   10. CARDS & POLISH............................................ lines 345-350
+       - Card and accordion border radius
+       - Shadow improvements
+===================================================== */
+
 /* =====================================================
    BASE SETTINGS
 ===================================================== */
@@ -148,6 +200,143 @@ body {
         background: #e85b92;
     }
 
+/* =========================
+   StickIt — Pastel + Mint Theme (clean)
+   - Keeps Bootstrap layout
+   - Replaces dark blocks with soft pastel gradients
+   - Makes primary buttons mint (solid + outline)
+   ========================= */
+
+/* ---------- Theme tokens ---------- */
+:root{
+    --text:#20324a;
+    --muted:#6b7a90;
+
+    /* mint */
+    --mint:#66d1c1;
+    --mint2:#9be7db;
+    --mintLine: rgba(102,209,193,.55);
+
+    /* background */
+    --bgA:#eaf6ff;
+    --bgB:#fff0f6;
+
+    /* cards */
+    --card: rgba(255,255,255,.88);
+    --shadow: 0 18px 50px rgba(20,30,60,.12);
+}
+
+/* ---------- Base ---------- */
+html, body { height:100%; }
+body{
+    margin:0;
+    min-height:100vh;
+    color: var(--text);
+    background:
+            radial-gradient(900px 500px at 20% 0%, var(--bgA) 0%, transparent 60%),
+            radial-gradient(900px 500px at 80% 0%, var(--bgB) 0%, transparent 60%),
+            linear-gradient(180deg, #ffffff 0%, #f7fbff 100%);
+}
+
+/* footer to bottom */
+body{ display:flex; flex-direction:column; }
+main{ flex:1; }
+
+/* ---------- Navbar + Footer helpers ---------- */
+.stickit-nav{
+    background: rgba(255,255,255,.92) !important;
+    border-bottom: 1px solid rgba(255,140,198,.18);
+    backdrop-filter: blur(10px);
+}
+.stickit-nav .nav-link{
+    color: var(--text) !important;
+    font-weight: 700;
+}
+.stickit-nav .nav-link:hover{ color: var(--mint) !important; }
+.stickit-nav .navbar-toggler{ border-color: rgba(255,140,198,.18); }
+
+.stickit-footer{
+    background: linear-gradient(180deg,
+    rgba(255, 220, 236, 0.95),
+    rgba(210, 236, 255, 0.95)) !important;
+    border-top: 1px solid rgba(255,140,198,.18);
+}
+.stickit-footer, .stickit-footer *{
+    color: rgba(32,50,74,.78) !important;
+}
+.stickit-footer a:hover{
+    color: var(--mint) !important;
+    text-decoration: underline !important;
+}
+
+/* ---------- Mint buttons (use these anywhere) ---------- */
+.stickit-btn{
+    background: linear-gradient(90deg, var(--mint), var(--mint2));
+    border: 0 !important;
+    color:#fff !important;
+    font-weight: 800;
+    border-radius: 999px;
+    padding: 10px 18px;
+    box-shadow: 0 10px 25px rgba(102,209,193,.22);
+}
+.stickit-btn:hover{ filter: brightness(.97); }
+
+.stickit-btn-outline{
+    background: #fff;
+    border: 2px solid var(--mintLine) !important;
+    color: var(--text) !important;
+    font-weight: 800;
+    border-radius: 999px;
+    padding: 10px 18px;
+    transition: background .15s ease, border-color .15s ease, transform .15s ease;
+}
+.stickit-btn-outline:hover{
+    background: rgba(102,209,193,.18) !important;
+    border-color: var(--mint) !important;
+}
+
+/* Map common Bootstrap button classes to mint (so you don't have to change every view) */
+.btn-warning{
+    background: linear-gradient(90deg, var(--mint), var(--mint2)) !important;
+    border: 0 !important;
+    color:#fff !important;
+    font-weight: 800 !important;
+}
+.btn-outline-light,
+.btn-outline-dark{
+    border-color: var(--mintLine) !important;
+    color: var(--text) !important;
+}
+.btn-outline-light:hover,
+.btn-outline-dark:hover{
+    background: rgba(102,209,193,.18) !important;
+    border-color: var(--mint) !important;
+    color: var(--text) !important;
+}
+
+/* ---------- Pastel replacements for DARK blocks (keep layout the same) ---------- */
+
+/* If your hero section uses Bootstrap bg-dark text-white */
+.bg-dark.text-white,
+section.bg-dark.text-white{
+    background: radial-gradient(1200px 600px at 15% 20%,
+    rgba(255,196,225,.90) 0%,
+    rgba(210,236,255,.90) 45%,
+    rgba(255,255,255,.98) 100%) !important;
+    color: var(--text) !important;
+}
+.bg-dark .text-white-50{ color: rgba(32,50,74,.70) !important; }
+
+
+/* Inline dark cards like style="background:#111;" */
+[style*="background:#111"]{
+    background: var(--card) !important;
+    border: 1px solid rgba(255,140,198,.22) !important;
+    box-shadow: 0 12px 30px rgba(20,30,60,.10) !important;
+    color: var(--text) !important;
+}
+[style*="background:#111"] .text-white-50{ color: rgba(32,50,74,.70) !important; }
+
 
 /* =====================================================
    FOOTER
@@ -248,3 +437,29 @@ footer[style*="background:#111"] a:hover{ color: var(--mint) !important; }
 .role-staff    { border-color: #0dcaf0; color: #0dcaf0; }
 .role-customer { border-color: #6c757d; color: #6c757d; }
 .role-none     { border-color: #adb5bd; color: #adb5bd; }
+
+/* Inline dark footer like <footer style="background:#111;"> */
+footer[style*="background:#111"]{
+    background: linear-gradient(180deg,
+    rgba(255, 220, 236, 0.95),
+    rgba(210, 236, 255, 0.95)) !important;
+    border-top: 1px solid rgba(255,140,198,.18) !important;
+}
+footer[style*="background:#111"] *{ color: rgba(32,50,74,.78) !important; }
+footer[style*="background:#111"] a:hover{ color: var(--mint) !important; }
+
+/* ---------- Cards / accordion polish ---------- */
+.card, .accordion-item{
+    border-radius: 18px !important;
+    border-color: rgba(255,140,198,.18) !important;
+}
+.shadow-sm{ box-shadow: 0 12px 28px rgba(20,30,60,.10) !important; }
+
+/* Focus ring */
+.btn:focus, .btn:active:focus,
+.btn-link.nav-link:focus,
+.form-control:focus,
+.form-check-input:focus{
+    box-shadow: 0 0 0 .15rem rgba(102,209,193,.25) !important;
+}
+
