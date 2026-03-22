@@ -11,18 +11,37 @@ using Microsoft.Extensions.Logging;
 namespace ELKH.Services
 {
     /// <summary>
-    /// Implementation of <see cref="IProductService"/> backed by EF Core and AutoMapper.
+    /// Implementation of <see cref="IProductService"/> backed by EF Core with manual mapping.
     /// Delegates search operations to <see cref="ISearchService"/> and uses
     /// <see cref="CompiledQueries"/> for hot-path single-product lookups.
     /// </summary>
+    /// <remarks>
+    /// TABLE OF CONTENTS
+    /// ==================
+    /// 1. Constructor & Dependencies (lines 33-40)
+    /// 2. Product Retrieval
+    ///    - GetAllAsync() - Fetch all products with category (lines 43-48)
+    ///    - GetByIdAsync() - Single product by ID (lines 51-57)
+    ///    - GetByIdsAsync() - Batch fetch for cart/order enrichment (lines 60-74)
+    /// 3. Product Search
+    ///    - SearchNames() - Fuzzy name search via ISearchService (lines 77-80)
+    /// 4. Product Mutation
+    ///    - CreateAsync() - Add new product with normalized name (lines 83-91)
+    ///    - UpdateAsync() - Update existing product fields (lines 94-112)
+    ///    - DeleteAsync() - Remove product (lines 115-122)
+    /// 5. Full-Text Search Management
+    ///    - ReindexFTSAsync() - Rebuild fuzzy search index (lines 125-134)
+    /// 6. Helpers
+    ///    - NormalizeName() - Lowercase + remove diacritics (lines 137-142)
+    /// </remarks>
     public class ProductService : IProductService
     {
         private readonly ApplicationDbContext _db;
         private readonly ISearchService _searchService;
-        private readonly AutoMapper.IMapper _mapper;
+        private readonly IProductMapper _mapper;
         private readonly ILogger<ProductService> _logger;
 
-        public ProductService(ApplicationDbContext db, ISearchService searchService, AutoMapper.IMapper mapper, ILogger<ProductService> logger)
+        public ProductService(ApplicationDbContext db, ISearchService searchService, IProductMapper mapper, ILogger<ProductService> logger)
         {
             _db = db;
             _searchService = searchService;
@@ -35,7 +54,7 @@ namespace ELKH.Services
         {
             // Include Category so the mapper can populate CategoryName without a second query.
             var products = await _db.Products.Include(p => p.Category).ToListAsync(ct);
-            return _mapper.Map<List<ProductVM>>(products);
+            return _mapper.ToViewModels(products);
         }
 
         /// <inheritdoc/>
@@ -50,7 +69,7 @@ namespace ELKH.Services
             // CompiledQueries.GetProductById avoids repeated EF query translation on this hot path.
             var p = await CompiledQueries.GetProductById(_db, id, ct);
             if (p == null) return null;
-            return _mapper.Map<ProductVM>(p);
+            return _mapper.ToViewModel(p);
         }
 
         /// <inheritdoc/>
@@ -68,14 +87,14 @@ namespace ELKH.Services
                 .Where(p => idList.Contains(p.PkProductId))
                 .ToListAsync(ct);
 
-            var viewModels = _mapper.Map<List<ProductVM>>(products);
+            var viewModels = _mapper.ToViewModels(products);
             return viewModels.ToDictionary(vm => vm.ProductId);
         }
 
         /// <inheritdoc/>
         public async Task CreateAsync(ProductVM vm, CancellationToken ct = default)
         {
-            var entity = _mapper.Map<ProductModel>(vm);
+            var entity = _mapper.ToModel(vm);
             // Normalize the name immediately so the entity is search-ready before it is persisted.
             entity.NameNormalized = NormalizeName(entity.Name);
             _db.Products.Add(entity);
@@ -87,8 +106,16 @@ namespace ELKH.Services
         {
             var entity = await _db.Products.FindAsync(new object[] { vm.ProductId }, ct);
             if (entity == null) return;
-            // Map changed fields onto the tracked entity (AutoMapper will skip navigation props).
-            _mapper.Map(vm, entity);
+
+            // Manual mapping of changed fields onto the tracked entity
+            entity.Name = vm.ProductName;
+            entity.Description = vm.Description;
+            entity.Price = vm.Price;
+            entity.DiscountPercent = vm.DiscountPercent;
+            entity.StockQuantity = vm.StockQuantity;
+            entity.FkCategoryId = vm.CategoryId;
+            entity.IsActive = vm.IsActive;
+
             // Re-normalize after mapping in case the product name changed.
             entity.NameNormalized = NormalizeName(entity.Name);
             await _db.SaveChangesAsync(ct);
