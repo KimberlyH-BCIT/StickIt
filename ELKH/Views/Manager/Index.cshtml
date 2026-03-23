@@ -2,7 +2,9 @@
     ViewData["Title"] = "Manager Dashboard";
     Layout = "~/Views/Shared/_Layout.cshtml";
 }
-
+@{
+    var currentController = ViewContext.RouteData.Values["controller"]?.ToString();
+}
 <div class="container-fluid px-4 mt-4 pb-5">
 
     <!-- ── Header ─────────────────────────────────────────────── -->

@@ -5,14 +5,17 @@
     @using Microsoft.AspNetCore.Antiforgery
     @inject SignInManager<IdentityUser> SignInManager
     @inject IAntiforgery AntiforgeryService
-    <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    @{
-        var csrfToken = AntiforgeryService.GetAndStoreTokens(Context).RequestToken;
-    }
+
+        <meta charset="utf-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+        @{
+                var csrfToken = AntiforgeryService.GetAndStoreTokens(Context).RequestToken;
+            }
+
     <meta name="csrf-token" content="@csrfToken" />
-    <link rel="icon" type="image/png" href="~/logo-stickit.png" />
-<title>@ViewData["Title"] - ELKH</title>
+        <link rel="icon" type="image/png" href="~/logo-stickit.png" />
+        <title>@ViewData["Title"] - StickIt</title>
+
     <script type="importmap"></script>
     <link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.min.css" />
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" />
@@ -22,229 +25,131 @@
 
 <body>
 
-    @* â‘  Top bar: brand + login greeting *@
-    <div class="header-top border-bottom py-2">
-        <div class="container-fluid d-flex align-items-center justify-content-between flex-wrap gap-2">
-            <a class="navbar-brand mb-0 h1" asp-area="" asp-controller="Home" asp-action="Index">ELKH</a>
-            <div class="d-flex align-items-center flex-wrap gap-2">
-                <partial name="_LoginPartial" />
-                <partial name="_CartIconPartial" />
-            </div>
-        </div>
-    </div>
+    
+    @{
+        string role = "Registered user";
+        if (User.IsInRole("Admin")) role = "Admin";
+        else if (User.IsInRole("Manager")) role = "Manager";
+        else if (User.IsInRole("Staff")) role = "Staff";
+    }
+    <header>
 
-        @* â‘¡ Search bar centered *@
-        <div class="header-search py-2">
-            <div class="container-fluid d-flex justify-content-center">
-                <div class="header-search-wrap position-relative">
-                    <form asp-controller="Product" asp-action="Index" method="get" class="d-flex" role="search">
-                        <input id="productNameInput"
-                               type="search"
-                               name="q"
-                               class="form-control"
-                               placeholder="Search productsâ€¦"
-                               autocomplete="off"
-                               aria-label="Search products" />
-                        <button type="submit" class="btn btn-outline-secondary ms-2">Search</button>
-                    </form>
-                    <div id="productNameSuggestions"
-                         class="list-group position-absolute w-100 shadow-sm"
-                         style="z-index:1050;display:none;"></div>
+        <div class="border-bottom py-2" style="background:linear-gradient(90deg,#fce4ec,#e1f5fe);">
+            <div class="container-fluid d-flex align-items-center justify-content-between">
+
+                <!-- LEFT: HAMBURGER + LOGO -->
+                <div class="d-flex align-items-center gap-3">
+
+                    <!-- HAMBURGER -->
+                    <button class="btn" data-bs-toggle="offcanvas" data-bs-target="#navOffcanvas">
+                        ☰
+                    </button>
+
+                    <!-- LOGO -->
+                    <a asp-controller="Home" asp-action="Index">
+                        <img src="~/logo-stickit.png" style="height:55px; filter:brightness(1.2);"  />
+                    </a>
                 </div>
+
+                <!-- SEARCH -->
+                <div class="py-2 text-center">
+                    <div class="container-fluid d-flex justify-content-center">
+                        <div class="header-search-wrap position-relative">
+                            <form asp-controller="Product" asp-action="Index" method="get" class="d-flex" role="search">
+                                <input id="productNameInput"
+                                       type="search"
+                                       name="q"
+                                       class="form-control"
+                                       placeholder="Search products"
+                                       autocomplete="off"
+                                       aria-label="Search products" />
+                                <button type="submit" class="btn btn-outline-secondary ms-2">Search</button>
+                            </form>
+                            <div id="productNameSuggestions"
+                                 class="list-group position-absolute w-100 shadow-sm"
+                                 style="z-index:1050;display:none;"></div>
+                        </div>
+                    </div>
+                </div>
+
+                @if (User.Identity.IsAuthenticated)
+                {
+                    <a class="btn btn-sm btn-dark rounded-pill px-3"
+                           asp-controller="@(User.IsInRole("Admin") ? "Admin" :
+                                                                                          User.IsInRole("Manager") ? "Manager" :
+                                                                                          User.IsInRole("Staff") ? "Staff" : "Home")"
+                           asp-action="Index">
+                        <span class="badge bg-light text-dark">@role</span> Dashboard
+                    </a>
+                }
+                <!-- RIGHT: LOGIN + CART -->
+                <div class="d-flex align-items-center gap-3">
+                    <partial name="_LoginPartial" />
+                    <partial name="_CartIconPartial" />
+                </div>
+
             </div>
         </div>
 
-        @* â‘¢ Nav strip â€” sits at the bottom of the header, separated by border-top *@
-        <nav class="header-nav border-top">
-            <div class="container-fluid d-flex align-items-center">
-                <button class="nav-hamburger flex-shrink-0 me-2"
-                        type="button"
-                        data-bs-toggle="offcanvas"
-                        data-bs-target="#navOffcanvas"
-                        aria-controls="navOffcanvas"
-                        aria-label="Open navigation menu">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" fill="currentColor" viewBox="0 0 16 16" aria-hidden="true">
-                        <path fill-rule="evenodd" d="M2.5 12a.5.5 0 0 1 .5-.5h10a.5.5 0 0 1 0 1H3a.5.5 0 0 1-.5-.5zm0-4a.5.5 0 0 1 .5-.5h10a.5.5 0 0 1 0 1H3a.5.5 0 0 1-.5-.5zm0-4a.5.5 0 0 1 .5-.5h10a.5.5 0 0 1 0 1H3a.5.5 0 0 1-.5-.5z"/>
-                    </svg>
-</button>
-@if (User.IsInRole("Admin"))
-{
-    <ul class="navbar-nav flex-row flex-grow-1 justify-content-evenly mb-0">
-        <li class="nav-item">
-            <a class="nav-link text-dark fw-semibold" asp-controller="Admin" asp-action="Index">Home</a>
-        </li>
-        <li class="nav-item">
-            <a class="nav-link text-dark" asp-controller="Home" asp-action="Index">View as Customer</a>
-        </li>
-        <li class="nav-item">
-            <a class="nav-link text-dark" asp-controller="Manager" asp-action="Index">View as Manager</a>
-        </li>
-        <li class="nav-item">
-            <a class="nav-link text-dark" asp-controller="Staff" asp-action="Index">View as Staff</a>
-        </li>
-    </ul>
-}
-            <!-- Hamburger -->
-            <button class="nav-hamburger flex-shrink-0"
-                    type="button"
-                    data-bs-toggle="offcanvas"
-                    data-bs-target="#navOffcanvas"
-                    aria-controls="navOffcanvas"
-                    aria-label="Menu">
-                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="currentColor" viewBox="0 0 16 16">
-                    <path fill-rule="evenodd"
-                          d="M2.5 12a.5.5 0 0 1 .5-.5h10a.5.5 0 0 1 0 1H3a.5.5 0 0 1-.5-.5zm0-4a.5.5 0 0 1 .5-.5h10a.5.5 0 0 1 0 1H3a.5.5 0 0 1-.5-.5zm0-4a.5.5 0 0 1 .5-.5h10a.5.5 0 0 1 0 1H3a.5.5 0 0 1-.5-.5z"/>
-                </svg>
-            </button>
 
-            <!-- Brand -->
-            <a class="navbar-brand flex-shrink-0" asp-controller="Home" asp-action="Index">
-                🌸 STICK IT
-            </a>
 
-            <!-- Search (hides on small screens) -->
-            <div class="navbar-search d-none d-md-flex flex-grow-1 position-relative" style="max-width:400px;">
-                <form asp-controller="Product" asp-action="Index" method="get" class="d-flex w-100" role="search">
-                    <input id="productNameInput"
-                           type="search" name="q"
-                           class="form-control"
-                           placeholder="Search stickers & more…"
-                           autocomplete="off" />
-                    <button type="submit" class="btn-search">🔍</button>
-                </form>
-                <div id="productNameSuggestions"
-                     class="list-group position-absolute w-100 shadow mt-1 top-100"></div>
-            </div>
+</header>
 
-            <!-- Desktop nav links -->
-            <ul class="navbar-nav flex-row gap-1 ms-auto d-none d-lg-flex align-items-center">
-                @if (User.IsInRole("Admin"))
-                {
-                    <li class="nav-item"><a class="nav-link fw-semibold" asp-controller="Admin"   asp-action="Index">🛡️ Admin</a></li>
-                    <li class="nav-item"><a class="nav-link" asp-controller="Manager" asp-action="Index">Manager</a></li>
-                    <li class="nav-item"><a class="nav-link" asp-controller="Staff"   asp-action="Index">Staff</a></li>
-                    <li class="nav-item"><a class="nav-link" asp-controller="Home"    asp-action="Index">Customer View</a></li>
-                }
-                else if (User.IsInRole("Manager"))
-                {
-                    <li class="nav-item"><a class="nav-link fw-semibold" asp-controller="Manager" asp-action="Index">📦 Manager</a></li>
-                    <li class="nav-item"><a class="nav-link" asp-controller="Staff"   asp-action="Index">Staff View</a></li>
-                    <li class="nav-item"><a class="nav-link" asp-controller="Home"    asp-action="Index">Customer View</a></li>
-                }
-                else if (User.IsInRole("Staff"))
-                {
-                    <li class="nav-item"><a class="nav-link fw-semibold" asp-controller="Staff" asp-action="Index">🧑‍💼 Staff</a></li>
-                    <li class="nav-item"><a class="nav-link" asp-controller="OrderHistory" asp-action="Index">Orders</a></li>
-                    <li class="nav-item"><a class="nav-link" asp-controller="Inventory"    asp-action="Index">Inventory</a></li>
-                }
-                else
-                {
-                    <ul class="navbar-nav flex-row flex-grow-1 justify-content-evenly mb-0">
-                        <li class="nav-item">
-                            <a class="nav-link text-dark" asp-area="" asp-controller="Home" asp-action="Index">Home</a>
-                        </li>
-                        <li class="nav-item">
-                            <a class="nav-link text-dark" asp-area="" asp-controller="Product" asp-action="Index">Products</a>
-                        </li>
-                        @if (User.IsInRole("Staff"))
-                        {
-                            <li class="nav-item">
-                                <a class="nav-link text-dark" asp-area="" asp-controller="OrderHistory" asp-action="Index">Order History</a>
-                            </li>
-                            <li class="nav-item">
-                                <a class="nav-link text-dark" asp-area="" asp-controller="Inventory" asp-action="Index">Inventory</a>
-                            </li>
-                        }
-                        @if (SignInManager.IsSignedIn(User))
-                        {
-                            <li class="nav-item">
-                                <a class="nav-link text-dark" asp-area="" asp-controller="Wishlist" asp-action="Index">Wishlist</a>
-                            </li>
-                            <li class="nav-item">
-                                <a class="nav-link text-dark" asp-area="" asp-controller="Order" asp-action="MyHistory">My Orders</a>
-                            </li>
-                            <li class="nav-item">
-                                <a class="nav-link text-dark" asp-area="" asp-controller="User" asp-action="MyRatings">My Ratings</a>
-                            </li>
-                            <li class="nav-item">
-                                <a class="nav-link text-dark" asp-area="" asp-controller="User" asp-action="EditProfile">My Profile</a>
-                            </li>
-                        }
-                    </ul>
-                }
-            </div>
-        </nav>
-
-    </header>
-
-    @* Off-canvas sidebar â€” opened by the hamburger button in the nav strip *@
-    <div class="offcanvas offcanvas-start" tabindex="-1" id="navOffcanvas" aria-labelledby="navOffcanvasTitle">
+    <!-- SIDEBAR -->
+    <div class="offcanvas offcanvas-start" tabindex="-1" id="navOffcanvas">
         <div class="offcanvas-header border-bottom">
-            <a class="navbar-brand mb-0 h1" asp-area="" asp-controller="Home" asp-action="Index" id="navOffcanvasTitle">ELKH</a>
-            <button type="button" class="btn-close" data-bs-dismiss="offcanvas" aria-label="Close"></button>
+            <img src="~/logo-stickit.png" style="height:35px;" />
+            <button class="btn-close" data-bs-dismiss="offcanvas"></button>
         </div>
 
-        <!-- Mobile search inside sidebar -->
-        <div class="px-3 py-2 border-bottom" style="background:#fce4ec;">
-            <form asp-controller="Product" asp-action="Index" method="get" class="d-flex gap-1">
-                <input type="search" name="q"
-                       class="form-control form-control-sm rounded-pill"
-                       placeholder="Search…" autocomplete="off" />
-                <button type="submit"
-                        class="btn btn-sm rounded-pill px-2"
-                        style="background:#e91e8c;color:#fff;border:none;">🔍</button>
-            </form>
-        </div>
+        <div class="offcanvas-body">
 
-        <div class="offcanvas-body p-0">
-            <ul class="navbar-nav flex-column">
-                @if (User.IsInRole("Admin"))
-                {
-                    <li class="nav-item border-bottom">
-                        <a class="nav-link text-dark px-3 py-2 fw-semibold" asp-controller="Admin" asp-action="Index">Home</a>
-                    </li>
-                    <li class="nav-item border-bottom">
-                        <a class="nav-link text-dark px-3 py-2" asp-controller="Home" asp-action="Index">View as Customer</a>
-                    </li>
-                    <li class="nav-item border-bottom">
-                        <a class="nav-link text-dark px-3 py-2" asp-controller="Manager" asp-action="Index">View as Manager</a>
-                    </li>
-                    <li class="nav-item border-bottom">
-                        <a class="nav-link text-dark px-3 py-2" asp-controller="Home" asp-action="Index">View as Staff</a>
-                    </li>
-                    <li class="nav-item border-bottom"><a class="nav-link px-3 py-2 fw-bold" asp-controller="Admin"   asp-action="Index">🛡️ Admin Dashboard</a></li>
-                    <li class="nav-item border-bottom"><a class="nav-link px-3 py-2" asp-controller="Manager" asp-action="Index">📦 Manager View</a></li>
-                    <li class="nav-item border-bottom"><a class="nav-link px-3 py-2" asp-controller="Staff"   asp-action="Index">🧑‍💼 Staff View</a></li>
-                    <li class="nav-item border-bottom"><a class="nav-link px-3 py-2" asp-controller="Home"    asp-action="Index">🛒 Customer View</a></li>
-                }
-                else if (User.IsInRole("Manager"))
-                {
-                    <li class="nav-item border-bottom"><a class="nav-link px-3 py-2 fw-bold" asp-controller="Manager" asp-action="Index">📦 Manager Dashboard</a></li>
-                    <li class="nav-item border-bottom"><a class="nav-link px-3 py-2" asp-controller="Staff"   asp-action="Index">🧑‍💼 Staff View</a></li>
-                    <li class="nav-item border-bottom"><a class="nav-link px-3 py-2" asp-controller="Home"    asp-action="Index">🛒 Customer View</a></li>
-                }
-                else if (User.IsInRole("Staff"))
-                {
-                    <li class="nav-item border-bottom"><a class="nav-link px-3 py-2 fw-bold" asp-controller="Staff" asp-action="Index">🧑‍💼 Staff Dashboard</a></li>
-                    <li class="nav-item border-bottom"><a class="nav-link px-3 py-2" asp-controller="OrderHistory" asp-action="Index">📋 Order History</a></li>
-                    <li class="nav-item border-bottom"><a class="nav-link px-3 py-2" asp-controller="Inventory"    asp-action="Index">📦 Inventory</a></li>
-                }
-                else
-                {
-                    <li class="nav-item border-bottom"><a class="nav-link px-3 py-2" asp-controller="Home"    asp-action="Index">🏠 Home</a></li>
-                    <li class="nav-item border-bottom"><a class="nav-link px-3 py-2" asp-controller="Product" asp-action="Index">🛍️ Products</a></li>
-                    <li class="nav-item border-bottom"><a class="nav-link px-3 py-2" asp-controller="Home"    asp-action="Privacy">🔒 Privacy</a></li>
-                    @if (SignInManager.IsSignedIn(User))
-                    {
-                        <li class="nav-item border-bottom"><a class="nav-link px-3 py-2" asp-controller="Wishlist" asp-action="Index">💖 Wishlist</a></li>
-                        <li class="nav-item border-bottom"><a class="nav-link px-3 py-2" asp-controller="Order"    asp-action="MyHistory">📦 My Orders</a></li>
-                        <li class="nav-item border-bottom"><a class="nav-link px-3 py-2" asp-controller="User"     asp-action="MyRatings">⭐ My Ratings</a></li>
-                        <li class="nav-item border-bottom"><a class="nav-link px-3 py-2" asp-controller="User"     asp-action="EditProfile">👤 My Profile</a></li>
-                    }
-                }
+            <!-- Mobile search inside sidebar -->
+            <div class="px-3 py-2 border-bottom" style="background:#fce4ec;">
+                <form asp-controller="Product" asp-action="Index" method="get" class="d-flex gap-1">
+                    <input type="search" name="q"
+                           class="form-control form-control-sm rounded-pill"
+                           placeholder="Search…" autocomplete="off" />
+                    <button type="submit"
+                            class="btn btn-sm rounded-pill px-2"
+                            style="background:#e91e8c;color:#fff;border:none;">
+                        🔍
+                    </button>
+                </form>
+            </div>
+
+            <!-- IMPORTANT LINKS -->
+            <ul class="list-unstyled">
+                <li><a asp-controller="Home" asp-action="Index">Home</a></li>
+                <li><a asp-controller="Product" asp-action="Index">Shop Stickers</a></li>
+                <li><a asp-controller="Cart" asp-action="Index">Cart</a></li>
+                <li><a asp-controller="Wishlist" asp-action="Index">Wishlist</a></li>
+                <li><a asp-controller="Order" asp-action="MyHistory">Order History</a></li>
             </ul>
+
+            <hr />
+
+            <!-- CATEGORIES -->
+            <ul class="list-unstyled">
+                <li><strong>Categories</strong></li>
+                <li><a class="dropdown-item py-2" asp-controller="Product" asp-action="Index" asp-route-category="Canadian">Canadian</a></li>
+                <li><a class="dropdown-item py-2" asp-controller="Product" asp-action="Index" asp-route-category="Christmas">Christmas</a></li>
+                <li><a class="dropdown-item py-2" asp-controller="Product" asp-action="Index" asp-route-category="Cute Animals">Cute Animals</a></li>
+                <li><a class="dropdown-item py-2" asp-controller="Product" asp-action="Index" asp-route-category="Easter">Easter</a></li>
+                <li><a class="dropdown-item py-2" asp-controller="Product" asp-action="Index" asp-route-category="Food">Food</a></li>
+                <li><a class="dropdown-item py-2" asp-controller="Product" asp-action="Index" asp-route-category="Halloween">Halloween</a></li>
+                <li><a class="dropdown-item py-2" asp-controller="Product" asp-action="Index" asp-route-category="Lunar New Year">Lunar New Year</a></li>
+                <li><a class="dropdown-item py-2" asp-controller="Product" asp-action="Index" asp-route-category="Nature & Floral">Nature & Floral</a></li>
+                <li><a class="dropdown-item py-2" asp-controller="Product" asp-action="Index" asp-route-category="New Years Eve">New Years Eve</a></li>
+                <li><a class="dropdown-item py-2" asp-controller="Product" asp-action="Index" asp-route-category="Thanksgiving">Thanksgiving</a></li>
+                <li><hr class="my-1"></li>
+                <li><a class="dropdown-item py-2" asp-controller="Product" asp-action="Index" asp-route-category="Miscellaneous">Miscellaneous</a></li>
+            </ul>
+
         </div>
     </div>
+
+
 
     <!-- ══════════════════ MAIN CONTENT ══════════════════ -->
     <div>
@@ -290,8 +195,8 @@
     </div>
 
     <!-- ══════════════════ FOOTER ══════════════════ -->
-    <footer class="site-footer pt-5 pb-3 mt-4">
-        <div class="container small">
+        <footer class="site-footer pt-5 pb-3 mt-4" style="background:linear-gradient(90deg,#f3e5f5,#e1f5fe);">
+            <div class="container small">
             <div class="row g-4 mb-4">
 
                 <div class="col-6 col-lg-3">
@@ -349,7 +254,7 @@
             <hr />
 
             <div class="d-flex justify-content-between align-items-center flex-wrap gap-2">
-                <div>Â© @DateTime.Now.Year - ELKH</div>
+                <div>© @DateTime.Now.Year - ELKH</div>
                 <div class="d-flex gap-3">
                     <a asp-controller="Home" asp-action="Privacy">Privacy</a>
                     <a href="#">Terms</a>
@@ -388,6 +293,7 @@
             </div>
         </div>
     </div>
+    </footer>
 
     <script src="~/lib/jquery/dist/jquery.min.js"></script>
     <script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>

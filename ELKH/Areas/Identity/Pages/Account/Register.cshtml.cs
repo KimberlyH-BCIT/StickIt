@@ -261,7 +261,8 @@ namespace ELKH.Areas.Identity.Pages.Account
                     else
                     {
                         await _signInManager.SignInAsync(user, isPersistent: false);
-                        return LocalRedirect(returnUrl);
+                        // Redirect new customers to the product catalog
+                        return RedirectToAction("Index", "Product");
                     }
                 }
                 foreach (var error in result.Errors)

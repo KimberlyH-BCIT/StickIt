@@ -22,7 +22,7 @@ public class ReCaptchaService : IReCaptchaService
 
         var form = new Dictionary<string, string>
         {
-            ["secret"]   = _opts.SecretKey,
+            ["secret"] = _opts.SecretKey,
             ["response"] = token
         };
 
@@ -35,6 +35,7 @@ public class ReCaptchaService : IReCaptchaService
         var json = await res.Content.ReadAsStringAsync();
         using var doc = JsonDocument.Parse(json);
 
+        // Google returns: { "success": true/false, ... }
         return doc.RootElement.TryGetProperty("success", out var ok) && ok.GetBoolean();
     }
 }

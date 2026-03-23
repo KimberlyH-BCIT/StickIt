@@ -4,7 +4,16 @@ namespace ELKH.ViewModels;
 
 public class CheckoutVM
 {
-    // Shipping info
+    // PayPal order ID (created client-side, captured server-side)
+    public string? PayPalOrderId { get; set; }
+
+    // Selected contact detail ID (for existing addresses)
+    public int? SelectedContactId { get; set; }
+
+    // Available saved addresses for the user
+    public List<ContactDetailVM> SavedAddresses { get; set; } = new();
+
+    // Shipping info (populated from selected address or entered manually)
     [Required, Display(Name = "Full Name")]
     public string FullName { get; set; } = string.Empty;
 

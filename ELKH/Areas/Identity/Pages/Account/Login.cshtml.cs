@@ -133,20 +133,26 @@ namespace ELKH.Areas.Identity.Pages.Account
 
                     if (await _userManager.IsInRoleAsync(user, "Admin"))
                     {
-                        return RedirectToAction("Index", "Admin");
+                        //return RedirectToAction("Index", "Admin");
+                        return LocalRedirect("/Admin");
+
                     }
 
                     if (await _userManager.IsInRoleAsync(user, "Manager"))
                     {
-                        return RedirectToAction("Index", "Manager");
+                        //return RedirectToAction("Index", "Manager");
+                        return LocalRedirect("/Manager");
                     }
 
                     if (await _userManager.IsInRoleAsync(user, "Staff"))
                     {
-                        return RedirectToAction("Index", "Staff");
+                        //return RedirectToAction("Index", "Staff");
+                        return LocalRedirect("/Staff");
                     }
 
-                    return RedirectToAction("Index", "Home");
+                    // Customer or default role - redirect to Products page
+                    _logger.LogInformation("User {Email} logged in as Customer.", Input.Email);
+                    return RedirectToAction("Index", "Product");
                 }
 
                 if (result.RequiresTwoFactor)

@@ -6,7 +6,9 @@
     var topProducts = ViewBag.TopProducts as List<ELKH.ViewModels.TopProductVM>
                       ?? new List<ELKH.ViewModels.TopProductVM>();
 }
-
+@{
+    var currentController = ViewContext.RouteData.Values["controller"]?.ToString();
+}
 <div class="container-fluid px-4 mt-4 pb-5">
 
     <!-- ── Header ────────────────────────────────────────────── -->
@@ -17,7 +19,7 @@
         </div>
         <!-- View-as shortcuts -->
         <div class="d-flex gap-2 flex-wrap">
-            <a asp-controller="Manager" asp-action="Index"
+             <a asp-controller="Manager" asp-action="Index"
                class="btn btn-sm btn-outline-secondary rounded-pill px-3">
                 👔 View as Manager
             </a>
@@ -70,7 +72,7 @@
                             <h5 class="fw-bold mb-1 text-dark">Manage Accounts</h5>
                             <p class="text-muted small mb-2">View, edit, and manage all users</p>
                             <span class="badge bg-success bg-opacity-10 text-success px-3 py-1 rounded-pill small">
-                                User Management
+                                User Account Management
                             </span>
                         </div>
                     </div>

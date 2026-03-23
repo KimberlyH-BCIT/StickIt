@@ -53,7 +53,7 @@ namespace ELKH.Models
         /// Foreign key to the customer who placed the order.
         /// </summary>
         public int FkRegisteredUserId { get; set; }
-        public RegisteredUserModel? RegisteredUser { get; set; }
+        public RegisteredUserModel RegisteredUser { get; set; }
 
         /// <summary>
         /// Collection of line items included in this order.
@@ -68,7 +68,7 @@ namespace ELKH.Models
         /// Foreign key to the shipping/delivery address for this order.
         /// </summary>
         public int FkContactId { get; set; }
-        public ContactDetailModel ContactDetail { get; set; } = new ContactDetailModel();
+        public ContactDetailModel? ContactDetail { get; set; }
         //public OrderStatusModel OrderStatusDetail { get; set; } = new OrderStatusModel();
     }
 }

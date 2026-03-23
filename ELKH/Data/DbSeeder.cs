@@ -491,7 +491,8 @@ public static class DbSeeder
                 PostCode           = postalCode,
                 Country            = "Canada",
                 IsDefault          = true,
-                FkRegisteredUserId = registeredUser.PkRegisteredUserId
+                FkRegisteredUserId = registeredUser.PkRegisteredUserId,
+                UserId = identityUser.Id
             };
             db.ContactDetails.Add(contact);
             await db.SaveChangesAsync();
@@ -538,7 +539,7 @@ public static class DbSeeder
                     CreatedAt          = orderDate,
                     DeliveryStatus     = deliveryStatus,
                     FkRegisteredUserId = registeredUser.PkRegisteredUserId,
-                    FkContactId        = contact.PkContactId
+                    FkContactId = contact.PkContactId
                 };
                 db.Orders.Add(order);
                 await db.SaveChangesAsync();
