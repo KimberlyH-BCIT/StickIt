@@ -4,6 +4,7 @@
 // ─── Entry points ────────────────────────────────────────────────────────────
 document.addEventListener('DOMContentLoaded', initWishlistAjax);
 document.addEventListener('DOMContentLoaded', initProductAutocomplete);
+document.addEventListener('DOMContentLoaded', initProductCardNavigation);
 
 // ─── Utility helpers ─────────────────────────────────────────────────────────
 
@@ -428,6 +429,37 @@ function initWishlistAjax() {
                 showTempMessage('danger', 'Network error');
                 button.disabled = false;
             }
+        });
+    });
+}
+
+// ─── Product Card Navigation ──────────────────────────────────────────────────
+
+/**
+ * Enables click-to-navigate on product cards while preserving button interactions.
+ * Clicking anywhere on a card (except buttons/forms) navigates to the product details.
+ * Form submissions and button clicks are handled normally via stopPropagation.
+ */
+function initProductCardNavigation() {
+    document.querySelectorAll('.product-card').forEach(function (card) {
+        card.addEventListener('click', function (e) {
+            // Don't navigate if clicking on interactive elements
+            if (e.target.closest('form') || e.target.closest('button') || e.target.closest('a')) {
+                return;
+            }
+
+            // Navigate to product details
+            const href = card.getAttribute('data-href');
+            if (href) {
+                window.location.href = href;
+            }
+        });
+
+        // Stop propagation on forms and buttons to prevent card navigation
+        card.querySelectorAll('form, button').forEach(function (elem) {
+            elem.addEventListener('click', function (e) {
+                e.stopPropagation();
+            });
         });
     });
 }

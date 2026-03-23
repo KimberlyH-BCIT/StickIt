@@ -38,8 +38,8 @@
                         @if (Model.SavedAddresses.Any())
                         {
                             <div class="mb-4">
-                                <label class="form-label fw-semibold">Select a saved address</label>
-                                <select class="form-select" id="addressSelector">
+                                <label for="addressSelector" class="form-label fw-semibold">Select a saved address</label>
+                                <select class="form-select" id="addressSelector" name="addressSelector">
                                     <option value="">-- Enter new address --</option>
                                     @foreach (var addr in Model.SavedAddresses)
                                     {

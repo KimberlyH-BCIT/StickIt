@@ -47,7 +47,7 @@
                                type="search"
                                name="q"
                                class="form-control"
-                               placeholder="Search productsâ€¦"
+                               placeholder="Search products"
                                autocomplete="off"
                                aria-label="Search products" />
                         <button type="submit" class="btn btn-outline-secondary ms-2">Search</button>
@@ -239,7 +239,7 @@
             </ul>
         </div>
     </div>
-    < class="container">
+    <div class="container">
         <div>
             @RenderSection("title",false)
         </div>
@@ -316,7 +316,7 @@
                     <div class="text-white-50 mb-3">Subscribe for product drops and updates.</div>
 
                     <form class="d-flex gap-2 mb-3">
-                        <input class="form-control form-control-sm" type="email" placeholder="Email address" />
+                        <input id="newsletter-email" name="email" class="form-control form-control-sm" type="email" placeholder="Email address" aria-label="Email address for newsletter" autocomplete="email" />
                         <button class="btn btn-warning btn-sm fw-bold" type="button">Subscribe</button>
                     </form>
 
