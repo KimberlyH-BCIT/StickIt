@@ -158,19 +158,3 @@ else
         </nav>
     }
 }
-
-@section Scripts {
-    <script>
-        (function () {
-            // Navigate to product details when clicking the card body,
-            // but let form submissions and button clicks proceed normally.
-            document.querySelectorAll('.product-card').forEach(function (card) {
-                card.addEventListener('click', function (e) {
-                    if (!e.target.closest('form') && !e.target.closest('button') && !e.target.closest('a')) {
-                        window.location.href = card.dataset.href;
-                    }
-                });
-            });
-        })();
-    </script>
-}
