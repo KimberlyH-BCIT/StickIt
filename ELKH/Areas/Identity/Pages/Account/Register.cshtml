@@ -78,6 +78,7 @@
 
             @* reCAPTCHA widget *@
             <div class="mb-3">
+                <!-- Debug: SiteKey = '@Model.ReCaptchaSiteKey' -->
                 <div class="g-recaptcha" data-sitekey="@Model.ReCaptchaSiteKey"></div>
                 <span class="text-danger">@Html.ValidationMessage("ReCaptcha")</span>
             </div>
