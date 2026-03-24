@@ -11,4 +11,5 @@ public class OrderVM
 public class OrderHistoryVM
 {
     public IEnumerable<OrderModel> Orders { get; set; } = new List<OrderModel>();
+    public string CurrentSort { get; set; } = "date_desc";
 }

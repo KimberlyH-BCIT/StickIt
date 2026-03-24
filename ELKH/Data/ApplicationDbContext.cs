@@ -31,6 +31,7 @@ namespace ELKH.Data
         public DbSet<TransactionModel> Transactions { get; set; }
         public DbSet<ContactDetailModel> ContactDetails { get; set; }
         public DbSet<ProductRatingModel> ProductRatings { get; set; }
+        public DbSet<StoreReviewModel> StoreReviews { get; set; }
         public DbSet<WishListModel> WishLists { get; set; }
         public DbSet<WishListItemModel> WishListItems { get; set; }
         public DbSet<UserLogModel> UserLogs { get; set; }
@@ -38,6 +39,7 @@ namespace ELKH.Data
         public DbSet<FuzzySuggestionModel> FuzzySuggestions { get; set; }
         public DbSet<AuditEntryModel> AuditEntries { get; set; }
         public DbSet<CachedFuzzyKeyModel> CachedFuzzyKeys { get; set; }
+        public DbSet<StockNotificationModel> StockNotifications { get; set; }
 
         /// <summary>
         /// Configures entity relationships, indexes, and table mappings for the application.
@@ -156,10 +158,66 @@ namespace ELKH.Data
                 .WithMany(u => u.ProductRatings)
                 .HasForeignKey(r => r.FkRegisteredUserId);
 
+            modelBuilder.Entity<StoreReviewModel>()
+                .HasOne(sr => sr.RegisteredUser)
+                .WithMany(u => u.StoreReviews)
+                .HasForeignKey(sr => sr.FkRegisteredUserId);
+
             modelBuilder.Entity<TransactionModel>()
                 .HasOne(t => t.ContactDetail)
                 .WithMany()
                 .HasForeignKey(t => t.FkContactId);
+
+            // ══════════════════════════════════════════════════════════════════════
+            // PERFORMANCE INDEXES
+            // Critical indexes for frequently queried foreign keys and composite queries
+            // Added to improve query performance and prevent table scans
+            // ══════════════════════════════════════════════════════════════════════
+
+            // Index on ProductRatingModel.FkProductId for product review queries
+            // Improves: "Get all ratings for product X" queries (product details page)
+            modelBuilder.Entity<ProductRatingModel>()
+                .HasIndex(r => r.FkProductId)
+                .HasDatabaseName("IX_ProductRatings_FkProductId");
+
+            // Composite index on OrderModel for user order history queries
+            // Improves: "Get orders for user X sorted by date" queries (order history page)
+            // Covering index: UserId + CreatedAt allows ORDER BY without separate sort operation
+            modelBuilder.Entity<OrderModel>()
+                .HasIndex(o => new { o.FkRegisteredUserId, o.CreatedAt })
+                .HasDatabaseName("IX_Orders_UserId_CreatedAt");
+
+            // Index on TransactionModel.TransactionStatus for payment tracking queries
+            // Improves: "Get all pending/completed/failed transactions" (admin dashboards)
+            modelBuilder.Entity<TransactionModel>()
+                .HasIndex(t => t.TransactionStatus)
+                .HasDatabaseName("IX_Transactions_TransactionStatus");
+
+            // Index on WishListItemModel.FkWishListId for wishlist item retrieval
+            // Improves: "Get all items in wishlist X" queries (wishlist page)
+            modelBuilder.Entity<WishListItemModel>()
+                .HasIndex(wi => wi.FkWishListId)
+                .HasDatabaseName("IX_WishListItems_FkWishListId");
+
+            // Index on OrderModel.CreatedAt for date range queries
+            // Improves: Sales analytics queries filtered by date range
+            modelBuilder.Entity<OrderModel>()
+                .HasIndex(o => o.CreatedAt)
+                .HasDatabaseName("IX_Orders_CreatedAt");
+
+            // Composite index on ProductRatingModel for moderation queries
+            // Improves: "Get approved/pending reviews sorted by date" (moderation page, product details)
+            // Filters on Approved + IsFlagged, then sorts by RatedTime
+            modelBuilder.Entity<ProductRatingModel>()
+                .HasIndex(r => new { r.Approved, r.IsFlagged, r.RatedTime })
+                .HasDatabaseName("IX_ProductRatings_Approved_Flagged_RatedTime");
+
+            // Composite index on StoreReviewModel for homepage review queries
+            // Improves: "Get approved store reviews sorted by date" (homepage carousel)
+            // Filters on Approved + IsDeleted, then sorts by CreatedAt
+            modelBuilder.Entity<StoreReviewModel>()
+                .HasIndex(sr => new { sr.Approved, sr.IsDeleted, sr.CreatedAt })
+                .HasDatabaseName("IX_StoreReviews_Approved_Deleted_CreatedAt");
         }
 
     }

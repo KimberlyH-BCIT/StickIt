@@ -67,14 +67,39 @@ namespace ELKH.Models
         /// </summary>
         [DisplayName("Stock Quantities")]
         [ConcurrencyCheck]
-public int? StockQuantity { get; set; } = 0;
+        public int? StockQuantity { get; set; } = 0;
 
-/// <summary>
-/// Whether the product is visible in the catalog and available for purchase.
-/// Inactive products are hidden from customers but retained in the database.
-/// </summary>
+        /// <summary>
+        /// Whether the product is visible in the catalog and available for purchase.
+        /// Inactive products are hidden from customers but retained in the database.
+        /// </summary>
         [DisplayName("Is Active")]
         public bool IsActive { get; set; } = false;
+
+        /// <summary>
+        /// Date and time when the product was added to the catalog.
+        /// Used to determine "New Arrivals" (products added in the past 30 days).
+        /// </summary>
+        public DateTime DateAdded { get; set; } = DateTime.UtcNow;
+
+        /// <summary>
+        /// Indicates if this product is currently trending based on recent sales activity.
+        /// Manually set by admins or automatically calculated by analytics.
+        /// </summary>
+        public bool IsTrending { get; set; } = false;
+
+        /// <summary>
+        /// Indicates if this product is marked as a best seller.
+        /// Can be based on total sales volume or manually curated.
+        /// </summary>
+        public bool IsBestSeller { get; set; } = false;
+
+        /// <summary>
+        /// Timestamp of when back-in-stock notifications were last sent for this product.
+        /// Used to prevent duplicate notification emails during the same restock cycle.
+        /// Null if notifications have never been sent.
+        /// </summary>
+        public DateTime? LastNotificationSent { get; set; }
 
         // =====================================================================
         // Relationships

@@ -3,9 +3,54 @@ using ELKH.Models;
 namespace ELKH.Data;
 
 /// <summary>
-/// Product seed data - 416 products across 11 categories.
-/// This partial class contains the GetProducts method used by DbSeeder.
+/// Product seed data partial class containing 416 sticker products across 11 themed categories.
+/// This file is part of the database seeding strategy used during application initialization.
 /// </summary>
+/// <remarks>
+/// TABLE OF CONTENTS - PRODUCT CATEGORIES
+/// ================================================================================
+/// Category Name         | Product Count | Lines        | Description
+/// ---------------------|---------------|--------------|---------------------------
+/// CANADIAN             | 40 products   | 29-69        | Canadian-themed stickers
+/// CHRISTMAS            | 43 products   | 71-115       | Christmas & holiday stickers
+/// ANIMALS              | 52 products   | 117-170      | Wildlife & pet stickers
+/// EASTER               | 34 products   | 172-207      | Easter & spring stickers
+/// FOOD & DRINK         | 49 products   | 209-259      | Food-themed stickers
+/// HALLOWEEN            | 38 products   | 261-300      | Halloween & spooky stickers
+/// LUNAR NEW YEAR       | 24 products   | 302-327      | Lunar New Year stickers
+/// NATURE & OUTDOORS    | 43 products   | 329-373      | Nature & landscape stickers
+/// NEW YEAR             | 22 products   | 375-398      | New Year celebration stickers
+/// THANKSGIVING         | 31 products   | 400-432      | Thanksgiving & autumn stickers
+/// MISCELLANEOUS        | 40 products   | 434-475      | General & novelty stickers
+/// ================================================================================
+///
+/// USAGE:
+/// Called by DbSeeder.SeedProducts() during application startup to populate the
+/// Products table if it's empty. Each product includes:
+/// - Name, Description, Price, Discount%, Stock Quantity
+/// - Category assignment
+/// - Search tags for discovery
+///
+/// PRICING STRATEGY:
+/// - Base price range: $1.99 - $4.99
+/// - Discount percentages: 0%, 10%, 15%, 20%, 25%
+/// - Out-of-stock items (0 quantity) strategically placed for testing
+///
+/// STOCK MANAGEMENT:
+/// - Most items: 100-320 units in stock
+/// - Low stock items: 15-95 units (testing low-stock alerts)
+/// - Out of stock: 0 units (testing sold-out behavior)
+///
+/// SEARCH OPTIMIZATION:
+/// Each product tagged with 4 comma-separated keywords for:
+/// - Fuzzy search matching
+/// - Category filtering
+/// - Related product discovery
+///
+/// HELPER METHOD:
+/// P() - Shorthand factory method to create ProductModel instances
+///      Parameters: name, description, price, discount%, stock, category, tags
+/// </remarks>
 public static partial class DbSeeder
 {
     private static List<ProductModel> GetProducts(
@@ -26,11 +71,11 @@ public static partial class DbSeeder
             // ══════════════════════════════════════════════════════════════
             // CANADIAN (40 products)
             // ══════════════════════════════════════════════════════════════
-            P("Maple Leaf Pride Sticker", "Classic red maple leaf design celebrating Canadian heritage.", 2.49m, 0, 250, canadian, "canadian,maple,leaf,patriotic"),
-            P("Eh Canada Sticker", "Friendly 'Eh?' text design with Canadian flag colors.", 1.99m, 10, 180, canadian, "canadian,eh,funny,text"),
-            P("Hockey Night Sticker", "Hockey stick and puck in red and white.", 2.99m, 0, 200, canadian, "canadian,hockey,sports,winter"),
+            P("Maple Leaf Pride Sticker", "Classic red maple leaf design celebrating Canadian heritage.", 2.49m, 0, 250, canadian, "canadian,maple,leaf,patriotic", isBestSeller: true),
+            P("Eh Canada Sticker", "Friendly 'Eh?' text design with Canadian flag colors.", 1.99m, 10, 180, canadian, "canadian,eh,funny,text", isTrending: true),
+            P("Hockey Night Sticker", "Hockey stick and puck in red and white.", 2.99m, 0, 200, canadian, "canadian,hockey,sports,winter", isBestSeller: true),
             P("Mountie Bear Sticker", "Cute bear wearing RCMP uniform.", 3.49m, 0, 0, canadian, "canadian,mountie,bear,cute"),
-            P("Poutine Love Sticker", "Delicious poutine illustration with heart.", 2.49m, 15, 150, canadian, "canadian,poutine,food,quebec"),
+            P("Poutine Love Sticker", "Delicious poutine illustration with heart.", 2.49m, 15, 150, canadian, "canadian,poutine,food,quebec", isTrending: true),
             P("Beaver Builder Sticker", "Cartoon beaver with hard hat and tools.", 2.99m, 0, 175, canadian, "canadian,beaver,animal,builder"),
             P("Canoe Adventure Sticker", "Red canoe on calm lake with pine trees.", 3.99m, 0, 120, canadian, "canadian,canoe,nature,adventure"),
             P("Toronto Skyline Sticker", "CN Tower and cityscape silhouette.", 3.49m, 0, 140, canadian, "canadian,toronto,city,skyline"),
@@ -70,9 +115,9 @@ public static partial class DbSeeder
             // ══════════════════════════════════════════════════════════════
             // CHRISTMAS (43 products)
             // ══════════════════════════════════════════════════════════════
-            P("Santa Claus Face Sticker", "Jolly Santa with rosy cheeks and white beard.", 2.99m, 0, 300, christmas, "christmas,santa,holiday,festive"),
-            P("Christmas Tree Sticker", "Decorated evergreen tree with star topper.", 2.49m, 15, 250, christmas, "christmas,tree,ornament,festive"),
-            P("Snowflake Crystal Sticker", "Intricate six-pointed snowflake design.", 1.99m, 0, 280, christmas, "christmas,snowflake,winter,snow"),
+            P("Santa Claus Face Sticker", "Jolly Santa with rosy cheeks and white beard.", 2.99m, 0, 300, christmas, "christmas,santa,holiday,festive", isBestSeller: true, isTrending: true),
+            P("Christmas Tree Sticker", "Decorated evergreen tree with star topper.", 2.49m, 15, 250, christmas, "christmas,tree,ornament,festive", isBestSeller: true),
+            P("Snowflake Crystal Sticker", "Intricate six-pointed snowflake design.", 1.99m, 0, 280, christmas, "christmas,snowflake,winter,snow", isTrending: true),
             P("Candy Cane Sticker", "Classic red and white striped candy cane.", 1.99m, 20, 320, christmas, "christmas,candy-cane,sweet,peppermint"),
             P("Gingerbread Man Sticker", "Smiling gingerbread cookie with icing.", 2.49m, 0, 260, christmas, "christmas,gingerbread,cookie,baking"),
             P("Reindeer Rudolph Sticker", "Red-nosed reindeer with antlers.", 2.99m, 0, 240, christmas, "christmas,reindeer,rudolph,animal"),

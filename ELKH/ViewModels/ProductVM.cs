@@ -61,5 +61,27 @@ namespace ELKH.ViewModels
         /// <summary>Average customer rating (1-5 stars).</summary>
         [Display(Name = "Average Rating")]
         public double AverageRating { get; set; } = 0;
+
+        /// <summary>Date when the product was added to the catalog.</summary>
+        [Display(Name = "Date Added")]
+        public DateTime DateAdded { get; set; } = DateTime.UtcNow;
+
+        /// <summary>Whether this product is currently trending.</summary>
+        [Display(Name = "Trending")]
+        public bool IsTrending { get; set; } = false;
+
+        /// <summary>Whether this product is marked as a best seller.</summary>
+        [Display(Name = "Best Seller")]
+        public bool IsBestSeller { get; set; } = false;
+
+        /// <summary>Whether this is a new arrival (added in the past 30 days).</summary>
+        [Display(Name = "New Arrival")]
+        public bool IsNewArrival => (DateTime.UtcNow - DateAdded).TotalDays <= 30;
+
+        /// <summary>Whether the product is in stock.</summary>
+        public bool IsInStock => (StockQuantity ?? 0) > 0;
+
+        /// <summary>Whether the product has low stock (less than 10 units).</summary>
+        public bool IsLowStock => (StockQuantity ?? 0) > 0 && (StockQuantity ?? 0) < 10;
     }
 }
