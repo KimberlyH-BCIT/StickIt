@@ -83,18 +83,29 @@ namespace ELKH.Services
         {
             // Step 1: Validate user exists
             var user = await _userService.GetByEmailAsync(userEmail);
-            if (user == null) return;
+            if (user == null) 
+                throw new InvalidOperationException("User not found.");
 
             // Step 2: Validate product exists
             var product = await _db.Products.FindAsync(itemId);
-            if (product == null) return;
+            if (product == null) 
+                throw new InvalidOperationException("Product not found.");
 
-            // Step 3: Calculate effective price (with discount applied)
-            var effective = product.GetEffectivePrice();
+            // Step 3: Validate stock availability
+            if (product.StockQuantity <= 0)
+                throw new InvalidOperationException("This item is out of stock and cannot be added to your cart.");
 
             // Step 4: Check if product already in cart
             var existing = await _db.Carts.FirstOrDefaultAsync(
                 c => c.FkRegisteredUserId == user.PkRegisteredUserId && c.FkProductID == itemId);
+
+            // Step 5: Validate total quantity doesn't exceed stock
+            var totalQuantity = (existing?.Quantity ?? 0) + quantity;
+            if (totalQuantity > product.StockQuantity)
+                throw new InvalidOperationException($"Cannot add {quantity} items. Only {product.StockQuantity - (existing?.Quantity ?? 0)} available (you already have {existing?.Quantity ?? 0} in cart).");
+
+            // Step 6: Calculate effective price (with discount applied)
+            var effective = product.GetEffectivePrice();
 
             if (existing != null)
             {
@@ -114,7 +125,7 @@ namespace ELKH.Services
                 });
             }
 
-            // Step 5: Persist changes
+            // Step 7: Persist changes
             await _db.SaveChangesAsync();
         }
 

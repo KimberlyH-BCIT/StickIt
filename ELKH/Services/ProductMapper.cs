@@ -25,7 +25,10 @@ namespace ELKH.Services
                 IsActive = model.IsActive,
                 AverageRating = model.ProductRatings?.Any() == true
                     ? model.ProductRatings.Average(r => r.Rating)
-                    : 0.0
+                    : 0.0,
+                DateAdded = model.DateAdded,
+                IsTrending = model.IsTrending,
+                IsBestSeller = model.IsBestSeller
             };
         }
 
@@ -45,7 +48,10 @@ namespace ELKH.Services
                 DiscountPercent = viewModel.DiscountPercent,
                 StockQuantity = viewModel.StockQuantity,
                 FkCategoryId = viewModel.CategoryId,
-                IsActive = viewModel.IsActive
+                IsActive = viewModel.IsActive,
+                DateAdded = viewModel.DateAdded,
+                IsTrending = viewModel.IsTrending,
+                IsBestSeller = viewModel.IsBestSeller
                 // NameNormalized is set by ProductService logic, not by mapper
             };
         }

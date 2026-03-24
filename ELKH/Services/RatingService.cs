@@ -291,7 +291,7 @@ namespace ELKH.Services
         }
 
         /// <inheritdoc/>
-        public async Task<ViewModels.ReviewPageVM> GetPagedApprovedReviewsAsync(int productId, int page, CancellationToken ct = default)
+        public async Task<ViewModels.ReviewPageVM> GetPagedApprovedReviewsAsync(int productId, int page, string sort = "date_new", CancellationToken ct = default)
         {
             const int pageSize = ViewModels.ReviewPageVM.PageSize;
 
@@ -305,8 +305,16 @@ namespace ELKH.Services
                 ? await baseQuery.AverageAsync(r => (double)r.Rating, ct)
                 : 0.0;
 
-            var ratings = await baseQuery
-                .OrderByDescending(r => r.RatedTime)
+            // Apply sorting
+            IQueryable<ProductRatingModel> sortedQuery = sort switch
+            {
+                "rating_high" => baseQuery.OrderByDescending(r => r.Rating).ThenByDescending(r => r.RatedTime),
+                "rating_low"  => baseQuery.OrderBy(r => r.Rating).ThenByDescending(r => r.RatedTime),
+                "date_old"    => baseQuery.OrderBy(r => r.RatedTime),
+                _             => baseQuery.OrderByDescending(r => r.RatedTime) // date_new (default)
+            };
+
+            var ratings = await sortedQuery
                 .Include(r => r.RegisteredUser)
                 .Skip((currentPage - 1) * pageSize)
                 .Take(pageSize)
@@ -405,6 +413,42 @@ namespace ELKH.Services
                 EligibleItems  = eligibleItems,
                 ExistingRating = existingRating
             };
+        }
+
+        /// <inheritdoc/>
+        public async Task<List<ViewModels.ProductToReviewVM>> GetProductsToReviewAsync(int userId, CancellationToken ct = default)
+        {
+            // Get all products from shipped/delivered orders that haven't been reviewed yet
+            var orderedProducts = await _db.OrderItems
+                .Where(oi => oi.Order!.FkRegisteredUserId == userId
+                          && (oi.Order!.DeliveryStatus == "Shipped" || oi.Order!.DeliveryStatus == "Delivered"))
+                .Include(oi => oi.Order)
+                .Include(oi => oi.Product)
+                .ToListAsync(ct);
+
+            // Get all existing ratings (non-deleted) for this user
+            var ratedProductIds = await _db.ProductRatings
+                .Where(r => r.FkRegisteredUserId == userId && !r.IsDeleted)
+                .Select(r => r.FkProductId)
+                .Distinct()
+                .ToListAsync(ct);
+
+            // Filter to products that haven't been rated
+            var productsToReview = orderedProducts
+                .Where(oi => !ratedProductIds.Contains(oi.FkProductId) && oi.Product != null)
+                .GroupBy(oi => oi.FkProductId)
+                .Select(g => g.OrderByDescending(oi => oi.Order!.CreatedAt).First())
+                .Select(oi => new ViewModels.ProductToReviewVM
+                {
+                    ProductId = oi.FkProductId,
+                    ProductName = oi.Product!.Name,
+                    PurchaseDate = oi.Order!.CreatedAt,
+                    OrderId = oi.Order!.PkOrderId
+                })
+                .OrderByDescending(p => p.PurchaseDate)
+                .ToList();
+
+            return productsToReview;
         }
     }
 }
