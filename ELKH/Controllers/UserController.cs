@@ -45,6 +45,7 @@ namespace ELKH.Controllers
         private readonly IRegisteredUserLogRepo _logRepository;
         private readonly IContactDetailRepo _contactRepository;
         private readonly IRatingService _ratingService;
+        private readonly IStoreReviewService _storeReviewService;
         private readonly ILogger<UserController> _logger;
 
         public UserController(
@@ -52,6 +53,7 @@ namespace ELKH.Controllers
             IRegisteredUserLogRepo logRepository,
             IContactDetailRepo contactRepository,
             IRatingService ratingService,
+            IStoreReviewService storeReviewService,
             IUserService userService,
             ILogger<UserController> logger,
             ELKH.Data.ApplicationDbContext db)
@@ -61,6 +63,7 @@ namespace ELKH.Controllers
             _logRepository = logRepository;
             _contactRepository = contactRepository;
             _ratingService = ratingService;
+            _storeReviewService = storeReviewService;
             _logger = logger;
         }
 
@@ -645,6 +648,7 @@ namespace ELKH.Controllers
                 return Challenge();
 
             var ratings = await _ratingService.GetUserRatingsAsync(userId.Value);
+            var productsToReview = await _ratingService.GetProductsToReviewAsync(userId.Value);
 
             IEnumerable<UserRatingVM> vms = sort switch
             {
@@ -659,8 +663,106 @@ namespace ELKH.Controllers
             return View(new MyRatingsVM
             {
                 Ratings     = vms.ToList(),
-                CurrentSort = sort
+                CurrentSort = sort,
+                ProductsToReview = productsToReview
             });
+        }
+
+        #endregion
+
+        #region Store Reviews
+
+        // GET: User/LeaveReview - Display review form
+        [AllowAnonymous]
+        public async Task<IActionResult> LeaveReview()
+        {
+            // If not signed in, redirect to login with return URL
+            if (!User.Identity?.IsAuthenticated ?? true)
+            {
+                return RedirectToPage("/Account/Login", new { area = "Identity", ReturnUrl = "/User/LeaveReview" });
+            }
+
+            var userId = await GetCurrentUserIdAsync();
+            if (userId is null)
+                return Challenge();
+
+            // Check if user already has a review
+            var existingReview = await _storeReviewService.GetUserReviewAsync(userId.Value);
+
+            // Check verified buyer status
+            var isVerified = await _storeReviewService.IsVerifiedBuyerAsync(userId.Value);
+
+            var vm = new StoreReviewViewModel
+            {
+                ExistingReview = existingReview,
+                ReviewId = existingReview?.PkStoreReviewId,
+                IsVerifiedBuyer = isVerified,
+                Title = existingReview?.Title ?? string.Empty,
+                Rating = existingReview?.Rating ?? 5,
+                Description = existingReview?.Description ?? string.Empty
+            };
+
+            return View(vm);
+        }
+
+        // POST: User/LeaveReview - Submit or update review
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> LeaveReview(StoreReviewViewModel vm)
+        {
+            var userId = await GetCurrentUserIdAsync();
+            if (userId is null)
+                return Challenge();
+
+            if (!ModelState.IsValid)
+            {
+                vm.IsVerifiedBuyer = await _storeReviewService.IsVerifiedBuyerAsync(userId.Value);
+                vm.ExistingReview = await _storeReviewService.GetUserReviewAsync(userId.Value);
+                return View(vm);
+            }
+
+            bool success;
+            if (vm.ReviewId.HasValue)
+            {
+                // Update existing review
+                success = await _storeReviewService.UpdateReviewAsync(
+                    vm.ReviewId.Value,
+                    userId.Value,
+                    vm.Title,
+                    vm.Rating,
+                    vm.Description);
+
+                if (success)
+                {
+                    SetSuccessMessage("Your review has been updated and will be re-reviewed by our moderators.");
+                }
+                else
+                {
+                    SetErrorMessage("Failed to update your review. Please try again.");
+                    return View(vm);
+                }
+            }
+            else
+            {
+                // Create new review
+                success = await _storeReviewService.SubmitReviewAsync(
+                    userId.Value,
+                    vm.Title,
+                    vm.Rating,
+                    vm.Description);
+
+                if (success)
+                {
+                    SetSuccessMessage("Thank you for your review! It will be visible once approved by our moderators.");
+                }
+                else
+                {
+                    SetErrorMessage("You have already submitted a review.");
+                    return View(vm);
+                }
+            }
+
+            return RedirectToAction("Index", "Home");
         }
 
         #endregion

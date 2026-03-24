@@ -88,9 +88,9 @@ namespace ELKH.Controllers
         /// Displays a filtered, paginated list of active products.
         /// Results are served from the output cache keyed by all query parameters.
         /// </summary>
-        // GET: Product/Index
+        // GET: Product/Index?sort=name_asc
         [Microsoft.AspNetCore.OutputCaching.OutputCache(PolicyName = "ProductList")]
-        public async Task<IActionResult> Index(string? search, int? categoryId, int page = 1)
+        public async Task<IActionResult> Index(string? search, int? categoryId, int page = 1, string sort = "name_asc")
         {
             const int pageSize = 12;
 
@@ -105,6 +105,17 @@ namespace ELKH.Controllers
             if (categoryId.HasValue)
                 allProducts = allProducts.Where(p => p.CategoryId == categoryId.Value);
 
+            // Apply sorting
+            allProducts = sort switch
+            {
+                "name_desc"   => allProducts.OrderByDescending(p => p.ProductName, StringComparer.OrdinalIgnoreCase),
+                "price_low"   => allProducts.OrderBy(p => p.Price),
+                "price_high"  => allProducts.OrderByDescending(p => p.Price),
+                "newest"      => allProducts.OrderByDescending(p => p.DateAdded),
+                "oldest"      => allProducts.OrderBy(p => p.DateAdded),
+                _             => allProducts.OrderBy(p => p.ProductName, StringComparer.OrdinalIgnoreCase) // name_asc
+            };
+
             var filtered    = allProducts.ToList();
             var totalPages  = Math.Max(1, (int)Math.Ceiling(filtered.Count / (double)pageSize));
             page            = Math.Clamp(page, 1, totalPages);
@@ -114,6 +125,7 @@ namespace ELKH.Controllers
 
             ViewBag.Search     = search;
             ViewBag.CategoryId = categoryId;
+            ViewBag.Sort       = sort;
             ViewBag.Page       = page;
             ViewBag.TotalPages = totalPages;
             ViewBag.Total      = filtered.Count;
@@ -127,12 +139,14 @@ namespace ELKH.Controllers
         /// the authenticated user's rating eligibility based on their purchase history.
         /// </summary>
         /// <param name="id">Primary key of the product to display.</param>
+        /// <param name="reviewPage">Current page number for reviews pagination.</param>
+        /// <param name="reviewSort">Sort order for reviews: rating_high, rating_low, date_new (default), date_old.</param>
         /// <returns>
         /// The product details view, or a redirect to <see cref="Index"/> with a warning
         /// <c>TempData</c> message if no product with <paramref name="id"/> exists.
         /// </returns>
         // GET: Product/Details
-        public async Task<IActionResult> Details(int id, int reviewPage = 1)
+        public async Task<IActionResult> Details(int id, int reviewPage = 1, string reviewSort = "date_new")
         {
             var vm = await _productService.GetByIdAsync(id);
             if (vm == null)
@@ -143,7 +157,8 @@ namespace ELKH.Controllers
 
             // Paged, profile-enriched reviews — also carries AverageRating and TotalCount
             // so the product header can display accurate aggregate stats.
-            ViewBag.ReviewPage = await _ratingService.GetPagedApprovedReviewsAsync(id, reviewPage);
+            ViewBag.ReviewPage = await _ratingService.GetPagedApprovedReviewsAsync(id, reviewPage, reviewSort);
+            ViewBag.ReviewSort = reviewSort;
 
             // Rating eligibility is only relevant for authenticated users.
             // Unauthenticated visitors can read reviews but cannot submit or edit one.
@@ -532,6 +547,48 @@ namespace ELKH.Controllers
                 TempData["Message"] = $"warning, Unable to find product ID: {id}";
             }
             return RedirectToAction(nameof(Index));
+        }
+        #endregion
+
+        #region Stock Notifications
+        /// <summary>
+        /// Allows authenticated users to request email notification when an out-of-stock product becomes available.
+        /// Creates a watchlist entry that will trigger an email when inventory is restocked.
+        /// </summary>
+        /// <param name="productId">The product ID to watch.</param>
+        /// <param name="returnUrl">Optional URL to redirect back to after processing.</param>
+        /// <returns>Redirects back to the previous page with a success/error message.</returns>
+        // POST: Product/NotifyStock
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        [Authorize]
+        public async Task<IActionResult> NotifyStock(int productId, string? returnUrl)
+        {
+            var email = User.Identity?.Name;
+            if (string.IsNullOrEmpty(email)) return Challenge();
+
+            var user = await _userService.GetByEmailAsync(email);
+            if (user is null) return Forbid();
+
+            // Inject IStockNotificationService
+            var stockService = HttpContext.RequestServices.GetRequiredService<ELKH.Services.IStockNotificationService>();
+
+            var success = await stockService.RequestNotificationAsync(user.PkRegisteredUserId, productId);
+
+            if (success)
+            {
+                TempData["Message"] = "success, You'll be notified when this product is back in stock!";
+            }
+            else
+            {
+                TempData["Message"] = "info, You're already subscribed to notifications for this product.";
+            }
+
+            // Redirect back to the page they came from, or default to product details
+            if (!string.IsNullOrEmpty(returnUrl) && Url.IsLocalUrl(returnUrl))
+                return Redirect(returnUrl);
+
+            return RedirectToAction("Details", new { id = productId });
         }
         #endregion
 
