@@ -51,6 +51,30 @@ builder.Services.AddDbContext<ImageStoreContext>(options =>
     options.UseSqlite(imageStoreConnection));
 builder.Services.AddDatabaseDeveloperPageExceptionFilter();
 
+// -- Health Checks (for monitoring and deployment readiness)
+// Exposes /health endpoint for load balancers, monitoring tools, and container orchestrators
+// Includes checks for:
+// - Database connectivity (ApplicationDbContext, ImageStoreContext)
+// - PayPal API accessibility and credential validation
+// - Email/SMTP server connectivity (production only, skipped in development)
+builder.Services.AddHealthChecks()
+    .AddDbContextCheck<ApplicationDbContext>(
+        name: "database",
+        failureStatus: Microsoft.Extensions.Diagnostics.HealthChecks.HealthStatus.Unhealthy,
+        tags: new[] { "db", "sql", "ready" })
+    .AddDbContextCheck<ImageStoreContext>(
+        name: "imagestore",
+        failureStatus: Microsoft.Extensions.Diagnostics.HealthChecks.HealthStatus.Unhealthy,
+        tags: new[] { "db", "sql", "ready" })
+    .AddCheck<ELKH.HealthChecks.PayPalHealthCheck>(
+        name: "paypal",
+        failureStatus: Microsoft.Extensions.Diagnostics.HealthChecks.HealthStatus.Degraded,
+        tags: new[] { "external", "payment", "live" })
+    .AddCheck<ELKH.HealthChecks.EmailHealthCheck>(
+        name: "email",
+        failureStatus: Microsoft.Extensions.Diagnostics.HealthChecks.HealthStatus.Degraded,
+        tags: new[] { "external", "smtp", "live" });
+
 // ASP.NET Core Identity with email confirmation requirement.
 // Users must confirm their email before they can sign in.
 // AddRoles<IdentityRole>() is required for [Authorize(Roles = "...")] to function —
@@ -62,10 +86,6 @@ builder.Services.AddIdentity<IdentityUser, IdentityRole>(options =>
     .AddEntityFrameworkStores<ApplicationDbContext>()
     .AddDefaultTokenProviders()
     .AddDefaultUI();
-
-// -- Health Checks (for monitoring and deployment readiness)
-// Exposes /health endpoint for load balancers, monitoring tools, and container orchestrators
-builder.Services.AddHealthChecks();
 
 // -- MVC / Razor
 builder.Services.AddControllersWithViews();
@@ -140,6 +160,25 @@ builder.Services.AddRepositories();        // All repository implementations wit
 // =====================================================================
 var app = builder.Build();
 
+// ═══════════════════════════════════════════════════════════════════════
+// CONFIGURATION VALIDATION
+// Validate all required secrets and configuration at startup to fail fast
+// before any HTTP requests are processed. In Development, logs warnings.
+// In Production, throws exception and aborts startup.
+// ═══════════════════════════════════════════════════════════════════════
+using (var scope = app.Services.CreateScope())
+{
+    var validator = new ConfigurationValidator(
+        scope.ServiceProvider.GetRequiredService<ILogger<ConfigurationValidator>>(),
+        scope.ServiceProvider.GetRequiredService<IWebHostEnvironment>(),
+        scope.ServiceProvider.GetRequiredService<Microsoft.Extensions.Options.IOptions<PayPalOptions>>(),
+        scope.ServiceProvider.GetRequiredService<Microsoft.Extensions.Options.IOptions<ReCaptchaOptions>>(),
+        scope.ServiceProvider.GetRequiredService<Microsoft.Extensions.Options.IOptions<EmailOptions>>(),
+        scope.ServiceProvider.GetRequiredService<IConfiguration>());
+
+    validator.ValidateConfiguration();
+}
+
 // Warn loudly if AllowedHosts is still the development default in a non-Development environment.
 // Override via the ASPNETCORE_AllowedHosts environment variable (e.g. "yourdomain.com;www.yourdomain.com").
 if (!app.Environment.IsDevelopment())
@@ -176,9 +215,10 @@ else
     app.UseHsts();
 }
 
-app.UseStaticFiles();
+app.UseApplicationMiddleware(app.Environment);
 
-app.UseApplicationMiddleware();
+// Static files AFTER compression so they can be compressed
+app.UseStaticFiles();
 
 // =====================================================================
 // Routing and endpoints
@@ -222,6 +262,7 @@ await using (var scope = app.Services.CreateAsyncScope())
         await DbSeeder.SeedProductsAsync(db);
         await DbSeeder.SeedAdminAsync(userManager, roleManager, app.Configuration);
         await DbSeeder.SeedCustomersAsync(db, userManager, app.Environment.WebRootPath);
+        await DbSeeder.SeedStoreReviewsAsync(db, userManager); // Seed featured homepage reviews
     }
 }
 

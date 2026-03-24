@@ -59,7 +59,11 @@ namespace ELKH.Extensions
             services.AddScoped<ICartService, CartService>();
             services.AddScoped<IWishlistService, WishlistService>();
             services.AddScoped<IOrderEmailService, OrderEmailService>();
+            services.AddScoped<IStoreReviewService, StoreReviewService>(); // Store review system
+            services.AddScoped<IStockNotificationService, StockNotificationService>(); // Back-in-stock notifications
+            services.AddScoped<StockNotificationEmailService>(); // Email notifications for restocked items
             services.AddScoped<IProductMapper, ProductMapper>(); // Manual mapping instead of AutoMapper
+            services.AddScoped<ImageValidationService>(); // Secure image upload validation
 
             return services;
         }
@@ -160,6 +164,26 @@ namespace ELKH.Extensions
                     o.QueueProcessingOrder = QueueProcessingOrder.OldestFirst;
                     o.QueueLimit          = 0;
                 });
+
+                // Admin operations: 10 requests per 60 s — protects resource-intensive admin actions.
+                // Includes: ReindexFTS, ClearCache, bulk operations
+                options.AddFixedWindowLimiter(RateLimitPolicies.Admin, o =>
+                {
+                    o.PermitLimit      = 10;
+                    o.Window           = TimeSpan.FromSeconds(60);
+                    o.QueueProcessingOrder = QueueProcessingOrder.OldestFirst;
+                    o.QueueLimit       = 0;
+                });
+
+                // Cart operations: 20 requests per 60 s — prevents inventory enumeration attacks.
+                // Includes: AddToCart, Update, Remove
+                options.AddFixedWindowLimiter(RateLimitPolicies.Cart, o =>
+                {
+                    o.PermitLimit      = 20;
+                    o.Window           = TimeSpan.FromSeconds(60);
+                    o.QueueProcessingOrder = QueueProcessingOrder.OldestFirst;
+                    o.QueueLimit       = 0;
+                });
             });
 
             return services;
@@ -203,5 +227,7 @@ namespace ELKH.Extensions
         public const string Auth     = "auth";      // login / register
         public const string Checkout = "checkout";  // payment endpoints
         public const string Search   = "search";    // autocomplete
+        public const string Admin    = "admin";     // resource-intensive admin operations
+        public const string Cart     = "cart";      // cart operations (prevents inventory enumeration)
     }
 }

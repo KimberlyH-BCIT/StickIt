@@ -12,9 +12,14 @@ namespace ELKH.Extensions
         /// <summary>
         /// Configures the standard middleware pipeline in the correct security-conscious order.
         /// </summary>
+        /// <param name="app">The application builder.</param>
+        /// <param name="env">The hosting environment (used to conditionally enable compression).</param>
         /// <remarks>
         /// Order is critical in ASP.NET Core. This method enforces:
-        /// Security Headers → HTTPS → Compression → Output Cache → Routing → Authentication → Authorization
+        /// Security Headers → HTTPS → Compression (Production only) → Output Cache → Routing → Authentication → Authorization
+        ///
+        /// Response compression is disabled in Development to allow Browser Link and Browser Refresh middleware
+        /// to inject their scripts into HTML responses. These dev tools cannot inject into compressed responses.
         ///
         /// Note on Response Compression + HTTPS (<c>EnableForHttps = true</c>):
         /// Compressing secret values (e.g. CSRF tokens, session IDs) over HTTPS is theoretically
@@ -23,7 +28,7 @@ namespace ELKH.Extensions
         /// negligible, but it should be re-evaluated if the application ever handles highly sensitive
         /// reflected data (e.g. bearer tokens in response bodies).
         /// </remarks>
-        public static IApplicationBuilder UseApplicationMiddleware(this IApplicationBuilder app)
+        public static IApplicationBuilder UseApplicationMiddleware(this IApplicationBuilder app, IWebHostEnvironment env)
         {
             // 0. Exception handler — must be first so it catches errors from all subsequent middleware.
             //    In Development the developer exception page is used instead (configured in Program.cs).
@@ -41,7 +46,11 @@ namespace ELKH.Extensions
             app.UseHttpsRedirection();
 
             // 3. Response Compression — compress before caching so cached responses are already compressed
-            app.UseResponseCompression();
+            //    Disabled in Development to allow Browser Link and hot reload script injection
+            if (!env.IsDevelopment())
+            {
+                app.UseResponseCompression();
+            }
 
             // 4. Rate Limiting — reject excess requests before they hit the cache or business logic
             app.UseRateLimiter();
