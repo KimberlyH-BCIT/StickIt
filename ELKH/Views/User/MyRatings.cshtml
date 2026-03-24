@@ -24,6 +24,33 @@
     <a class="btn btn-sm btn-outline-secondary" asp-action="Index">&larr; Dashboard</a>
 </div>
 
+@* ── Products waiting for review ──────────────────────────────────────── *@
+@if (Model.ProductsToReview?.Any() == true)
+{
+    <div class="alert alert-info border-0 shadow-sm mb-4">
+        <div class="d-flex align-items-start">
+            <i class="bi bi-star fs-4 me-3 mt-1"></i>
+            <div class="flex-grow-1">
+                <h6 class="fw-bold mb-2">Products Waiting for Your Review</h6>
+                <p class="mb-3 small">You've purchased these products but haven't rated them yet. Share your experience!</p>
+                <div class="d-flex flex-wrap gap-2">
+                    @foreach (var product in Model.ProductsToReview.Take(5))
+                    {
+                        <a asp-controller="Product" asp-action="Details" asp-route-id="@product.ProductId" asp-fragment="reviews" 
+                           class="btn btn-sm btn-outline-primary" title="Purchased @product.PurchaseDate.ToString("MMM d, yyyy")">
+                            <i class="bi bi-star me-1"></i>@product.ProductName
+                        </a>
+                    }
+                    @if (Model.ProductsToReview.Count > 5)
+                    {
+                        <span class="align-self-center text-muted small">+@(Model.ProductsToReview.Count - 5) more</span>
+                    }
+                </div>
+            </div>
+        </div>
+    </div>
+}
+
 @* ── Sort controls ─────────────────────────────────────────────────── *@
 <div class="card mb-4">
     <div class="card-body py-2">

@@ -1,4 +1,34 @@
 ﻿
+@*
+╔══════════════════════════════════════════════════════════════════════════════════╗
+║ TABLE OF CONTENTS - _Layout.cshtml                                               ║
+╠══════════════════════════════════════════════════════════════════════════════════╣
+║ 1. HTML Document Head ...................................... Lines    4-25     ║
+║    - Meta tags, CSRF token generation, and external resource links              ║
+║    - Security headers and responsive viewport configuration                      ║
+║                                                                                  ║
+║ 2. Header Navigation ....................................... Lines   28-85     ║
+║    - Top bar: brand logo and user authentication status                         ║
+║    - Search bar: product search with autocomplete functionality                 ║
+║    - Main navigation: category links and user account access                    ║
+║                                                                                  ║
+║ 3. Main Content Area ....................................... Lines   87-95     ║
+║    - Dynamic content container with alert notifications                         ║
+║    - Page-specific content injection point                                      ║
+║                                                                                  ║
+║ 4. Footer Section .......................................... Lines   97-175    ║
+║    - Company information and contact details                                    ║
+║    - Legal links: privacy policy, terms of service, accessibility              ║
+║    - Social media links and newsletter signup                                   ║
+║                                                                                  ║
+║ 5. Scripts Section ......................................... Lines  177-384    ║
+║    - Bootstrap framework and jQuery library loading                             ║
+║    - Custom JavaScript for search autocomplete                                  ║
+║    - AJAX functionality for cart and wishlist operations                        ║
+║    - Page-specific script injection point                                       ║
+╚══════════════════════════════════════════════════════════════════════════════════╝
+*@
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -9,6 +39,11 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     @{
+        // ═══════════════════════════════════════════════════════════════════════════════
+        // ║ CSRF Token Generation for Client-Side AJAX Operations                      ║
+        // ║ Generates antiforgery token for secure AJAX requests                       ║
+        // ═══════════════════════════════════════════════════════════════════════════════
+
         // Generate and store a per-request antiforgery token. The token is written into
         // a <meta> tag so client-side JavaScript can read it and attach it as the
         // X-CSRF-TOKEN request header on every state-changing fetch() call. This
@@ -45,7 +80,7 @@
                     <form asp-controller="Product" asp-action="Index" method="get" class="d-flex" role="search">
                         <input id="productNameInput"
                                type="search"
-                               name="q"
+                               name="search"
                                class="form-control"
                                placeholder="Search products"
                                autocomplete="off"
@@ -79,7 +114,7 @@
             <a class="nav-link text-dark fw-semibold" asp-controller="Admin" asp-action="Index">Home</a>
         </li>
         <li class="nav-item">
-            <a class="nav-link text-dark" asp-controller="Home" asp-action="Index">View as Customer</a>
+            <a class="nav-link text-dark" asp-controller="User" asp-action="Index">View as Customer</a>
         </li>
         <li class="nav-item">
             <a class="nav-link text-dark" asp-controller="Manager" asp-action="Index">View as Manager</a>
@@ -132,7 +167,7 @@
                                 <a class="nav-link text-dark" asp-area="" asp-controller="Cart" asp-action="Index">My Cart</a>
                             </li>
                             <li class="nav-item">
-                                <a class="nav-link text-dark" asp-area="" asp-controller="Wishlist" asp-action="Index">Wishlist</a>
+                                <a class="nav-link text-dark" asp-area="" asp-controller="Wishlist" asp-action="Index">My Wishlist</a>
                             </li>
                             <li class="nav-item">
                                 <a class="nav-link text-dark" asp-area="" asp-controller="Order" asp-action="MyHistory">My Orders</a>
@@ -250,6 +285,7 @@
                 var parts = raw.Split(',', 2);
                 var level = parts.Length > 0 ? parts[0].Trim().ToLower() : "info";
                 var text = parts.Length > 1 ? parts[1].Trim() : string.Empty;
+                var isCartMessage = text.Contains("cart", StringComparison.OrdinalIgnoreCase);
                 var alertClass = level switch
                 {
                     "success" => "alert-success",
@@ -262,21 +298,44 @@
                 {
         <div class="row">
             <div class="col-12">
-                <div class="alert @alertClass alert-dismissible fade show" role="alert">
-                    @text
-                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                <div id="globalAlert" class="alert @alertClass alert-dismissible fade show d-flex align-items-center justify-content-between" role="alert">
+                    <div>
+                        @if (level == "success")
+                        {
+                            <i class="bi bi-check-circle-fill me-2"></i>
+                        }
+                        <strong id="alertMessage">@text</strong>
+                    </div>
+                    <div class="d-flex gap-2 align-items-center">
+                        @{
+                            var isOnCartPage = Context.Request.Path.StartsWithSegments("/Cart");
+                        }
+                        @if (level == "success" && isCartMessage && !isOnCartPage)
+                        {
+                            <a asp-controller="Cart" asp-action="Index" class="btn btn-sm btn-success">
+                                <i class="bi bi-cart-check me-1"></i>View Cart
+                            </a>
+                        }
+                        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                    </div>
                 </div>
             </div>
         </div>
                 }
             }
         }
+        <!-- ═══════════════════════════════════════════════════════════════════════════ -->
+        <!-- ║ Main Content Area - Dynamic page content injection point              ║ -->
+        <!-- ═══════════════════════════════════════════════════════════════════════════ -->
         <main role="main" class="pb-3">
             @RenderBody()
         </main>
 
     </div>
 
+    <!-- ════════════════════════════════════════════════════════════════════════════════ -->
+    <!-- ║ Site Footer - Company information, legal links, and contact details       ║ -->
+    <!-- ════════════════════════════════════════════════════════════════════════════════ -->
     <footer style="background:#111;">
         <div class="container py-5 text-white-50 small">
             <div class="row g-4">
@@ -287,27 +346,34 @@
                         <li class="mb-2"><a class="text-white-50 text-decoration-none" asp-controller="Home" asp-action="Index">Home</a></li>
                         <li class="mb-2"><a class="text-white-50 text-decoration-none" asp-controller="Product" asp-action="Index">All Products</a></li>
                         <li class="mb-2"><a class="text-white-50 text-decoration-none" asp-controller="Cart" asp-action="Index">Cart</a></li>
-                        <li><a class="text-white-50 text-decoration-none" asp-controller="Order" asp-action="History">My Orders</a></li>
+                        @if (User.Identity?.IsAuthenticated == true)
+                        {
+                            <li><a class="text-white-50 text-decoration-none" asp-controller="Order" asp-action="MyHistory">My Orders</a></li>
+                        }
+                        else
+                        {
+                            <li><a class="text-white-50 text-decoration-none" asp-area="Identity" asp-page="/Account/Login">My Orders</a></li>
+                        }
                     </ul>
                 </div>
 
                 <div class="col-6 col-lg-3">
                     <div class="text-white fw-bold mb-2">Support</div>
                     <ul class="list-unstyled mb-0">
-                        <li class="mb-2"><a class="text-white-50 text-decoration-none" href="#">Contact</a></li>
-                        <li class="mb-2"><a class="text-white-50 text-decoration-none" href="#">FAQ</a></li>
-                        <li class="mb-2"><a class="text-white-50 text-decoration-none" href="#">Shipping</a></li>
-                        <li><a class="text-white-50 text-decoration-none" href="#">Returns</a></li>
+                        <li class="mb-2"><a class="text-white-50 text-decoration-none" asp-controller="Home" asp-action="Contact">Contact</a></li>
+                        <li class="mb-2"><a class="text-white-50 text-decoration-none" asp-controller="Home" asp-action="FAQ">FAQ</a></li>
+                        <li class="mb-2"><a class="text-white-50 text-decoration-none" asp-controller="Home" asp-action="Shipping">Shipping</a></li>
+                        <li><a class="text-white-50 text-decoration-none" asp-controller="Home" asp-action="Returns">Returns</a></li>
                     </ul>
                 </div>
 
                 <div class="col-6 col-lg-3">
                     <div class="text-white fw-bold mb-2">Company</div>
                     <ul class="list-unstyled mb-0">
-                        <li class="mb-2"><a class="text-white-50 text-decoration-none" href="#">About</a></li>
+                        <li class="mb-2"><a class="text-white-50 text-decoration-none" asp-controller="Home" asp-action="About">About</a></li>
                         <li class="mb-2"><a class="text-white-50 text-decoration-none" asp-controller="Home" asp-action="Privacy">Privacy</a></li>
-                        <li class="mb-2"><a class="text-white-50 text-decoration-none" href="#">Terms</a></li>
-                        <li><a class="text-white-50 text-decoration-none" href="#">Accessibility</a></li>
+                        <li class="mb-2"><a class="text-white-50 text-decoration-none" asp-controller="Home" asp-action="Terms">Terms</a></li>
+                        <li><a class="text-white-50 text-decoration-none" asp-controller="Home" asp-action="Accessibility">Accessibility</a></li>
                     </ul>
                 </div>
 
@@ -315,9 +381,9 @@
                     <div class="text-white fw-bold mb-2">Stay connected</div>
                     <div class="text-white-50 mb-3">Subscribe for product drops and updates.</div>
 
-                    <form class="d-flex gap-2 mb-3">
-                        <input id="newsletter-email" name="email" class="form-control form-control-sm" type="email" placeholder="Email address" aria-label="Email address for newsletter" autocomplete="email" />
-                        <button class="btn btn-warning btn-sm fw-bold" type="button">Subscribe</button>
+                    <form id="newsletter-form" class="d-flex gap-2 mb-3">
+                        <input id="newsletter-email" name="email" class="form-control form-control-sm" type="email" placeholder="Email address" aria-label="Email address for newsletter" autocomplete="email" required />
+                        <button id="newsletter-btn" class="btn btn-warning btn-sm fw-bold" type="submit">Subscribe</button>
                     </form>
 
                     <div class="d-flex gap-3 fs-5">
@@ -333,10 +399,10 @@
             <hr class="border-secondary my-4" />
 
             <div class="d-flex justify-content-between align-items-center flex-wrap gap-2">
-                <div>Â© @DateTime.Now.Year - ELKH</div>
+                <div>&copy; @DateTime.Now.Year - ELKH</div>
                 <div class="d-flex gap-3">
                     <a class="text-white-50 text-decoration-none" asp-controller="Home" asp-action="Privacy">Privacy</a>
-                    <a class="text-white-50 text-decoration-none" href="#">Terms</a>
+                    <a class="text-white-50 text-decoration-none" asp-controller="Home" asp-action="Terms">Terms</a>
                 </div>
             </div>
         </div>
@@ -370,10 +436,16 @@
         </div>
     </div>
 
+    <!-- ════════════════════════════════════════════════════════════════════════════════ -->
+    <!-- ║ Scripts Section - Framework and application JavaScript loading             ║ -->
+    <!-- ════════════════════════════════════════════════════════════════════════════════ -->
     <script src="~/lib/jquery/dist/jquery.min.js"></script>
     <script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
     <script src="~/js/site.js" asp-append-version="true"></script>
+    <script src="~/js/cart-ajax.js" asp-append-version="true"></script>
     @await Html.PartialAsync("_ValidationScriptsPartial")
+
+    <!-- Page-specific script injection point for additional functionality -->
     @await RenderSectionAsync("Scripts", required: false)
 
 </body>

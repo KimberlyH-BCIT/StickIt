@@ -1,9 +1,67 @@
-﻿@{
+@{
     ViewData["Title"] = "Home";
     Layout = "~/Views/Shared/_Layout.cshtml";
 }
 
-<!-- HERO (layout kept the same, colors are controlled by site.css) -->
+@*
+╔══════════════════════════════════════════════════════════════════════════════════╗
+║ TABLE OF CONTENTS - Home/Index.cshtml                                            ║
+╠══════════════════════════════════════════════════════════════════════════════════╣
+║ 1. ViewBag Data Preparation ................................. Lines    7-18     ║
+║    - Store reviews extraction and null-safety checks                             ║
+║    - Helper methods for review sorting and button styles                         ║
+║                                                                                  ║
+║ 2. Hero Section ............................................ Lines   25-53     ║
+║    - Primary call-to-action with product navigation                              ║
+║    - Feature highlights (delivery, quality, security)                           ║
+║    - Trending products showcase with branding                                    ║
+║                                                                                  ║
+║ 3. Feature Cards Section .................................. Lines   55-113     ║
+║    - Product category highlights with visual cards                               ║
+║    - Sample packs, die-cut stickers, and promotional content                     ║
+║                                                                                  ║
+║ 4. FAQ Accordion .......................................... Lines  115-151     ║
+║    - Bootstrap accordion with delivery, refund, and material info               ║
+║    - Order history navigation link integration                                   ║
+║                                                                                  ║
+║ 5. Customer Reviews Carousel .............................. Lines  153-275     ║
+║    - Dynamic review display (max 3 at a time)                                    ║
+║    - Conditional rendering based on review availability                          ║
+║    - Navigation arrows and review indicators                                     ║
+║    - Alternating card styles (light/dark theme)                                 ║
+║                                                                                  ║
+║ 6. JavaScript Review Carousel Logic ....................... Lines  277-340     ║
+║    - Client-side review navigation and pagination                               ║
+║    - Dynamic DOM updates for review content                                      ║
+║    - Button state management and user interaction handling                       ║
+╚══════════════════════════════════════════════════════════════════════════════════╝
+*@
+
+@{
+    // ═══════════════════════════════════════════════════════════════════════════════
+    // ║ ViewBag Data Preparation                                                    ║
+    // ║ Extract and prepare data passed from HomeController for display             ║
+    // ═══════════════════════════════════════════════════════════════════════════════
+
+    // Store reviews for the customer testimonials section
+    // Reviews come from StoreReviewService and may be null during initial load
+    var reviews = ViewBag.StoreReviews as List<ELKH.Models.StoreReviewModel>;
+    var hasReviews = reviews != null && reviews.Any();
+
+    // Helper method to generate review sorting URLs with proper routing
+    // Maintains current page state while changing sort parameters
+    string ReviewSortLink(string sortKey) =>
+        Url.Action("Details", "Product", new { reviewPage = 1, reviewSort = sortKey }) + "#reviews";
+
+    // Dynamic CSS class assignment for review sort buttons
+    // Highlights the currently active sort option with primary styling
+    string ReviewBtnClass(string sortKey) =>
+        "btn btn-sm btn-outline-secondary"; // Default for home page (no active sorting)
+}
+
+<!-- ════════════════════════════════════════════════════════════════════════════════ -->
+<!-- ║ Hero Section - Primary marketing content and call-to-action                 ║ -->
+<!-- ════════════════════════════════════════════════════════════════════════════════ -->
 <section class="bg-dark text-white w-100">
     <div class="container-fluid px-0">
         <div class="row align-items-center g-4 mx-0">
@@ -53,7 +111,9 @@
     </div>
 </section>
 
-<!-- FEATURE CARDS -->
+<!-- ════════════════════════════════════════════════════════════════════════════════ -->
+<!-- ║ Feature Cards Section - Product categories and promotional content         ║ -->
+<!-- ════════════════════════════════════════════════════════════════════════════════ -->
 <section class="bg-light">
     <div class="container py-4 py-lg-5">
         <h2 class="fw-bold mb-2">Premium and create with confidence</h2>
@@ -108,7 +168,9 @@
             </div>
         </div>
 
-        <!-- FAQ -->
+        <!-- ═══════════════════════════════════════════════════════════════════════════ -->
+        <!-- ║ FAQ Section - Frequently Asked Questions with Bootstrap Accordion     ║ -->
+        <!-- ═══════════════════════════════════════════════════════════════════════════ -->
         <div class="mt-5">
             <h2 class="fw-bold mb-1">FAQ</h2>
             <div class="text-muted">Quick answers to common questions</div>
@@ -150,93 +212,244 @@
             </div>
         </div>
 
-        <!-- REVIEWS -->
+        <!-- ═══════════════════════════════════════════════════════════════════════════ -->
+        <!-- ║ Customer Reviews Section - Dynamic carousel with pagination           ║ -->
+        <!-- ═══════════════════════════════════════════════════════════════════════════ -->
         <section class="py-5">
             <h2 class="fw-bold mb-1 text-center">What our beloved Customers Say!</h2>
             <p class="text-muted text-center mb-4">Real words from real sticker lovers.</p>
 
-            <div class="row g-4">
-                <div class="col-md-4">
-                    <div class="card border-0 shadow-sm h-100 rounded-4">
-                        <div class="card-body p-4">
-                            <div class="d-flex align-items-center justify-content-between mb-3">
-                                <span class="badge" style="background: rgba(46,204,113,.15); color:#2ecc71;">Verified buyer</span>
-                                <span class="text-warning">★★★★★</span>
-                            </div>
-                            <h5 class="fw-bold mb-2">“Great quality and super fast!”</h5>
-                            <p class="text-muted mb-4">
-                                The cuts are clean, the colors pop, and shipping was quicker than I expected.
-                                I’m already planning my next order.
-                            </p>
-                            <div class="d-flex align-items-center gap-2">
-                                <div class="rounded-circle bg-light d-flex align-items-center justify-content-center" style="width:40px;height:40px;">
-                                    <span class="fw-bold">J</span>
-                                </div>
-                                <div>
-                                    <div class="fw-semibold">Lovedeep</div>
-                                    <div class="text-muted small">Sticker sheets</div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
+            @if (hasReviews)
+            {
+                <!-- ═══════════════════════════════════════════════════════════════════════ -->
+                <!-- ║ Review Carousel Container - Shows max 3 reviews with navigation   ║ -->
+                <!-- ═══════════════════════════════════════════════════════════════════════ -->
+                <div class="position-relative">
+                    <!-- Navigation Arrows -->
+                    <button class="btn btn-light border rounded-circle position-absolute top-50 start-0 translate-middle-y" 
+                            id="prevReview" 
+                            style="width: 50px; height: 50px; z-index: 10; margin-left: -25px;"
+                            title="Previous review">
+                        <i class="bi bi-chevron-left fw-bold"></i>
+                    </button>
+                    <button class="btn btn-light border rounded-circle position-absolute top-50 end-0 translate-middle-y" 
+                            id="nextReview" 
+                            style="width: 50px; height: 50px; z-index: 10; margin-right: -25px;"
+                            title="Next review">
+                        <i class="bi bi-chevron-right fw-bold"></i>
+                    </button>
 
-                <div class="col-md-4">
-                    <div class="card border-0 shadow-sm h-100 rounded-4" style="background:#111; color:white;">
-                        <div class="card-body p-4">
-                            <div class="d-flex align-items-center justify-content-between mb-3">
-                                <span class="badge bg-warning text-dark">Verified buyer</span>
-                                <span class="text-warning">★★★★★</span>
-                            </div>
-                            <h5 class="fw-bold mb-2">“I'm loving it!”</h5>
-                            <p class="text-white-50 mb-4">
-                                The purchase was simple, checkout was smooth, and the stickers look premium.
-                                Perfect for my small business packaging.
-                            </p>
-                            <div class="d-flex align-items-center gap-2">
-                                <div class="rounded-circle bg-secondary d-flex align-items-center justify-content-center" style="width:40px;height:40px;">
-                                    <span class="fw-bold">N</span>
-                                </div>
-                                <div>
-                                    <div class="fw-semibold">Evan</div>
-                                    <div class="text-white-50 small">Labels</div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
+                    <!-- Review Cards: Display up to 3 reviews with alternating visual themes -->
+                    <div id="reviewCarousel" class="row g-4">
+                        @for (int i = 0; i < Math.Min(3, reviews?.Count ?? 0); i++)
+                        {
+                            var review = reviews[i];
 
-                <div class="col-md-4">
-                    <div class="card border-0 shadow-sm h-100 rounded-4">
-                        <div class="card-body p-4">
-                            <div class="d-flex align-items-center justify-content-between mb-3">
-                                <span class="badge" style="background: rgba(46,204,113,.15); color:#2ecc71;">Verified buyer</span>
-                                <span class="text-warning">★★★★★</span>
-                            </div>
-                            <h5 class="fw-bold mb-2">“Durable and looks stunning!”</h5>
-                            <p class="text-muted mb-4">
-                                I put mine on my laptop and water bottle, still looks brand new.
-                                The finish is smooth and the print is sharp.
-                            </p>
-                            <div class="d-fle   x align-items-center gap-2">
-                                <div class="rounded-circle bg-light d-flex align-items-center justify-content-center" style="width:40px;height:40px;">
-                                    <span class="fw-bold">L</span>
+                            // ═══════════════════════════════════════════════════════════════════
+                            // ║ Alternating Card Theme Logic                                  ║
+                            // ║ Even-indexed cards: Light theme with subtle green verified badge  ║
+                            // ║ Odd-indexed cards:  Dark theme with warning-colored badge         ║
+                            // ═══════════════════════════════════════════════════════════════════
+                            var isEven = i % 2 == 0;
+                            var cardClass = isEven ? "card border-0 shadow-sm h-100 rounded-4" : "card border-0 shadow-sm h-100 rounded-4 bg-dark text-white";
+                            var badgeClass = isEven ? "badge" : "badge bg-warning text-dark";
+                            var badgeStyle = isEven ? "background: rgba(46,204,113,.15); color:#2ecc71;" : "";
+                            var textClass = isEven ? "text-muted" : "text-white-50";
+                            var bgClass = isEven ? "bg-light" : "bg-secondary";
+
+                            <div class="col-md-4 review-card" data-index="@i">
+                                <div class="@cardClass">
+                                    <div class="card-body p-4">
+                                        <div class="d-flex align-items-center justify-content-between mb-3">
+                                            @if (review.IsVerifiedBuyer)
+                                            {
+                                                <span class="@badgeClass" style="@badgeStyle">Verified buyer</span>
+                                            }
+                                            else
+                                            {
+                                                <span></span>
+                                            }
+                                            <span class="text-warning">
+                                                @for (int s = 0; s < review.Rating; s++)
+                                                {
+                                                    <text>★</text>
+                                                }
+                                            </span>
+                                        </div>
+                                        @if (!string.IsNullOrEmpty(review.Title))
+                                        {
+                                            <h6 class="fw-bold mb-2">@review.Title</h6>
+                                        }
+                                        <p class="@textClass mb-4" style="min-height: 100px;">
+                                            @review.Description
+                                        </p>
+                                        <div class="d-flex align-items-center gap-2">
+                                            <div class="rounded-circle @bgClass d-flex align-items-center justify-content-center" style="width:40px;height:40px;">
+                                                <span class="fw-bold">@(review.RegisteredUser?.Email?.FirstOrDefault().ToString().ToUpper() ?? "?")</span>
+                                            </div>
+                                            <div>
+                                                <div class="fw-semibold">@(review.RegisteredUser?.Email?.Split('@').FirstOrDefault() ?? "Anonymous")</div>
+                                                <div class="@textClass small">@review.CreatedAt.ToString("MMM dd, yyyy")</div>
+                                            </div>
+                                        </div>
+                                    </div>
                                 </div>
-                                <div>
-                                    <div class="fw-semibold">Kimberly</div>
-                                    <div class="text-muted small">Sticker sheets</div>
-                                </div>
                             </div>
-                        </div>
+                        }
                     </div>
+
+                    <!-- Review indicators -->
+                    @if (reviews.Count > 3)
+                    {
+                        <div class="text-center mt-3">
+                            <span class="text-muted small">
+                                <span id="currentReviewSet">1</span> - <span id="maxReviewSet">@(reviews.Count - 2)</span> of @reviews.Count reviews
+                            </span>
+                        </div>
+                    }
                 </div>
-            </div>
+            }
+            else
+            {
+                <!-- No reviews yet - show placeholder -->
+                <div class="text-center py-5">
+                    <i class="bi bi-chat-quote display-1 text-muted mb-3"></i>
+                    <p class="text-muted">Be the first to leave a review!</p>
+                </div>
+            }
 
             <div class="text-center mt-4">
                 <a asp-controller="User" asp-action="LeaveReview" class="btn btn-warning btn-lg px-4">
-                    Leave your reviews
+                    <i class="bi bi-pencil-square me-2"></i>Leave your review
                 </a>
             </div>
         </section>
     </div>
 </section>
+
+@section Scripts {
+    @if (hasReviews && (reviews?.Count ?? 0) > 3)
+    {
+        <script>
+            // Client-Side Review Carousel Logic - Handles pagination through customer reviews
+
+            // Serialize review data from server to JavaScript for client-side manipulation
+            // Only includes necessary fields to minimize payload size
+            const allReviews = @Html.Raw(System.Text.Json.JsonSerializer.Serialize(reviews.Select(r => new {
+                r.Title,
+                r.Rating,
+                r.Description,
+                r.IsVerifiedBuyer,
+                r.CreatedAt,
+                Email = r.RegisteredUser?.Email ?? "Anonymous"
+            })));
+
+            // Pagination state management
+            let currentStartIndex = 0;  // Current starting position in the review array
+            const maxIndex = allReviews.length - 3;  // Maximum starting index (ensures 3 items always visible)
+
+            // ═══════════════════════════════════════════════════════════════════════════════
+            // ║ Navigation Event Handlers                                                 ║
+            // ═══════════════════════════════════════════════════════════════════════════════
+
+            document.getElementById('prevReview').addEventListener('click', function() {
+                if (currentStartIndex > 0) {
+                    currentStartIndex--;
+                    updateReviews();
+                }
+            });
+
+            document.getElementById('nextReview').addEventListener('click', function() {
+                if (currentStartIndex < maxIndex) {
+                    currentStartIndex++;
+                    updateReviews();
+                }
+            });
+
+            // Dynamic DOM Update Function - Updates the 3 visible review cards with new data
+            function updateReviews() {
+                const reviewCards = document.querySelectorAll('.review-card');
+
+                // Update each of the 3 visible review cards with new review data
+                for (let i = 0; i < 3; i++) {
+                    const review = allReviews[currentStartIndex + i];
+                    const card = reviewCards[i];
+
+                    if (review && card) {
+                        // Verified Buyer Badge Update
+                        const badge = card.querySelector('.badge');
+                        if (badge && review.IsVerifiedBuyer) {
+                            badge.textContent = 'Verified buyer';
+                            badge.style.display = '';
+                        } else if (badge) {
+                            badge.style.display = 'none';
+                        }
+
+                        // Star Rating Display Update
+                        const stars = card.querySelector('.text-warning');
+                        if (stars) {
+                            stars.innerHTML = '★'.repeat(review.Rating);
+                        }
+
+                        // Review Title Handling (Optional Field)
+                        const titleElem = card.querySelector('h6.fw-bold');
+                        if (review.Title) {
+                            if (titleElem) {
+                                titleElem.textContent = review.Title;
+                                titleElem.style.display = '';
+                            } else {
+                                // Create title element if it doesn't exist
+                                const starsDiv = card.querySelector('.text-warning').parentElement.parentElement;
+                                const newTitle = document.createElement('h6');
+                                newTitle.className = 'fw-bold mb-2';
+                                newTitle.textContent = review.Title;
+                                starsDiv.insertAdjacentElement('afterend', newTitle);
+                            }
+                        } else if (titleElem) {
+                            titleElem.style.display = 'none';
+                        }
+
+                        // Update description
+                        const description = card.querySelector('p');
+                        if (description) {
+                            description.textContent = review.Description;
+                        }
+
+                        // User Information Display (Name and Avatar)
+                        const initial = card.querySelector('.rounded-circle span');
+                        if (initial) {
+                            initial.textContent = review.Email.charAt(0).toUpperCase();
+                        }
+
+                        // Extract username from email (part before at symbol)
+                        const username = card.querySelector('.fw-semibold');
+                        if (username) {
+                            username.textContent = review.Email.split('@@')[0];
+                        }
+
+                        // Date Formatting and Display
+                        const dateElem = card.querySelectorAll('.small')[card.querySelectorAll('.small').length - 1];
+                        if (dateElem) {
+                            const reviewDate = new Date(review.CreatedAt);
+                            dateElem.textContent = reviewDate.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+                        }
+                    }
+                }
+
+                // ═══════════════════════════════════════════════════════════════════════════
+                // ║ UI State Updates                                                      ║
+                // ═══════════════════════════════════════════════════════════════════════════
+
+                // Update pagination indicator to show current position
+                document.getElementById('currentReviewSet').textContent = currentStartIndex + 1;
+
+                // Enable/disable navigation buttons based on current position
+                document.getElementById('prevReview').disabled = currentStartIndex === 0;
+                document.getElementById('nextReview').disabled = currentStartIndex >= maxIndex;
+            }
+
+            // Initialize the carousel with proper button states on page load
+            updateReviews();
+        </script>
+    }
+}

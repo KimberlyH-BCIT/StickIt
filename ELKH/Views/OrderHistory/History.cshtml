@@ -2,6 +2,14 @@
 @{
     ViewData["Title"] = "My Orders";
     Layout = "~/Views/Shared/_Layout.cshtml";
+
+    string SortLink(string sortKey) =>
+        Url.Action("MyHistory", "Order", new { sort = sortKey }) ?? "#";
+
+    string BtnClass(string sortKey) =>
+        Model.CurrentSort == sortKey
+            ? "btn btn-sm btn-primary"
+            : "btn btn-sm btn-outline-secondary";
 }
 
 @section title {
@@ -30,6 +38,31 @@
     }
 else
 {
+        @* ── Sort controls ─────────────────────────────────────────────────── *@
+        <div class="card mb-3">
+            <div class="card-body py-2">
+                <div class="d-flex align-items-center flex-wrap gap-2">
+                    <span class="text-muted small me-1">Sort by:</span>
+
+                    <a href="@SortLink("date_desc")" class="@BtnClass("date_desc")">
+                        Date <span aria-hidden="true">↓</span>
+                    </a>
+                    <a href="@SortLink("date_asc")" class="@BtnClass("date_asc")">
+                        Date <span aria-hidden="true">↑</span>
+                    </a>
+                    <a href="@SortLink("total_high")" class="@BtnClass("total_high")">
+                        Total High &rarr; Low
+                    </a>
+                    <a href="@SortLink("total_low")" class="@BtnClass("total_low")">
+                        Total Low &rarr; High
+                    </a>
+                    <a href="@SortLink("status")" class="@BtnClass("status")">
+                        Status
+                    </a>
+                </div>
+            </div>
+        </div>
+
         <div class="card shadow-sm">
             <div class="table-responsive">
                 <table class="table table-hover mb-0">
@@ -70,7 +103,7 @@ else
                                     {
                                         if (item.Product is not null)
                                         {
-                                            <form asp-controller="Cart" asp-action="AddToCart" method="post">
+                                            <form asp-controller="Cart" asp-action="AddToCart" method="post" class="d-inline">
                                                 @Html.AntiForgeryToken()
                                                 <input type="hidden" name="itemId"   value="@item.FkProductId" />
                                                 <input type="hidden" name="quantity" value="1" />
@@ -79,6 +112,14 @@ else
                                                     <i class="bi bi-arrow-repeat me-1"></i>@item.Product.Name
                                                 </button>
                                             </form>
+                                            @if (order.DeliveryStatus == "Delivered" || order.DeliveryStatus == "Shipped")
+                                            {
+                                                <a asp-controller="Product" asp-action="Details" asp-route-id="@item.FkProductId" asp-fragment="reviews"
+                                                   class="btn btn-sm btn-outline-primary"
+                                                   title="Leave a review for @item.Product.Name">
+                                                    <i class="bi bi-star me-1"></i>Review
+                                                </a>
+                                            }
                                         }
                                     }
                                 </td>

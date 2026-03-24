@@ -1,0 +1,287 @@
+@model ELKH.ViewModels.StoreReviewViewModel
+@{
+    ViewData["Title"] = Model.ExistingReview != null ? "Edit Your Review" : "Leave a Review";
+    var isEdit = Model.ExistingReview != null;
+}
+
+<div class="container py-5">
+    <div class="row justify-content-center">
+        <div class="col-lg-8">
+            <!-- Header -->
+            <div class="text-center mb-4">
+                <h1 class="display-5 fw-bold mb-2">@ViewData["Title"]</h1>
+                <p class="text-muted lead">
+                    @if (isEdit)
+                    {
+                        <text>Update your feedback about our store</text>
+                    }
+                    else
+                    {
+                        <text>Share your experience shopping with us</text>
+                    }
+                </p>
+
+                @if (Model.IsVerifiedBuyer)
+                {
+                    <div class="alert alert-success d-inline-flex align-items-center gap-2 mb-0" role="alert">
+                        <i class="bi bi-patch-check-fill"></i>
+                        <strong>Verified Buyer</strong> - Your review will show the verified buyer badge
+                    </div>
+                }
+                else
+                {
+                    <div class="alert alert-info d-inline-flex align-items-center gap-2 mb-0" role="alert">
+                        <i class="bi bi-info-circle-fill"></i>
+                        Complete a purchase to become a verified buyer
+                    </div>
+                }
+            </div>
+
+            <!-- Review Form Card -->
+            <div class="card border-0 shadow-sm rounded-4">
+                <div class="card-body p-4 p-md-5">
+                    <form asp-action="LeaveReview" method="post" id="reviewForm">
+                        @Html.AntiForgeryToken()
+                        @if (Model.ExistingReview != null)
+                        {
+                            <input type="hidden" name="ReviewId" value="@Model.ExistingReview.PkStoreReviewId" />
+                        }
+
+                        <!-- Rating Section -->
+                        <div class="mb-4">
+                            <label class="form-label fw-semibold d-flex align-items-center gap-2">
+                                <i class="bi bi-star-fill text-warning"></i>
+                                Overall Rating
+                            </label>
+                            <div class="rating-input d-flex gap-2 mb-2">
+                                @for (int i = 1; i <= 5; i++)
+                                {
+                                    var isChecked = Model.Rating == i;
+                                    <label class="rating-star" data-value="@i">
+                                        @if (isChecked)
+                                        {
+                                            <input type="radio" 
+                                                   asp-for="Rating" 
+                                                   value="@i" 
+                                                   class="visually-hidden" 
+                                                   checked="checked" />
+                                        }
+                                        else
+                                        {
+                                            <input type="radio" 
+                                                   asp-for="Rating" 
+                                                   value="@i" 
+                                                   class="visually-hidden" />
+                                        }
+                                        <i class="bi bi-star-fill fs-1 @(isChecked || i <= Model.Rating ? "text-warning" : "text-muted")"></i>
+                                    </label>
+                                }
+                            </div>
+                            <div class="text-muted small" id="ratingText">@GetRatingText(Model.Rating)</div>
+                            <span asp-validation-for="Rating" class="text-danger small"></span>
+                        </div>
+
+                        <!-- Title Section -->
+                        <div class="mb-4">
+                            <label asp-for="Title" class="form-label fw-semibold d-flex align-items-center gap-2">
+                                <i class="bi bi-card-heading text-primary"></i>
+                                Review Title
+                            </label>
+                            <input asp-for="Title" 
+                                   class="form-control form-control-lg" 
+                                   type="text" 
+                                   placeholder="Give your review a headline (e.g., 'Great service!' or 'Best stickers ever!')"
+                                   maxlength="100" />
+                            <div class="d-flex justify-content-between mt-2">
+                                <span asp-validation-for="Title" class="text-danger small"></span>
+                                <span class="text-muted small" id="titleCharCount">@Model.Title.Length / 100 characters</span>
+                            </div>
+                        </div>
+
+                        <!-- Review Text Section -->
+                        <div class="mb-4">
+                            <label asp-for="Description" class="form-label fw-semibold d-flex align-items-center gap-2">
+                                <i class="bi bi-chat-left-text-fill text-primary"></i>
+                                Your Review
+                            </label>
+                            <textarea asp-for="Description" 
+                                      class="form-control form-control-lg" 
+                                      rows="6" 
+                                      placeholder="Tell us about your experience with our store, products, and service..."
+                                      maxlength="1000"></textarea>
+                            <div class="d-flex justify-content-between mt-2">
+                                <span asp-validation-for="Description" class="text-danger small"></span>
+                                <span class="text-muted small" id="charCount">@Model.Description.Length / 1000 characters</span>
+                            </div>
+                        </div>
+
+                        <!-- Guidelines -->
+                        <div class="alert alert-light border mb-4">
+                            <h6 class="fw-semibold mb-2"><i class="bi bi-lightbulb-fill text-warning me-2"></i>Review Guidelines</h6>
+                            <ul class="mb-0 small text-muted">
+                                <li>Be honest and specific about your experience</li>
+                                <li>Focus on product quality, service, and shipping</li>
+                                <li>Reviews are moderated and will be published once approved</li>
+                                <li>Inappropriate content will not be approved</li>
+                            </ul>
+                        </div>
+
+                        <!-- Action Buttons -->
+                        <div class="d-flex gap-3">
+                            <button type="submit" class="btn btn-warning btn-lg flex-grow-1">
+                                <i class="bi bi-send-fill me-2"></i>
+                                @(isEdit ? "Update Review" : "Submit Review")
+                            </button>
+                            <a asp-controller="Home" asp-action="Index" class="btn btn-outline-secondary btn-lg">
+                                Cancel
+                            </a>
+                        </div>
+
+                        @if (isEdit && Model.ExistingReview != null)
+                        {
+                            <div class="text-center mt-3">
+                                <small class="text-muted">
+                                    <i class="bi bi-clock-history me-1"></i>
+                                    Originally submitted on @Model.ExistingReview.CreatedAt.ToString("MMM dd, yyyy")
+                                    @if (Model.ExistingReview.LastEditedAt.HasValue)
+                                    {
+                                        <br />
+                                        <text>Last edited on @Model.ExistingReview.LastEditedAt.Value.ToString("MMM dd, yyyy")</text>
+                                    }
+                                </small>
+                            </div>
+                        }
+                    </form>
+                </div>
+            </div>
+
+            <!-- Back to Home -->
+            <div class="text-center mt-4">
+                <a asp-controller="Home" asp-action="Index" class="text-decoration-none">
+                    <i class="bi bi-arrow-left me-2"></i>Back to Home
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+    <script>
+        // Star rating interaction
+        document.querySelectorAll('.rating-star').forEach(star => {
+            star.addEventListener('click', function() {
+                const value = parseInt(this.dataset.value);
+                updateRating(value);
+            });
+
+            star.addEventListener('mouseenter', function() {
+                const value = parseInt(this.dataset.value);
+                highlightStars(value);
+            });
+        });
+
+        document.querySelector('.rating-input').addEventListener('mouseleave', function() {
+            const checkedValue = parseInt(document.querySelector('input[name="Rating"]:checked')?.value || 0);
+            highlightStars(checkedValue);
+        });
+
+        function updateRating(value) {
+            // Update radio button
+            const radio = document.querySelector(`input[name="Rating"][value="${value}"]`);
+            if (radio) radio.checked = true;
+
+            // Update rating text
+            const texts = ['', 'Poor', 'Fair', 'Good', 'Very Good', 'Excellent'];
+            document.getElementById('ratingText').textContent = texts[value] || '';
+
+            highlightStars(value);
+        }
+
+        function highlightStars(value) {
+            document.querySelectorAll('.rating-star').forEach((star, index) => {
+                const starIcon = star.querySelector('i');
+                if (index < value) {
+                    starIcon.classList.remove('text-muted');
+                    starIcon.classList.add('text-warning');
+                } else {
+                    starIcon.classList.remove('text-warning');
+                    starIcon.classList.add('text-muted');
+                }
+            });
+        }
+
+        // Character counter for review text
+        const textarea = document.querySelector('textarea[name="Description"]');
+        const charCount = document.getElementById('charCount');
+
+        if (textarea && charCount) {
+            textarea.addEventListener('input', function() {
+                const count = this.value.length;
+                charCount.textContent = `${count} / 1000 characters`;
+
+                if (count > 1000) {
+                    charCount.classList.add('text-danger');
+                    charCount.classList.remove('text-muted');
+                } else {
+                    charCount.classList.remove('text-danger');
+                    charCount.classList.add('text-muted');
+                }
+            });
+        }
+
+        // Character counter for title
+        const titleInput = document.querySelector('input[name="Title"]');
+        const titleCharCount = document.getElementById('titleCharCount');
+
+        if (titleInput && titleCharCount) {
+            titleInput.addEventListener('input', function() {
+                const count = this.value.length;
+                titleCharCount.textContent = `${count} / 100 characters`;
+
+                if (count > 100) {
+                    titleCharCount.classList.add('text-danger');
+                    titleCharCount.classList.remove('text-muted');
+                } else {
+                    titleCharCount.classList.remove('text-danger');
+                    titleCharCount.classList.add('text-muted');
+                }
+            });
+        }
+
+        // Initialize stars on page load
+        const currentRating = parseInt(document.querySelector('input[name="Rating"]:checked')?.value || 5);
+        highlightStars(currentRating);
+    </script>
+
+    <style>
+        .rating-star {
+            cursor: pointer;
+            transition: transform 0.2s ease;
+            user-select: none;
+        }
+
+        .rating-star:hover {
+            transform: scale(1.1);
+        }
+
+        .rating-star i {
+            transition: color 0.2s ease;
+        }
+    </style>
+}
+
+@functions {
+    string GetRatingText(int rating)
+    {
+        return rating switch
+        {
+            1 => "Poor",
+            2 => "Fair",
+            3 => "Good",
+            4 => "Very Good",
+            5 => "Excellent",
+            _ => ""
+        };
+    }
+}

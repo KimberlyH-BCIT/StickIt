@@ -1,0 +1,62 @@
+@{
+    ViewData["Title"] = "Contact Us";
+}
+
+<div class="container my-5">
+    <div class="row justify-content-center">
+        <div class="col-lg-8">
+            <h1 class="mb-4">@ViewData["Title"]</h1>
+            
+            <div class="card shadow-sm mb-4">
+                <div class="card-body p-4">
+                    <h5 class="card-title mb-3">Get in Touch</h5>
+                    <p class="card-text">Have questions or need assistance? We're here to help!</p>
+                    
+                    <div class="row g-4 mt-3">
+                        <div class="col-md-6">
+                            <h6><i class="bi bi-envelope me-2"></i>Email</h6>
+                            <p class="text-muted">support@stickit.dev</p>
+                        </div>
+                        <div class="col-md-6">
+                            <h6><i class="bi bi-telephone me-2"></i>Phone</h6>
+                            <p class="text-muted">1-800-STICKER</p>
+                        </div>
+                        <div class="col-md-6">
+                            <h6><i class="bi bi-clock me-2"></i>Business Hours</h6>
+                            <p class="text-muted">Monday - Friday: 9:00 AM - 5:00 PM EST</p>
+                        </div>
+                        <div class="col-md-6">
+                            <h6><i class="bi bi-geo-alt me-2"></i>Address</h6>
+                            <p class="text-muted">123 Sticker Street<br/>Toronto, ON M5V 3A8</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="card shadow-sm">
+                <div class="card-body p-4">
+                    <h5 class="card-title mb-3">Send us a message</h5>
+                    <form>
+                        <div class="mb-3">
+                            <label for="contactName" class="form-label">Name</label>
+                            <input type="text" class="form-control" id="contactName" required>
+                        </div>
+                        <div class="mb-3">
+                            <label for="contactEmail" class="form-label">Email</label>
+                            <input type="email" class="form-control" id="contactEmail" required>
+                        </div>
+                        <div class="mb-3">
+                            <label for="contactSubject" class="form-label">Subject</label>
+                            <input type="text" class="form-control" id="contactSubject" required>
+                        </div>
+                        <div class="mb-3">
+                            <label for="contactMessage" class="form-label">Message</label>
+                            <textarea class="form-control" id="contactMessage" rows="5" required></textarea>
+                        </div>
+                        <button type="submit" class="btn btn-primary">Send Message</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

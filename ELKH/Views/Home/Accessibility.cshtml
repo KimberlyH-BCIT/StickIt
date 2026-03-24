@@ -1,0 +1,89 @@
+@{
+    ViewData["Title"] = "Accessibility Statement";
+}
+
+<div class="container my-5">
+    <div class="row justify-content-center">
+        <div class="col-lg-8">
+            <h1 class="mb-4">@ViewData["Title"]</h1>
+            
+            <p class="lead">ELKH Stickers is committed to ensuring digital accessibility for people with disabilities.</p>
+
+            <div class="card shadow-sm mb-4">
+                <div class="card-body p-4">
+                    <h5 class="card-title">Our Commitment</h5>
+                    <p>We are continually improving the user experience for everyone and applying the relevant accessibility standards to ensure we provide equal access to all of our users.</p>
+                    <p class="mb-0">We strive to conform to the Web Content Accessibility Guidelines (WCAG) 2.1, Level AA, published by the World Wide Web Consortium (W3C).</p>
+                </div>
+            </div>
+
+            <div class="card shadow-sm mb-4">
+                <div class="card-body p-4">
+                    <h5 class="card-title">Accessibility Features</h5>
+                    <p>Our website includes the following accessibility features:</p>
+                    <ul class="mb-0">
+                        <li>Semantic HTML structure for better screen reader navigation</li>
+                        <li>Alternative text for images</li>
+                        <li>Keyboard navigation support</li>
+                        <li>ARIA labels and roles where appropriate</li>
+                        <li>Sufficient color contrast for text readability</li>
+                        <li>Responsive design that works on various devices and screen sizes</li>
+                        <li>Clear and consistent navigation</li>
+                        <li>Form labels and error messages</li>
+                    </ul>
+                </div>
+            </div>
+
+            <div class="card shadow-sm mb-4">
+                <div class="card-body p-4">
+                    <h5 class="card-title">Compatibility</h5>
+                    <p class="mb-0">This website is designed to be compatible with the following assistive technologies:</p>
+                    <ul class="mt-2 mb-0">
+                        <li>Screen readers (JAWS, NVDA, VoiceOver)</li>
+                        <li>Speech recognition software</li>
+                        <li>Keyboard navigation</li>
+                        <li>Screen magnification software</li>
+                    </ul>
+                </div>
+            </div>
+
+            <div class="card shadow-sm mb-4">
+                <div class="card-body p-4">
+                    <h5 class="card-title">Known Limitations</h5>
+                    <p>Despite our best efforts, there may be some limitations. We are actively working to improve accessibility and remove barriers.</p>
+                    <p class="mb-0">If you encounter any accessibility barriers, please let us know so we can address them.</p>
+                </div>
+            </div>
+
+            <div class="card shadow-sm mb-4">
+                <div class="card-body p-4">
+                    <h5 class="card-title">Assessment and Testing</h5>
+                    <p class="mb-0">We regularly test our website using:</p>
+                    <ul class="mt-2 mb-0">
+                        <li>Automated accessibility testing tools</li>
+                        <li>Manual testing with assistive technologies</li>
+                        <li>Keyboard-only navigation testing</li>
+                        <li>User feedback and accessibility audits</li>
+                    </ul>
+                </div>
+            </div>
+
+            <div class="card shadow-sm">
+                <div class="card-body p-4">
+                    <h5 class="card-title">Feedback</h5>
+                    <p>We welcome your feedback on the accessibility of ELKH Stickers. Please let us know if you encounter accessibility barriers:</p>
+                    <ul class="mb-3">
+                        <li>Email: accessibility@stickit.dev</li>
+                        <li>Contact form: <a asp-action="Contact">Contact Us</a></li>
+                    </ul>
+                    <p class="mb-0">We aim to respond to accessibility feedback within 5 business days.</p>
+                </div>
+            </div>
+
+            <div class="alert alert-info mt-4">
+                <i class="bi bi-info-circle me-2"></i>
+                <strong>Last Updated:</strong> @DateTime.Now.ToString("MMMM dd, yyyy")
+            </div>
+        </div>
+    </div>
+</div>

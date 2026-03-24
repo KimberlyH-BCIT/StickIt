@@ -5,60 +5,104 @@
     var order = Model.Order;
 }
 
-<div class="container py-5">
-    <div class="text-center mb-5">
-        <div class="display-1 mb-3">🎉</div>
-        <h1 class="fw-bold text-success">Order Confirmed!</h1>
-        <p class="lead text-muted">Your stickers are on their way. Order #@order.PkOrderId</p>
-    </div>
-
+<div class="container my-5 py-4">
     <div class="row justify-content-center">
-        <div class="col-lg-7">
-            <div class="card shadow-sm mb-4">
-                <div class="card-body">
-                    <h5 class="fw-bold mb-3">Order Details</h5>
+        <div class="col-lg-8">
+            <!-- Success Header -->
+            <div class="text-center mb-5">
+                <div class="mb-4">
+                    <svg class="text-success" width="80" height="80" fill="currentColor" viewBox="0 0 16 16">
+                        <path d="M16 8A8 8 0 1 1 0 8a8 8 0 0 1 16 0zm-3.97-3.03a.75.75 0 0 0-1.08.022L7.477 9.417 5.384 7.323a.75.75 0 0 0-1.06 1.06L6.97 11.03a.75.75 0 0 0 1.079-.02l3.992-4.99a.75.75 0 0 0-.01-1.05z"/>
+                    </svg>
+                </div>
+                <h1 class="display-5 fw-bold text-success mb-3">Order Confirmed!</h1>
+                <p class="lead text-muted mb-2">Thank you for your purchase</p>
+                <p class="text-muted">Order Number: <strong class="text-dark">#@order.PkOrderId</strong></p>
+            </div>
 
-                    <div class="row mb-3">
-                        <div class="col-6">
-                            <p class="mb-1 text-muted small">Order Date</p>
-                            <p class="fw-semibold">@order.CreatedAt.ToString("MMMM d, yyyy")</p>
+            <!-- Order Summary Card -->
+            <div class="card shadow-sm mb-4">
+                <div class="card-header bg-white py-3">
+                    <h5 class="fw-bold mb-0"><i class="bi bi-receipt me-2"></i>Order Summary</h5>
+                </div>
+                <div class="card-body p-4">
+                    <!-- Order Details Grid -->
+                    <div class="row mb-4">
+                        <div class="col-md-6 mb-3 mb-md-0">
+                            <p class="mb-2 text-muted small text-uppercase fw-semibold">Order Date</p>
+                            <p class="mb-0 fw-semibold">@order.CreatedAt.ToString("MMMM d, yyyy 'at' h:mm tt")</p>
                         </div>
-                        <div class="col-6">
-                            <p class="mb-1 text-muted small">Status</p>
-                            <span class="badge bg-success">@order.OrderStatus</span>
+                        <div class="col-md-6">
+                            <p class="mb-2 text-muted small text-uppercase fw-semibold">Status</p>
+                            <span class="badge bg-success px-3 py-2">@order.OrderStatus</span>
                         </div>
                     </div>
 
+                    <!-- Shipping Address -->
                     @if (order.ContactDetail is not null)
                     {
-                        <h6 class="fw-bold mt-3 mb-2">Ship To</h6>
-                        <address class="text-muted mb-4">
-                            @order.ContactDetail.FirstName @order.ContactDetail.LastName<br />
+                        <hr class="my-4" />
+                        <h6 class="fw-bold mb-3"><i class="bi bi-truck me-2"></i>Shipping Address</h6>
+                        <address class="mb-0">
+                            <strong>@order.ContactDetail.FirstName @order.ContactDetail.LastName</strong><br />
                             @order.ContactDetail.Street<br />
                             @order.ContactDetail.City, @order.ContactDetail.Province @order.ContactDetail.PostCode<br />
                             @order.ContactDetail.Country
                         </address>
                     }
 
-                    <h6 class="fw-bold mb-2">Items</h6>
-                    @foreach (var item in order.OrderItems)
-                    {
-                        <div class="d-flex justify-content-between mb-1">
-                            <span>@(item.Product?.Name ?? "Product") <span class="text-muted">× @item.Quantity</span></span>
-                            <span>$@((item.Product?.Price ?? 0) * item.Quantity).ToString("F2")</span>
-                        </div>
-                    }
-                    <hr />
-                    <div class="d-flex justify-content-between fw-bold fs-5 mt-2">
-                        <span>Total</span>
-                        <span>$@order.TotalAmount.ToString("F2")</span>
+                    <!-- Order Items -->
+                    <hr class="my-4" />
+                    <h6 class="fw-bold mb-3"><i class="bi bi-bag-check me-2"></i>Items Ordered</h6>
+                    <div class="table-responsive">
+                        <table class="table table-borderless mb-0">
+                            <tbody>
+                                @foreach (var item in order.OrderItems)
+                                {
+                                    var itemTotal = (item.Product?.Price ?? 0) * item.Quantity;
+                                    <tr>
+                                        <td class="ps-0">
+                                            <strong>@(item.Product?.Name ?? "Product")</strong>
+                                            <br />
+                                            <small class="text-muted">Quantity: @item.Quantity</small>
+                                        </td>
+                                        <td class="text-end pe-0">
+                                            <strong>$@itemTotal.ToString("F2")</strong>
+                                        </td>
+                                    </tr>
+                                }
+                            </tbody>
+                        </table>
+                    </div>
+
+                    <!-- Order Total -->
+                    <hr class="my-3" />
+                    <div class="d-flex justify-content-between align-items-center">
+                        <h5 class="mb-0 fw-bold">Total</h5>
+                        <h4 class="mb-0 text-success fw-bold">$@order.TotalAmount.ToString("F2")</h4>
                     </div>
                 </div>
             </div>
 
-            <div class="d-flex gap-2 justify-content-center">
-                <a asp-controller="Order" asp-action="History" class="btn btn-outline-dark">View All Orders</a>
-                <a asp-controller="Product" asp-action="Index" class="btn btn-dark">Keep Shopping</a>
+            <!-- Confirmation Message -->
+            <div class="alert alert-info border-0 shadow-sm mb-4">
+                <div class="d-flex align-items-start">
+                    <i class="bi bi-envelope-check fs-4 me-3 mt-1"></i>
+                    <div>
+                        <strong>Confirmation email sent!</strong>
+                        <p class="mb-0 small">We've sent an order confirmation to your email address with all the details.</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Action Buttons -->
+            <div class="d-flex flex-column flex-md-row gap-3 justify-content-center">
+                <a asp-controller="Order" asp-action="MyHistory" class="btn btn-outline-primary btn-lg">
+                    <i class="bi bi-clock-history me-2"></i>View Order History
+                </a>
+                <a asp-controller="Product" asp-action="Index" class="btn btn-primary btn-lg">
+                    <i class="bi bi-bag-plus me-2"></i>Continue Shopping
+                </a>
             </div>
         </div>
     </div>

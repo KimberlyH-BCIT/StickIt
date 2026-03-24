@@ -2,17 +2,80 @@
 @using ELKH.Models
 @using ELKH.ViewModels
 
+@*
+╔══════════════════════════════════════════════════════════════════════════════════╗
+║ TABLE OF CONTENTS - Product/Details.cshtml                                       ║
+╠══════════════════════════════════════════════════════════════════════════════════╣
+║ 1. ViewBag Data Preparation ................................. Lines    6-24     ║
+║    - Review pagination, sorting, and pricing calculations                        ║
+║    - Helper methods for review sorting URL generation                            ║
+║                                                                                  ║
+║ 2. Breadcrumb Navigation ................................... Lines   29-34     ║
+║    - Simple navigation path for SEO and UX                                      ║
+║                                                                                  ║
+║ 3. Product Display Section ................................ Lines   36-125     ║
+║    - Product image with fallback placeholder                                     ║
+║    - Product info, pricing, discounts, and purchase controls                    ║
+║    - Stock status, wishlist, and add-to-cart functionality                      ║
+║                                                                                  ║
+║ 4. Product Description & Details .......................... Lines  127-165     ║
+║    - Expandable product description with character limits                        ║
+║    - Product specifications and features                                         ║
+║                                                                                  ║
+║ 5. Customer Reviews Section ............................... Lines  167-275     ║
+║    - Review statistics and average rating display                               ║
+║    - User rating submission form (authenticated users only)                     ║
+║    - Review filtering and sorting controls                                       ║
+║    - Paginated review display with detailed review cards                        ║
+║                                                                                  ║
+║ 6. Related Products Section ............................... Lines  277-320     ║
+║    - Suggested products carousel                                                 ║
+║    - Category-based product recommendations                                      ║
+║                                                                                  ║
+║ 7. JavaScript Enhancements ................................ Lines  322-410     ║
+║    - AJAX cart operations with user feedback                                    ║
+║    - Wishlist toggle functionality                                              ║
+║    - Rating submission with form validation                                     ║
+║    - Dynamic UI updates and error handling                                      ║
+╚══════════════════════════════════════════════════════════════════════════════════╝
+*@
+
 @{
     ViewData["Title"] = Model.ProductName;
+
+    // ═══════════════════════════════════════════════════════════════════════════════
+    // ║ ViewBag Data Extraction and Processing                                     ║
+    // ║ Safely extract complex data from controller with null-safety               ║
+    // ═══════════════════════════════════════════════════════════════════════════════
+
+    // Review pagination and sorting state
     var reviewPage     = ViewBag.ReviewPage as ReviewPageVM ?? new ReviewPageVM();
+    var currentReviewSort = ViewBag.ReviewSort as string ?? "date_new";
+
+    // User's purchase eligibility for rating (must have bought this product)
     var eligibleItems  = ViewBag.EligibleOrderItems as List<EligibleOrderItemVM>;
     bool userAlreadyRated = ViewBag.UserAlreadyRated == true;
     var userRating     = ViewBag.UserRating as ProductRatingModel;
     int userRatingId   = ViewBag.UserRatingId is int rid ? rid : 0;
+
+    // Price calculation including discount processing
     var effectivePrice = Model.DiscountPercent > 0
         ? Model.Price * (1 - (Model.DiscountPercent / 100m))
         : Model.Price;
+
+    // Helper methods for dynamic URL and CSS class generation
+    string ReviewSortLink(string sortKey) =>
+        Url.Action("Details", "Product", new { id = Model.ProductId, reviewPage = 1, reviewSort = sortKey }) + "#reviews";
+
+    string ReviewBtnClass(string sortKey) =>
+        currentReviewSort == sortKey
+            ? "btn btn-sm btn-primary"
+            : "btn btn-sm btn-outline-secondary";
 }
+
+<!-- ════════════════════════════════════════════════════════════════════════════════ -->
+<!-- ║ Breadcrumb Navigation - SEO-friendly navigation path                       ║ -->
+<!-- ════════════════════════════════════════════════════════════════════════════════ -->
 
 <nav aria-label="breadcrumb" class="mb-4">
     <ol class="breadcrumb">
@@ -22,8 +85,14 @@
 </nav>
 
 <div class="row g-5">
-    <!-- Product image -->
-    <div class="col-md-5">
+    <!-- ════════════════════════════════════════════════════════════════════════════════ -->
+    <!-- ║ Product Display Section - Main product information and purchase controls    ║ -->
+    <!-- ════════════════════════════════════════════════════════════════════════════════ -->
+    <div class="row g-5">
+        <!-- ═══════════════════════════════════════════════════════════════════════════ -->
+        <!-- ║ Product Image Display with Responsive Design                           ║ -->
+        <!-- ═══════════════════════════════════════════════════════════════════════════ -->
+        <div class="col-md-5">
         <div class="card border-0 shadow-sm bg-light d-flex align-items-center justify-content-center overflow-hidden"
              style="min-height:350px;">
             @if (!string.IsNullOrEmpty(Model.Thumbnail))
@@ -38,7 +107,9 @@
         </div>
     </div>
 
-    <!-- Product info -->
+    <!-- ═══════════════════════════════════════════════════════════════════════════ -->
+    <!-- ║ Product Information Panel with Pricing and Purchase Controls          ║ -->
+    <!-- ═══════════════════════════════════════════════════════════════════════════ -->
     <div class="col-md-7">
         <div class="mb-2 d-flex align-items-center gap-2 flex-wrap">
             <span class="badge bg-secondary">@Model.CategoryName</span>
@@ -147,7 +218,7 @@
 </div>
 
 <!-- Reviews & Ratings -->
-<div class="mt-5 pt-4 border-top">
+<div class="mt-5 pt-4 border-top" id="reviews">
 
     <!-- Section header with aggregate stats -->
     <div class="d-flex align-items-center gap-3 mb-4 flex-wrap">
@@ -165,6 +236,31 @@
             </div>
         }
     </div>
+
+    @* ── Sort controls ─────────────────────────────────────────────────── *@
+    @if (reviewPage.Reviews.Any())
+    {
+        <div class="card mb-3">
+            <div class="card-body py-2">
+                <div class="d-flex align-items-center flex-wrap gap-2">
+                    <span class="text-muted small me-1">Sort by:</span>
+
+                    <a href="@ReviewSortLink("date_new")" class="@ReviewBtnClass("date_new")">
+                        Newest First
+                    </a>
+                    <a href="@ReviewSortLink("date_old")" class="@ReviewBtnClass("date_old")">
+                        Oldest First
+                    </a>
+                    <a href="@ReviewSortLink("rating_high")" class="@ReviewBtnClass("rating_high")">
+                        Highest Rating
+                    </a>
+                    <a href="@ReviewSortLink("rating_low")" class="@ReviewBtnClass("rating_low")">
+                        Lowest Rating
+                    </a>
+                </div>
+            </div>
+        </div>
+    }
 
     <!-- Review cards -->
     @if (!reviewPage.Reviews.Any())

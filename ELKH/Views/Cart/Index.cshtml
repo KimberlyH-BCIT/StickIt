@@ -2,23 +2,14 @@
 @{
     ViewData["Title"] = "Your Cart";
     Layout = "~/Views/Shared/_Layout.cshtml";
+    var totalQuantity = Model.Items.Sum(i => i.Quantity);
 }
 
 @section title {
     <h1 class="fw-bold mb-4">Your Cart 🛒</h1>
 }
 
-<div class="container py-4">
-
-    @if (TempData["Message"] is string msg)
-{
-        var parts = msg.Split(',', 2);
-        var alertType = parts[0].Trim() == "success" ? "alert-success" : "alert-warning";
-        <div class="alert @alertType alert-dismissible fade show" role="alert">
-            @parts[^1].Trim()
-            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-        </div>
-}
+<div class="container py-4" data-cart-count="@totalQuantity">
 
     @if (Model.IsEmpty)
     {

@@ -1,0 +1,93 @@
+@{
+    ViewData["Title"] = "About Us";
+}
+
+<div class="container my-5">
+    <div class="row justify-content-center">
+        <div class="col-lg-8">
+            <h1 class="mb-4">@ViewData["Title"]</h1>
+            
+            <div class="card shadow-sm mb-4">
+                <div class="card-body p-4">
+                    <h5 class="card-title mb-3">Our Story</h5>
+                    <p>Welcome to ELKH Stickers! We're passionate about creating high-quality, unique stickers that help you express yourself and personalize your belongings.</p>
+                    <p>Founded in 2025, we started with a simple mission: to make beautiful, durable stickers accessible to everyone. What began as a small passion project has grown into a thriving business serving customers across Canada.</p>
+                </div>
+            </div>
+
+            <div class="card shadow-sm mb-4">
+                <div class="card-body p-4">
+                    <h5 class="card-title mb-3">What We Offer</h5>
+                    <div class="row g-3">
+                        <div class="col-md-6">
+                            <div class="d-flex align-items-start">
+                                <i class="bi bi-patch-check-fill text-primary me-3 fs-4"></i>
+                                <div>
+                                    <h6>Premium Quality</h6>
+                                    <p class="small text-muted mb-0">Waterproof, UV-resistant vinyl stickers built to last</p>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="d-flex align-items-start">
+                                <i class="bi bi-palette-fill text-primary me-3 fs-4"></i>
+                                <div>
+                                    <h6>Unique Designs</h6>
+                                    <p class="small text-muted mb-0">Carefully curated collection across multiple themes</p>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="d-flex align-items-start">
+                                <i class="bi bi-truck text-primary me-3 fs-4"></i>
+                                <div>
+                                    <h6>Fast Shipping</h6>
+                                    <p class="small text-muted mb-0">Quick processing and reliable delivery across Canada</p>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="d-flex align-items-start">
+                                <i class="bi bi-heart-fill text-primary me-3 fs-4"></i>
+                                <div>
+                                    <h6>Customer First</h6>
+                                    <p class="small text-muted mb-0">Dedicated support and satisfaction guarantee</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="card shadow-sm mb-4">
+                <div class="card-body p-4">
+                    <h5 class="card-title mb-3">Our Values</h5>
+                    <ul class="mb-0">
+                        <li class="mb-2"><strong>Quality:</strong> We never compromise on the materials or printing process</li>
+                        <li class="mb-2"><strong>Creativity:</strong> We celebrate unique designs that stand out</li>
+                        <li class="mb-2"><strong>Sustainability:</strong> We're committed to eco-friendly practices wherever possible</li>
+                        <li><strong>Community:</strong> We're building a community of sticker enthusiasts and collectors</li>
+                    </ul>
+                </div>
+            </div>
+
+            <div class="card shadow-sm">
+                <div class="card-body p-4 text-center">
+                    <h5 class="card-title mb-3">Join Our Community</h5>
+                    <p>Follow us on social media to see new releases, customer creations, and special promotions!</p>
+                    <div class="d-flex gap-3 justify-content-center fs-4">
+                        <a class="text-dark" href="#"><i class="bi bi-instagram"></i></a>
+                        <a class="text-dark" href="#"><i class="bi bi-facebook"></i></a>
+                        <a class="text-dark" href="#"><i class="bi bi-youtube"></i></a>
+                        <a class="text-dark" href="#"><i class="bi bi-tiktok"></i></a>
+                    </div>
+                </div>
+            </div>
+
+            <div class="alert alert-primary mt-4">
+                <i class="bi bi-envelope me-2"></i>
+                Have questions or want to learn more? <a asp-action="Contact" class="alert-link">Get in touch</a> — we'd love to hear from you!
+            </div>
+        </div>
+    </div>
+</div>

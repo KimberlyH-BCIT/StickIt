@@ -3,100 +3,204 @@
     ViewData["Title"] = "My Account";
 }
 
-<div class="row g-4">
-    <!-- Welcome panel -->
-    <div class="col-12">
-        <div class="card shadow-sm border-0 bg-dark text-white">
-            <div class="card-body p-4 d-flex justify-content-between align-items-center flex-wrap gap-3">
-                <div>
-                    <h2 class="fw-bold mb-1">
-                        Welcome back, @(Model.Profile?.FirstName ?? User.Identity?.Name?.Split('@')[0]) 👋
-                    </h2>
-                    <p class="text-white-50 mb-0">@User.Identity?.Name</p>
+<div class="container my-4">
+    <div class="row g-4">
+        <!-- Welcome panel -->
+        <div class="col-12">
+            <div class="card shadow-sm border-0 bg-dark text-white">
+                <div class="card-body p-4 d-flex justify-content-between align-items-center flex-wrap gap-3">
+                    <div>
+                        <h2 class="fw-bold mb-1">
+                            Welcome back, @(Model.Profile?.FirstName ?? User.Identity?.Name?.Split('@')[0]) 👋
+                        </h2>
+                        <p class="text-white-50 mb-0">@User.Identity?.Name</p>
+                    </div>
+                    <a asp-action="EditProfile" class="btn btn-outline-light btn-sm">
+                        <i class="bi bi-pencil me-1"></i>Edit Profile
+                    </a>
                 </div>
-                <a asp-action="EditProfile" class="btn btn-outline-light btn-sm">
-                    <i class="bi bi-pencil me-1"></i>Edit Profile
-                </a>
             </div>
         </div>
-    </div>
 
-    <!-- Quick links -->
-    <div class="col-md-4">
-        <a asp-controller="Order" asp-action="History" class="text-decoration-none">
-            <div class="card shadow-sm border-0 h-100 text-center p-4">
-                <i class="bi bi-bag-check display-4 text-primary mb-3"></i>
-                <h5 class="fw-bold">My Orders</h5>
-                <p class="text-muted small">View and track your order history</p>
-            </div>
-        </a>
-    </div>
-    <div class="col-md-4">
-        <a asp-action="Addresses" class="text-decoration-none">
-            <div class="card shadow-sm border-0 h-100 text-center p-4">
-                <i class="bi bi-geo-alt display-4 text-success mb-3"></i>
-                <h5 class="fw-bold">Addresses</h5>
-                <p class="text-muted small">Manage your shipping addresses</p>
-            </div>
-        </a>
-    </div>
-    <div class="col-md-4">
-        <a asp-action="LoginHistory" class="text-decoration-none">
-            <div class="card shadow-sm border-0 h-100 text-center p-4">
-                <i class="bi bi-clock-history display-4 text-warning mb-3"></i>
-                <h5 class="fw-bold">Login History</h5>
-                <p class="text-muted small">Review your recent login activity</p>
-            </div>
-        </a>
-    </div>
+        <!-- Quick links -->
+        <div class="col-md-4">
+            <a asp-controller="Order" asp-action="MyHistory" class="text-decoration-none">
+                <div class="card shadow-sm border-0 h-100 text-center p-4 hover-lift">
+                    <i class="bi bi-bag-check display-4 text-primary mb-3"></i>
+                    <h5 class="fw-bold">My Orders</h5>
+                    <p class="text-muted small mb-0">View and track your order history</p>
+                </div>
+            </a>
+        </div>
+        <div class="col-md-4">
+            <a asp-action="Addresses" class="text-decoration-none">
+                <div class="card shadow-sm border-0 h-100 text-center p-4 hover-lift">
+                    <i class="bi bi-geo-alt display-4 text-success mb-3"></i>
+                    <h5 class="fw-bold">Addresses</h5>
+                    <p class="text-muted small mb-0">Manage your shipping addresses</p>
+                </div>
+            </a>
+        </div>
+        <div class="col-md-4">
+            <a asp-action="LoginHistory" class="text-decoration-none">
+                <div class="card shadow-sm border-0 h-100 text-center p-4 hover-lift">
+                    <i class="bi bi-clock-history display-4 text-warning mb-3"></i>
+                    <h5 class="fw-bold">Login History</h5>
+                    <p class="text-muted small mb-0">Review your recent login activity</p>
+                </div>
+            </a>
+        </div>
 
-    <!-- Profile summary -->
-    @if (Model.Profile is not null)
-    {
+        <!-- Recent Orders Section -->
+        @if (Model.ActiveOrdersSection?.Items?.Any() == true || Model.OrderHistorySection?.Items?.Any() == true)
+        {
+            <div class="col-12">
+                <div class="card shadow-sm">
+                    <div class="card-header bg-white py-3 d-flex justify-content-between align-items-center">
+                        <h5 class="fw-bold mb-0"><i class="bi bi-bag-check me-2"></i>Recent Orders</h5>
+                        <a asp-controller="Order" asp-action="MyHistory" class="btn btn-sm btn-outline-primary">View All</a>
+                    </div>
+                    <div class="card-body p-0">
+                        <div class="table-responsive">
+                            <table class="table table-hover mb-0">
+                                <thead class="table-light">
+                                    <tr>
+                                        <th>Order #</th>
+                                        <th>Date</th>
+                                        <th>Status</th>
+                                        <th>Items</th>
+                                        <th class="text-end">Total</th>
+                                        <th></th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    @{
+                                        var recentOrders = (Model.ActiveOrdersSection?.Items ?? new List<DashboardOrderVM>())
+                                            .Concat(Model.OrderHistorySection?.Items ?? new List<DashboardOrderVM>())
+                                            .OrderByDescending(o => o.CreatedAt)
+                                            .Take(5);
+                                    }
+                                    @foreach (var order in recentOrders)
+                                    {
+                                        <tr>
+                                            <td class="fw-semibold">#@order.OrderId</td>
+                                            <td>@order.CreatedAt.ToString("MMM d, yyyy")</td>
+                                            <td><span class="badge @(order.OrderStatus == "Delivered" ? "bg-success" : order.OrderStatus == "Shipped" ? "bg-info" : "bg-warning")">@order.OrderStatus</span></td>
+                                            <td>@order.ItemCount item@(order.ItemCount != 1 ? "s" : "")</td>
+                                            <td class="text-end fw-semibold">@order.TotalAmount.ToString("C")</td>
+                                            <td class="text-end">
+                                                <a asp-controller="Order" asp-action="Details" asp-route-id="@order.OrderId" class="btn btn-sm btn-outline-secondary">
+                                                    <i class="bi bi-eye"></i>
+                                                </a>
+                                            </td>
+                                        </tr>
+                                    }
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        }
+
+        <!-- Wishlist Preview -->
+        @if (Model.WishlistSection?.Items?.Any() == true)
+        {
+            <div class="col-12">
+                <div class="card shadow-sm">
+                    <div class="card-header bg-white py-3 d-flex justify-content-between align-items-center">
+                        <h5 class="fw-bold mb-0"><i class="bi bi-heart me-2"></i>My Wishlist (@Model.WishListCount)</h5>
+                        <a asp-controller="Wishlist" asp-action="Index" class="btn btn-sm btn-outline-primary">View All</a>
+                    </div>
+                    <div class="card-body">
+                        <div class="row row-cols-1 row-cols-md-3 row-cols-lg-4 g-3">
+                            @foreach (var item in Model.WishlistSection.Items.Take(4))
+                            {
+                                <div class="col">
+                                    <div class="card h-100 border">
+                                        <div class="card-body p-3">
+                                            <h6 class="card-title mb-2">@item.ProductName</h6>
+                                            @if (item.DiscountPercent > 0)
+                                            {
+                                                <p class="mb-0">
+                                                    <span class="text-muted text-decoration-line-through small">@item.Price.ToString("C")</span>
+                                                    <br />
+                                                    <strong class="text-success">@item.EffectivePrice.ToString("C")</strong>
+                                                </p>
+                                            }
+                                            else
+                                            {
+                                                <p class="mb-0 fw-semibold">@item.Price.ToString("C")</p>
+                                            }
+                                        </div>
+                                        <div class="card-footer bg-white border-top-0 p-2">
+                                            <a asp-controller="Product" asp-action="Details" asp-route-id="@item.ProductId" class="btn btn-sm btn-outline-primary w-100">View</a>
+                                        </div>
+                                    </div>
+                                </div>
+                            }
+                        </div>
+                    </div>
+                </div>
+            </div>
+        }
+
+        <!-- Profile summary and Account settings side by side -->
         <div class="col-md-6">
-            <div class="card shadow-sm">
-                <div class="card-header fw-bold"><i class="bi bi-person me-2"></i>Profile</div>
+            @if (Model.Profile is not null)
+            {
+                <div class="card shadow-sm h-100">
+                    <div class="card-header bg-white fw-bold"><i class="bi bi-person me-2"></i>Profile</div>
+                    <div class="card-body">
+                        <dl class="row mb-0">
+                            <dt class="col-sm-4 text-muted">Name</dt>
+                            <dd class="col-sm-8">@Model.Profile.FirstName @Model.Profile.LastName</dd>
+                            <dt class="col-sm-4 text-muted">Email</dt>
+                            <dd class="col-sm-8">@Model.Profile.PkEmail</dd>
+                        </dl>
+                    </div>
+                    <div class="card-footer bg-white">
+                        <a asp-action="EditProfile" class="btn btn-sm btn-outline-primary">
+                            <i class="bi bi-pencil me-1"></i>Edit
+                        </a>
+                    </div>
+                </div>
+            }
+            else
+            {
+                <div class="card shadow-sm border-warning h-100">
+                    <div class="card-body text-center py-5">
+                        <i class="bi bi-person-exclamation fs-1 text-warning mb-2"></i>
+                        <p class="mb-2">Your profile is incomplete.</p>
+                        <a asp-action="EditProfile" class="btn btn-warning btn-sm">
+                            <i class="bi bi-pencil me-1"></i>Complete Profile
+                        </a>
+                    </div>
+                </div>
+            }
+        </div>
+
+        <!-- Account settings -->
+        <div class="col-md-6">
+            <div class="card shadow-sm h-100">
+                <div class="card-header bg-white fw-bold"><i class="bi bi-gear me-2"></i>Account Settings</div>
                 <div class="card-body">
-                    <dl class="row mb-0">
-                        <dt class="col-sm-4 text-muted">Name</dt>
-                        <dd class="col-sm-8">@Model.Profile.FirstName @Model.Profile.LastName</dd>
-                        <dt class="col-sm-4 text-muted">Email</dt>
-                        <dd class="col-sm-8">@Model.Profile.PkEmail</dd>
-                    </dl>
-                </div>
-                <div class="card-footer bg-white">
-                    <a asp-action="EditProfile" class="btn btn-sm btn-outline-primary">
-                        <i class="bi bi-pencil me-1"></i>Edit
+                    <p class="text-muted small mb-3">Change your password, email, or two-factor settings.</p>
+                    <a asp-area="Identity" asp-page="/Account/Manage/Index" class="btn btn-outline-secondary btn-sm">
+                        <i class="bi bi-gear me-1"></i>Manage Identity
                     </a>
                 </div>
-            </div>
-        </div>
-    }
-    else
-    {
-        <div class="col-md-6">
-            <div class="card shadow-sm border-warning">
-                <div class="card-body text-center py-4">
-                    <i class="bi bi-person-exclamation fs-1 text-warning mb-2"></i>
-                    <p class="mb-2">Your profile is incomplete.</p>
-                    <a asp-action="EditProfile" class="btn btn-warning btn-sm">
-                        <i class="bi bi-pencil me-1"></i>Complete Profile
-                    </a>
-                </div>
-            </div>
-        </div>
-    }
-
-    <!-- Account settings link -->
-    <div class="col-md-6">
-        <div class="card shadow-sm">
-            <div class="card-header fw-bold"><i class="bi bi-gear me-2"></i>Account Settings</div>
-            <div class="card-body">
-                <p class="text-muted small mb-3">Change your password, email, or two-factor settings.</p>
-                <a asp-area="Identity" asp-page="/Account/Manage/Index" class="btn btn-outline-secondary btn-sm">
-                    <i class="bi bi-gear me-1"></i>Manage Identity
-                </a>
             </div>
         </div>
     </div>
 </div>
+
+<style>
+    .hover-lift {
+        transition: transform 0.2s ease, box-shadow 0.2s ease;
+    }
+    .hover-lift:hover {
+        transform: translateY(-4px);
+        box-shadow: 0 .5rem 1.5rem rgba(0,0,0,.1) !important;
+    }
+</style>

@@ -3,50 +3,167 @@
 @{
     ViewData["Title"] = $"Order #{Model.PkOrderId} Details";
     var productVms = ViewBag.ProductVMs as List<ProductVM>;
+
+    // Delivery status progression
+    var isPending = Model.DeliveryStatus == "Pending";
+    var isProcessing = Model.DeliveryStatus == "Processing" || Model.DeliveryStatus == "In Transit";
+    var isShipped = Model.DeliveryStatus == "Shipped" || Model.DeliveryStatus == "In Transit";
+    var isDelivered = Model.DeliveryStatus == "Delivered";
 }
 
-<div class="container my-4">
-    <h1 class="mb-4">Order Details</h1>
+<div class="container my-5">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h1 class="mb-0">Order #@Model.PkOrderId</h1>
+        @if (!User.IsInRole("Admin"))
+        {
+            <a asp-action="MyHistory" class="btn btn-outline-secondary">
+                <i class="bi bi-arrow-left me-2"></i>Back to Orders
+            </a>
+        }
+        else
+        {
+            <a asp-action="Index" class="btn btn-outline-secondary">
+                <i class="bi bi-arrow-left me-2"></i>Back to All Orders
+            </a>
+        }
+    </div>
 
-    <div class="card mb-4">
-        <div class="card-header">
-            <h4>Order Information</h4>
+    <!-- Delivery Status Tracker -->
+    <div class="card shadow-sm mb-4">
+        <div class="card-header bg-white py-3">
+            <h5 class="fw-bold mb-0"><i class="bi bi-truck me-2"></i>Delivery Status</h5>
         </div>
-        <div class="card-body">
+        <div class="card-body p-4">
             <div class="row">
-                <div class="col-md-6">
-                    <p><strong>Order ID:</strong> #@Model.PkOrderId</p>
-                    <p><strong>Order Date:</strong> @Model.CreatedAt.ToString("MMMM dd, yyyy HH:mm")</p>
-                    <p><strong>Order Status:</strong> <span class="badge bg-primary">@Model.OrderStatus</span></p>
+                <div class="col-12">
+                    <div class="d-flex align-items-center justify-content-between position-relative mb-4">
+                        <!-- Progress Bar Background -->
+                        <div class="position-absolute w-100" style="height: 2px; background: #dee2e6; top: 20px; z-index: 0;"></div>
+
+                        <!-- Active Progress Bar -->
+                        <div class="position-absolute" style="height: 2px; background: #198754; top: 20px; z-index: 0; width: @(isDelivered ? "100%" : isShipped ? "66%" : isProcessing ? "33%" : "0%"); transition: width 0.3s ease;"></div>
+
+                        <!-- Step 1: Pending -->
+                        <div class="text-center position-relative" style="z-index: 1; flex: 1;">
+                            <div class="mb-2">
+                                <div class="rounded-circle d-inline-flex align-items-center justify-content-center @(isPending || isProcessing || isShipped || isDelivered ? "bg-success text-white" : "bg-light text-muted")" style="width: 40px; height: 40px;">
+                                    @if (isPending || isProcessing || isShipped || isDelivered)
+                                    {
+                                        <i class="bi bi-check-lg fw-bold"></i>
+                                    }
+                                    else
+                                    {
+                                        <i class="bi bi-circle"></i>
+                                    }
+                                </div>
+                            </div>
+                            <small class="fw-semibold @(isPending && !isProcessing && !isShipped && !isDelivered ? "text-success" : "text-muted")">Pending</small>
+                        </div>
+
+                        <!-- Step 2: Processing -->
+                        <div class="text-center position-relative" style="z-index: 1; flex: 1;">
+                            <div class="mb-2">
+                                <div class="rounded-circle d-inline-flex align-items-center justify-content-center @(isProcessing || isShipped || isDelivered ? "bg-success text-white" : "bg-light text-muted")" style="width: 40px; height: 40px;">
+                                    @if (isProcessing || isShipped || isDelivered)
+                                    {
+                                        <i class="bi bi-check-lg fw-bold"></i>
+                                    }
+                                    else
+                                    {
+                                        <i class="bi bi-circle"></i>
+                                    }
+                                </div>
+                            </div>
+                            <small class="fw-semibold @(isProcessing && !isShipped && !isDelivered ? "text-success" : "text-muted")">Processing</small>
+                        </div>
+
+                        <!-- Step 3: Shipped -->
+                        <div class="text-center position-relative" style="z-index: 1; flex: 1;">
+                            <div class="mb-2">
+                                <div class="rounded-circle d-inline-flex align-items-center justify-content-center @(isShipped || isDelivered ? "bg-success text-white" : "bg-light text-muted")" style="width: 40px; height: 40px;">
+                                    @if (isShipped || isDelivered)
+                                    {
+                                        <i class="bi bi-check-lg fw-bold"></i>
+                                    }
+                                    else
+                                    {
+                                        <i class="bi bi-circle"></i>
+                                    }
+                                </div>
+                            </div>
+                            <small class="fw-semibold @(isShipped && !isDelivered ? "text-success" : "text-muted")">Shipped</small>
+                        </div>
+
+                        <!-- Step 4: Delivered -->
+                        <div class="text-center position-relative" style="z-index: 1; flex: 1;">
+                            <div class="mb-2">
+                                <div class="rounded-circle d-inline-flex align-items-center justify-content-center @(isDelivered ? "bg-success text-white" : "bg-light text-muted")" style="width: 40px; height: 40px;">
+                                    @if (isDelivered)
+                                    {
+                                        <i class="bi bi-check-lg fw-bold"></i>
+                                    }
+                                    else
+                                    {
+                                        <i class="bi bi-circle"></i>
+                                    }
+                                </div>
+                            </div>
+                            <small class="fw-semibold @(isDelivered ? "text-success" : "text-muted")">Delivered</small>
+                        </div>
+                    </div>
+
+                    <div class="alert @(isDelivered ? "alert-success" : "alert-info") border-0 mb-0">
+                        <strong>Current Status:</strong> @Model.DeliveryStatus
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Order Information Card -->
+    <div class="card shadow-sm mb-4">
+        <div class="card-header bg-white py-3">
+            <h5 class="fw-bold mb-0"><i class="bi bi-receipt me-2"></i>Order Information</h5>
+        </div>
+        <div class="card-body p-4">
+            <div class="row">
+                <div class="col-md-6 mb-3 mb-md-0">
+                    <p class="mb-2"><strong>Order ID:</strong> #@Model.PkOrderId</p>
+                    <p class="mb-2"><strong>Order Date:</strong> @Model.CreatedAt.ToString("MMMM dd, yyyy 'at' h:mm tt")</p>
+                    <p class="mb-0"><strong>Order Status:</strong> <span class="badge bg-primary px-3 py-2">@Model.OrderStatus</span></p>
                 </div>
                 <div class="col-md-6">
-                    <p><strong>Delivery Status:</strong> <span class="badge bg-info">@Model.DeliveryStatus</span></p>
-                    <p><strong>Total Amount:</strong> <strong class="text-success">@Model.TotalAmount.ToString("C")</strong></p>
-                    @if (Model.RegisteredUser != null)
+                    <p class="mb-2"><strong>Delivery Status:</strong> <span class="badge bg-info px-3 py-2">@Model.DeliveryStatus</span></p>
+                    <p class="mb-0"><strong>Total Amount:</strong> <strong class="text-success fs-5">@Model.TotalAmount.ToString("C")</strong></p>
+                    @if (Model.RegisteredUser != null && User.IsInRole("Admin"))
                     {
-                        <p><strong>Customer:</strong> @Model.RegisteredUser.Email</p>
+                        <p class="mb-0 mt-2"><strong>Customer:</strong> @Model.RegisteredUser.Email</p>
                     }
                 </div>
             </div>
         </div>
     </div>
 
-    <div class="card">
-        <div class="card-header">
-            <h4>Order Items</h4>
+    <!-- Order Items Card -->
+    <div class="card shadow-sm">
+        <div class="card-header bg-white py-3">
+            <h5 class="fw-bold mb-0"><i class="bi bi-bag-check me-2"></i>Order Items</h5>
         </div>
-        <div class="card-body">
+        <div class="card-body p-4">
             @if (Model.OrderItems != null && Model.OrderItems.Any())
             {
                 <div class="table-responsive">
-                    <table class="table table-hover">
-                        <thead>
+                    <table class="table table-hover mb-0">
+                        <thead class="table-light">
                             <tr>
                                 <th>Product</th>
-                                <th>SKU</th>
                                 <th class="text-center">Quantity</th>
                                 <th class="text-end">Unit Price</th>
                                 <th class="text-end">Subtotal</th>
+                                @if (!User.IsInRole("Admin") && (Model.OrderStatus == "Delivered" || Model.OrderStatus == "Shipped"))
+                                {
+                                    <th class="text-center">Review</th>
+                                }
                             </tr>
                         </thead>
                         <tbody>
@@ -60,24 +177,37 @@
                                     <td>
                                         @if (product != null)
                                         {
-                                            <strong>@product.ProductName</strong>
+                                            <a asp-controller="Product" asp-action="Details" asp-route-id="@product.ProductId" class="text-decoration-none">
+                                                <strong>@product.ProductName</strong>
+                                            </a>
                                         }
                                         else
                                         {
                                             <strong>Product #@item.FkProductId</strong>
                                         }
                                     </td>
-                                    <td>@item.FkProductId</td>
                                     <td class="text-center">@item.Quantity</td>
                                     <td class="text-end">@item.UnitPrice.ToString("C")</td>
-                                    <td class="text-end">@subtotal.ToString("C")</td>
+                                    <td class="text-end fw-semibold">@subtotal.ToString("C")</td>
+                                    @if (!User.IsInRole("Admin") && (Model.OrderStatus == "Delivered" || Model.OrderStatus == "Shipped"))
+                                    {
+                                        <td class="text-center">
+                                            <a asp-controller="Product" asp-action="Details" asp-route-id="@item.FkProductId" asp-fragment="reviews" class="btn btn-sm btn-outline-primary">
+                                                <i class="bi bi-star me-1"></i>Rate
+                                            </a>
+                                        </td>
+                                    }
                                 </tr>
                             }
                         </tbody>
-                        <tfoot>
+                        <tfoot class="table-light">
                             <tr>
-                                <td colspan="4" class="text-end"><strong>Total:</strong></td>
-                                <td class="text-end"><strong class="text-success">@Model.TotalAmount.ToString("C")</strong></td>
+                                <td colspan="@((!User.IsInRole("Admin") && (Model.OrderStatus == "Delivered" || Model.OrderStatus == "Shipped")) ? "4" : "3")" class="text-end fw-bold fs-5">Total:</td>
+                                <td class="text-end fw-bold text-success fs-5">@Model.TotalAmount.ToString("C")</td>
+                                @if (!User.IsInRole("Admin") && (Model.OrderStatus == "Delivered" || Model.OrderStatus == "Shipped"))
+                                {
+                                    <td></td>
+                                }
                             </tr>
                         </tfoot>
                     </table>
@@ -85,19 +215,8 @@
             }
             else
             {
-                <p class="text-muted">No items in this order.</p>
+                <p class="text-muted mb-0">No items in this order.</p>
             }
         </div>
-    </div>
-
-    <div class="mt-4">
-        @if (User.IsInRole("Admin"))
-        {
-            <a asp-action="Index" class="btn btn-secondary">Back to Orders List</a>
-        }
-        else
-        {
-            <a asp-action="MyHistory" class="btn btn-secondary">Back to My Orders</a>
-        }
     </div>
 </div>
