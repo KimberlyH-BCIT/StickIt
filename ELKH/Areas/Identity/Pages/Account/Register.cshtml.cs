@@ -28,31 +28,100 @@ using static ELKH.Extensions.RateLimitPolicies;
 
 namespace ELKH.Areas.Identity.Pages.Account
 {
+    /*
+     * ┌────────────────────────────────────────────────────────────────────────────┐
+     * │ TABLE OF CONTENTS - Register.cshtml.cs                                    │
+     * ├────────────────────────────────────────────────────────────────────────────┤
+     * │ 1. Properties & Input Model ............................ Lines  43-174    │
+     * │    - Dependency injection fields                                           │
+     * │    - InputModel: Email, Password, Name, Address fields                     │
+     * │    - ReCaptcha configuration                                               │
+     * │                                                                            │
+     * │ 2. GET Handler: OnGetAsync ............................. Lines 177-182    │
+     * │    - Load external authentication schemes                                  │
+     * │    - Store return URL for post-registration redirect                       │
+     * │                                                                            │
+     * │ 3. POST Handler: OnPostAsync ........................... Lines 184-269    │
+     * │    - Create IdentityUser with email/password                               │
+     * │    - Create RegisteredUserModel (links Identity to app data)               │
+     * │    - Create UserProfileModel (first/last name for UI)                      │
+     * │    - Create ContactDetailModel (default shipping address)                  │
+     * │    - Send email confirmation link                                          │
+     * │    - Sign in or redirect to confirmation page                              │
+     * │    - Rate limited via [EnableRateLimiting(Auth)]                           │
+     * │                                                                            │
+     * │ 4. Helper Methods ...................................... Lines 249-269    │
+     * │    - CreateUser(): Factory for IdentityUser                                │
+     * │    - GetEmailStore(): Validates email support in UserManager               │
+     * └────────────────────────────────────────────────────────────────────────────┘
+     */
+
     /// <summary>
-    /// Razor Page model for new user registration.
-    /// Extends the scaffolded Identity registration flow to create three additional
-    /// records on successful sign-up:
-    /// <list type="bullet">
-    ///   <item><see cref="RegisteredUserModel"/> — links the Identity user to application data.</item>
-    ///   <item><see cref="UserProfileModel"/> — stores first/last name for the profile header.</item>
-    ///   <item><see cref="ContactDetailModel"/> — stores the shipping address supplied during registration.</item>
-    /// </list>
+    /// Razor Page model for new user registration with extended profile creation.
+    /// Extends the scaffolded ASP.NET Core Identity registration flow to create
+    /// four database records on successful sign-up:
     /// </summary>
+    /// <remarks>
+    /// <para><strong>Registration Workflow (Multi-Record Creation):</strong></para>
+    /// <list type="number">
+    /// <item><strong>IdentityUser:</strong> ASP.NET Core Identity account (email/password)</item>
+    /// <item><strong>RegisteredUserModel:</strong> Links Identity user to application data</item>
+    /// <item><strong>UserProfileModel:</strong> Stores first/last name for profile header display</item>
+    /// <item><strong>ContactDetailModel:</strong> Default shipping address from registration form</item>
+    /// </list>
+    ///
+    /// <para><strong>Security Features:</strong></para>
+    /// <list type="bullet">
+    /// <item>Rate limiting via <c>[EnableRateLimiting(Auth)]</c> prevents registration spam</item>
+    /// <item>Google reCAPTCHA v2 integration (site key injected from configuration)</item>
+    /// <item>Email confirmation requirement (configurable via RequireConfirmedAccount)</item>
+    /// <item>Password strength validation (6-100 chars, complexity rules from Identity)</item>
+    /// </list>
+    ///
+    /// <para><strong>Post-Registration Flow:</strong></para>
+    /// If <c>RequireConfirmedAccount</c> is true: Redirect to RegisterConfirmation page.<br/>
+    /// If false: Sign in immediately and redirect to Product catalog (Index).
+    ///
+    /// <para><strong>Role Assignment:</strong></para>
+    /// All new registrants are automatically assigned the "Customer" role
+    /// (comment placeholder exists but implementation may be in seeder or middleware).
+    /// </remarks>
     public class RegisterModel : PageModel
     {
+        #region Properties & Dependencies
+
+        // ── ASP.NET Core Identity Services ───────────────────────────────────────
         private readonly SignInManager<IdentityUser> _signInManager;
         private readonly UserManager<IdentityUser> _userManager;
-        
         private readonly IUserStore<IdentityUser> _userStore;
         private readonly IUserEmailStore<IdentityUser> _emailStore;
         private readonly ILogger<RegisterModel> _logger;
         private readonly IEmailSender _emailSender;
+
+        // ── Application Services ─────────────────────────────────────────────────
         private readonly ApplicationDbContext _context;
         private readonly IContactDetailRepo _contactRepository;
+
+        // ── ReCaptcha Configuration ──────────────────────────────────────────────
         private readonly ReCaptchaOptions _reCaptchaOptions;
-        
+
+        /// <summary>
+        /// Google reCAPTCHA v2 site key for client-side rendering.
+        /// Injected from configuration and passed to the view.
+        /// </summary>
         public string ReCaptchaSiteKey { get; set; } = "";
 
+        /// <summary>
+        /// Initializes a new instance of <see cref="RegisterModel"/> with required dependencies.
+        /// </summary>
+        /// <param name="userManager">ASP.NET Core Identity UserManager for account creation.</param>
+        /// <param name="userStore">User store abstraction for UserManager operations.</param>
+        /// <param name="signInManager">Handles sign-in after successful registration (if email confirmation not required).</param>
+        /// <param name="logger">Logger for registration events and errors.</param>
+        /// <param name="emailSender">Email service for sending confirmation links.</param>
+        /// <param name="context">Database context for creating RegisteredUserModel and UserProfileModel.</param>
+        /// <param name="contactRepository">Repository for creating default shipping address.</param>
+        /// <param name="reCaptchaOptions">Google reCAPTCHA configuration (site key for client-side integration).</param>
         public RegisterModel(
             UserManager<IdentityUser> userManager,
             IUserStore<IdentityUser> userStore,
@@ -78,60 +147,66 @@ namespace ELKH.Areas.Identity.Pages.Account
             ReCaptchaSiteKey = _reCaptchaOptions.SiteKey;
         }
 
+        // ══════════════════════════════════════════════════════════════════════════
+        // ║ Input Model & View Properties                                          ║
+        // ══════════════════════════════════════════════════════════════════════════
+
         /// <summary>
-        ///     This API supports the ASP.NET Core Identity default UI infrastructure and is not intended to be used
-        ///     directly from your code. This API may change or be removed in future releases.
+        /// Form input data bound from the registration view.
+        /// Includes Identity fields (Email/Password) plus extended profile and address fields.
         /// </summary>
         [BindProperty]
         public InputModel Input { get; set; }
 
         /// <summary>
-        ///     This API supports the ASP.NET Core Identity default UI infrastructure and is not intended to be used
-        ///     directly from your code. This API may change or be removed in future releases.
+        /// URL to redirect to after successful registration.
+        /// Preserves the original destination from query string.
         /// </summary>
         public string ReturnUrl { get; set; }
 
         /// <summary>
-        ///     This API supports the ASP.NET Core Identity default UI infrastructure and is not intended to be used
-        ///     directly from your code. This API may change or be removed in future releases.
+        /// List of configured external authentication providers (Google, Microsoft, etc.).
+        /// Displayed on the registration form for social login options.
         /// </summary>
         public IList<AuthenticationScheme> ExternalLogins { get; set; }
 
         /// <summary>
-        ///     This API supports the ASP.NET Core Identity default UI infrastructure and is not intended to be used
-        ///     directly from your code. This API may change or be removed in future releases.
+        /// Input model for registration form data.
+        /// Extends standard Identity fields (Email/Password) with profile and shipping address.
         /// </summary>
+        /// <remarks>
+        /// <para><strong>Field Groups:</strong></para>
+        /// <list type="bullet">
+        /// <item><strong>Identity Fields:</strong> Email, Password, ConfirmPassword (ASP.NET Core Identity requirements)</item>
+        /// <item><strong>Profile Fields:</strong> FirstName, LastName (stored in UserProfileModel for UI display)</item>
+        /// <item><strong>Contact Fields:</strong> PhoneNumber, Street, City, Province, PostCode, Country (stored in ContactDetailModel as default shipping address)</item>
+        /// </list>
+        /// All fields are required except Country (defaults to "Canada").
+        /// </remarks>
         public class InputModel
         {
-            /// <summary>
-            ///     This API supports the ASP.NET Core Identity default UI infrastructure and is not intended to be used
-            ///     directly from your code. This API may change or be removed in future releases.
-            /// </summary>
+            // ── Identity Fields ──────────────────────────────────────────────────
+            /// <summary>User's email address (also used as username).</summary>
             [Required]
             [EmailAddress]
             [Display(Name = "Email")]
             public string Email { get; set; }
 
-            /// <summary>
-            ///     This API supports the ASP.NET Core Identity default UI infrastructure and is not intended to be used
-            ///     directly from your code. This API may change or be removed in future releases.
-            /// </summary>
+            /// <summary>Account password (6-100 characters with complexity requirements).</summary>
             [Required]
             [StringLength(100, ErrorMessage = "The {0} must be at least {2} and at max {1} characters long.", MinimumLength = 6)]
             [DataType(DataType.Password)]
             [Display(Name = "Password")]
             public string Password { get; set; }
 
-            /// <summary>
-            ///     This API supports the ASP.NET Core Identity default UI infrastructure and is not intended to be used
-            ///     directly from your code. This API may change or be removed in future releases.
-            /// </summary>
+            /// <summary>Password confirmation (must match Password field).</summary>
             [DataType(DataType.Password)]
             [Display(Name = "Confirm password")]
             [Compare("Password", ErrorMessage = "The password and confirmation password do not match.")]
             public string ConfirmPassword { get; set; }
 
-            [Required]
+            // ── Profile Fields ───────────────────────────────────────────────────
+            /// <summary>User's first name (displayed in profile header and account pages).</summary>            [Required]
             [MaxLength(100)]
             [Display(Name = "First Name")]
             public string FirstName { get; set; }
@@ -141,6 +216,8 @@ namespace ELKH.Areas.Identity.Pages.Account
             [Display(Name = "Last Name")]
             public string LastName { get; set; }
 
+            // ── Contact & Shipping Address Fields ────────────────────────────────
+            /// <summary>User's phone number (used for order notifications and shipping contact).</summary>
             [Required]
             [Phone]
             [DataType(DataType.PhoneNumber)]
@@ -173,8 +250,15 @@ namespace ELKH.Areas.Identity.Pages.Account
             public string Country { get; set; } = "Canada";
         }
 
+        #endregion
 
-        /// <summary>Populates external login providers and stores the return URL for the view.</summary>
+        #region GET/POST Handlers
+
+        /// <summary>
+        /// Handles GET requests to the registration page.
+        /// Populates external login providers and stores the return URL for the view.
+        /// </summary>
+        /// <param name="returnUrl">URL to redirect to after successful registration.</param>
         public async Task OnGetAsync(string returnUrl = null)
         {
             ReturnUrl = returnUrl;
@@ -182,15 +266,30 @@ namespace ELKH.Areas.Identity.Pages.Account
         }
 
         /// <summary>
-        /// Handles the registration form submission.
-        /// On success, performs these steps in order:
-        /// 1. Creates the ASP.NET Core Identity user (<see cref="IdentityUser"/>).
-        /// 2. Persists a <see cref="RegisteredUserModel"/> to link the identity to app data.
-        /// 3. Creates a <see cref="UserProfileModel"/> so the name shows on first login.
-        /// 4. Creates the default <see cref="ContactDetailModel"/> from the address fields.
-        /// 5. Sends an email-confirmation link; redirects to confirmation page or signs in directly
-        ///    depending on <c>RequireConfirmedAccount</c> setting.
+        /// Handles POST request for user registration form submission.
+        /// Creates multiple database records and sends email confirmation.
+        /// Protected by rate limiting to prevent registration spam.
         /// </summary>
+        /// <param name="returnUrl">URL to redirect to after successful registration.</param>
+        /// <returns>
+        /// On success: RedirectToPage("RegisterConfirmation") if email confirmation required,
+        /// otherwise RedirectToAction("Index", "Product") after automatic sign-in.
+        /// On failure: Returns page with validation errors.
+        /// </returns>
+        /// <remarks>
+        /// <para><strong>Multi-Record Creation Workflow:</strong></para>
+        /// <list type="number">
+        /// <item><strong>IdentityUser:</strong> Create ASP.NET Core Identity account with email/password</item>
+        /// <item><strong>RegisteredUserModel:</strong> Create app-level user record (links Identity to business data)</item>
+        /// <item><strong>UserProfileModel:</strong> Create profile with first/last name (for UI greeting)</item>
+        /// <item><strong>ContactDetailModel:</strong> Create default shipping address from form data</item>
+        /// <item><strong>Email Confirmation:</strong> Generate token and send confirmation link</item>
+        /// <item><strong>Sign-In or Redirect:</strong> Auto sign-in if confirmation not required, else redirect to confirmation page</item>
+        /// </list>
+        ///
+        /// <para><strong>Rate Limiting:</strong></para>
+        /// Protected by <c>[EnableRateLimiting(Auth)]</c> policy to prevent automated registration attacks.
+        /// </remarks>
         [Microsoft.AspNetCore.RateLimiting.EnableRateLimiting(ELKH.Extensions.RateLimitPolicies.Auth)]
         public async Task<IActionResult> OnPostAsync(string returnUrl = null)
         {
@@ -198,6 +297,9 @@ namespace ELKH.Areas.Identity.Pages.Account
             ExternalLogins = (await _signInManager.GetExternalAuthenticationSchemesAsync()).ToList();
             if (ModelState.IsValid)
             {
+                // ══════════════════════════════════════════════════════════════════
+                // ║ PHASE 1: Create Identity Account                              ║
+                // ══════════════════════════════════════════════════════════════════
                 var user = CreateUser();
 
                 await _userStore.SetUserNameAsync(user, Input.Email, CancellationToken.None);
@@ -206,15 +308,19 @@ namespace ELKH.Areas.Identity.Pages.Account
 
                 if (result.Succeeded)
                 {
-                    //Save the registered user into database with additional information
+                    // ══════════════════════════════════════════════════════════════
+                    // ║ PHASE 2: Create Application-Level User Records           ║
+                    // ══════════════════════════════════════════════════════════════
+
+                    // 2a. RegisteredUserModel: Links Identity user to app business logic
                     var registeredUser = new RegisteredUserModel()
                     {
                         Email = Input.Email
                     };
                     _context.RegisteredUsers.Add(registeredUser);
 
-                    // Create the user profile immediately so the header greeting shows
-                    // the first name rather than the email address from the very first login.
+                    // 2b. UserProfileModel: Stores first/last name for profile header greeting
+                    // Created immediately so the header shows the name instead of email from first login.
                     var profile = new UserProfileModel
                     {
                         PkEmail   = Input.Email,
@@ -225,6 +331,8 @@ namespace ELKH.Areas.Identity.Pages.Account
 
                     await _context.SaveChangesAsync();
 
+                    // 2c. ContactDetailModel: Default shipping address from registration form
+                    // Marked as IsDefault so it's auto-selected during checkout.
                     var contact = new ContactDetailModel
                     {
                         FirstName = Input.FirstName,
@@ -240,11 +348,20 @@ namespace ELKH.Areas.Identity.Pages.Account
                     };
                     await _contactRepository.AddAndSaveAsync(contact);
 
-                    // Assign the Customer role to every new registrant.
-                    
+                    // ══════════════════════════════════════════════════════════════
+                    // ║ PHASE 3: Role Assignment (Placeholder)                    ║
+                    // ══════════════════════════════════════════════════════════════
+                    // NOTE: Customer role assignment may be handled by seeder or middleware.
+                    // Uncomment below to assign role immediately:
+                    // await _userManager.AddToRoleAsync(user, "Customer");
 
                     _logger.LogInformation("User created a new account with password.");
 
+                    // ══════════════════════════════════════════════════════════════
+                    // ║ PHASE 4: Email Confirmation                               ║
+                    // ══════════════════════════════════════════════════════════════
+
+                    // Generate email confirmation token and build callback URL
                     var userId = await _userManager.GetUserIdAsync(user);
                     var code = await _userManager.GenerateEmailConfirmationTokenAsync(user);
                     code = WebEncoders.Base64UrlEncode(Encoding.UTF8.GetBytes(code));
@@ -257,6 +374,9 @@ namespace ELKH.Areas.Identity.Pages.Account
                     await _emailSender.SendEmailAsync(Input.Email, "Confirm your email",
                         $"Please confirm your account by <a href='{HtmlEncoder.Default.Encode(callbackUrl)}'>clicking here</a>.");
 
+                    // ── Conditional Sign-In or Redirect to Confirmation ────────────────────────
+                    // If RequireConfirmedAccount=true: User must click email link before signing in.
+                    // If false: Sign in immediately and redirect to product catalog.
                     if (_userManager.Options.SignIn.RequireConfirmedAccount)
                     {
                         return RedirectToPage("RegisterConfirmation", new { email = Input.Email, returnUrl = returnUrl });
@@ -268,16 +388,30 @@ namespace ELKH.Areas.Identity.Pages.Account
                         return RedirectToAction("Index", "Product");
                     }
                 }
+
+                // ── Add Identity Validation Errors to ModelState ────────────────────────────────
                 foreach (var error in result.Errors)
                 {
                     ModelState.AddModelError(string.Empty, error.Description);
                 }
             }
 
-            // If we got this far, something failed, redisplay form
+            // Redisplay form with validation errors
             return Page();
         }
 
+        #endregion
+
+        #region Helper Methods
+
+        /// <summary>
+        /// Factory method for creating a new <see cref="IdentityUser"/> instance.
+        /// Required by scaffolded Identity UI infrastructure.
+        /// </summary>
+        /// <returns>New IdentityUser instance.</returns>
+        /// <exception cref="InvalidOperationException">
+        /// Thrown if IdentityUser cannot be instantiated (abstract class or missing parameterless constructor).
+        /// </exception>
         private IdentityUser CreateUser()
         {
             try
@@ -292,6 +426,14 @@ namespace ELKH.Areas.Identity.Pages.Account
             }
         }
 
+        /// <summary>
+        /// Retrieves the email store from the user store and validates email support.
+        /// Required by scaffolded Identity UI infrastructure for email-based registration.
+        /// </summary>
+        /// <returns>Email store interface for setting user email.</returns>
+        /// <exception cref="NotSupportedException">
+        /// Thrown if the configured user store does not support email operations.
+        /// </exception>
         private IUserEmailStore<IdentityUser> GetEmailStore()
         {
             if (!_userManager.SupportsUserEmail)
@@ -300,5 +442,7 @@ namespace ELKH.Areas.Identity.Pages.Account
             }
             return (IUserEmailStore<IdentityUser>)_userStore;
         }
+
+        #endregion
     }
 }
