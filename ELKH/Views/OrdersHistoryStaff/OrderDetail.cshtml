@@ -1,0 +1,128 @@
+﻿@model PagedResult<OrderDetailsVM>
+@{
+    var firstItem = Model.Items.FirstOrDefault();
+}
+
+<div class="container py-4">
+    @if (TempData["StatusMessage"] != null)
+    {
+        <div class="alert alert-success text-center shadow-sm mb-4">
+            @TempData["StatusMessage"]
+        </div>
+    }
+
+    <div class="row justify-content-center">
+    </div>
+</div>
+
+<div class="container py-5">
+    <div class="row justify-content-center">
+        <div class="col-lg-9 col-xl-8">
+            
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <h2 class="fw-bold text-primary mb-0">Order Detail</h2>
+
+                <a class="btn btn-outline-secondary rounded-pill px-4 shadow-sm" asp-action="Index">
+                    ← Back to Order List
+                </a>
+                
+            </div>
+
+            <div class="card shadow-lg border-0 rounded-4 overflow-hidden">
+                <div class="card-header bg-dark text-white p-4">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <h4 class="mb-0">Invoice #@firstItem?.OrderId</h4>
+                            <small class="text-light">Transaction ID: @firstItem?.TransactionId</small>
+                        </div>
+                        <div class="text-end">
+                            <span class="badge rounded-pill px-3 py-2
+                                @(string.Equals(firstItem?.DeliveryStatus, ELKH.Models.DeliveryStatus.Delivered.ToString(), StringComparison.OrdinalIgnoreCase) ? "bg-success" :
+                                            string.Equals(firstItem?.DeliveryStatus, ELKH.Models.DeliveryStatus.Cancelled.ToString(), StringComparison.OrdinalIgnoreCase) ? "bg-danger" :
+                                            "bg-warning text-dark")">
+                                @firstItem?.DeliveryStatus
+                            </span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="card-body p-5">
+                    <div class="row mb-5 text-center text-sm-start">
+                        <div class="col-sm-6">
+                            <h6 class="text-uppercase text-muted fw-bold small mb-3">Customer Information</h6>
+                            <p class="h5 mb-1">@firstItem?.FirstName @firstItem?.LastName</p>
+                            <p class="text-muted mb-1">@firstItem?.UserEmail</p>
+                            <p class="text-muted small">@firstItem?.Address</p>
+                        </div>
+                        
+                        <div class="col-sm-6 text-sm-end mt-4 mt-sm-0">
+                            <h6 class="text-uppercase text-muted fw-bold small mb-3">Update Order Status</h6>
+                            <form asp-action="UpdateStatus" method="post" class="btn-group shadow-sm">
+                                @Html.AntiForgeryToken() @* Good practice for POST requests *@
+                                <input type="hidden" name="orderId" value="@firstItem?.OrderId" />
+        
+                                @* Values must match the Enum member names exactly *@
+                                <button type="submit" name="status" value="@ELKH.Models.DeliveryStatus.Pending" class="btn btn-sm btn-outline-warning">Pending</button>
+                                <button type="submit" name="status" value="@ELKH.Models.DeliveryStatus.Delivered" class="btn btn-sm btn-outline-success">Delivered</button>
+                                <button type="submit" name="status" value="@ELKH.Models.DeliveryStatus.Cancelled" class="btn btn-sm btn-outline-danger">Cancel</button>
+                            </form>
+                        </div>
+                    </div>
+
+                    <div class="table-responsive">
+                        <table class="table table-hover align-middle">
+                            <thead class="table-light">
+                                <tr>
+                                    <th>Product Description</th>
+                                    <th class="text-center">Qty</th>
+                                    <th class="text-end">Unit Price</th>
+                                    <th class="text-end">Subtotal</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @foreach (var product in Model.Items)
+                                {
+                                    <tr>
+                                        <td class="fw-bold">@product.ProductName</td>
+                                        <td class="text-center">@product.Quantity</td>
+                                        <td class="text-end">@product.UnitPrice.ToString("C")</td>
+                                        <td class="text-end fw-bold">@((product.UnitPrice * product.Quantity).ToString("C"))</td>
+                                    </tr>
+                                }
+                            </tbody>
+                        </table>
+                    </div>
+
+                    <div class="row justify-content-end mt-4">
+                        <div class="col-md-5">
+                            <div class="d-flex justify-content-between mb-2">
+                                <span class="text-muted">Page Total:</span>
+                                <span>@Model.Items.Sum(p => p.UnitPrice * p.Quantity).ToString("C")</span>
+                            </div>
+                            <hr>
+                            <div class="d-flex justify-content-between align-items-center">
+                                <strong class="h4 mb-0">Total Amount:</strong>
+                                <strong class="h4 mb-0 text-primary">@firstItem?.TotalOrderAmount.ToString("C")</strong>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="card-footer bg-light text-center py-3">
+                    <small class="text-muted">Staff Managed Order Detail View</small>
+                </div>
+            </div>
+
+            <nav class="mt-4">
+                <ul class="pagination justify-content-center">
+                    @for (int i = 1; i <= Model.AllPages; i++)
+                    {
+                        <li class="page-item @(i == Model.CurrentPage ? "active" : "")">
+                            <a class="page-link" asp-action="OrderDetail" asp-route-orderId="@firstItem?.OrderId" asp-route-page="@i">@i</a>
+                        </li>
+                    }
+                </ul>
+            </nav>
+        </div>
+    </div>
+</div>

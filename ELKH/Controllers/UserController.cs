@@ -33,6 +33,7 @@ namespace ELKH.Controllers
             _logger = logger;
         }
 
+        // ================= DASHBOARD =================
         public async Task<IActionResult> Index()
         {
             var authResult = RequireAuthenticatedUser(out var email);
@@ -51,12 +52,11 @@ namespace ELKH.Controllers
             };
 
             var registered = await GetCurrentUserAsync();
-
             if (registered != null)
             {
                 var userId = registered.PkRegisteredUserId;
-
                 var dashboard = await UserService.GetDashboardDataAsync(userId);
+
                 vm.WishlistCount = dashboard.WishlistCount;
                 vm.WishlistSection = dashboard.Wishlist;
                 vm.ActiveOrdersSection = dashboard.ActiveOrders;
@@ -66,6 +66,7 @@ namespace ELKH.Controllers
             return View(vm);
         }
 
+        // ================= EDIT PROFILE =================
         public async Task<IActionResult> EditProfile()
         {
             var authResult = RequireAuthenticatedUser(out var email);
@@ -90,7 +91,6 @@ namespace ELKH.Controllers
             if (userId.HasValue)
             {
                 var addresses = await _contactRepository.GetAllByUserIdAsync(userId.Value);
-
                 vm.Addresses = addresses.Select(a => new ContactDetailVM
                 {
                     ContactId = a.PkContactId,
@@ -140,7 +140,6 @@ namespace ELKH.Controllers
             }
 
             var existing = _profileRepository.GetById(email);
-
             if (existing is null)
             {
                 var newProfile = new UserProfileModel
@@ -149,26 +148,25 @@ namespace ELKH.Controllers
                     FirstName = vm.Profile.FirstName,
                     LastName = vm.Profile.LastName
                 };
-                await _profileRepository.AddAndSaveAsync(newProfile);
+                _profileRepository.Add(newProfile);
             }
             else
             {
                 existing.FirstName = vm.Profile.FirstName;
-                existing.LastName  = vm.Profile.LastName;
-                await _profileRepository.UpdateAndSaveAsync(existing);
+                existing.LastName = vm.Profile.LastName;
+                _profileRepository.UpdateAndSave(existing);
             }
 
             SetSuccessMessage("Profile updated successfully");
-
-            await _logRepository.LogActivityAsync(
-                email,
-                "ProfileUpdated",
-                $"Name updated to {vm.Profile.FirstName} {vm.Profile.LastName}"
-            );
+            await _logRepository.LogActivityAsync(email, "ProfileUpdated",
+                $"Name updated to {vm.Profile.FirstName} {vm.Profile.LastName}");
 
             return RedirectToAction(nameof(EditProfile));
         }
 
+        // ================= AVATAR =================
+
+        // GET: User/GetAvatar — returns the current user's avatar
         [HttpGet]
         public IActionResult GetAvatar()
         {
@@ -176,13 +174,13 @@ namespace ELKH.Controllers
             if (authResult != null) return authResult;
 
             var profile = _profileRepository.GetById(email);
-
             if (profile?.AvatarData is null || string.IsNullOrEmpty(profile.AvatarMimeType))
                 return NotFound();
 
             return File(profile.AvatarData, profile.AvatarMimeType);
         }
 
+        // GET: User/Avatar/{id} — serves any user's avatar anonymously (keyed by int PK)
         [HttpGet]
         [AllowAnonymous]
         public async Task<IActionResult> Avatar(int id)
@@ -191,13 +189,13 @@ namespace ELKH.Controllers
             if (user is null) return NotFound();
 
             var profile = _profileRepository.GetById(user.Email);
-
             if (profile?.AvatarData is null || string.IsNullOrEmpty(profile.AvatarMimeType))
                 return NotFound();
 
             return File(profile.AvatarData, profile.AvatarMimeType);
         }
 
+        // POST: User/UploadAvatar
         [HttpPost]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> UploadAvatar(UserProfilePageVM vm)
@@ -205,15 +203,9 @@ namespace ELKH.Controllers
             var authResult = RequireAuthenticatedUser(out var email);
             if (authResult != null) return authResult;
 
-            const long maxBytes = 10 * 1024 * 1024;
-
+            const long maxBytes = 10 * 1024 * 1024; // 10 MB
             var allowedTypes = new HashSet<string>(StringComparer.OrdinalIgnoreCase)
-            {
-                "image/jpeg",
-                "image/png",
-                "image/gif",
-                "image/webp"
-            };
+                { "image/jpeg", "image/png", "image/gif", "image/webp" };
 
             var file = vm.AvatarFile;
 
@@ -237,11 +229,9 @@ namespace ELKH.Controllers
 
             using var ms = new System.IO.MemoryStream();
             await file.CopyToAsync(ms);
-
             var bytes = ms.ToArray();
 
             var existing = _profileRepository.GetById(email);
-
             if (existing is null)
             {
                 var newProfile = new UserProfileModel
@@ -249,7 +239,7 @@ namespace ELKH.Controllers
                     PkEmail = email,
                     FirstName = string.Empty,
                     LastName = string.Empty,
-                    AvatarData = bytes,
+                    AvatarData = bytes,              // ← correct version saves bytes
                     AvatarMimeType = file.ContentType
                 };
                 await _profileRepository.AddAndSaveAsync(newProfile);
@@ -261,12 +251,14 @@ namespace ELKH.Controllers
                 await _profileRepository.UpdateAndSaveAsync(existing);
             }
 
-            await _logRepository.LogActivityAsync(email, "AvatarUploaded", $"Uploaded profile picture ({file.ContentType}, {file.Length} bytes)");
+            await _logRepository.LogActivityAsync(email, "AvatarUploaded",
+                $"Uploaded profile picture ({file.ContentType}, {file.Length} bytes)");
             SetSuccessMessage("Profile picture updated successfully.");
 
             return RedirectToAction(nameof(EditProfile));
         }
 
+        // POST: User/RemoveAvatar
         [HttpPost]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> RemoveAvatar()
@@ -275,7 +267,6 @@ namespace ELKH.Controllers
             if (authResult != null) return authResult;
 
             var existing = _profileRepository.GetById(email);
-
             if (existing is not null && existing.AvatarData is not null)
             {
                 existing.AvatarData = null;
@@ -288,15 +279,13 @@ namespace ELKH.Controllers
             return RedirectToAction(nameof(EditProfile));
         }
 
+        // ================= ADDRESSES =================
         public async Task<IActionResult> Addresses()
         {
             var userId = await GetCurrentUserIdAsync();
-
-            if (userId is null)
-                return Challenge();
+            if (userId is null) return Challenge();
 
             var addresses = await _contactRepository.GetAllByUserIdAsync(userId.Value);
-
             var viewModels = addresses.Select(a => new ContactDetailVM
             {
                 ContactId = a.PkContactId,
@@ -316,12 +305,7 @@ namespace ELKH.Controllers
 
         public IActionResult AddAddress()
         {
-            var vm = new ContactDetailVM
-            {
-                Country = "Canada",
-                IsDefault = false
-            };
-
+            var vm = new ContactDetailVM { Country = "Canada", IsDefault = false };
             return View(vm);
         }
 
@@ -329,12 +313,10 @@ namespace ELKH.Controllers
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> AddAddress(ContactDetailVM vm)
         {
-            if (!ModelState.IsValid)
-                return View(vm);
+            if (!ModelState.IsValid) return View(vm);
 
             var userId = await GetCurrentUserIdAsync();
-            if (userId is null)
-                return Challenge();
+            if (userId is null) return Challenge();
 
             var contact = new ContactDetailModel
             {
@@ -351,15 +333,10 @@ namespace ELKH.Controllers
             };
 
             bool success = await _contactRepository.AddAndSaveAsync(contact);
-
             if (success)
             {
-                await _logRepository.LogActivityAsync(
-                    User.Identity?.Name ?? "",
-                    "AddressAdded",
-                    $"Added address at {vm.Street}, {vm.City}"
-                );
-
+                await _logRepository.LogActivityAsync(User.Identity?.Name ?? "",
+                    "AddressAdded", $"Added address at {vm.Street}, {vm.City}");
                 SetSuccessMessage("Address added successfully");
             }
             else
@@ -402,16 +379,12 @@ namespace ELKH.Controllers
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> EditAddress(ContactDetailVM vm)
         {
-            if (!ModelState.IsValid)
-                return View(vm);
+            if (!ModelState.IsValid) return View(vm);
 
             var userId = await GetCurrentUserIdAsync();
-
-            if (userId is null)
-                return Challenge();
+            if (userId is null) return Challenge();
 
             var existing = await _contactRepository.GetByIdAsync(vm.ContactId);
-
             if (existing is null || existing.FkRegisteredUserId != userId.Value)
             {
                 SetWarningMessage("Address not found");
@@ -434,15 +407,10 @@ namespace ELKH.Controllers
             };
 
             bool success = await _contactRepository.UpdateAndSaveAsync(contact);
-
             if (success)
             {
-                await _logRepository.LogActivityAsync(
-                    User.Identity?.Name ?? "",
-                    "AddressUpdated",
-                    $"Updated address at {vm.Street}, {vm.City}"
-                );
-
+                await _logRepository.LogActivityAsync(User.Identity?.Name ?? "",
+                    "AddressUpdated", $"Updated address at {vm.Street}, {vm.City}");
                 SetSuccessMessage("Address updated successfully");
             }
             else
@@ -456,11 +424,9 @@ namespace ELKH.Controllers
         public async Task<IActionResult> DeleteAddress(int id)
         {
             var userId = await GetCurrentUserIdAsync();
-            if (userId is null)
-                return Challenge();
+            if (userId is null) return Challenge();
 
             var contact = await _contactRepository.GetByIdAsync(id);
-
             if (contact is null || contact.FkRegisteredUserId != userId.Value)
             {
                 SetWarningMessage("Address not found");
@@ -489,11 +455,9 @@ namespace ELKH.Controllers
         public async Task<IActionResult> DeleteAddressConfirmed(int id)
         {
             var userId = await GetCurrentUserIdAsync();
-            if (userId is null)
-                return Challenge();
+            if (userId is null) return Challenge();
 
             var contact = await _contactRepository.GetByIdAsync(id);
-
             if (contact is null || contact.FkRegisteredUserId != userId.Value)
             {
                 SetWarningMessage("Address not found");
@@ -501,17 +465,12 @@ namespace ELKH.Controllers
             }
 
             var addressSummary = $"{contact.Street}, {contact.City}";
-
             bool success = await _contactRepository.DeleteAsync(id);
 
             if (success)
             {
-                await _logRepository.LogActivityAsync(
-                    User.Identity?.Name ?? "",
-                    "AddressDeleted",
-                    $"Deleted address at {addressSummary}"
-                );
-
+                await _logRepository.LogActivityAsync(User.Identity?.Name ?? "",
+                    "AddressDeleted", $"Deleted address at {addressSummary}");
                 SetSuccessMessage("Address deleted successfully");
             }
             else
@@ -527,11 +486,9 @@ namespace ELKH.Controllers
         public async Task<IActionResult> SetDefaultAddress(int id)
         {
             var userId = await GetCurrentUserIdAsync();
-            if (userId is null)
-                return Challenge();
+            if (userId is null) return Challenge();
 
             var contact = await _contactRepository.GetByIdAsync(id);
-
             if (contact is null || contact.FkRegisteredUserId != userId.Value)
             {
                 SetWarningMessage("Address not found");
@@ -543,12 +500,8 @@ namespace ELKH.Controllers
 
             if (success)
             {
-                await _logRepository.LogActivityAsync(
-                    User.Identity?.Name ?? "",
-                    "AddressDefaultSet",
-                    $"Set {contact.Street}, {contact.City} as default address"
-                );
-
+                await _logRepository.LogActivityAsync(User.Identity?.Name ?? "",
+                    "AddressDefaultSet", $"Set {contact.Street}, {contact.City} as default address");
                 SetSuccessMessage("Default address updated");
             }
             else
@@ -559,33 +512,31 @@ namespace ELKH.Controllers
             return RedirectToAction(nameof(EditProfile));
         }
 
+        // ================= LOGIN HISTORY =================
         public async Task<IActionResult> LoginHistory()
         {
             var authResult = RequireAuthenticatedUser(out var email);
             if (authResult != null) return authResult;
 
             var rawLogs = await _logRepository.GetByEmailAsync(email);
-
-            var logs = rawLogs.Take(30)
-                .Select(l => new UserLogVM
-                {
-                    LogInTime = l.LogInTime,
-                    LogOutTime = l.LogOutTime,
-                    Abandoned = l.Abandoned,
-                    ActivityType = l.ActivityType,
-                    ActivityDetail = l.ActivityDetail
-                }).ToList();
+            var logs = rawLogs.Take(30).Select(l => new UserLogVM
+            {
+                LogInTime = l.LogInTime,
+                LogOutTime = l.LogOutTime,
+                Abandoned = l.Abandoned,
+                ActivityType = l.ActivityType,
+                ActivityDetail = l.ActivityDetail
+            }).ToList();
 
             return View(logs);
         }
 
+        // ================= MY RATINGS =================
         [HttpGet]
         public async Task<IActionResult> MyRatings(string sort = "purchase_desc")
         {
             var userId = await GetCurrentUserIdAsync();
-
-            if (userId is null)
-                return Challenge();
+            if (userId is null) return Challenge();
 
             var ratings = await _ratingService.GetUserRatingsAsync(userId.Value);
 

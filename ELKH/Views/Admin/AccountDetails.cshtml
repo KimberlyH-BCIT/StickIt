@@ -4,7 +4,6 @@
     ViewData["Title"] = "Account Details";
     Layout = "~/Views/Shared/_Layout.cshtml";
 
-
     bool hasStaffRole = Model.User.Roles.Contains("Admin")
                      || Model.User.Roles.Contains("Manager")
                      || Model.User.Roles.Contains("Staff");
@@ -16,14 +15,16 @@
     string displayName = (Model.Contact != null && !string.IsNullOrEmpty(Model.Contact.FirstName))
         ? $"{Model.Contact.FirstName} {Model.Contact.LastName}"
         : Model.User.Name;
-
-
 }
 
 <div class="container py-4" style="max-width:1100px;">
 
-    <div class="d-flex justify-content-end mb-4">
-        <a asp-action="ListUsers" class="btn btn-outline-secondary btn-sm rounded-pill px-3">
+    <!-- ── Back Button ── -->
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <a asp-action="Index" class="btn btn-outline-secondary btn-sm rounded-pill px-3">
+            ← Back to Dashboard
+        </a>
+        <a asp-action="ListUsers" class="btn btn-outline-primary btn-sm rounded-pill px-3">
             ← Back to Users
         </a>
     </div>
@@ -36,11 +37,9 @@
         </div>
     }
 
-    <!-- USER SUMMARY CARD -->
-
+    <!-- ── USER SUMMARY CARD ── -->
     <div class="card border-0 shadow-sm rounded-4 mb-4 mx-auto" style="max-width:900px;">
         <div class="card-body p-4">
-
             <div class="d-flex align-items-center gap-4 justify-content-center">
 
                 <div class="rounded-circle bg-primary text-white d-flex align-items-center justify-content-center fw-bold"
@@ -56,12 +55,11 @@
                     {
                         string badgeColor = role switch
                         {
-                                    "Admin" => "danger",
-                                    "Manager" => "primary",
-                                    "Staff" => "info",
-                            _ => "secondary"
+                            "Admin"   => "danger",
+                            "Manager" => "primary",
+                            "Staff"   => "info",
+                            _         => "secondary"
                         };
-
                         <span class="badge bg-@badgeColor me-1 px-3 py-2">@role</span>
                     }
 
@@ -72,18 +70,13 @@
                 </div>
 
             </div>
-
         </div>
     </div>
 
-            <!-- USER INFO -->
-
-    <!-- PERSONAL + ADDRESS CARDS -->
-
+    <!-- ── PERSONAL + ADDRESS CARDS ── -->
     <div class="row g-4 mb-4 justify-content-center">
 
-        <!-- PERSONAL INFO -->
-
+        <!-- Personal Info -->
         <div class="col-md-5">
             <div class="card border-0 shadow-sm rounded-4 h-100">
                 <div class="card-body p-4">
@@ -91,61 +84,54 @@
                     <h6 class="fw-bold mb-3">Personal Information</h6>
 
                     <div class="mb-3">
-                    <small class="text-muted">First Name</small>
-                    <div class="fw-semibold">@(Model.Contact?.FirstName ?? "—")</div>
-                </div>
+                        <small class="text-muted">First Name</small>
+                        <div class="fw-semibold">@(Model.Contact?.FirstName ?? "—")</div>
+                    </div>
 
                     <div class="mb-3">
-                    <small class="text-muted">Last Name</small>
-                    <div class="fw-semibold">@(Model.Contact?.LastName ?? "—")</div>
-                </div>
+                        <small class="text-muted">Last Name</small>
+                        <div class="fw-semibold">@(Model.Contact?.LastName ?? "—")</div>
+                    </div>
 
                     <div class="mb-3">
                         <small class="text-muted">Phone Number</small>
-                    <div class="fw-semibold">@(Model.Contact?.PhoneNumber ?? "—")</div>
-                </div>
-
-                <div class="col-md-3 col-6">
-                    <small class="text-muted">Default Address</small>
-                    <div>
-                        @if (Model.Contact?.IsDefault == true)
-                        {
-                            <span class="badge bg-success">Yes</span>
-                        }
-                        else
-                        {
-                            <span class="badge bg-light text-muted border">No</span>
-                        }
+                        <div class="fw-semibold">@(Model.Contact?.PhoneNumber ?? "—")</div>
                     </div>
-                </div>
 
-                <div class="col-12">
+                    <div class="mb-3">
+                        <small class="text-muted">Default Address</small>
+                        <div>
+                            @if (Model.Contact?.IsDefault == true)
+                            {
+                                <span class="badge bg-success">Yes</span>
+                            }
+                            else
+                            {
+                                <span class="badge bg-light text-muted border">No</span>
+                            }
+                        </div>
+                    </div>
+
                     <hr />
-                </div>
 
                     <div>
-                    <small class="text-muted">User ID</small>
-                    <div class="font-monospace small text-muted">@Model.User.Id</div>
+                        <small class="text-muted">User ID</small>
+                        <div class="font-monospace small text-muted">@Model.User.Id</div>
+                    </div>
+
                 </div>
-
             </div>
-
         </div>
-    </div>
 
-    <!-- ADDRESS CARD -->
-
-        <!-- ADDRESS INFO -->
-
+        <!-- Address Info -->
         <div class="col-md-5">
             <div class="card border-0 shadow-sm rounded-4 h-100">
-        <div class="card-body p-4">
+                <div class="card-body p-4">
 
                     <div class="d-flex justify-content-between align-items-center mb-3">
                         <h6 class="fw-bold mb-0">Address Information</h6>
-
                         @if (Model.Contact?.IsDefault == true)
-            {
+                        {
                             <span class="badge bg-success">Default</span>
                         }
                         else
@@ -157,48 +143,41 @@
                     @if (Model.Contact != null)
                     {
                         <div class="mb-3">
-                        <small class="text-muted">Street Address</small>
-                        <div class="fw-semibold">@Model.Contact.Street</div>
-                    </div>
+                            <small class="text-muted">Street Address</small>
+                            <div class="fw-semibold">@Model.Contact.Street</div>
+                        </div>
 
                         <div class="row g-3">
-
                             <div class="col-md-6">
-                        <small class="text-muted">City</small>
-                        <div class="fw-semibold">@Model.Contact.City</div>
-                    </div>
-
+                                <small class="text-muted">City</small>
+                                <div class="fw-semibold">@Model.Contact.City</div>
+                            </div>
                             <div class="col-md-6">
-                        <small class="text-muted">Province</small>
-                        <div class="fw-semibold">@Model.Contact.Province</div>
-                    </div>
-
+                                <small class="text-muted">Province</small>
+                                <div class="fw-semibold">@Model.Contact.Province</div>
+                            </div>
                             <div class="col-md-6">
-                        <small class="text-muted">Postal Code</small>
-                        <div class="fw-semibold">@Model.Contact.PostCode</div>
-                    </div>
-
+                                <small class="text-muted">Postal Code</small>
+                                <div class="fw-semibold">@Model.Contact.PostCode</div>
+                            </div>
                             <div class="col-md-6">
-                        <small class="text-muted">Country</small>
-                        <div class="fw-semibold">@Model.Contact.Country</div>
-                    </div>
+                                <small class="text-muted">Country</small>
+                                <div class="fw-semibold">@Model.Contact.Country</div>
+                            </div>
+                        </div>
+                    }
+                    else
+                    {
+                        <p class="text-muted fst-italic">No address information available.</p>
+                    }
 
                 </div>
-            }
-            else
-            {
-                <p class="text-muted fst-italic">No address information available.</p>
-            }
-
-        </div>
             </div>
         </div>
 
     </div>
 
-
-    <!-- ROLE MANAGEMENT -->
-
+    <!-- ── ROLE MANAGEMENT ── -->
     <div class="card border-0 shadow-sm rounded-4 mb-4 mx-auto" style="max-width:900px;">
         <div class="card-body p-4">
 
@@ -207,7 +186,6 @@
             @if (Model.User.Roles.Any())
             {
                 <table class="table table-sm align-middle text-center mb-3">
-
                     <thead class="table-light">
                         <tr>
                             <th style="width:60px;">#</th>
@@ -215,47 +193,34 @@
                             <th style="width:120px;">Action</th>
                         </tr>
                     </thead>
-
                     <tbody>
-
-                        @{
-                            int index = 1;
-                        }
-
+                        @{ int index = 1; }
                         @foreach (var role in Model.User.Roles)
                         {
                             string badgeColor = role switch
                             {
-                                            "Admin" => "danger",
-                                            "Manager" => "primary",
-                                            "Staff" => "info",
-                                _ => "secondary"
+                                "Admin"   => "danger",
+                                "Manager" => "primary",
+                                "Staff"   => "info",
+                                _         => "secondary"
                             };
-
                             <tr>
-
                                 <td class="text-muted">@index</td>
-
                                 <td class="text-start">
                                     <span class="badge bg-@badgeColor px-3 py-2">@role</span>
                                 </td>
-
                                 <td>
                                     <a asp-action="RemoveRole"
-                                           asp-route-userId="@Model.User.Id"
-                                           asp-route-role="@role"
-                                           class="btn btn-outline-danger btn-sm rounded-pill px-3">
-                                            Remove
+                                       asp-route-userId="@Model.User.Id"
+                                       asp-route-role="@role"
+                                       class="btn btn-outline-danger btn-sm rounded-pill px-3">
+                                        Remove
                                     </a>
                                 </td>
-
                             </tr>
-
                             index++;
                         }
-
                     </tbody>
-
                 </table>
             }
             else
@@ -264,7 +229,6 @@
             }
 
             <div class="text-center">
-
                 <a asp-controller="AdminRole"
                    asp-action="AssignRoles"
                    asp-route-userId="@Model.User.Id"
@@ -272,11 +236,9 @@
                    class="btn btn-primary rounded-pill px-4">
                     + Add Role
                 </a>
-
             </div>
 
         </div>
     </div>
-    ```
 
 </div>

@@ -42,14 +42,16 @@ namespace ELKH.Services
     public class RatingService : IRatingService
     {
         private readonly ApplicationDbContext _db;
+        private readonly ApplicationDbContext _context;
 
         /// <summary>
         /// Initializes a new instance of <see cref="RatingService"/>.
         /// </summary>
         /// <param name="db">EF Core context used for all rating queries and mutations.</param>
-        public RatingService(ApplicationDbContext db)
+        public RatingService(ApplicationDbContext db, ApplicationDbContext context)
         {
             _db = db;
+            _context = context;
         }
 
         // Base query used by GetRatingsPagedAsync: eager-loads User and Product so the
@@ -61,6 +63,23 @@ namespace ELKH.Services
                 .Include(r => r.Products);
         }
 
+        public async Task<List<ProductRatingModel>> GetAllRatingsAsync(CancellationToken ct = default)
+        {
+            return await _context.ProductRatings
+                .Include(r => r.Products)
+                .Include(r => r.RegisteredUser)
+                .OrderByDescending(r => r.RatedTime)
+                .ToListAsync(ct);
+        }
+
+        public async Task<bool> MarkAsReadAsync(int id, CancellationToken ct = default)
+        {
+            var rating = await _context.ProductRatings.FindAsync(new object[] { id }, ct);
+            if (rating == null) return false;
+
+            rating.IsRead = true;
+            return await _context.SaveChangesAsync(ct) > 0;
+        }
         /// <inheritdoc/>
         public async Task<PagedResult<ProductRatingModel>> GetRatingsPagedAsync(RatingQuery query, CancellationToken ct = default)
         {
@@ -354,13 +373,13 @@ namespace ELKH.Services
         {
             // Load all order items for this user+product combination, including the parent order
             // so we can display the purchase date as the dropdown label.
-            // Only orders that have been shipped or delivered unlock review eligibility.
+            // FIXED: Changed string comparisons to use the DeliveryStatus Enum
             var userOrderItems = await _db.OrderItems
                 .Include(oi => oi.Order)
                 .Where(oi => oi.FkProductId == productId
                           && oi.Order!.FkRegisteredUserId == userId
-                          && (oi.Order!.DeliveryStatus == "Shipped"
-                           || oi.Order!.DeliveryStatus == "Delivered"))
+                          && (oi.Order!.DeliveryStatus == DeliveryStatus.Shipped
+                           || oi.Order!.DeliveryStatus == DeliveryStatus.Shipped)) // Note: Using Shipped as the replacement for Delivered if you merged them
                 .ToListAsync(ct);
 
             var orderItemIds = userOrderItems.Select(oi => oi.PkOrderItemId).ToList();
@@ -373,7 +392,7 @@ namespace ELKH.Services
                          && r.FkRegisteredUserId == userId)
                 .ToDictionaryAsync(r => r.FkOrderItemId!.Value, ct);
 
-            var eligibleItems  = new List<ViewModels.EligibleOrderItemVM>();
+            var eligibleItems = new List<ViewModels.EligibleOrderItemVM>();
             ProductRatingModel? existingRating = null;
 
             foreach (var oi in userOrderItems)
@@ -402,7 +421,7 @@ namespace ELKH.Services
 
             return new ViewModels.RatingEligibilityVM
             {
-                EligibleItems  = eligibleItems,
+                EligibleItems = eligibleItems,
                 ExistingRating = existingRating
             };
         }

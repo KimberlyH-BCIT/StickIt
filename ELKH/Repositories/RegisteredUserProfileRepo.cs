@@ -30,4 +30,9 @@ public class RegisteredUserProfileRepo : RepositoryBase<UserProfileModel, string
         Logger.LogWarning("UserProfile NOT added — a profile already exists for: {Email}", profile.PkEmail);
         return false;
     }
+
+    public void UpdateAndSave(UserProfileModel existing)
+    {
+        throw new NotImplementedException();
+    }
 }

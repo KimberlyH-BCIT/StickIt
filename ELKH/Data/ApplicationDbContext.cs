@@ -39,6 +39,8 @@ namespace ELKH.Data
         public DbSet<FuzzySuggestionModel> FuzzySuggestions { get; set; }
         public DbSet<AuditEntryModel> AuditEntries { get; set; }
         public DbSet<CachedFuzzyKeyModel> CachedFuzzyKeys { get; set; }
+        public DbSet<StaffMessageModel> StaffMessages { get; set; }
+        public DbSet<MessageReplyModel> MessageReplies { get; set; }
 
         /// <summary>
         /// Configures entity relationships, indexes, and table mappings for the application.

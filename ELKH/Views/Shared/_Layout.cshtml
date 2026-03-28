@@ -1,69 +1,65 @@
-﻿<!DOCTYPE html>
+﻿@using Microsoft.AspNetCore.Identity
+@using Microsoft.AspNetCore.Antiforgery
+@inject SignInManager<IdentityUser> SignInManager
+@inject IAntiforgery AntiforgeryService
+<!DOCTYPE html>
 <html lang="en">
 <head>
-    @using Microsoft.AspNetCore.Identity
-    @using Microsoft.AspNetCore.Antiforgery
-    @inject SignInManager<IdentityUser> SignInManager
-    @inject IAntiforgery AntiforgeryService
-
-        <meta charset="utf-8" />
-        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-        @{
-                var csrfToken = AntiforgeryService.GetAndStoreTokens(Context).RequestToken;
-            }
-
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    @{
+        var csrfToken = AntiforgeryService.GetAndStoreTokens(Context).RequestToken;
+    }
     <meta name="csrf-token" content="@csrfToken" />
-        <link rel="icon" type="image/png" href="~/logo-stickit.png" />
-        <title>@ViewData["Title"] - StickIt</title>
+    <link rel="icon" type="image/png" href="~/logo-stickit.png" />
+    <title>@ViewData["Title"] - StickIt</title>
 
     <script type="importmap"></script>
     <link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.min.css" />
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" />
     <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
-    <link rel="stylesheet" href="~/ELKH.styles.css" asp-append-version="true" />
 </head>
-
 <body>
-
-    
     @{
+       
         string role = "Registered user";
         if (User.IsInRole("Admin")) role = "Admin";
         else if (User.IsInRole("Manager")) role = "Manager";
         else if (User.IsInRole("Staff")) role = "Staff";
     }
     <header>
-
         <div class="border-bottom py-2" style="background:linear-gradient(90deg,#fce4ec,#e1f5fe);">
             <div class="container-fluid d-flex align-items-center justify-content-between">
 
                 <!-- LEFT: HAMBURGER + LOGO -->
                 <div class="d-flex align-items-center gap-3">
-
-                    <!-- HAMBURGER -->
-                    <button class="btn" data-bs-toggle="offcanvas" data-bs-target="#navOffcanvas">
-                        ☰
+                    <button class="btn btn-sm" type="button"
+                            data-bs-toggle="offcanvas" data-bs-target="#navOffcanvas"
+                            aria-controls="navOffcanvas">
+                        <i class="bi bi-list fs-4"></i>
                     </button>
-
-                    <!-- LOGO -->
-                    <a asp-controller="Home" asp-action="Index">
-                        <img src="~/logo-stickit.png" style="height:55px; filter:brightness(1.2);"  />
+                    <a class="navbar-brand mb-0 h1"
+                           asp-area="" asp-controller="Home" asp-action="Index">
+                        <img src="~/logo-stickit.png" style="height:85px;" />
                     </a>
                 </div>
 
                 <!-- SEARCH -->
-                <div class="py-2 text-center">
-                    <div class="container-fluid d-flex justify-content-center">
-                        <div class="header-search-wrap position-relative">
-                            <form asp-controller="Product" asp-action="Index" method="get" class="d-flex" role="search">
+                <div class="py-2 text-center d-none d-md-block flex-grow-1 px-4">
+                    <div class="d-flex justify-content-center">
+                        <div class="header-search-wrap position-relative" style="width:100%;max-width:500px;">
+                            <form asp-controller="Product" asp-action="Index" method="get"
+                                  class="d-flex" role="search">
                                 <input id="productNameInput"
-                                       type="search"
-                                       name="q"
+                                       type="search" name="q"
                                        class="form-control"
                                        placeholder="Search products"
                                        autocomplete="off"
                                        aria-label="Search products" />
-                                <button type="submit" class="btn btn-outline-secondary ms-2">Search</button>
+                                <button type="submit"
+                                        class="btn btn-outline-secondary ms-2">
+                                    Search
+                                </button>
                             </form>
                             <div id="productNameSuggestions"
                                  class="list-group position-absolute w-100 shadow-sm"
@@ -72,41 +68,45 @@
                     </div>
                 </div>
 
-                @if (User.Identity.IsAuthenticated)
-                {
-                    <a class="btn btn-sm btn-dark rounded-pill px-3"
-                           asp-controller="@(User.IsInRole("Admin") ? "Admin" :
-                                                                                          User.IsInRole("Manager") ? "Manager" :
-                                                                                          User.IsInRole("Staff") ? "Staff" : "Home")"
-                           asp-action="Index">
-                        <span class="badge bg-light text-dark">@role</span> Dashboard
-                    </a>
-                }
-                <!-- RIGHT: LOGIN + CART -->
+                <!-- RIGHT: DASHBOARD BADGE + LOGIN + CART -->
                 <div class="d-flex align-items-center gap-3">
+                    @if (User.Identity != null && User.Identity.IsAuthenticated)
+                    {
+                        <a class="btn btn-sm btn-dark rounded-pill px-3"
+                               asp-controller="@(User.IsInRole("Admin")   ? "Admin"   :
+                                User.IsInRole("Manager") ? "Manager" :
+                                User.IsInRole("Staff") ? "Staff" : "Home")"
+                               asp-action="Index">
+                            <span class="badge bg-light text-dark">@role</span> Dashboard
+                        </a>
+                    }
                     <partial name="_LoginPartial" />
                     <partial name="_CartIconPartial" />
                 </div>
 
             </div>
         </div>
+    </header>
 
-
-
-</header>
-
-    <!-- SIDEBAR -->
-    <div class="offcanvas offcanvas-start" tabindex="-1" id="navOffcanvas">
+    <!-- ══════════════════ SIDEBAR (OFFCANVAS) ══════════════════ -->
+    <div class="offcanvas offcanvas-start" tabindex="-1"
+         id="navOffcanvas" aria-labelledby="navOffcanvasTitle">
         <div class="offcanvas-header border-bottom">
-            <img src="~/logo-stickit.png" style="height:35px;" />
-            <button class="btn-close" data-bs-dismiss="offcanvas"></button>
+            <a class="navbar-brand mb-0 h1"
+                   asp-area="" asp-controller="Home" asp-action="Index"
+                   id="navOffcanvasTitle">
+                <img src="~/logo-stickit.png" style="height:35px;" />
+            </a>
+            <button type="button" class="btn-close"
+                    data-bs-dismiss="offcanvas" aria-label="Close"></button>
         </div>
 
-        <div class="offcanvas-body">
+        <div class="offcanvas-body p-0">
 
             <!-- Mobile search inside sidebar -->
             <div class="px-3 py-2 border-bottom" style="background:#fce4ec;">
-                <form asp-controller="Product" asp-action="Index" method="get" class="d-flex gap-1">
+                <form asp-controller="Product" asp-action="Index"
+                      method="get" class="d-flex gap-1">
                     <input type="search" name="q"
                            class="form-control form-control-sm rounded-pill"
                            placeholder="Search…" autocomplete="off" />
@@ -118,94 +118,115 @@
                 </form>
             </div>
 
-            <!-- IMPORTANT LINKS -->
-            <ul class="list-unstyled">
-                <li><a asp-controller="Home" asp-action="Index">Home</a></li>
-                <li><a asp-controller="Product" asp-action="Index">Shop Stickers</a></li>
-                <li><a asp-controller="Cart" asp-action="Index">Cart</a></li>
-                <li><a asp-controller="Wishlist" asp-action="Index">Wishlist</a></li>
-                <li><a asp-controller="Order" asp-action="MyHistory">Order History</a></li>
+            <!-- NAV LINKS -->
+            <ul class="navbar-nav flex-column px-3 pt-2">
+                <li class="nav-item">
+                    <a class="nav-link text-dark" asp-controller="Home" asp-action="Index">Home</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link text-dark" asp-controller="Product" asp-action="Index">Shop Stickers</a>
+                </li>
+
+                @if (User.IsInRole("Admin"))
+                {
+                    <li class="nav-item border-bottom">
+                        <a class="nav-link text-dark fw-bold"
+                           asp-controller="Admin" asp-action="Index">Admin Dashboard</a>
+                    </li>
+                }
+
+                @if (User.IsInRole("Staff") || User.IsInRole("Admin"))
+                {
+                    <li class="nav-item">
+                        <a class="nav-link text-dark"
+                           asp-controller="OrderHistory" asp-action="Index">Order History</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link text-dark"
+                           asp-controller="Inventory" asp-action="Index">Inventory</a>
+                    </li>
+                }
+
+                @if (SignInManager.IsSignedIn(User))
+                {
+                    <li class="nav-item">
+                        <a class="nav-link text-dark"
+                           asp-controller="Cart" asp-action="Index">My Cart</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link text-dark"
+                           asp-controller="Wishlist" asp-action="Index">Wishlist</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link text-dark"
+                           asp-controller="Order" asp-action="MyHistory">My Orders</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link text-dark"
+                           asp-controller="User" asp-action="MyRatings">My Ratings</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link text-dark"
+                           asp-controller="User" asp-action="EditProfile">My Profile</a>
+                    </li>
+                }
             </ul>
-
-            <hr />
-
-            <!-- CATEGORIES -->
-            <ul class="list-unstyled">
-                <li><strong>Categories</strong></li>
-                <li><a class="dropdown-item py-2" asp-controller="Product" asp-action="Index" asp-route-category="Canadian">Canadian</a></li>
-                <li><a class="dropdown-item py-2" asp-controller="Product" asp-action="Index" asp-route-category="Christmas">Christmas</a></li>
-                <li><a class="dropdown-item py-2" asp-controller="Product" asp-action="Index" asp-route-category="Cute Animals">Cute Animals</a></li>
-                <li><a class="dropdown-item py-2" asp-controller="Product" asp-action="Index" asp-route-category="Easter">Easter</a></li>
-                <li><a class="dropdown-item py-2" asp-controller="Product" asp-action="Index" asp-route-category="Food">Food</a></li>
-                <li><a class="dropdown-item py-2" asp-controller="Product" asp-action="Index" asp-route-category="Halloween">Halloween</a></li>
-                <li><a class="dropdown-item py-2" asp-controller="Product" asp-action="Index" asp-route-category="Lunar New Year">Lunar New Year</a></li>
-                <li><a class="dropdown-item py-2" asp-controller="Product" asp-action="Index" asp-route-category="Nature & Floral">Nature & Floral</a></li>
-                <li><a class="dropdown-item py-2" asp-controller="Product" asp-action="Index" asp-route-category="New Years Eve">New Years Eve</a></li>
-                <li><a class="dropdown-item py-2" asp-controller="Product" asp-action="Index" asp-route-category="Thanksgiving">Thanksgiving</a></li>
-                <li><hr class="my-1"></li>
-                <li><a class="dropdown-item py-2" asp-controller="Product" asp-action="Index" asp-route-category="Miscellaneous">Miscellaneous</a></li>
-            </ul>
-
         </div>
     </div>
 
-
-
     <!-- ══════════════════ MAIN CONTENT ══════════════════ -->
-    <div>
+    @RenderSection("title", required: false)
 
-        @* TempData["Message"] alert — format: "level, text" *@
-        @{
-            var raw = TempData["Message"] as string;
-            if (!string.IsNullOrEmpty(raw))
-            {
-                var parts = raw.Split(',', 2);
-                var level = parts.Length > 0 ? parts[0].Trim().ToLower() : "info";
-                var text = parts.Length > 1 ? parts[1].Trim() : string.Empty;
-                var alertClass = level switch
-                {
-                    "success" => "alert-success",
-                    "danger" or "error" => "alert-danger",
-                    "warning" => "alert-warning",
-                    "info" => "alert-info",
-                    _ => "alert-secondary"
-                };
-                if (!string.IsNullOrEmpty(text))
-                {
-        <div class="row">
-            <div class="col-12">
-                <div class="alert @alertClass alert-dismissible fade show" role="alert">
-                    @text
-                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+    <main role="main" class="pb-4">
+        @RenderBody()
+    </main>
+
+    <!-- ══════════════════ WISHLIST MODAL ══════════════════ -->
+    <div class="modal fade" id="wishlistSignInModal" tabindex="-1"
+         aria-labelledby="wishlistSignInModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content border-0 shadow">
+                <div class="modal-header border-0"
+                     style="background:linear-gradient(135deg,#e91e8c,#ba68c8);">
+                    <h5 class="modal-title text-white" id="wishlistSignInModalLabel">
+                        <i class="bi bi-heart-fill me-2"></i>Save to Wishlist
+                    </h5>
+                    <button type="button" class="btn-close btn-close-white"
+                            data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <p class="mb-0">Sign in to save items to your wishlist and access them any time.</p>
+                </div>
+                <div class="modal-footer border-0 justify-content-start gap-2">
+                    <a asp-area="Identity" asp-page="/Account/Login"
+                           asp-route-returnUrl="@(Context.Request.Path + Context.Request.QueryString)"
+                           class="btn btn-sm rounded-pill px-4 fw-semibold text-white"
+                           style="background:linear-gradient(135deg,#e91e8c,#ba68c8);border:none;">
+                        <i class="bi bi-box-arrow-in-right me-1"></i>Sign In
+                    </a>
+                    <a asp-area="Identity" asp-page="/Account/Register"
+                           asp-route-returnUrl="@(Context.Request.Path + Context.Request.QueryString)"
+                           class="btn btn-sm btn-outline-secondary rounded-pill px-4">
+                        <i class="bi bi-person-plus me-1"></i>Create Account
+                    </a>
                 </div>
             </div>
         </div>
-                }
-            }
-        }
-       
-               
-
-        @RenderSection("title", required: false)
-
-        <main role="main" class="pb-4">
-            @RenderBody()
-        </main>
-
     </div>
 
     <!-- ══════════════════ FOOTER ══════════════════ -->
-        <footer class="site-footer pt-5 pb-3 mt-4" style="background:linear-gradient(90deg,#f3e5f5,#e1f5fe);">
-            <div class="container small">
+    <footer class="site-footer pt-5 pb-3 mt-4"
+            style="background:linear-gradient(90deg,#f3e5f5,#e1f5fe);">
+        <div class="container small">
             <div class="row g-4 mb-4">
 
                 <div class="col-6 col-lg-3">
                     <div class="footer-heading">🌸 Quick Links</div>
                     <ul class="list-unstyled">
-                        <li class="mb-1"><a asp-controller="Home"    asp-action="Index">Home</a></li>
+                        <li class="mb-1"><a asp-controller="Home" asp-action="Index">Home</a></li>
                         <li class="mb-1"><a asp-controller="Product" asp-action="Index">All Products</a></li>
-                        <li class="mb-1"><a asp-controller="Cart"    asp-action="Index">Cart</a></li>
-                        <li>            <a asp-controller="Order"   asp-action="MyHistory">My Orders</a></li>
+                        <li class="mb-1"><a asp-controller="Cart" asp-action="Index">Cart</a></li>
+                        <li>            <a asp-controller="Order" asp-action="MyHistory">My Orders</a></li>
                     </ul>
                 </div>
 
@@ -231,7 +252,7 @@
 
                 <div class="col-12 col-lg-3">
                     <div class="footer-heading">📬 Stay Connected</div>
-                    <p style="color:rgba(255,255,255,.58);" class="mb-2">
+                    <p class="mb-2" style="color:rgba(255,255,255,.58);">
                         Subscribe for new sticker drops &amp; updates!
                     </p>
                     <form class="d-flex gap-2 mb-3">
@@ -239,7 +260,9 @@
                                type="email" placeholder="Your email…" />
                         <button class="btn btn-sm rounded-pill px-3 fw-bold"
                                 style="background:#fff;color:#c2185b;border:none;"
-                                type="button">Go</button>
+                                type="button">
+                            Go
+                        </button>
                     </form>
                     <div class="d-flex gap-3" style="font-size:1.2rem;">
                         <a href="#"><i class="bi bi-instagram"></i></a>
@@ -261,38 +284,6 @@
                 </div>
             </div>
         </div>
-    <!-- Wishlist sign-in prompt (shared across all pages; shown when a guest clicks any wishlist button) -->
-    <div class="modal fade" id="wishlistSignInModal" tabindex="-1"
-         aria-labelledby="wishlistSignInModalLabel" aria-hidden="true">
-        <div class="modal-dialog modal-dialog-centered">
-            <div class="modal-content border-0 shadow">
-                <div class="modal-header border-0"
-                     style="background:linear-gradient(135deg,#e91e8c,#ba68c8);">
-                    <h5 class="modal-title text-white" id="wishlistSignInModalLabel">
-                        <i class="bi bi-heart-fill me-2"></i>Save to Wishlist
-                    </h5>
-                    <button type="button" class="btn-close btn-close-white"
-                            data-bs-dismiss="modal" aria-label="Close"></button>
-                </div>
-                <div class="modal-body">
-                    <p class="mb-0">Sign in to save items to your wishlist and access them any time.</p>
-                </div>
-                <div class="modal-footer border-0 justify-content-start gap-2">
-                    <a asp-area="Identity" asp-page="/Account/Login"
-                       asp-route-returnUrl="@(Context.Request.Path + Context.Request.QueryString)"
-                       class="btn btn-sm rounded-pill px-4 fw-semibold text-white"
-                       style="background:linear-gradient(135deg,#e91e8c,#ba68c8);border:none;">
-                        <i class="bi bi-box-arrow-in-right me-1"></i>Sign In
-                    </a>
-                    <a asp-area="Identity" asp-page="/Account/Register"
-                       asp-route-returnUrl="@(Context.Request.Path + Context.Request.QueryString)"
-                       class="btn btn-sm btn-outline-secondary rounded-pill px-4">
-                        <i class="bi bi-person-plus me-1"></i>Create Account
-                    </a>
-                </div>
-            </div>
-        </div>
-    </div>
     </footer>
 
     <script src="~/lib/jquery/dist/jquery.min.js"></script>

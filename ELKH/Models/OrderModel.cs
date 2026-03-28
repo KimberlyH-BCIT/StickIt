@@ -21,7 +21,7 @@ namespace ELKH.Models
         /// </summary>
         [Display(Name = "Order Status")]
         [MaxLength(50)]
-        public string OrderStatus { get; set; } = string.Empty;
+        public OrderStatus OrderStatus { get; set; } = OrderStatus.Pending;
 
         /// <summary>
         /// Total order amount including all line items and any applicable taxes/fees.
@@ -43,7 +43,7 @@ namespace ELKH.Models
         /// </summary>
         [Display(Name ="Delivery Status")]
         [MaxLength(50)]
-        public string DeliveryStatus { get; set; } = string.Empty;
+        public DeliveryStatus DeliveryStatus { get; set; } = DeliveryStatus.Pending;
 
         // =====================================================================
         // Relationships
@@ -62,13 +62,14 @@ namespace ELKH.Models
         public ICollection<OrderItemModel> OrderItems { get; set; } = new List<OrderItemModel>();
 
         //Relationship with Transaction
-        public TransactionModel Transaction { get; set; } = new TransactionModel();
+        public TransactionModel? Transaction { get; set; }
 
         /// <summary>
         /// Foreign key to the shipping/delivery address for this order.
         /// </summary>
         public int FkContactId { get; set; }
         public ContactDetailModel? ContactDetail { get; set; }
-        //public OrderStatusModel OrderStatusDetail { get; set; } = new OrderStatusModel();
+
+
     }
 }

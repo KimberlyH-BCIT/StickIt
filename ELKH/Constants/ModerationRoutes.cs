@@ -45,6 +45,8 @@ namespace ELKH.Constants
         /// Returns a value like: "/Admin/Moderation/Flag?id=123"
         /// </summary>
         /// <param name="id">The identifier of the entity to flag.</param>
+        /// <summary>Build a flag path: "/Admin/Moderation/Flag?id=123"</summary>
+        /// <summary>Build a flag path: "/Admin/Moderation/Flag?id=123"</summary>
         public static string FlagPath(int id) => $"{FlagAction}?id={id}";
 
         /// <summary>

@@ -84,16 +84,12 @@ public int? StockQuantity { get; set; } = 0;
         /// Foreign key to the product's category (required).
         /// </summary>
         public int FkCategoryId { get; set; }
-
-        //Product Image Relationship
-        public ICollection<ImageModel>? ProductImages { get; set; }
         /// <summary>
         /// Navigation property to the product's category.
         /// Used for category filtering and display.
         /// </summary>
         public CategoryModel? Category { get; set; }
-
-
+        public bool IsDeleted { get; set; } = false;
         /// <summary>
         /// Collection of images associated with this product.
         /// Used for product galleries and thumbnails.

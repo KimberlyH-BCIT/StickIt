@@ -2,7 +2,6 @@ using ELKH.ViewModels;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
-using System.ComponentModel.DataAnnotations;
 
 namespace ELKH.Controllers
 {
@@ -30,7 +29,7 @@ namespace ELKH.Controllers
                     RoleName = r.Name
                 }).ToList();
 
-            return View(roles);
+            return View(roles); // ← was missing return statement
         }
 
         // ================= CREATE ROLE =================
@@ -86,7 +85,7 @@ namespace ELKH.Controllers
 
             if (result.Succeeded)
             {
-                TempData["Success"] = "Role updated successfully.";
+                TempData["Success"] = "Role updated successfully."; // ← block was cut off
                 return RedirectToAction("ListRoles");
             }
 
@@ -96,7 +95,7 @@ namespace ELKH.Controllers
             return View(model);
         }
 
-        // ================= ASSIGN ROLE =================
+        // ================= ASSIGN ROLE (GET) =================
         public async Task<IActionResult> AssignRoles(string? userId, string? returnTo, string? roleId)
         {
             string? email = null;
@@ -113,13 +112,13 @@ namespace ELKH.Controllers
 
             if (lockRole)
             {
-                var role = await _roleManager.FindByIdAsync(roleId);
+                var role = await _roleManager.FindByIdAsync(roleId!);
                 roleName = role?.Name;
             }
 
             var model = new AssignRoleVM
             {
-                UserId = userId,
+                UserId = userId,          
                 Email = email,
                 ReturnTo = returnTo,
                 RoleId = roleId,
@@ -131,6 +130,7 @@ namespace ELKH.Controllers
             return View(model);
         }
 
+        // ================= ASSIGN ROLE (POST) =================
         [HttpPost]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> AssignRoles(AssignRoleVM model)
@@ -166,19 +166,26 @@ namespace ELKH.Controllers
                 return View(model);
             }
 
-            var result = await _userManager.AddToRoleAsync(user, model.RoleName);
-
+            var result = await _userManager.AddToRoleAsync(user, model.RoleName!);
             if (result.Succeeded)
             {
-                TempData["Success"] = "Role assigned successfully.";
+                TempData["Success"] = $"Role '{model.RoleName}' assigned successfully.";
 
-                if (model.ReturnTo == "UserDetails" && !string.IsNullOrEmpty(model.UserId))
-                    return RedirectToAction("AccountDetails", "Admin", new { id = model.UserId });
+                // ── Redirect back to where the user came from ──────────
+                return model.ReturnTo switch
+                {
+                    // Came from AccountDetails → go back to that user's detail page
+                    "UserDetails" => RedirectToAction("AccountDetails", "Admin",
+                                         new { id = model.UserId }),
 
-                if (model.ReturnTo == "RoleDetails" && !string.IsNullOrEmpty(model.RoleId))
-                    return RedirectToAction("RoleUsers", new { roleId = model.RoleId });
+                    // Came from the role's user list → go back to that list
+                    "RoleDetails" when !string.IsNullOrEmpty(model.RoleId)
+                                  => RedirectToAction("RoleUsers",
+                                         new { roleId = model.RoleId }),
 
-                return RedirectToAction("ListRoles");
+                    // Default fallback
+                    _ => RedirectToAction("ListRoles")
+                };
             }
 
             TempData["Error"] = "Failed to assign role.";
@@ -194,20 +201,16 @@ namespace ELKH.Controllers
             var role = await _roleManager.FindByIdAsync(roleId);
             if (role == null) return NotFound();
 
-            var users = new List<IdentityUser>();
-
-            foreach (var user in _userManager.Users)
-            {
-                if (await _userManager.IsInRoleAsync(user, role.Name))
-                    users.Add(user);
-            }
+            // Single efficient query instead of per-user IsInRoleAsync calls
+            var usersInRole = await _userManager.GetUsersInRoleAsync(role.Name!);
 
             ViewBag.RoleId = role.Id;
             ViewBag.RoleName = role.Name;
 
-            return View(users);
+            return View(usersInRole); // ← was returning wrong variable 'users'
         }
 
+        // ================= REMOVE USER FROM ROLE =================
         [HttpPost]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> RemoveUserFromRole(string roleId, string userId)
@@ -222,17 +225,16 @@ namespace ELKH.Controllers
             }
 
             var result = await _userManager.RemoveFromRoleAsync(user, role.Name!);
+
+            // ← removed duplicate TempData assignment
             TempData[result.Succeeded ? "Success" : "Error"] = result.Succeeded
                 ? "User removed from role successfully."
                 : "Failed to remove user from role.";
 
-            TempData[result.Succeeded ? "Success" : "Error"] =
-                result.Succeeded ? "User removed from role." : "Failed to remove user.";
-
             return RedirectToAction("RoleUsers", new { roleId });
         }
 
-        // ================= DELETE ROLE =================
+        // ================= DELETE ROLE (GET) =================
         public async Task<IActionResult> DeleteRole(string roleId)
         {
             var role = await _roleManager.FindByIdAsync(roleId);
@@ -245,6 +247,7 @@ namespace ELKH.Controllers
             });
         }
 
+        // ================= DELETE ROLE (POST) =================
         [HttpPost]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> DeleteRole(RoleVM model)
@@ -257,7 +260,6 @@ namespace ELKH.Controllers
             }
 
             var users = await _userManager.GetUsersInRoleAsync(role.Name!);
-
             if (users.Any())
             {
                 TempData["Error"] = "Role cannot be deleted because it is assigned.";

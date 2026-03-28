@@ -22,14 +22,15 @@ namespace ELKH.Controllers
         private readonly ILogger<AdminController> _logger;
         private readonly IFuzzyReindexService _reindexService;
         private readonly UserManager<IdentityUser> _userManager;
-
+        private readonly RoleManager<IdentityRole> _roleManager;
         public AdminController(
             IRoleRepository roleRepo,
             ApplicationDbContext context,
             IMemoryCache cache,
             ILogger<AdminController> logger,
             IFuzzyReindexService reindexService,
-            UserManager<IdentityUser> userManager)
+            UserManager<IdentityUser> userManager,
+            RoleManager<IdentityRole> roleManager)
         {
             _roleRepo = roleRepo;
             _context = context;
@@ -37,6 +38,7 @@ namespace ELKH.Controllers
             _logger = logger;
             _reindexService = reindexService;
             _userManager = userManager;
+            _roleManager = roleManager;
         }
         /// <summary>Renders the admin dashboard with top products and stock stats.</summary>
         public async Task<IActionResult> Index()
@@ -45,23 +47,13 @@ namespace ELKH.Controllers
             var weekAgo = now.AddDays(-7);
             var monthAgo = now.AddDays(-30);
 
-            var vm = new SalesVM
-            {
-                WeeklyTotalOrders  = await _context.Orders.CountAsync(o => o.CreatedAt >= weekAgo),
-                MonthlyTotalOrders = await _context.Orders.CountAsync(o => o.CreatedAt >= monthAgo),
-
-                // Split inventory into well-stocked (> 100 units) vs low-stock (≤ 100 units) buckets.
-                StockUpCount       = await _context.Product.CountAsync(p => p.StockQuantity > 100),
-                StockDownCount     = await _context.Product.CountAsync(p => p.StockQuantity <= 100),
-            };
-
             // Top 5 products for dashboard widget
             var orderItems = await _context.OrderItems
                 .Include(oi => oi.Product)
                 .Select(oi => new
                 {
                     oi.FkProductId,
-                    ProductName  = oi.Product == null ? "Unknown" : oi.Product.Name,
+                    ProductName = oi.Product == null ? "Unknown" : oi.Product.Name,
                     ProductPrice = oi.Product == null ? 0m : oi.Product.Price,
                     oi.Quantity
                 })
@@ -72,14 +64,16 @@ namespace ELKH.Controllers
                 .Select(g => new TopProductVM
                 {
                     ProductName = g.Key.ProductName,
-                    UnitsSold   = g.Sum(oi => oi.Quantity),
-                    Revenue     = g.Sum(oi => oi.Quantity * g.Key.ProductPrice)
+                    UnitsSold = g.Sum(oi => oi.Quantity),
+                    Revenue = g.Sum(oi => oi.Quantity * g.Key.ProductPrice)
                 })
                 .OrderByDescending(p => p.UnitsSold)
                 .Take(5)
                 .ToList();
 
-            return View(vm);
+            ViewBag.ViewAs = "Admin";
+
+            return View(new SalesVM());
         }
 
         /*============================== List Of All Users ==============================*/
@@ -87,18 +81,22 @@ namespace ELKH.Controllers
         {
             const int pageSize = 5;
 
-            // Candidate set: either all users in the requested role (single query)
-            // or the full user table narrowed by the email search predicate in the DB.
-            IList<IdentityUser> candidates;
+            // Load roles dynamically from DB — new roles appear here automatically
+            ViewBag.Roles = new List<string> { "All" }
+                .Concat(await _roleManager.Roles
+                    .OrderBy(r => r.Name)
+                    .Select(r => r.Name!)
+                    .ToListAsync())
+                .ToList();
 
             bool hasRoleFilter = !string.IsNullOrEmpty(roleFilter) && roleFilter != "All";
 
+            IList<IdentityUser> candidates;
+
             if (hasRoleFilter)
             {
-                // Single server-side query: returns only users assigned to this role.
                 candidates = await _userManager.GetUsersInRoleAsync(roleFilter);
 
-                // Apply optional email search in-memory on the (already small) role-member list.
                 if (!string.IsNullOrEmpty(search))
                 {
                     candidates = candidates
@@ -108,7 +106,6 @@ namespace ELKH.Controllers
             }
             else
             {
-                // Push the email filter to the database; avoid loading all users into memory.
                 IQueryable<IdentityUser> query = _userManager.Users;
                 if (!string.IsNullOrEmpty(search))
                     query = query.Where(u => u.Email != null && u.Email.Contains(search));
@@ -118,30 +115,56 @@ namespace ELKH.Controllers
 
             int totalUsers = candidates.Count;
 
-            // Materialise only the current page before the per-user role look-ups.
             var pageUsers = candidates
                 .Skip((page - 1) * pageSize)
                 .Take(pageSize)
                 .ToList();
 
-            // GetRolesAsync is called only for the paged slice (≤ pageSize users).
             var userList = new List<UserListVM>(pageUsers.Count);
             foreach (var user in pageUsers)
             {
                 var roles = await _userManager.GetRolesAsync(user);
                 userList.Add(new UserListVM
                 {
-                    Id    = user.Id,
+                    Id = user.Id,
                     Email = user.Email ?? string.Empty,
                     Roles = roles.ToList()
                 });
             }
 
             ViewBag.CurrentPage = page;
-            ViewBag.TotalPages  = (int)Math.Ceiling((double)totalUsers / pageSize);
-            ViewBag.Search      = search;
-            ViewBag.RoleFilter  = roleFilter;
+            ViewBag.TotalPages = (int)Math.Ceiling((double)totalUsers / pageSize);
+            ViewBag.Search = search;
+            ViewBag.RoleFilter = roleFilter;
 
+
+            var allUsers = _userManager.Users.ToList();
+            ViewBag.TotalUsers = allUsers.Count;
+
+            var roleCounts = new Dictionary<string, int>();
+
+            var rolesFromDb = await _roleManager.Roles
+                .AsNoTracking()
+                .Select(r => r.Name!)
+                .ToListAsync();
+
+            foreach (var role in rolesFromDb)
+            {
+                roleCounts[role] = 0;
+            }
+
+            foreach (var user in allUsers)
+            {
+                var roles = await _userManager.GetRolesAsync(user);
+
+                foreach (var role in roles)
+                {
+                    if (roleCounts.ContainsKey(role))
+                        roleCounts[role]++;
+                }
+            }
+
+            ViewBag.RoleCounts = roleCounts;
             return View(userList);
         }
 
@@ -159,9 +182,6 @@ namespace ELKH.Controllers
 
             var roles = await _userManager.GetRolesAsync(user);
 
-            // Resolve the application-side RegisteredUser by email so we can look up
-            // the contact detail via the canonical FK (FkRegisteredUserId) rather than
-            // the Identity GUID string, which may not be populated on all rows.
             var registeredUser = await _context.RegisteredUsers
                 .FirstOrDefaultAsync(r => r.Email == user.Email);
             var contact = registeredUser is null
@@ -212,56 +232,82 @@ namespace ELKH.Controllers
         public async Task<IActionResult> ManageSales()
         {
             var now = DateTime.UtcNow;
+            var todayStart = now.Date;
             var weekStart = now.AddDays(-6).Date;
             var monthStart = new DateTime(now.Year, now.Month, 1);
-            var yearStart = now.AddMonths(-11).Date;
+            var yearStart = new DateTime(now.Year, 1, 1);
+            var fiveYrStart = now.AddYears(-4).Date;
 
-            // ── Fetch into memory first so decimal Sum() works with SQLite ──
+            // Load enough history for all buckets in one round-trip
             var allTransactions = await _context.Transactions
-                .Where(t => t.TransactionDate >= yearStart)
+                .Where(t => t.TransactionDate >= fiveYrStart)
                 .Select(t => new { t.TransactionDate, t.Amount })
                 .ToListAsync();
 
+            // ── Bucket helpers ────────────────────────────────────────
+            var todayTx = allTransactions.Where(t => t.TransactionDate.Date == todayStart).ToList();
             var weeklyTx = allTransactions.Where(t => t.TransactionDate.Date >= weekStart).ToList();
             var monthlyTx = allTransactions.Where(t => t.TransactionDate >= monthStart).ToList();
+            var yearlyTx = allTransactions.Where(t => t.TransactionDate >= yearStart).ToList();
 
-            // ── Summary cards ─────────────────────────────────────────────
+            // ── Summary cards ─────────────────────────────────────────
+            decimal dailyGross = todayTx.Any() ? todayTx.Sum(t => t.Amount) : 0m;
             decimal weeklyGross = weeklyTx.Any() ? weeklyTx.Sum(t => t.Amount) : 0m;
             decimal monthlyGross = monthlyTx.Any() ? monthlyTx.Sum(t => t.Amount) : 0m;
-            int weeklyOrders = weeklyTx.Count;
-            int monthlyOrders = monthlyTx.Count;
-            int totalOrders = await _context.Orders.CountAsync();
+            decimal yearlyGross = yearlyTx.Any() ? yearlyTx.Sum(t => t.Amount) : 0m;
 
-            // ── Weekly chart: last 7 days ─────────────────────────────────
+            // ── Daily chart: today by hour ────────────────────────────
+            var dailyLabels = new List<string>();
+            var dailySalesData = new List<decimal>();
+            for (int h = 0; h < 24; h++)
+            {
+                var hour = todayStart.AddHours(h);
+                dailyLabels.Add(hour.ToString("HH:00"));
+                dailySalesData.Add(todayTx
+                    .Where(t => t.TransactionDate.Hour == h)
+                    .Sum(t => (decimal?)t.Amount) ?? 0m);
+            }
+
+            // ── Weekly chart: last 7 days ─────────────────────────────
             var weeklyLabels = new List<string>();
             var weeklySalesData = new List<decimal>();
-
             for (int d = 6; d >= 0; d--)
             {
                 var day = now.AddDays(-d).Date;
-                var dayTx = allTransactions.Where(t => t.TransactionDate.Date == day).ToList();
                 weeklyLabels.Add(day.ToString("ddd dd"));
-                weeklySalesData.Add(dayTx.Any() ? dayTx.Sum(t => t.Amount) : 0m);
+                weeklySalesData.Add(allTransactions
+                    .Where(t => t.TransactionDate.Date == day)
+                    .Sum(t => (decimal?)t.Amount) ?? 0m);
             }
 
-            // ── Monthly chart: last 12 months ─────────────────────────────
+            // ── Monthly chart: last 12 months ────────────────────────
             var monthlyLabels = new List<string>();
             var monthlySalesData = new List<decimal>();
-
             for (int m = 11; m >= 0; m--)
             {
                 var month = now.AddMonths(-m);
-                var monthTx = allTransactions
+                monthlyLabels.Add(month.ToString("MMM yyyy"));
+                monthlySalesData.Add(allTransactions
                     .Where(t => t.TransactionDate.Year == month.Year
                              && t.TransactionDate.Month == month.Month)
-                    .ToList();
-                monthlyLabels.Add(month.ToString("MMM yyyy"));
-                monthlySalesData.Add(monthTx.Any() ? monthTx.Sum(t => t.Amount) : 0m);
+                    .Sum(t => (decimal?)t.Amount) ?? 0m);
             }
 
-            // ── Top 5 products ────────────────────────────────────────────
+            // ── Yearly chart: last 5 years ────────────────────────────
+            var yearlyLabels = new List<string>();
+            var yearlySalesData = new List<decimal>();
+            for (int y = 4; y >= 0; y--)
+            {
+                int yr = now.AddYears(-y).Year;
+                yearlyLabels.Add(yr.ToString());
+                yearlySalesData.Add(allTransactions
+                    .Where(t => t.TransactionDate.Year == yr)
+                    .Sum(t => (decimal?)t.Amount) ?? 0m);
+            }
+
+            // ── Top 5 products ────────────────────────────────────────
             var orderItems = await _context.OrderItems
-                .Include(oi => oi.Product) // use correct navigation property
+                .Include(oi => oi.Product)
                 .Select(oi => new
                 {
                     oi.FkProductId,
@@ -285,22 +331,34 @@ namespace ELKH.Controllers
 
             var vm = new SalesVM
             {
+                DailyGrossSales = dailyGross,
+                DailyTotalOrders = todayTx.Count,
+                DailyLabels = dailyLabels,
+                DailySalesData = dailySalesData,
+
                 WeeklyGrossSales = weeklyGross,
-                MonthlyGrossSales = monthlyGross,
-                WeeklyTotalOrders = weeklyOrders,
-                MonthlyTotalOrders = monthlyOrders,
-                TotalOrdersAllTime = totalOrders,
+                WeeklyTotalOrders = weeklyTx.Count,
                 WeeklyLabels = weeklyLabels,
                 WeeklySalesData = weeklySalesData,
+
+                MonthlyGrossSales = monthlyGross,
+                MonthlyTotalOrders = monthlyTx.Count,
                 MonthlyLabels = monthlyLabels,
                 MonthlySalesData = monthlySalesData,
+
+                YearlyGrossSales = yearlyGross,
+                YearlyTotalOrders = yearlyTx.Count,
+                YearlyLabels = yearlyLabels,
+                YearlySalesData = yearlySalesData,
+
+                TotalOrdersAllTime = await _context.Orders.CountAsync(),
                 TopProducts = topProducts
             };
 
             return View(vm);
         }
 
-[HttpPost]
+        [HttpPost]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> ReindexFTS([FromBody] ReindexPayload? payload)
         {

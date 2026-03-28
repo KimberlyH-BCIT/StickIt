@@ -1,0 +1,110 @@
+﻿@model ELKH.ViewModels.TransactionDetailVM
+
+@{
+    ViewData["Title"] = "Transaction Details";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+
+<div class="container" style="max-width:1000px;">
+
+    <!-- HEADER -->
+    <div class="d-flex justify-content-between align-items-center mt-3 mb-3">
+        <h2 class="fw-bold text-primary mb-0">Transaction Details</h2>
+        <a asp-action="ListAllTransactions"
+               class="btn btn-outline-primary btn-sm rounded-pill px-4">
+            ← Back To Transactions
+        </a>
+    </div>
+
+    <!-- TRANSACTION CARD -->
+    <div class="card shadow-sm border-0 rounded-4 mb-4">
+        <div class="card-body text-center">
+
+            <h4 class="fw-bold mb-1">Transaction #@Model.TransactionId</h4>
+
+            <p class="text-muted mb-1">@Model.CustomerName</p>
+            <p class="text-muted mb-3">@Model.CustomerEmail</p>
+
+            <div class="d-flex justify-content-center gap-5 mt-3">
+
+                <div>
+                    <small class="text-muted">Amount</small>
+                    <h5 class="text-success fw-bold">
+                        $@Model.Amount.ToString("N2")
+                    </h5>
+                </div>
+
+                <div>
+                    <small class="text-muted">Delivery</small>
+                    <h6>$@Model.DeliveryFee.ToString("N2")</h6>
+                </div>
+
+                <div>
+                    <small class="text-muted">Date</small>
+                    <h6>@Model.TransactionDate.ToString("MMM dd, yyyy")</h6>
+                </div>
+
+            </div>
+
+        </div>
+    </div>
+
+    <!-- ORDER ITEMS -->
+    <div class="card shadow-sm border-0 rounded-4">
+        <div class="card-header bg-light fw-semibold">
+            🛒 Order Items
+        </div>
+
+        <div class="table-responsive">
+            <table class="table align-middle mb-0">
+
+                <thead class="table-light">
+                    <tr>
+                        <th>Product</th>
+                        <th>Category</th>
+                        <th class="text-center">Qty</th>
+                        <th class="text-end">Price</th>
+                    </tr>
+                </thead>
+
+                <tbody>
+                    @if (Model.Items != null && Model.Items.Any())
+                    {
+                        @foreach (var item in Model.Items)
+                        {
+                            var finalPrice = item.UnitPrice - (item.UnitPrice * item.DiscountPercent / 100);
+
+                            <tr>
+                                <td class="fw-semibold">
+                                    @item.ProductName
+                                </td>
+
+                                <td class="text-muted">
+                                    @item.CategoryName
+                                </td>
+
+                                <td class="text-center">
+                                    @item.Quantity
+                                </td>
+
+                                <td class="text-end text-success fw-semibold">
+                                    $@finalPrice.ToString("N2")
+                                </td>
+                            </tr>
+                        }
+                    }
+                    else
+                    {
+                        <tr>
+                            <td colspan="4" class="text-center text-muted py-4">
+                                No items found
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+
+            </table>
+        </div>
+    </div>
+
+</div>

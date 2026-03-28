@@ -3,80 +3,165 @@
 @{
     ViewData["Title"] = "Staff Accounts";
     Layout = "~/Views/Shared/_Layout.cshtml";
+
+    string search = ViewBag.Search as string ?? "";
+    string roleFilter = ViewBag.RoleFilter as string ?? "";
 }
 
-<div class="container-fluid mt-4 px-4">
+<div class="container mt-4 mb-5" style="max-width:1000px;">
 
+    <!-- Header -->
     <div class="d-flex justify-content-between align-items-center mb-4">
-        <h2 class="fw-bold text-primary mb-0">Staff Accounts</h2>
-        <a asp-action="Index" class="btn btn-outline-primary rounded-pill px-4">← Dashboard</a>
+        <h3 class="fw-bold text-primary mb-0">Staff Accounts</h3>
+        <a asp-action="Index" class="btn btn-outline-primary btn-sm rounded-pill px-4">
+            ← Back To Dashboard
+        </a>
     </div>
 
-    <!-- Search -->
+    <!-- Search + Filters -->
     <div class="card border-0 shadow-sm rounded-4 mb-4">
-        <div class="card-body p-4">
-            <form method="get" class="d-flex justify-content-center gap-2">
-                <div class="input-group w-50">
-                    <input type="text"
-                           name="search"
-                           value="@ViewBag.Search"
-                           class="form-control rounded-start-pill"
-                           placeholder="Search by email or role..." />
-                    <button type="submit" class="btn btn-primary rounded-end-pill px-4">Search</button>
+        <div class="card-body">
+
+            <form method="get" asp-action="ListOfStaffAccount"
+                  class="d-flex flex-wrap gap-3 align-items-center justify-content-between">
+
+                <!-- LEFT SIDE -->
+                <div class="d-flex flex-wrap gap-2 align-items-center">
+
+                    <!-- Roles -->
+                    <div class="d-flex flex-wrap gap-2">
+
+                        <a asp-action="ListOfStaffAccount"
+                               class="btn btn-sm rounded-pill px-3 @(string.IsNullOrEmpty(roleFilter) ? "btn-dark" : "btn-outline-dark")">
+                            All
+                        </a>
+
+                        @foreach (var role in ViewBag.Roles as List<string>)
+                        {
+                            var color = role switch
+                            {
+                                "Admin" => "danger",
+                                "Manager" => "primary",
+                                "Staff" => "info",
+                                _ => "secondary"
+                            };
+
+                            <a asp-action="ListOfStaffAccount"
+                                   asp-route-roleFilter="@role"
+                                   asp-route-search="@search"
+                                   class="btn btn-sm rounded-pill px-3 @(roleFilter == role ? $"btn-{color}" : $"btn-outline-{color}")">
+                                @role
+                            </a>
+                        }
+
+                    </div>
                 </div>
-                @if (!string.IsNullOrEmpty(ViewBag.Search as string))
-                {
-                    <a asp-action="ListOfStaffAccount" class="btn btn-outline-secondary rounded-pill px-4">Clear</a>
-                }
+
+                <!-- Search -->
+                <div class="d-flex align-items-center gap-2">
+                    <input type="text" name="search" value="@search"
+                           class="form-control form-control-sm rounded-pill px-3"
+                           placeholder="Search by name or email..."
+                           style="width:220px;" />
+
+                    <button type="submit" class="btn btn-primary btn-sm rounded-pill px-4">
+                        Search
+                    </button>
+
+                    @if (!string.IsNullOrEmpty(search) || !string.IsNullOrEmpty(roleFilter))
+                    {
+                        <a asp-action="ListOfStaffAccount"
+                               class="btn btn-outline-secondary btn-sm rounded-pill px-3">
+                            ✕ Clear
+                        </a>
+                    }
+                </div>
+
+
             </form>
+
         </div>
     </div>
 
     <!-- Table -->
-    <div class="card border-0 shadow-sm rounded-4">
-        <div class="card-body p-0">
-            <div class="table-responsive">
-                <table class="table table-hover align-middle mb-0">
-                    <thead class="table-light">
-                        <tr>
-                            <th class="ps-4">Email</th>
-                            <th>Username</th>
-                            <th>Roles</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        @if (Model.Any())
-                        {
-                            @foreach (var u in Model)
-                            {
-                                <tr>
-                                    <td class="ps-4 fw-semibold">@u.Email</td>
-                                    <td class="text-muted">@u.Name</td>
-                                    <td>
-                                        @foreach (var role in u.Roles)
-                                        {
-                                            var color = role switch
-                                            {
-                                                                "Admin" => "bg-danger",
-                                                                "Manager" => "bg-primary",
-                                                                "Staff" => "bg-info text-dark",
-                                                _ => "bg-secondary"
-                                            };
-                                            <span class="badge @color me-1">@role</span>
-                                        }
-                                    </td>
-                                </tr>
-                            }
-                        }
-                        else
+    <div class="card border-0 shadow rounded-4 overflow-hidden">
+        <div class="table-responsive">
+            <table class="table table-hover align-middle mb-0">
+
+                <thead class="table-light">
+                    <tr>
+                        <th class="ps-3" style="width:50px;">#</th>
+                        <th>User ID</th>
+                        <th>Name</th>
+                        <th>Email</th>
+                        <th>Phone</th>
+                        <th>Province</th>
+                        <th>Roles</th>
+                    </tr>
+                </thead>
+
+                <tbody>
+                    @if (Model.Any())
+                    {
+                        int i = 1;
+
+                        @foreach (var u in Model)
                         {
                             <tr>
-                                <td colspan="3" class="text-center text-muted py-5">No staff accounts found.</td>
+                                <td class="ps-3 text-muted small">@i</td>
+
+                                <td class="text-muted small">
+                                    @(u.Id?.Length > 6 ? u.Id.Substring(0, 6) + "..." : u.Id)
+                                </td>
+
+                                <td class="fw-semibold">
+                                    @(string.IsNullOrEmpty(u.FirstName) ? "—" : u.FirstName)
+                                    @(string.IsNullOrEmpty(u.LastName) ? "" : " " + u.LastName)
+                                </td>
+
+                                <td class="text-muted">@u.Email</td>
+
+                                <td class="text-muted">
+                                    @(string.IsNullOrEmpty(u.PhoneNumber) ? "—" : u.PhoneNumber)
+                                </td>
+
+                                <td class="text-muted">
+                                    @(ViewBag.Provinces != null && ViewBag.Provinces.ContainsKey(u.Id)
+                                        ? ViewBag.Provinces[u.Id]
+                                        : "—")
+                                </td>
+
+                                <!-- MULTIPLE ROLES -->
+                                <td>
+                                    @foreach (var role in u.Roles)
+                                    {
+                                        var badge = role switch
+                                        {
+                                            "Admin" => "bg-danger",
+                                            "Manager" => "bg-primary",
+                                            "Staff" => "bg-info text-dark",
+                                            _ => "bg-secondary"
+                                        };
+
+                                        <span class="badge @badge me-1">@role</span>
+                                    }
+                                </td>
                             </tr>
+
+                            i++;
                         }
-                    </tbody>
-                </table>
-            </div>
+                    }
+                    else
+                    {
+                        <tr>
+                            <td colspan="7" class="text-center text-muted py-5">
+                                No staff accounts found.
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+
+            </table>
         </div>
     </div>
 

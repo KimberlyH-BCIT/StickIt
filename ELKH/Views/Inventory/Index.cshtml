@@ -1,67 +1,200 @@
-﻿@model List<InventoryVM>
+@model PagedResult<InventoryVM>
 
-@section title{
-    <h3>Inventory</h3>
+@{
+    ViewData["Title"] = "Inventory";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+
+    // Capture the current stock filter from ViewBag
+    string stockFilter = ViewBag.StockFilter as string ?? "";
 }
 
-<table>
-    <thead>
-        <tr>
-            <td>SKU</td>
-            <td>Name</td>
-            <td>Quantity</td>
-            <td>Active</td>
-            <td>Edit</td>
-            <td>Edit Image</td>
-            <td>Edit Quantity</td>
-        </tr>
-    </thead>
-    <tbody>
-        @foreach(var pro in Model)
-        {
-            <tr>
-                <td>@pro.PkProductId</td>
-                <td>@pro.ProductName</td>
-                <td>@pro.Quantity</td>
-                <td>@pro.IsActive</td>
-                <td>
-                    <a asp-controller="Inventory" asp-action="ProductImages" asp-route-id="@pro.PkProductId">Edit</a>
-                </td>
-                <td>
-                    <a asp-controller="Inventory" asp-action="ProductImages" asp-route-id="@pro.PkProductId">Edit Product Image</a>
-                </td>
-                <td>
-                    <label for="edit-@pro.PkProductId">Edit Quantity</label>
-                    <input id="edit-@pro.PkProductId" type="checkbox" class="editQuantity" data-id="@pro.PkProductId" />
+<div class="container mt-4 pb-5" style="max-width:1100px;">
 
-                    <div class="editQuantityArea hide" data-id="@pro.PkProductId">
-                        <form method="post" asp-action="EditProductAmount" asp-controller="Inventory">
-                            <input type="hidden" name="productId" value="@pro.PkProductId" />
-                            <input type="number" name="quantityId" value="@pro.Quantity" />
-                            <button type="submit">Update</button>
-                        </form>
+    @if (TempData["Success"] != null)
+    {
+        <div class="alert alert-success alert-dismissible fade show" role="alert">
+            @TempData["Success"]
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
+    }
+
+    <div class="text-center mb-4">
+        <h2 class="fw-bold text-primary mb-0">Inventory Management</h2>
+        <p class="text-muted small">Monitor stock levels and product status</p>
+    </div>
+
+    <div class="d-flex justify-content-between align-items-center mb-3">
+        <a asp-action="AddProduct" class="btn btn-primary rounded-pill px-4 shadow-sm">+ Add Product</a>
+        <a asp-controller="Staff" asp-action="Index" class="btn btn-outline-secondary rounded-pill px-4">← Back to Dashboard</a>
+    </div>
+
+    <div class="card border-0 shadow-sm rounded-4 mb-4">
+        <div class="card-body p-4">
+            <form asp-action="Index" method="get">
+                <div class="row g-3 align-items-center">
+                    
+                    <div class="col-md-4">
+                        <div class="input-group">
+                            <input class="form-control rounded-start-pill" type="search" name="searchString"
+                                   value="@ViewBag.CurrentFilter" placeholder="Search product..." />
+                            <button type="submit" class="btn btn-secondary rounded-end-pill px-3">Search</button>
+                        </div>
                     </div>
-                </td>
-            </tr>
+
+                    <div class="col-md-4 text-center">
+                        <div class="btn-group shadow-sm rounded-pill p-1 bg-light">
+                            <span class="px-2 small fw-bold text-muted align-self-center">Stock:</span>
+                            
+                            <a asp-action="Index" 
+                               asp-route-sortOrder="@ViewBag.CurrentSort" 
+                               asp-route-searchString="@ViewBag.CurrentFilter"
+                               class="btn btn-sm rounded-pill @(stockFilter == "" ? "btn-dark" : "text-muted")">All</a>
+                            
+                            <a asp-action="Index" asp-route-stockFilter="stocked" 
+                               asp-route-sortOrder="@ViewBag.CurrentSort" 
+                               asp-route-searchString="@ViewBag.CurrentFilter"
+                               class="btn btn-sm rounded-pill @(stockFilter == "stocked" ? "btn-success" : "text-outline-success")">Full</a>
+                            
+                            <a asp-action="Index" asp-route-stockFilter="low" 
+                               asp-route-sortOrder="@ViewBag.CurrentSort" 
+                               asp-route-searchString="@ViewBag.CurrentFilter"
+                               class="btn btn-sm rounded-pill @(stockFilter == "low" ? "btn-danger" : "text-outline-danger")">Low</a>
+                        </div>
+                    </div>
+
+                    <div class="col-md-4 text-md-end">
+                        <div class="dropdown d-inline-block">
+                            <button class="btn btn-outline-primary rounded-pill dropdown-toggle px-4" type="button" data-bs-toggle="dropdown">
+                                Sort By
+                            </button>
+                            <ul class="dropdown-menu dropdown-menu-end shadow border-0 rounded-3">
+                                <li><a class="dropdown-item" asp-action="Index" asp-route-sortOrder="name_asc" asp-route-searchString="@ViewBag.CurrentFilter" asp-route-stockFilter="@stockFilter">Name (A-Z)</a></li>
+                                <li><a class="dropdown-item" asp-action="Index" asp-route-sortOrder="name_desc" asp-route-searchString="@ViewBag.CurrentFilter" asp-route-stockFilter="@stockFilter">Name (Z-A)</a></li>
+                                <li><hr class="dropdown-divider"></li>
+                                <li><a class="dropdown-item" asp-action="Index" asp-route-sortOrder="price_asc" asp-route-searchString="@ViewBag.CurrentFilter" asp-route-stockFilter="@stockFilter">Price: Low to High</a></li>
+                                <li><a class="dropdown-item" asp-action="Index" asp-route-sortOrder="price_desc" asp-route-searchString="@ViewBag.CurrentFilter" asp-route-stockFilter="@stockFilter">Price: High to Low</a></li>
+                            </ul>
+                        </div>
+                        <a asp-action="Index" class="btn btn-link btn-sm text-decoration-none text-muted ms-2">Clear All</a>
+                    </div>
+
+                </div>
+                
+                @* Hidden fields to preserve state during search submit *@
+                <input type="hidden" name="sortOrder" value="@ViewBag.CurrentSort" />
+                <input type="hidden" name="stockFilter" value="@stockFilter" />
+            </form>
+        </div>
+    </div>
+
+    <div class="card border-0 shadow-sm rounded-4 overflow-hidden">
+        <div class="table-responsive">
+            <table class="table table-hover align-middle mb-0">
+                <thead class="bg-light">
+                    <tr>
+                        <th class="ps-4 py-3 text-uppercase small fw-bold text-muted">SKU</th>
+                        <th class="py-3 text-uppercase small fw-bold text-muted">Product</th>
+                        <th class="py-3 text-uppercase small fw-bold text-muted text-end pe-3">Price</th>
+                        <th class="py-3 text-uppercase small fw-bold text-muted text-center">Quantity</th>
+                        <th class="py-3 text-uppercase small fw-bold text-muted text-center">Status</th>
+                        <th class="py-3 text-uppercase small fw-bold text-muted text-center">Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @if (Model.Items.Any())
+                    {
+                        foreach (var pro in Model.Items)
+                        {
+                            string stockBadge = pro.Quantity == 0 ? "bg-secondary"
+                                              : pro.Quantity < 50 ? "bg-danger" : "bg-success";
+                            
+                            string rowClass = pro.Quantity == 0 ? "table-light"
+                                            : pro.Quantity < 50 ? "table-danger-subtle" : "";
+
+                            <tr class="@rowClass">
+                                <td class="ps-4 text-muted small">#@pro.PkProductId</td>
+                                <td class="fw-bold text-dark">@pro.ProductName</td>
+                                <td class="text-end pe-3 fw-bold text-success">
+                                    $@pro.Price.ToString("N2")
+                                </td>
+                                <td class="text-center">
+                                    <span class="badge @stockBadge px-3 py-2 rounded-pill shadow-sm">@pro.Quantity</span>
+                                </td>
+                                <td class="text-center">
+                                    @if (pro.IsActive)
+                                    {
+                                        <span class="badge rounded-pill bg-success-subtle text-success border border-success px-2 py-1">● Active</span>
+                                    }
+                                    else
+                                    {
+                                        <span class="badge rounded-pill bg-secondary-subtle text-secondary border border-secondary px-2 py-1">○ Inactive</span>
+                                    }
+                                </td>
+                                <td class="text-center">
+                                    <div class="d-flex justify-content-center gap-2">
+                                        <a asp-action="Detail" asp-route-id="@pro.PkProductId"
+                                           class="btn btn-sm btn-outline-secondary rounded-pill px-3">Detail</a>
+                                        <a asp-action="EditProduct" asp-route-id="@pro.PkProductId"
+                                           class="btn btn-sm btn-primary rounded-pill px-3 shadow-sm">Edit</a>
+                                    </div>
+                                </td>
+                            </tr>
+                        }
+                    }
+                    else
+                    {
+                        <tr>
+                            <td colspan="6" class="text-center py-5">
+                                <div class="text-muted">
+                                    <i class="bi bi-box-seam display-4 d-block mb-3"></i>
+                                    <p class="mb-0">No products match your current filters.</p>
+                                </div>
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+
+        @if (Model.AllPages > 1)
+        {
+            <div class="card-footer bg-white py-3 border-0">
+                <nav>
+                    <ul class="pagination pagination-sm justify-content-center mb-0">
+                        <li class="page-item @(Model.CurrentPage == 1 ? "disabled" : "")">
+                            <a class="page-link rounded-start-pill px-3" asp-action="Index"
+                               asp-route-page="@(Model.CurrentPage - 1)"
+                               asp-route-searchString="@ViewBag.CurrentFilter"
+                               asp-route-sortOrder="@ViewBag.CurrentSort"
+                               asp-route-stockFilter="@stockFilter">Prev</a>
+                        </li>
+                        @for (int i = 1; i <= Model.AllPages; i++)
+                        {
+                            <li class="page-item @(i == Model.CurrentPage ? "active" : "")">
+                                <a class="page-link px-3" asp-action="Index" asp-route-page="@i"
+                                   asp-route-searchString="@ViewBag.CurrentFilter"
+                                   asp-route-sortOrder="@ViewBag.CurrentSort"
+                                   asp-route-stockFilter="@stockFilter">@i</a>
+                            </li>
+                        }
+                        <li class="page-item @(Model.CurrentPage == Model.AllPages ? "disabled" : "")">
+                            <a class="page-link rounded-end-pill px-3" asp-action="Index"
+                               asp-route-page="@(Model.CurrentPage + 1)"
+                               asp-route-searchString="@ViewBag.CurrentFilter"
+                               asp-route-sortOrder="@ViewBag.CurrentSort"
+                               asp-route-stockFilter="@stockFilter">Next</a>
+                        </li>
+                    </ul>
+                </nav>
+            </div>
         }
-    </tbody>
-</table>
+    </div>
+</div>
 
-<script>
-    document.addEventListener("DOMContentLoaded", function() {
-        const inputCheck = document.querySelectorAll(".editQuantity");
-
-        inputCheck.forEach(box => {
-            box.addEventListener("change", function() {
-                const editArea = document.querySelector(`.editQuantityArea[data-id='${this.dataset.id}']`);
-
-                if(this.checked){
-                    editArea.classList.remove("hide");
-                } else {
-                    editArea.classList.add("hide");
-                }
-            });
-        });
-    });
-</script>
-
+<style>
+    .table-danger-subtle { background-color: rgba(220, 53, 69, 0.04) !important; }
+    .bg-success-subtle { background-color: #e6f4ea; }
+    .bg-secondary-subtle { background-color: #f1f3f4; }
+    .btn-outline-success:hover { color: #fff; background-color: #198754; }
+    .btn-outline-danger:hover { color: #fff; background-color: #dc3545; }
+</style>

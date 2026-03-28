@@ -194,6 +194,9 @@ body {
 .form-floating > .form-control:focus::placeholder {
     text-align: start;
 }
+.form-floating > .form-control-plaintext:focus::placeholder, .form-floating > .form-control:focus::placeholder {
+  text-align: start;
+}
 /* Inline dark footer like <footer style="background:#111;"> */
 footer[style*="background:#111"]{
     background: linear-gradient(180deg,
@@ -248,3 +251,17 @@ footer[style*="background:#111"] a:hover{ color: var(--mint) !important; }
 .role-staff    { border-color: #0dcaf0; color: #0dcaf0; }
 .role-customer { border-color: #6c757d; color: #6c757d; }
 .role-none     { border-color: #adb5bd; color: #adb5bd; }
+
+
+.small-kpi-clean {
+    min-height: 55px;
+}
+
+    .small-kpi-clean h6 {
+        font-size: 1rem;
+        margin: 0;
+    }
+
+    .small-kpi-clean small {
+        font-size: 0.7rem;
+    }

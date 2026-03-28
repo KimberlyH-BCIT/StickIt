@@ -1,0 +1,76 @@
+@model ELKH.ViewModels.ProductVM
+
+@{
+    ViewData["Title"] = "Add Product";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+
+<div class="container mt-4 pb-5" style="max-width:700px;">
+
+    <h2 class="fw-bold text-primary mb-4">Add Product</h2>
+
+    @* The enctype attribute is essential for sending file data to the controller *@
+    <form asp-action="AddProduct" method="post" enctype="multipart/form-data">
+        @Html.AntiForgeryToken()
+
+        <div class="mb-3">
+            <label asp-for="ProductName" class="form-label fw-bold"></label>
+            <input asp-for="ProductName" class="form-control" />
+            <span asp-validation-for="ProductName" class="text-danger"></span>
+        </div>
+
+        <div class="mb-3">
+            <label asp-for="Description" class="form-label fw-bold"></label>
+            <textarea asp-for="Description" class="form-control" rows="3"></textarea>
+            <span asp-validation-for="Description" class="text-danger"></span>
+        </div>
+
+        <div class="row mb-3">
+            <div class="col-md-6">
+                <label asp-for="Price" class="form-label fw-bold"></label>
+                <input asp-for="Price" type="number" step="0.01" class="form-control" />
+                <span asp-validation-for="Price" class="text-danger"></span>
+            </div>
+            <div class="col-md-6">
+                <label asp-for="StockQuantity" class="form-label fw-bold"></label>
+                <input asp-for="StockQuantity" type="number" class="form-control" />
+                <span asp-validation-for="StockQuantity" class="text-danger"></span>
+            </div>
+        </div>
+
+        <div class="mb-3">
+            <label asp-for="CategoryId" class="form-label fw-bold"></label>
+            <select asp-for="CategoryId" asp-items="@ViewBag.Categories" class="form-select">
+                <option value="">-- Select Category --</option>
+            </select>
+            <span asp-validation-for="CategoryId" class="text-danger"></span>
+        </div>
+
+        <div class="mb-4">
+            <div class="form-check">
+                <input asp-for="IsActive" class="form-check-input" checked />
+                <label asp-for="IsActive" class="form-check-label">Product is Active</label>
+            </div>
+        </div>
+
+        <hr />
+
+        <h5 class="fw-bold">Upload Product Images</h5>
+        <div class="mb-4">
+            <input type="file" name="Images" multiple class="form-control" accept="image/*" />
+            <small class="text-muted">You can select one or more images for this new product.</small>
+        </div>
+
+        <div class="d-flex justify-content-between mt-4">
+            <a asp-action="Index" class="btn btn-outline-secondary px-4">Cancel</a>
+            <button type="submit" class="btn btn-success px-4">Create Product</button>
+        </div>
+
+    </form>
+</div>
+
+@section Scripts {
+    @{
+        await Html.RenderPartialAsync("_ValidationScriptsPartial");
+    }
+}

@@ -246,12 +246,12 @@ public class CheckoutController : Controller
         {
             var order = new OrderModel
             {
-                OrderStatus        = "Placed",
-                TotalAmount        = total,
-                CreatedAt          = DateTime.UtcNow,
-                DeliveryStatus     = "Pending",
+                OrderStatus = OrderStatus.Pending,
+                TotalAmount = total,
+                CreatedAt = DateTime.UtcNow,
+                DeliveryStatus = DeliveryStatus.Pending,
                 FkRegisteredUserId = regUser.PkRegisteredUserId,
-                FkContactId        = contactId
+                FkContactId = contactId
             };
             _db.Orders.Add(order);
             await _db.SaveChangesAsync();
@@ -379,10 +379,10 @@ public class CheckoutController : Controller
         {
             var order = new OrderModel
             {
-                OrderStatus        = "Placed",
+                OrderStatus = OrderStatus.Pending,
                 TotalAmount        = total,
                 CreatedAt          = DateTime.UtcNow,
-                DeliveryStatus     = "Pending",
+                DeliveryStatus = DeliveryStatus.Pending,
                 FkRegisteredUserId = regUser.PkRegisteredUserId,
                 FkContactId        = contactId
             };

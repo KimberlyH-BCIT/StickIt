@@ -22,5 +22,6 @@ namespace ELKH.Repositories
 
         /// <summary>Applies all changes in <paramref name="profile"/> and saves asynchronously. Returns <see langword="true"/> on success.</summary>
         Task<bool> UpdateAndSaveAsync(UserProfileModel profile);
+        void UpdateAndSave(UserProfileModel existing);
     }
 }

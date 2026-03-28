@@ -4,41 +4,132 @@
     ViewData["Title"] = "Sales Dashboard";
     Layout = "~/Views/Shared/_Layout.cshtml";
 
-    var dailyLabels   = System.Text.Json.JsonSerializer.Serialize(Model.DailyLabels);
-    var dailySales    = System.Text.Json.JsonSerializer.Serialize(Model.DailySalesData);
-    var weeklyLabels  = System.Text.Json.JsonSerializer.Serialize(Model.WeeklyLabels);
-    var weeklySales   = System.Text.Json.JsonSerializer.Serialize(Model.WeeklySalesData);
-    var monthlyLabels = System.Text.Json.JsonSerializer.Serialize(Model.MonthlyLabels);
-    var monthlySales  = System.Text.Json.JsonSerializer.Serialize(Model.MonthlySalesData);
-    var yearlyLabels  = System.Text.Json.JsonSerializer.Serialize(Model.YearlyLabels);
-    var yearlySales   = System.Text.Json.JsonSerializer.Serialize(Model.YearlySalesData);
+    // ── Dummy data fallback so the page always looks populated ──
+    // Remove this block once real transactions exist in your DB.
+    bool useDummy = !Model.WeeklyLabels.Any();
+
+    List<string> dailyLabels;
+    List<decimal> dailySales;
+    List<string> weeklyLabels;
+    List<decimal> weeklySales;
+    List<string> monthlyLabels;
+    List<decimal> monthlySales;
+    List<string> yearlyLabels;
+    List<decimal> yearlySales;
+    List<ELKH.ViewModels.TopProductVM> topProducts;
+
+    decimal dailyGross, weeklyGross, monthlyGross, yearlyGross;
+    int dailyOrders, weeklyOrders, monthlyOrders, yearlyOrders, totalOrders;
+
+    if (useDummy)
+    {
+        var rng = new Random(42);
+        var now = DateTime.Now;
+
+        // Daily – last 24 hours by hour
+        dailyLabels = Enumerable.Range(0, 24)
+            .Select(h => now.AddHours(-23 + h).ToString("HH:00")).ToList();
+        dailySales = dailyLabels.Select(_ => Math.Round((decimal)(rng.NextDouble() * 400 + 50), 2)).ToList();
+
+        // Weekly – last 7 days
+        weeklyLabels = Enumerable.Range(0, 7)
+            .Select(d => now.AddDays(-6 + d).ToString("ddd dd")).ToList();
+        weeklySales = weeklyLabels.Select(_ => Math.Round((decimal)(rng.NextDouble() * 1200 + 300), 2)).ToList();
+
+        // Monthly – last 12 months
+        monthlyLabels = Enumerable.Range(0, 12)
+            .Select(m => now.AddMonths(-11 + m).ToString("MMM yyyy")).ToList();
+        monthlySales = monthlyLabels.Select(_ => Math.Round((decimal)(rng.NextDouble() * 8000 + 2000), 2)).ToList();
+
+        // Yearly – last 5 years
+        yearlyLabels = Enumerable.Range(0, 5)
+            .Select(y => now.AddYears(-4 + y).Year.ToString()).ToList();
+        yearlySales = yearlyLabels.Select(_ => Math.Round((decimal)(rng.NextDouble() * 60000 + 20000), 2)).ToList();
+
+        dailyGross   = dailySales.Sum();
+        weeklyGross  = weeklySales.Sum();
+        monthlyGross = monthlySales.Sum();
+        yearlyGross  = yearlySales.Sum();
+        dailyOrders  = rng.Next(8, 30);
+        weeklyOrders = rng.Next(40, 120);
+        monthlyOrders = rng.Next(150, 400);
+        yearlyOrders  = rng.Next(1800, 5000);
+        totalOrders   = rng.Next(6000, 15000);
+
+        topProducts = new List<ELKH.ViewModels.TopProductVM>
+        {
+            new() { ProductName = "Wireless Headphones",  UnitsSold = 312, Revenue = 31188m },
+            new() { ProductName = "USB-C Hub",            UnitsSold = 287, Revenue = 14350m },
+            new() { ProductName = "Mechanical Keyboard",  UnitsSold = 214, Revenue = 25680m },
+            new() { ProductName = "Ergonomic Mouse",      UnitsSold = 198, Revenue = 9900m  },
+            new() { ProductName = "Monitor Stand",        UnitsSold = 155, Revenue = 7750m  },
+        };
+    }
+    else
+    {
+        dailyLabels   = Model.DailyLabels;
+        dailySales    = Model.DailySalesData;
+        weeklyLabels  = Model.WeeklyLabels;
+        weeklySales   = Model.WeeklySalesData;
+        monthlyLabels = Model.MonthlyLabels;
+        monthlySales  = Model.MonthlySalesData;
+        yearlyLabels  = Model.YearlyLabels   ?? new List<string>();
+        yearlySales   = Model.YearlySalesData ?? new List<decimal>();
+        dailyGross    = Model.DailyGrossSales;
+        weeklyGross   = Model.WeeklyGrossSales;
+        monthlyGross  = Model.MonthlyGrossSales;
+        yearlyGross   = Model.YearlyGrossSales;
+        dailyOrders   = Model.DailyTotalOrders;
+        weeklyOrders  = Model.WeeklyTotalOrders;
+        monthlyOrders = Model.MonthlyTotalOrders;
+        yearlyOrders  = Model.YearlyTotalOrders;
+        totalOrders   = Model.TotalOrdersAllTime;
+        topProducts   = Model.TopProducts ?? new List<ELKH.ViewModels.TopProductVM>();
+    }
+
+    var topNames    = System.Text.Json.JsonSerializer.Serialize(topProducts.Select(p => p.ProductName).ToList());
+    var topUnits    = System.Text.Json.JsonSerializer.Serialize(topProducts.Select(p => p.UnitsSold).ToList());
+    var topRevenues = System.Text.Json.JsonSerializer.Serialize(topProducts.Select(p => p.Revenue).ToList());
+
+    var jsDailyLabels   = System.Text.Json.JsonSerializer.Serialize(dailyLabels);
+    var jsDailySales    = System.Text.Json.JsonSerializer.Serialize(dailySales);
+    var jsWeeklyLabels  = System.Text.Json.JsonSerializer.Serialize(weeklyLabels);
+    var jsWeeklySales   = System.Text.Json.JsonSerializer.Serialize(weeklySales);
+    var jsMonthlyLabels = System.Text.Json.JsonSerializer.Serialize(monthlyLabels);
+    var jsMonthlySales  = System.Text.Json.JsonSerializer.Serialize(monthlySales);
+    var jsYearlyLabels  = System.Text.Json.JsonSerializer.Serialize(yearlyLabels);
+    var jsYearlySales   = System.Text.Json.JsonSerializer.Serialize(yearlySales);
 }
 
 <div class="container-fluid px-4 mt-4 pb-5">
 
-    <!-- Header -->
-    <div class="d-flex justify-content-between align-items-center mb-4">
+    <!-- ── Header ── -->
+    <div class="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-2">
         <div>
             <h2 class="fw-bold mb-0">Sales Dashboard</h2>
-            <p class="text-muted small mb-0">Revenue and order metrics across all time periods.</p>
+            <p class="text-muted small mb-0">Revenue and order metrics across all time periods.
+                @if (useDummy)
+                {
+                    <span class="badge bg-warning text-dark ms-2">Demo data — no real transactions yet</span>
+                }
+            </p>
         </div>
         <a asp-action="Index" class="btn btn-outline-secondary rounded-pill px-4">
-            ← Back
+            ← Back to Dashboard
         </a>
     </div>
 
-    <!-- ── 4 Summary Cards ──────────────────────────────────── -->
+    <!-- ── 4 Summary Cards ── -->
     <div class="row g-3 mb-4">
 
         <div class="col-6 col-xl-3">
-            <div class="card border-0 shadow-sm rounded-4 h-100"
-                 style="border-left: 4px solid #06b6d4 !important;">
+            <div class="card border-0 shadow-sm rounded-4 h-100" style="border-left:4px solid #06b6d4 !important;">
                 <div class="card-body p-4">
                     <div class="d-flex justify-content-between align-items-start">
                         <div>
                             <p class="text-muted small mb-1">Today's Sales</p>
-                            <h3 class="fw-bold mb-0">$@Model.DailyGrossSales.ToString("N2")</h3>
-                            <small class="text-muted">@Model.DailyTotalOrders orders today</small>
+                            <h3 class="fw-bold mb-0">$@dailyGross.ToString("N2")</h3>
+                            <small class="text-muted">@dailyOrders orders today</small>
                         </div>
                         <div class="rounded-circle bg-info bg-opacity-10 p-3">
                             <i class="bi bi-sun fs-4 text-info"></i>
@@ -49,14 +140,13 @@
         </div>
 
         <div class="col-6 col-xl-3">
-            <div class="card border-0 shadow-sm rounded-4 h-100"
-                 style="border-left: 4px solid #6366f1 !important;">
+            <div class="card border-0 shadow-sm rounded-4 h-100" style="border-left:4px solid #6366f1 !important;">
                 <div class="card-body p-4">
                     <div class="d-flex justify-content-between align-items-start">
                         <div>
                             <p class="text-muted small mb-1">Weekly Sales</p>
-                            <h3 class="fw-bold mb-0">$@Model.WeeklyGrossSales.ToString("N2")</h3>
-                            <small class="text-muted">@Model.WeeklyTotalOrders orders this week</small>
+                            <h3 class="fw-bold mb-0">$@weeklyGross.ToString("N2")</h3>
+                            <small class="text-muted">@weeklyOrders orders this week</small>
                         </div>
                         <div class="rounded-circle bg-primary bg-opacity-10 p-3">
                             <i class="bi bi-calendar-week fs-4 text-primary"></i>
@@ -67,14 +157,13 @@
         </div>
 
         <div class="col-6 col-xl-3">
-            <div class="card border-0 shadow-sm rounded-4 h-100"
-                 style="border-left: 4px solid #22c55e !important;">
+            <div class="card border-0 shadow-sm rounded-4 h-100" style="border-left:4px solid #22c55e !important;">
                 <div class="card-body p-4">
                     <div class="d-flex justify-content-between align-items-start">
                         <div>
                             <p class="text-muted small mb-1">Monthly Sales</p>
-                            <h3 class="fw-bold mb-0">$@Model.MonthlyGrossSales.ToString("N2")</h3>
-                            <small class="text-muted">@Model.MonthlyTotalOrders orders this month</small>
+                            <h3 class="fw-bold mb-0">$@monthlyGross.ToString("N2")</h3>
+                            <small class="text-muted">@monthlyOrders orders this month</small>
                         </div>
                         <div class="rounded-circle bg-success bg-opacity-10 p-3">
                             <i class="bi bi-calendar-month fs-4 text-success"></i>
@@ -85,14 +174,13 @@
         </div>
 
         <div class="col-6 col-xl-3">
-            <div class="card border-0 shadow-sm rounded-4 h-100"
-                 style="border-left: 4px solid #f97316 !important;">
+            <div class="card border-0 shadow-sm rounded-4 h-100" style="border-left:4px solid #f97316 !important;">
                 <div class="card-body p-4">
                     <div class="d-flex justify-content-between align-items-start">
                         <div>
                             <p class="text-muted small mb-1">Yearly Sales</p>
-                            <h3 class="fw-bold mb-0">$@Model.YearlyGrossSales.ToString("N2")</h3>
-                            <small class="text-muted">@Model.YearlyTotalOrders orders this year</small>
+                            <h3 class="fw-bold mb-0">$@yearlyGross.ToString("N2")</h3>
+                            <small class="text-muted">@yearlyOrders orders this year</small>
                         </div>
                         <div class="rounded-circle bg-warning bg-opacity-10 p-3">
                             <i class="bi bi-calendar fs-4 text-warning"></i>
@@ -104,9 +192,8 @@
 
     </div>
 
-    <!-- ── Charts Row 1: Daily + Weekly ─────────────────────── -->
+    <!-- ── Charts Row 1: Daily + Weekly ── -->
     <div class="row g-4 mb-4">
-
         <div class="col-12 col-lg-6">
             <div class="card border-0 shadow-sm rounded-4 h-100">
                 <div class="card-body p-4">
@@ -117,7 +204,6 @@
                 </div>
             </div>
         </div>
-
         <div class="col-12 col-lg-6">
             <div class="card border-0 shadow-sm rounded-4 h-100">
                 <div class="card-body p-4">
@@ -128,12 +214,10 @@
                 </div>
             </div>
         </div>
-
     </div>
 
-    <!-- ── Charts Row 2: Monthly + Yearly ───────────────────── -->
+    <!-- ── Charts Row 2: Monthly + Yearly ── -->
     <div class="row g-4 mb-4">
-
         <div class="col-12 col-lg-6">
             <div class="card border-0 shadow-sm rounded-4 h-100">
                 <div class="card-body p-4">
@@ -144,7 +228,6 @@
                 </div>
             </div>
         </div>
-
         <div class="col-12 col-lg-6">
             <div class="card border-0 shadow-sm rounded-4 h-100">
                 <div class="card-body p-4">
@@ -155,93 +238,163 @@
                 </div>
             </div>
         </div>
+    </div>
+
+    <!-- ── Top 5 Products ── -->
+    <div class="row g-4 mb-4">
+
+        <!-- Table -->
+        <div class="col-12 col-lg-6">
+            <div class="card border-0 shadow-sm rounded-4 h-100">
+                <div class="card-body p-4">
+                    <h5 class="fw-bold mb-4">🏆 Top 5 Products</h5>
+                    @if (topProducts.Any())
+                    {
+                        <div class="table-responsive">
+                            <table class="table table-hover align-middle mb-0">
+                                <thead class="table-light">
+                                    <tr>
+                                        <th style="width:50px;">Rank</th>
+                                        <th>Product</th>
+                                        <th class="text-center">Units</th>
+                                        <th class="text-end">Revenue</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    @{ int rank = 1; }
+                                    @foreach (var p in topProducts)
+                                    {
+                                        <tr>
+                                            <td>
+                                                @if (rank == 1)     { <span>🥇</span> }
+                                                else if (rank == 2) { <span>🥈</span> }
+                                                else if (rank == 3) { <span>🥉</span> }
+                                                else                { <span class="text-muted fw-semibold">@rank</span> }
+                                            </td>
+                                            <td class="fw-semibold">@p.ProductName</td>
+                                            <td class="text-center">
+                                                <span class="badge bg-primary bg-opacity-10 text-primary px-2">@p.UnitsSold</span>
+                                            </td>
+                                            <td class="text-end text-success fw-bold">$@p.Revenue.ToString("N2")</td>
+                                        </tr>
+                                        rank++;
+                                    }
+                                </tbody>
+                            </table>
+                        </div>
+                    }
+                    else
+                    {
+                        <p class="text-muted fst-italic">No product data yet.</p>
+                    }
+                </div>
+            </div>
+        </div>
+
+        <!-- Horizontal bar chart -->
+        <div class="col-12 col-lg-6">
+            <div class="card border-0 shadow-sm rounded-4 h-100">
+                <div class="card-body p-4">
+                    <h5 class="fw-bold mb-4">📊 Units Sold Chart</h5>
+                    <canvas id="topProductsChart" height="220"></canvas>
+                </div>
+            </div>
+        </div>
 
     </div>
 
-    <!-- ── Top Products ──────────────────────────────────────── -->
-    
 </div>
 
-@section Scripts {
-<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
 <script>
-    const dailyLabels   = @Html.Raw(dailyLabels);
-    const dailySales    = @Html.Raw(dailySales);
-    const weeklyLabels  = @Html.Raw(weeklyLabels);
-    const weeklySales   = @Html.Raw(weeklySales);
-    const monthlyLabels = @Html.Raw(monthlyLabels);
-    const monthlySales  = @Html.Raw(monthlySales);
-    const yearlyLabels  = @Html.Raw(yearlyLabels);
-    const yearlySales   = @Html.Raw(yearlySales);
+    document.addEventListener("DOMContentLoaded", function() {
+        // 1. Data Parsing
+        const dailyLabels = @Html.Raw(jsDailyLabels);
+        const dailySales = @Html.Raw(jsDailySales);
+        const weeklyLabels = @Html.Raw(jsWeeklyLabels);
+        const weeklySales = @Html.Raw(jsWeeklySales);
+        const monthlyLabels = @Html.Raw(jsMonthlyLabels);
+        const monthlySales = @Html.Raw(jsMonthlySales);
+        const yearlyLabels = @Html.Raw(jsYearlyLabels);
+        const yearlySales = @Html.Raw(jsYearlySales);
+        const topNames = @Html.Raw(topNames);
+        const topUnits = @Html.Raw(topUnits);
 
-    const yAxis = { beginAtZero: true, ticks: { callback: v => '$' + v.toLocaleString() } };
-    const noLegend = { legend: { display: false } };
+        // 2. Shared Options
+        const yAxisConfig = {
+            beginAtZero: true,
+            ticks: { callback: (v) => '$' + v.toLocaleString() }
+        };
 
-    // Daily — bar by hour
-    new Chart(document.getElementById('dailyChart'), {
-        type: 'bar',
-        data: {
-            labels: dailyLabels,
-            datasets: [{ label: 'Sales ($)', data: dailySales,
-                backgroundColor: 'rgba(6,182,212,0.7)', borderColor: 'rgba(6,182,212,1)',
-                borderWidth: 1, borderRadius: 5 }]
-        },
-        options: { responsive: true, plugins: noLegend, scales: { y: yAxis } }
-    });
+        // 3. Initialize Charts
+        new Chart(document.getElementById('dailyChart'), {
+            type: 'bar',
+            data: {
+                labels: dailyLabels,
+                datasets: [{
+                    label: 'Sales ($)', data: dailySales,
+                    backgroundColor: 'rgba(6,182,212,0.7)', borderRadius: 5
+                }]
+            },
+            options: { responsive: true, plugins: { legend: { display: false } }, scales: { y: yAxisConfig } }
+        });
 
-    // Weekly — bar
-    new Chart(document.getElementById('weeklyChart'), {
-        type: 'bar',
-        data: {
-            labels: weeklyLabels,
-            datasets: [{ label: 'Sales ($)', data: weeklySales,
-                backgroundColor: 'rgba(99,102,241,0.7)', borderColor: 'rgba(99,102,241,1)',
-                borderWidth: 1, borderRadius: 5 }]
-        },
-        options: { responsive: true, plugins: noLegend, scales: { y: yAxis } }
-    });
+        new Chart(document.getElementById('weeklyChart'), {
+            type: 'bar',
+            data: {
+                labels: weeklyLabels,
+                datasets: [{
+                    label: 'Sales ($)', data: weeklySales,
+                    backgroundColor: 'rgba(99,102,241,0.7)', borderRadius: 5
+                }]
+            },
+            options: { responsive: true, plugins: { legend: { display: false } }, scales: { y: yAxisConfig } }
+        });
 
-    // Monthly — line
-    new Chart(document.getElementById('monthlyChart'), {
-        type: 'line',
-        data: {
-            labels: monthlyLabels,
-            datasets: [{ label: 'Sales ($)', data: monthlySales,
-                fill: true, backgroundColor: 'rgba(34,197,94,0.15)',
-                borderColor: 'rgba(34,197,94,1)', borderWidth: 2, tension: 0.4,
-                pointBackgroundColor: 'rgba(34,197,94,1)', pointRadius: 4 }]
-        },
-        options: { responsive: true, plugins: noLegend, scales: { y: yAxis } }
-    });
+        new Chart(document.getElementById('monthlyChart'), {
+            type: 'line',
+            data: {
+                labels: monthlyLabels,
+                datasets: [{
+                    label: 'Sales ($)', data: monthlySales,
+                    fill: true, backgroundColor: 'rgba(34,197,94,0.1)',
+                    borderColor: 'rgba(34,197,94,1)', tension: 0.4
+                }]
+            },
+            options: { responsive: true, plugins: { legend: { display: false } }, scales: { y: yAxisConfig } }
+        });
 
-    // Yearly — bar
-    new Chart(document.getElementById('yearlyChart'), {
-        type: 'bar',
-        data: {
-            labels: yearlyLabels,
-            datasets: [{ label: 'Sales ($)', data: yearlySales,
-                backgroundColor: 'rgba(249,115,22,0.7)', borderColor: 'rgba(249,115,22,1)',
-                borderWidth: 1, borderRadius: 5 }]
-        },
-        options: { responsive: true, plugins: noLegend, scales: { y: yAxis } }
-    });
+        new Chart(document.getElementById('yearlyChart'), {
+            type: 'bar',
+            data: {
+                labels: yearlyLabels,
+                datasets: [{
+                    label: 'Sales ($)', data: yearlySales,
+                    backgroundColor: 'rgba(249,115,22,0.7)', borderRadius: 5
+                }]
+            },
+            options: { responsive: true, plugins: { legend: { display: false } }, scales: { y: yAxisConfig } }
+        });
 
-    // Top Products — horizontal bar
-    new Chart(document.getElementById('topProductsChart'), {
-        type: 'bar',
-        data: {
-            labels: topNames,
-            datasets: [{ label: 'Units Sold', data: topUnits,
-                backgroundColor: [
-                    'rgba(251,191,36,0.8)', 'rgba(99,102,241,0.8)', 'rgba(34,197,94,0.8)',
-                    'rgba(239,68,68,0.8)',  'rgba(20,184,166,0.8)'
-                ], borderRadius: 6 }]
-        },
-        options: {
-            indexAxis: 'y', responsive: true,
-            plugins: { legend: { display: false } },
-            scales: { x: { beginAtZero: true, ticks: { precision: 0 } } }
-        }
+        new Chart(document.getElementById('topProductsChart'), {
+            type: 'bar',
+            data: {
+                labels: topNames,
+                datasets: [{
+                    label: 'Units Sold', data: topUnits,
+                    backgroundColor: ['#fbbf24', '#6366f1', '#22c55e', '#ef4444', '#14b8a6'],
+                    borderRadius: 6
+                }]
+            },
+            options: {
+                indexAxis: 'y',
+                responsive: true,
+                plugins: { legend: { display: false } },
+                scales: { x: { beginAtZero: true } }
+            }
+        });
     });
 </script>
+@section Scripts {
+    <script src="~/js/sales-charts.js"></script>
+}
 }

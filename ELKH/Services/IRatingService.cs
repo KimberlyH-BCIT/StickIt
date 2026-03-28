@@ -91,5 +91,7 @@ namespace ELKH.Services
         /// (for the create-form dropdown) and any existing non-deleted rating (for the edit form).
         /// </returns>
         Task<ViewModels.RatingEligibilityVM> GetRatingEligibilityAsync(int productId, int userId, CancellationToken ct = default);
+        Task<List<ProductRatingModel>> GetAllRatingsAsync(CancellationToken ct = default);
+        Task<bool> MarkAsReadAsync(int id, CancellationToken ct = default);
     }
 }

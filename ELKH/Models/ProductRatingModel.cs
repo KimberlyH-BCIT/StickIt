@@ -36,7 +36,7 @@ namespace ELKH.Models
         /// Whether the rating is approved and visible to the public.
         /// </summary>
         public bool Approved { get; set; } = false;
-
+        public bool IsRead { get; set; } = false;
         /// <summary>
         /// Whether the rating is flagged for moderator review.
         /// </summary>
@@ -86,5 +86,7 @@ namespace ELKH.Models
         /// Timestamp when the rating was deleted (if deleted).
         /// </summary>
         public DateTime? DeletedAt { get; set; }
+        public string UserId { get; set; }
+       
     }
 }

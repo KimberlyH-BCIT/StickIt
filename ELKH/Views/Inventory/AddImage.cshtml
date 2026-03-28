@@ -1,49 +1,4 @@
 ﻿@model ELKH.Models.ImageModel
-@* 
-@{
-    ViewData["Title"] = "Add Product Image";
-}
-<h1 class="display-4">Upload Product Image</h1>
-    <div id="dropZone" style="
-        border: 2px dashed #999;
-        padding: 40px;
-<form asp-controller="Inventory" asp-action="AddImage" method="post"
-      enctype="multipart/form-data">
-        border-radius: 10px>
-    <span class="form-group">
-        <label for="file" class="btn btn-info btn-block">
-        Drag & drop image here or click to select
-
-        <input type="file" asp-for="ProductImage" id="fileInput" style="display:none;" />
-            name="file" style="display:none;" 
-            onchange="previewImage();">
-</form>
-
-             margin-top: 10px; display:none;">
-    </span>
-    <button type="submit" class="btn btn-primary">Upload</button>
-
-    dropZone.addEventListener("click", ()=>{
-        fileInput.click();
-    })
-
-    dropZone.addEventListener("dragover", (e) =>{
-        e.PreventDefault;
-        dropZone.style.background = "#f0f8ff";
-    });
-
-    dropZone.addEventListener("dragleave",()=>{
-        dropZone.style.background = "";
-    });
-
-    dropZone.addEventListener("drop",(e)=>{
-
-        e.preventDefault();
-        const files = e.dataTransfer.files;
-        fileInput.files = files;
-    });
-
-</script> *@
 
 @{  ViewData["Title"] = "Home Page"; }
 <h1 class="display-4">Upload Your Image</h1>
@@ -51,7 +6,7 @@
 <hr class="my-4">
 
 <form asp-action="AddImage" method="post" enctype="multipart/form-data">
-    <input type="hidden" name="productId" value="@ViewBag.productId" />
+    <input type="hidden" name="productId" value="@ViewBag.ProductId" />
     <div class="form-group">
         <label for="file" class="btn btn-info">
             Choose image
@@ -67,45 +22,7 @@
 </form>
 
 
-<style>
-        var file =
-            document.querySelector('input[type=file]').files[0];
-    }
 
-    .container {
-            var preview = document.getElementById('preview');
-        padding: 2rem;
-        border-radius: 0.5rem;
-        }
-    }
-
-    .btn-info {
-        background-color: #17a2b8;
-        color: white;
-    }
-
-    .btn-info:hover {
-        background-color: #138496;
-        border-color: #117a8b;
-        color: white;
-    }
-
-    .btn-success {
-        font-weight: 400;
-        background-color: #28a745;
-        border-color: #28a745;
-    }
-
-    .btn-success:hover {
-        background-color: #218838;
-        border-color: #1e7e34;
-    }
-
-    .btn-upload {
-        padding: 5px 15px;
-        font-size: 16px;
-    }
-</style>
 
 
 <script>

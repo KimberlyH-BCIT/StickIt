@@ -1,0 +1,82 @@
+﻿@model ELKH.ViewModels.PagedResult<ELKH.Models.ProductRatingModel>
+
+@{
+    ViewData["Title"] = "Customer Reviews Management";
+}
+
+<div class="container-fluid mt-4">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2>Customer Reviews</h2>
+        <a asp-action="Index" class="btn btn-outline-secondary">← Back to Dashboard</a>
+    </div>
+
+    <div class="card shadow-sm">
+        <div class="card-body p-0">
+            <table class="table table-hover mb-0">
+                <thead class="bg-light">
+                    <tr>
+                        <th>Date</th>
+                        <th>User</th>
+                        <th>Product</th>
+                        <th>Rating</th>
+                        <th>Comment</th>
+                        <th>Status</th>
+                        <th class="text-end">Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var item in Model.Items)
+                    {
+                        <tr>
+                            <td>@item.RatedTime.ToString("MMM dd, yyyy")</td>
+                            <td>@item.RegisteredUser?.Email</td>
+                            <td><strong>@item.Products?.Name</strong></td>
+                            <td>
+                                @for (int i = 1; i <= 5; i++)
+                                {
+                                    <i class="bi bi-star@(i <= item.Rating ? "-fill text-warning" : " text-muted")"></i>
+                                }
+                            </td>
+                            <td><small>@item.Description</small></td>
+                            <td>
+                                @if (item.Approved)
+                                {
+                                    <span class="badge bg-success-soft text-success border border-success">Approved</span>
+                                }
+                                else
+                                {
+                                    <span class="badge bg-warning-soft text-warning border border-warning">Pending</span>
+                                }
+                            </td>
+                            <td class="text-end">
+                                <div class="btn-group">
+                                    @if (!item.Approved)
+                                    {
+                                        <form asp-action="ApproveReview" asp-route-id="@item.PkRatingId" method="post" class="d-inline">
+                                            <button type="submit" class="btn btn-sm btn-success me-1">Approve</button>
+                                        </form>
+                                    }
+                                    <form asp-action="DeleteReview" asp-route-id="@item.PkRatingId" method="post" class="d-inline"
+                                          onsubmit="return confirm('Are you sure you want to delete this review?');">
+                                        <button type="submit" class="btn btn-sm btn-outline-danger">Delete</button>
+                                    </form>
+                                </div>
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <nav class="mt-4">
+        <ul class="pagination justify-content-center">
+            @for (int i = 1; i <= Model.TotalPages; i++)
+            {
+                <li class="page-item @(i == Model.CurrentPage ? "active" : "")">
+                    <a class="page-link" asp-action="Reviews" asp-route-page="@i">@i</a>
+                </li>
+            }
+        </ul>
+    </nav>
+</div>
