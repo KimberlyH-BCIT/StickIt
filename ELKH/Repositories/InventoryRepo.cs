@@ -1,7 +1,11 @@
 ﻿using ELKH.Data;
 using ELKH.Models;
 using ELKH.ViewModels;
+using Microsoft.AspNetCore.Http.HttpResults;
+using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Mvc.ModelBinding;
 using Microsoft.EntityFrameworkCore;
+using static System.Net.Mime.MediaTypeNames;
 
 namespace ELKH.Repositories
 {
@@ -9,7 +13,7 @@ namespace ELKH.Repositories
     /// Repository for inventory management operations including product queries,
     /// stock quantity updates, and product image uploads.
     /// </summary>
-    public class InventoryRepo : IInventoryRepo
+    public class InventoryRepo
     {
         private readonly ApplicationDbContext _context;
         private readonly ImageStoreContext _imageDb;
@@ -20,9 +24,89 @@ namespace ELKH.Repositories
         }
 
         /// <summary>Returns all products without any includes (lightweight listing query).</summary>
-        public async Task<IEnumerable<ProductModel>> GetAllProduct()
+        public async Task<PagedResult<InventoryVM>> GetAllProduct(string? searchString, int page = 1, int pageSize = 10)
         {
-            return await _context.Products.ToListAsync();
+            // 1. Start with the base query
+            var query = _context.Products.AsQueryable();
+
+            // 2. Apply filtering (build on 'query')
+            if (!string.IsNullOrEmpty(searchString))
+            {
+                var search = searchString.ToLower();
+                query = query.Where(p => p.Name.ToLower().Contains(search)
+                                      || p.Description.ToLower().Contains(search));
+            }
+
+            // 3. Count the filtered results
+            var countProducts = await query.CountAsync();
+
+            // 4. Order, Paginate, and PROJECT directly to VM
+            var items = await query
+                .OrderBy(p => p.PkProductId)
+                .Skip((page - 1) * pageSize)
+                .Take(pageSize)
+                .Select(p => new InventoryVM // Mapping here saves database bandwidth
+                {
+                    PkProductId = p.PkProductId,
+                    ProductName = p.Name,
+                    Quantity = p.StockQuantity,
+                    IsActive = p.IsActive,
+                })
+                .ToListAsync();
+
+            // 5. Return the result
+            return new PagedResult<InventoryVM>
+            {
+                Items = items,
+                PageSize = pageSize,
+                CurrentPage = page,
+                TotalItems = countProducts
+            };
+        }
+
+        public async Task<bool> EditProduct(ProductVM vm)
+        {
+            var product = await GetProductById(vm.ProductId);
+
+            if(product == null)
+            {
+                return false;
+            }
+
+            product.Name = vm.ProductName;
+            product.Description = vm.Description;
+            product.Price = vm.Price;
+            product.FkCategoryId = vm.CategoryId;
+            product.StockQuantity = vm.StockQuantity;
+            product.DiscountPercent = vm.DiscountPercent;
+
+            await _context.SaveChangesAsync();
+
+            return true;
+        }
+
+        public async Task<ProductModel> GetProductById (int Id)
+        {
+
+            var productModel = await _context.Products.Include(p=> p.Category)
+                                                      .Include(p=> p.ProductRatings)
+                                                      .ThenInclude(pr => pr.RegisteredUser)
+                                                      .FirstOrDefaultAsync(p => p.PkProductId == Id);
+
+            return productModel;
+        }
+
+        public async Task<bool> DeleteProductReview(int reviewId)
+        {
+            var review = await _context.ProductRatings.FirstOrDefaultAsync(pr => pr.PkRatingId == reviewId);
+            if(review == null)
+            {
+                return false;
+            }
+
+            _context.ProductRatings.Remove(review);
+            await _context.SaveChangesAsync();
+            return true;
         }
 
 
@@ -34,8 +118,8 @@ namespace ELKH.Repositories
 
         /// <summary>
         /// Updates the stock quantity for a single product and returns the updated view model.
+        /// Throws <see cref="NullReferenceException"/> if no product with <paramref name="productId"/> exists.
         /// </summary>
-        /// <exception cref="KeyNotFoundException">Thrown when no product with <paramref name="productId"/> exists.</exception>
         public async Task<ProductVM> EditProductQuantity(int productId, int quantityAmount)
         {
             var product = await _context.Products
@@ -56,65 +140,83 @@ namespace ELKH.Repositories
                 IsActive      = product.IsActive
             };
         }
-        private const long MaxFileSizeBytes = 5 * 1024 * 1024; // 5 MB
-
-        private static readonly HashSet<string> s_allowedExtensions =
-            new(StringComparer.OrdinalIgnoreCase) { ".jpg", ".jpeg", ".png", ".gif", ".webp", ".bmp" };
-
-        private static bool HasValidImageSignature(byte[] bytes)
+        public async Task<bool> UploadImage(int productId, IFormFile file)
         {
-            if (bytes.Length < 4) return false;
+            if (file != null && file.Length > 0)
+            {
+                // Convert the file to a byte array.
+                using var stream = new MemoryStream();
+                file.CopyTo(stream);
+                var imageBytes = stream.ToArray();
 
-            // JPEG: FF D8 FF
-            if (bytes[0] == 0xFF && bytes[1] == 0xD8 && bytes[2] == 0xFF)
-                return true;
-            // PNG: 89 50 4E 47 0D 0A 1A 0A
-            if (bytes.Length >= 8 &&
-                bytes[0] == 0x89 && bytes[1] == 0x50 && bytes[2] == 0x4E && bytes[3] == 0x47 &&
-                bytes[4] == 0x0D && bytes[5] == 0x0A && bytes[6] == 0x1A && bytes[7] == 0x0A)
-                return true;
-            // GIF: GIF8
-            if (bytes[0] == 0x47 && bytes[1] == 0x49 && bytes[2] == 0x46 && bytes[3] == 0x38)
-                return true;
-            // BMP: BM
-            if (bytes[0] == 0x42 && bytes[1] == 0x4D)
-                return true;
-            // WebP: RIFF....WEBP
-            if (bytes.Length >= 12 &&
-                bytes[0] == 0x52 && bytes[1] == 0x49 && bytes[2] == 0x46 && bytes[3] == 0x46 &&
-                bytes[8] == 0x57 && bytes[9] == 0x45 && bytes[10] == 0x42 && bytes[11] == 0x50)
-                return true;
+                // Create a new Image instance.
+                var image = new ImageModel
+                {
+                    FileName = file.FileName,
+                    Description = "",
+                    FileType = file.ContentType,
+                    ImageData = imageBytes,
+                    FkProductId = productId
+                };
 
+                // Add to database context and save.
+                _imageDb.Images.Add(image);
+                bool isSaved = _imageDb.SaveChanges() > 0;
+                if (!isSaved)
+                {
+                    return false;
+                }
+                return true;
+            }
             return false;
         }
 
-        public async Task<bool> UploadImage(int productId, IFormFile file)
+        public async Task<bool> DeleteImage(int imageId)
         {
-            if (file == null || file.Length == 0) return false;
-            if (file.Length > MaxFileSizeBytes) return false;
-
-            var ext = Path.GetExtension(file.FileName);
-            if (!s_allowedExtensions.Contains(ext)) return false;
-
-            using var stream = new MemoryStream();
-            await file.CopyToAsync(stream);
-            var imageBytes = stream.ToArray();
-
-            if (!HasValidImageSignature(imageBytes)) return false;
-
-            var safeFileName = Guid.NewGuid().ToString("N") + ext.ToLowerInvariant();
-
-            var image = new ImageModel
+            var findImageById = await _imageDb.Images.Where(i => i.ImageId == imageId)
+                                               .FirstOrDefaultAsync();
+            if(findImageById == null)
             {
-                FileName = safeFileName,
-                Description = "",
-                FileType = file.ContentType,
-                ImageData = imageBytes,
-                FkProductId = productId
+                return false;
+            }
+
+            _imageDb.Images.Remove(findImageById);
+            _imageDb.SaveChanges();
+            return true;
+        }
+
+        public async Task<int> AddProduct(ProductVM vm)
+        {
+
+            var mapToProductModel = new ProductModel
+            {
+                Name = vm.ProductName,
+                NameNormalized = vm.Description,
+                Price = vm.Price,
+                DiscountPercent = vm.DiscountPercent,
+                StockQuantity = vm.StockQuantity,
+                IsActive = vm.IsActive,
+                FkCategoryId = vm.CategoryId
             };
 
-            _imageDb.Images.Add(image);
-            return _imageDb.SaveChanges() > 0;
+            await _context.Products.AddAsync(mapToProductModel);
+            await _context.SaveChangesAsync();
+
+
+
+            return mapToProductModel.PkProductId;
+
         }
+
+        public async Task<List<CategoryModel>> GetAllCategories()
+        {
+
+            var categories = await _context.Categories.ToListAsync();
+
+            return categories;
+            
+        }
+
     }
-}
+} 
+

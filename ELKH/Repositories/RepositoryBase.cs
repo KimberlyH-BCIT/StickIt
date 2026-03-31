@@ -101,6 +101,14 @@ namespace ELKH.Repositories
             }
         }
 
+        /// <summary>
+        /// Update an existing entity.
+        /// </summary>
+        public virtual void Update(TEntity entity)
+        {
+            Context.Set<TEntity>().Update(entity);
+        }
+
         /// <summary>Update and immediately persist an entity.</summary>
         public virtual async Task<bool> UpdateAndSaveAsync(TEntity entity)
         {
@@ -129,6 +137,24 @@ namespace ELKH.Repositories
                     Logger.LogWarning("Cannot delete {EntityType} with ID {Id} — not found", typeof(TEntity).Name, id);
                     return false;
                 }
+        }
+
+        /// <summary>
+        /// Delete an entity from the database.
+        /// </summary>
+        public virtual void Delete(TEntity entity)
+        {
+            Context.Set<TEntity>().Remove(entity);
+        }
+
+        /// <summary>
+        /// Delete an entity and save changes immediately.
+        /// Returns true if successful, false otherwise.
+        /// </summary>
+        public virtual bool DeleteAndSave(TEntity entity)
+        {
+            try
+            {
                 Context.Set<TEntity>().Remove(entity);
                 await Context.SaveChangesAsync();
                 Logger.LogInformation("Deleted {EntityType} with ID {Id}", typeof(TEntity).Name, id);
@@ -146,6 +172,13 @@ namespace ELKH.Repositories
         {
             try
             {
+                var entity = await GetByIdAsync(id);
+                if (entity == null)
+                {
+                    Logger.LogWarning("Cannot delete {EntityType} with ID {Id} - not found", typeof(TEntity).Name, id);
+                    return false;
+                }
+
                 Context.Set<TEntity>().Remove(entity);
                 await Context.SaveChangesAsync();
                 Logger.LogInformation("Deleted {EntityType}", typeof(TEntity).Name);
@@ -156,6 +189,14 @@ namespace ELKH.Repositories
                 Logger.LogError(ex, "Error deleting {EntityType}", typeof(TEntity).Name);
                 return false;
             }
+        }
+
+        /// <summary>
+        /// Save all pending changes to the database.
+        /// </summary>
+        public virtual void SaveChanges()
+        {
+            Context.SaveChanges();
         }
 
         /// <summary>Flush all pending changes asynchronously.</summary>

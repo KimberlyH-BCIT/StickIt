@@ -1,0 +1,81 @@
+﻿@model PagedResult<OrderDetailsVM>
+
+@{
+    // Grab the first item so we can show the Order/User info at the top
+    var firstItem = Model.Items.FirstOrDefault();
+}
+
+<form asp-action="OrderDetail" method="get" class="mb-3">
+    <div class="input-group">
+        <input type="hidden" name="orderId" value="@ViewBag.orderId" />
+        <input type="hidden" name="transactionId" value="@ViewBag.transactionId" />
+        <input type="search"
+               name="searchString"
+               value="@ViewBag.SearchString"
+               class="form-control"
+               placeholder="Search Product Name" />
+        <button type="submit" class="btn btn-primary">Search</button>
+</div>
+</form>
+
+    
+<a class="btn btn-outline-primary rounded-pill px-4" asp-action="Index">Go Back to Orders</a>
+
+
+@if (User.IsInRole("Admin"))
+{
+    
+    <a class="btn btn-outline-primary rounded-pill px-4" asp-controller="Manager" asp-action="ListAllTransactions">Go Back to Transactions</a>
+}
+
+
+
+@if (firstItem != null)
+{
+    <h2>User: <span>@firstItem.UserEmail</span></h2>
+    <h2>Order ID: <span>@firstItem.OrderId</span></h2>
+    <h2>Transaction ID: <span>@firstItem.TransactionId</span></h2>
+}
+
+<table class="table">
+    <thead>
+        <tr>
+            <th>Product Name</th>
+            <th>Quantity</th>
+            <th>Unit Price</th>
+            <th>Subtotal</th>
+        </tr>
+    </thead>
+    <tbody>
+        @foreach (var product in Model.Items)
+        {
+            <tr>
+                <td>@product.ProductName</td>
+                <td>@product.Quantity</td>
+                <td>@product.UnitPrice.ToString("C")</td>
+                <td>@((product.UnitPrice * product.Quantity).ToString("C"))</td>
+            </tr>
+        }
+    </tbody>
+    <tfoot>
+        <tr>
+            @* Note: This only sums the items on the CURRENT page! *@
+            <td colspan="3" style="text-align:right"><strong>Page Total:</strong></td>
+            <td>@Model.Items.Sum(p => p.UnitPrice * p.Quantity).ToString("C")</td>
+        </tr>
+    </tfoot>
+</table>
+
+<nav>
+    <ul class="pagination">
+        @for (int i = 1; i <= Model.AllPages; i++)
+        {
+            <li class="page-item @(i == Model.CurrentPage ? "active" : "")">
+                <a class="page-link"
+                   asp-action="OrderDetails"
+                   asp-route-orderId="@firstItem?.OrderId"
+                   asp-route-page="@i">@i</a>
+            </li>
+        }
+    </ul>
+</nav>

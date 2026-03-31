@@ -194,6 +194,9 @@ body {
 .form-floating > .form-control:focus::placeholder {
     text-align: start;
 }
+.form-floating > .form-control-plaintext:focus::placeholder, .form-floating > .form-control:focus::placeholder {
+  text-align: start;
+}
 /* Inline dark footer like <footer style="background:#111;"> */
 footer[style*="background:#111"]{
     background: linear-gradient(180deg,

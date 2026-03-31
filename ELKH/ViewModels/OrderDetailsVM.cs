@@ -29,5 +29,7 @@ namespace ELKH.ViewModels
 
         /// <summary>Line-item breakdown of all products in the order.</summary>
         public List<OrderItemVM> OrderItems { get; set; } = new List<OrderItemVM>();
+
+        public decimal TotalPrice => OrderItems?.Sum(product => product.Quantity * product.ProductPrice) ?? 0;
     }
 }

@@ -1,0 +1,113 @@
+﻿@section title {
+    <h3 class="fw-bold mb-0">Staff Dashboard</h3>
+}
+
+<div class="container-fluid px-4 mt-4 pb-5">
+
+    <!-- Header -->
+    <div class="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-2">
+        <div>
+            <h2 class="fw-bold mb-0">Staff Dashboard</h2>
+            <p class="text-muted mb-0 small">
+                Daily operations · @DateTime.Now.ToString("dddd, MMMM d yyyy")
+            </p>
+        </div>
+    </div>
+
+    <!-- Main Task Cards -->
+    <div class="row g-4">
+
+        <!-- Inventory -->
+        <div class="col-md-4">
+            <a asp-controller="Inventory" asp-action="Index" class="text-decoration-none">
+                <div class="card border-0 shadow-sm rounded-4 h-100 mgr-card">
+                    <div class="card-body p-4 d-flex align-items-center gap-4">
+
+                        <div class="bg-primary bg-opacity-10 rounded-4 p-3">
+                            <span style="font-size:2.4rem;">📦</span>
+                        </div>
+
+                        <div>
+                            <h5 class="fw-bold mb-1 text-dark">Inventory</h5>
+                            <p class="text-muted small mb-2">
+                                View and manage available products
+                            </p>
+
+                            <span class="badge bg-primary bg-opacity-10 text-primary px-3 py-1 rounded-pill small">
+                                Products
+                            </span>
+                        </div>
+
+                    </div>
+
+                    <div class="card-footer bg-primary text-white text-center py-2 rounded-bottom-4 fw-semibold small">
+                        Go to Inventory →
+                    </div>
+                </div>
+            </a>
+        </div>
+
+        <!-- Order History -->
+        <div class="col-md-4">
+            <a asp-controller="OrdersHistoryStaff" asp-action="Index" class="text-decoration-none">
+                <div class="card border-0 shadow-sm rounded-4 h-100 mgr-card">
+
+                    <div class="card-body p-4 d-flex align-items-center gap-4">
+
+                        <div class="bg-success bg-opacity-10 rounded-4 p-3">
+                            <span style="font-size:2.4rem;">📋</span>
+                        </div>
+
+                        <div>
+                            <h5 class="fw-bold mb-1 text-dark">Order History</h5>
+                            <p class="text-muted small mb-2">
+                                View all customer orders
+                            </p>
+
+                            <span class="badge bg-success bg-opacity-10 text-success px-3 py-1 rounded-pill small">
+                                Orders
+                            </span>
+                        </div>
+
+                    </div>
+
+                    <div class="card-footer bg-success text-white text-center py-2 rounded-bottom-4 fw-semibold small">
+                        Go to Orders →
+                    </div>
+                </div>
+            </a>
+        </div>
+
+        <!-- Transactions -->
+        <div class="col-md-4">
+            <a asp-controller="Manager" asp-action="ListAllTransactions" class="text-decoration-none">
+                <div class="card border-0 shadow-sm rounded-4 h-100 mgr-card">
+
+                    <div class="card-body p-4 d-flex align-items-center gap-4">
+
+                        <div class="bg-warning bg-opacity-10 rounded-4 p-3">
+                            <span style="font-size:2.4rem;">💳</span>
+                        </div>
+
+                        <div>
+                            <h5 class="fw-bold mb-1 text-dark">Transactions</h5>
+                            <p class="text-muted small mb-2">
+                                View and track payment transactions
+                            </p>
+
+                            <span class="badge bg-warning bg-opacity-25 text-warning px-3 py-1 rounded-pill small">
+                                Payments
+                            </span>
+                        </div>
+
+                    </div>
+
+                    <div class="card-footer bg-warning text-dark text-center py-2 rounded-bottom-4 fw-semibold small">
+                        Go to Transactions →
+                    </div>
+                </div>
+            </a>
+        </div>
+
+    </div>
+</div>

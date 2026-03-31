@@ -213,11 +213,12 @@ public class CheckoutController : Controller
 
         // ── 2. Determine contact ID: use selected address from VM or default address
         int contactId;
-        if (vm.SelectedContactId.HasValue)
-        {
-            contactId = vm.SelectedContactId.Value;
-        }
-        catch (Exception ex)
+            if (vm.SelectedContactId.HasValue)
+            {
+                contactId = vm.SelectedContactId.Value;
+            }
+
+        else
         {
             var contact = await _db.ContactDetails
                 .FirstOrDefaultAsync(c => c.FkRegisteredUserId == regUser.PkRegisteredUserId && c.IsDefault);

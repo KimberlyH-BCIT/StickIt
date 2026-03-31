@@ -12,6 +12,63 @@ namespace ELKH.Data;
 /// </summary>
 public static class DbSeeder
 {
+    public static async Task SeedTestTransactionsAsync(ApplicationDbContext db)
+    {
+        if (await db.Orders.AnyAsync(o => o.OrderStatus == "Test")) return;
+
+        // Assume at least one user, product, and contact exist
+        var user = await db.RegisteredUsers.FirstOrDefaultAsync();
+        var product = await db.Products.FirstOrDefaultAsync();
+        var contact = await db.ContactDetails.FirstOrDefaultAsync();
+
+        if (user == null || product == null || contact == null) return;
+
+        var order = new OrderModel
+        {
+            OrderStatus = "Test",
+            TotalAmount = product.Price,
+            CreatedAt = DateTime.UtcNow,
+            DeliveryStatus = "Pending",
+            FkRegisteredUserId = user.PkRegisteredUserId,
+            FkContactId = contact.PkContactId
+        };
+        db.Orders.Add(order);
+        await db.SaveChangesAsync();
+
+        var orderItem = new OrderItemModel
+        {
+            FkOrderId = order.PkOrderId,
+            FkProductId = product.PkProductId,
+            Quantity = 1
+        };
+        db.OrderItems.Add(orderItem);
+        await db.SaveChangesAsync();
+
+        var transaction = new TransactionModel
+        {
+            TransactionStatus = "Pending",
+            Amount = product.Price,
+            TransactionDate = DateTime.UtcNow,
+            DeliveryFee = 5.99m,
+            FkOrderId = order.PkOrderId,
+            FkContactId = contact.PkContactId
+        };
+        db.Transactions.Add(transaction);
+
+        var rating = new ProductRatingModel
+        {
+            FkProductId = product.PkProductId,
+            FkRegisteredUserId = user.PkRegisteredUserId,
+            FkOrderItemId = orderItem.PkOrderItemId,
+            Rating = 5,
+            Description = "Test review",
+            RatedTime = DateTime.UtcNow,
+            Approved = true
+        };
+        db.ProductRatings.Add(rating);
+
+        await db.SaveChangesAsync();
+    }
     public static async Task SeedProductsAsync(ApplicationDbContext db)
     {
         // Skip if products already exist

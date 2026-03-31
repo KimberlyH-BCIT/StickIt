@@ -23,8 +23,7 @@ namespace ELKH.ViewModels
         [StringLength(1000, ErrorMessage = "Description cannot exceed 1000 characters.")]
         public string Description { get; set; } = string.Empty;
 
-        /// <summary>Product price (non-negative, formatted as currency).</summary>
-        [Required(ErrorMessage = "Please enter a price.")]
+        [Required]
         [Display(Name = "Price")]
         [DataType(DataType.Currency)]
         [DisplayFormat(DataFormatString = "{0:C}", ApplyFormatInEditMode = true)]

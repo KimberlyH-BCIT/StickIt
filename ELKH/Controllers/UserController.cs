@@ -184,6 +184,95 @@ namespace ELKH.Controllers
                     FirstName = vm.Profile.FirstName,
                     LastName  = vm.Profile.LastName
                 };
+                _profileRepository.Add(newProfile);
+            }
+            else
+            {
+                existing.FirstName = vm.Profile.FirstName;
+                existing.LastName  = vm.Profile.LastName;
+                _profileRepository.UpdateAndSave(existing);
+            }
+
+            SetSuccessMessage("Profile updated successfully");
+            await _logRepository.LogActivityAsync(email, "ProfileUpdated", $"Name updated to {vm.Profile.FirstName} {vm.Profile.LastName}");
+            return RedirectToAction(nameof(EditProfile));
+        }
+
+        // GET: User/GetAvatar  – returns the current user's avatar image
+        [HttpGet]
+        public IActionResult GetAvatar()
+        {
+            var authResult = RequireAuthenticatedUser(out var email);
+            if (authResult != null) return authResult;
+
+            var profile = _profileRepository.GetById(email);
+            if (profile?.AvatarData is null || string.IsNullOrEmpty(profile.AvatarMimeType))
+                return NotFound();
+
+            return File(profile.AvatarData, profile.AvatarMimeType);
+        }
+
+        // GET: User/Avatar/{id} — serves any registered user's avatar without requiring auth.
+        // Keyed by RegisteredUser PK (integer) to avoid exposing email addresses in URLs.
+        [HttpGet]
+        [AllowAnonymous]
+        public async Task<IActionResult> Avatar(int id)
+        {
+            var user = await UserService.GetByIdAsync(id);
+            if (user is null) return NotFound();
+
+            var profile = _profileRepository.GetById(user.Email);
+            if (profile?.AvatarData is null || string.IsNullOrEmpty(profile.AvatarMimeType))
+                return NotFound();
+
+            return File(profile.AvatarData, profile.AvatarMimeType);
+        }
+
+        // POST: User/UploadAvatar
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> UploadAvatar(UserProfilePageVM vm)
+        {
+            var authResult = RequireAuthenticatedUser(out var email);
+            if (authResult != null) return authResult;
+
+            const long maxBytes = 10 * 1024 * 1024; // 10 MB
+            var allowedTypes = new HashSet<string>(StringComparer.OrdinalIgnoreCase)
+                { "image/jpeg", "image/png", "image/gif", "image/webp" };
+
+            var file = vm.AvatarFile;
+
+            if (file is null || file.Length == 0)
+            {
+                SetErrorMessage("Please select an image file to upload.");
+                return RedirectToAction(nameof(EditProfile));
+            }
+
+            if (file.Length > maxBytes)
+            {
+                SetErrorMessage("The image must not exceed 10 MB.");
+                return RedirectToAction(nameof(EditProfile));
+            }
+
+            if (!allowedTypes.Contains(file.ContentType))
+            {
+                SetErrorMessage("Only JPEG, PNG, GIF, and WebP images are supported.");
+                return RedirectToAction(nameof(EditProfile));
+            }
+
+            using var ms = new System.IO.MemoryStream();
+            await file.CopyToAsync(ms);
+            var bytes = ms.ToArray();
+
+            var existing = _profileRepository.GetById(email);
+            if (existing is null)
+            {
+                var newProfile = new UserProfileModel
+                {
+                    PkEmail   = email,
+                    FirstName = vm.Profile.FirstName,
+                    LastName  = vm.Profile.LastName
+                };
                 await _profileRepository.AddAndSaveAsync(newProfile);
             }
             else
@@ -506,7 +595,7 @@ namespace ELKH.Controllers
                 SetErrorMessage("Failed to update address");
             }
 
-            return RedirectToAction(nameof(Addresses));
+            return RedirectToAction(nameof(EditProfile));
         }
 
         // GET: User/DeleteAddress/5
