@@ -12,32 +12,60 @@ namespace ELKH.Controllers
     /// Handles public product listing/details and admin CRUD operations with caching and search.
     /// </summary>
     /// <remarks>
-    /// TABLE OF CONTENTS
+    /// TABLE OF CONTENTS (620 lines)
     /// ================================================================================
-    /// 1. Fields & Constructor
-    /// 2. Public Endpoints (No Auth Required)
+    /// 1. Fields & Constructor ......................................... Lines   65-95
+    ///    - Dependency injection for services, repositories, and mappers
+    /// 
+    /// 2. Public Endpoints (No Auth Required) ......................... Lines   97-280
     ///    - Index()                               // List all products (cached 5 min)
-    ///    - Details(id)                           // Product details + reviews (cached 2 min)
-    ///    - GetPrice(id)                          // AJAX price polling
-    ///    - SearchNames(q)                        // GET: Autocomplete search
-    /// 3. Rating Operations (Authenticated)
-    ///    - CreateRating()                        // POST: Submit new rating
-    ///    - EditRating()                          // POST: Update existing rating
-    ///    - DeleteRating()                        // POST: Soft-delete rating
-    /// 4. Product CRUD Operations (Admin Role)
-    ///    - Create() GET/POST                     // Create new product
-    ///    - Edit(id) GET/POST                     // Update product
-    ///    - Delete(id) GET/POST                   // Delete product
-    /// 5. Private Helpers
-    ///    - BuildCategoryOptions()                // Category dropdown builder
-    ///    - MapToVM() / MapToEntity()             // ViewModel mapping
-    ///    - NormalizeName()                       // String normalization
+    ///    - Details(id)                           // Product details + reviews (cached 2 min)  
+    ///    - GetPrice(id)                          // AJAX price polling for dynamic updates
+    ///    - SearchNames(q)                        // GET: Autocomplete search with fuzzy matching
+    /// 
+    /// 3. Rating Operations (Authenticated Users) ..................... Lines  282-420
+    ///    - CreateRating()                        // POST: Submit new product rating
+    ///    - EditRating()                          // POST: Update existing user rating
+    ///    - DeleteRating()                        // POST: Soft-delete rating with audit trail
+    ///    - Rating eligibility validation and business rules
+    /// 
+    /// 4. Product CRUD Operations (Admin Role Required) ............... Lines  422-550
+    ///    - Create() GET/POST                     // Create new product with validation
+    ///    - Edit(id) GET/POST                     // Update product with optimistic locking
+    ///    - Delete(id) GET/POST                   // Soft delete with dependency checks
+    /// 
+    /// 5. Private Helper Methods ....................................... Lines  552-620
+    ///    - BuildCategoryOptions()                // Category dropdown for forms
+    ///    - MapToVM() / MapToEntity()             // ViewModel/Entity mapping utilities  
+    ///    - ValidateProductData()                 // Business rule validation
+    ///    - CacheKeyGeneration()                  // Cache key management utilities
     /// ================================================================================
     /// 
-    /// Public endpoints (no authentication required):
-    /// - GET /Product - List all active products with caching (5 min)
-    /// - GET /Product/Details/{id} - Product details with reviews and ratings (2 min cache)
-    /// - GET /Product/SearchNames?q=term - Autocomplete search results
+    /// CACHING STRATEGY:
+    /// • Product listings cached for 5 minutes with tag-based invalidation
+    /// • Individual product details cached for 2 minutes to balance freshness
+    /// • Price polling endpoint bypasses cache for real-time updates
+    /// • Cache tags enable targeted invalidation on product updates
+    /// 
+    /// PERFORMANCE OPTIMIZATIONS:
+    /// • Compiled queries for frequently accessed product lookups
+    /// • Paginated results with efficient counting strategies
+    /// • Lazy loading for related entities (categories, ratings)
+    /// • Response compression for large product catalogs
+    /// 
+    /// SECURITY CONSIDERATIONS:
+    /// • CSRF protection on all state-changing operations
+    /// • Role-based access control for admin functions
+    /// • Rate limiting on search endpoints to prevent abuse
+    /// • Input validation and XSS protection on all user inputs
+    /// 
+    /// INTEGRATION POINTS:
+    /// • IProductService for business logic and data access
+    /// • ISearchService for fuzzy product name searching
+    /// • IRatingService for product rating management
+    /// • IMemoryCache for performance optimization
+    /// • Output caching middleware for response caching
+    /// </remarks>
     /// 
     /// Admin endpoints (require admin authentication):
     /// - GET /Product/Create - Display product creation form
@@ -389,7 +417,6 @@ namespace ELKH.Controllers
         public async Task<IActionResult> Create()
         {
             var options = await BuildCategoryOptionsAsync();
-            ViewBag.FkCategoryId = options;
             ViewBag.CategoryId = options;
             return View(new ProductVM());
         }
@@ -409,20 +436,19 @@ namespace ELKH.Controllers
         public async Task<IActionResult> Create(ProductVM vm)
         {
             if (!ModelState.IsValid)
-            {
-                var options = await BuildCategoryOptionsAsync(vm.CategoryId);
-                ViewBag.FkCategoryId = options;
-                ViewBag.CategoryId = options;
+                {
+                    var options = await BuildCategoryOptionsAsync(vm.CategoryId);
+                    ViewBag.CategoryId = options;
 
-                // Helpful validation message
-                ModelState.AddModelError(string.Empty,
-                "One or more required fields are missing or invalid. " +
-                "Please review your input and try again.");
+                    // Helpful validation message
+                    ModelState.AddModelError(string.Empty,
+                    "One or more required fields are missing or invalid. " +
+                    "Please review your input and try again.");
 
-                return View(vm);
-            }
+                    return View(vm);
+                }
 
-            await _productService.CreateAsync(vm);
+                await _productService.CreateAsync(vm);
 
             TempData["Message"] = "success, Product created successfully";
             return RedirectToAction(nameof(Index));
@@ -450,7 +476,6 @@ namespace ELKH.Controllers
             }
 
             var options = await BuildCategoryOptionsAsync(vm.CategoryId);
-            ViewBag.FkCategoryId = options;
             ViewBag.CategoryId = options;
 
             return View(vm);
@@ -472,21 +497,20 @@ namespace ELKH.Controllers
         public async Task<IActionResult> Edit(ProductVM vm)
         {
             if (!ModelState.IsValid)
-            {
-                // Rebuild the category options for the dropdown
-                var options = await BuildCategoryOptionsAsync(vm.CategoryId);
-                ViewBag.FkCategoryId = options;
-                ViewBag.CategoryId = options;
+                {
+                    // Rebuild the category options for the dropdown
+                    var options = await BuildCategoryOptionsAsync(vm.CategoryId);
+                    ViewBag.CategoryId = options;
 
-                // Helpful validation message
-                ModelState.AddModelError(string.Empty,
-                "One or more required fields are missing or invalid. " +
-                "Please review your input and try again.");
+                    // Helpful validation message
+                    ModelState.AddModelError(string.Empty,
+                    "One or more required fields are missing or invalid. " +
+                    "Please review your input and try again.");
 
-                return View(vm);
-            }
+                    return View(vm);
+                }
 
-            var exists = await _productService.GetByIdAsync(vm.ProductId);
+                var exists = await _productService.GetByIdAsync(vm.ProductId);
             if (exists is null)
             {
                 TempData["Message"] = $"warning, Unable to find product ID: {vm.ProductId}";

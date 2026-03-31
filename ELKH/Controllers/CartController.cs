@@ -12,11 +12,11 @@ using Microsoft.AspNetCore.Mvc;
 namespace ELKH.Controllers;
 
 /// <summary>
-/// Shopping cart management controller for authenticated users.
+/// Shopping cart management controller for authenticated and guest users.
 /// Handles cart operations (add, remove) and quick purchase functionality.
 /// </summary>
 /// <remarks>
-/// All endpoints require authentication (inherited from AuthenticatedControllerBase).
+/// Cart operations support both authenticated users (database) and guest users (session).
 ///
 /// CART OPERATIONS:
 /// - GET /Cart - Display current user's cart items
@@ -35,8 +35,9 @@ namespace ELKH.Controllers;
 /// - Service layer handles business rules (inventory checks, price calculations)
 ///
 /// SECURITY:
-/// - User email retrieved from authenticated context via AuthenticatedControllerBase
-/// - All operations scoped to current user's cart
+/// - User email retrieved from authenticated context for logged-in users
+/// - Guest carts stored in secure session storage (30-min timeout, HttpOnly)
+/// - All operations scoped to current user's cart (database or session)
 /// - Anti-forgery tokens required for all POST operations
 ///
 /// TABLE OF CONTENTS
@@ -60,21 +61,24 @@ namespace ELKH.Controllers;
 /// - (0)  = Operation failed / database error
 /// - (>0) = Success: returns order ID
 /// </remarks>
-public class CartController : AuthenticatedControllerBase
+public class CartController : Controller
 {
     #region Constructor & Dependencies
 
     private readonly ICartService _cartService;
+    private readonly IGuestCartService _guestCartService;
+    private readonly IUserService _userService;
     private readonly ILogger<CartController> _logger;
 
     public CartController(
         ICartService cartService,
+        IGuestCartService guestCartService,
         IUserService userService,
-        ILogger<CartController> logger,
-        ELKH.Data.ApplicationDbContext db)
-        : base(db, userService)
+        ILogger<CartController> logger)
     {
         _cartService = cartService;
+        _guestCartService = guestCartService;
+        _userService = userService;
         _logger = logger;
     }
 
@@ -84,6 +88,7 @@ public class CartController : AuthenticatedControllerBase
 
     /// <summary>
     /// Displays the user's shopping cart with item details and order summary.
+    /// Supports both authenticated users (database cart) and guest users (session cart).
     /// </summary>
     /// <returns>View with cart items and calculated totals (tax, shipping, total)</returns>
     /// <remarks>
@@ -97,30 +102,48 @@ public class CartController : AuthenticatedControllerBase
     /// - Effective price calculated per product (includes discounts)
     /// - Line totals computed from effective price × quantity
     ///
-    /// All cart data retrieved from ICartService for consistent business logic.
+    /// AUTHENTICATION ROUTING:
+    /// - Authenticated: ICartService retrieves from database
+    /// - Guest: IGuestCartService retrieves from session
     /// </remarks>
     public async Task<IActionResult> Index()
     {
-        var authResult = RequireAuthenticatedUser(out var email);
-        if (authResult != null) return authResult;
+        ViewModels.CartVM cartVM;
 
-        // Delegate retrieval to the cart service and render the view with model data.
-        var items = await _cartService.GetCartItemsAsync(email);
-
-        // Map CartModel list to CartVM for view presentation
-        var cartVM = new ViewModels.CartVM
+        if (User.Identity?.IsAuthenticated == true)
         {
-            Items = items.Select(c => new ViewModels.CartItemVM
+            // Authenticated user: retrieve cart from database
+            var email = User.FindFirst(System.Security.Claims.ClaimTypes.Email)?.Value;
+            if (string.IsNullOrEmpty(email))
             {
-                CartItemId = c.PkCartId,
-                ProductId = c.FkProductID,
-                ProductName = c.Product?.Name ?? "Unknown",
-                UnitPrice = c.Product?.GetEffectivePrice() ?? 0,
-                Quantity = c.Quantity,
-                ImageUrl = c.Product?.ProductImage?.FirstOrDefault()?.ProductImageURL,
-                LineTotal = c.TotalPrice
-            }).ToList()
-        };
+                return RedirectToAction("Login", "Account", new { area = "Identity" });
+            }
+
+            var items = await _cartService.GetCartItemsAsync(email);
+
+            cartVM = new ViewModels.CartVM
+            {
+                Items = items.Select(c => new ViewModels.CartItemVM
+                {
+                    CartItemId = c.PkCartId,
+                    ProductId = c.FkProductID,
+                    ProductName = c.Product?.Name ?? "Unknown",
+                    UnitPrice = c.Product?.GetEffectivePrice() ?? 0,
+                    Quantity = c.Quantity,
+                    ImageUrl = c.Product?.ProductImage?.FirstOrDefault()?.ProductImageURL,
+                    LineTotal = c.TotalPrice
+                }).ToList()
+            };
+        }
+        else
+        {
+            // Guest user: retrieve cart from session
+            var items = await _guestCartService.GetCartItemsAsync();
+            cartVM = new ViewModels.CartVM
+            {
+                Items = items
+            };
+        }
 
         // Calculate summary values
         // Tax: 12% (BC PST 7% + GST 5% composite rate, simplified for customer-facing display)
@@ -163,16 +186,30 @@ public class CartController : AuthenticatedControllerBase
     {
         if (quantity <= 0) return BadRequest("Quantity must be positive.");
 
-        var authResult = RequireAuthenticatedUser(out var email);
-        if (authResult != null) return authResult;
-
         try
         {
-            await _cartService.AddToCartAsync(email, itemId, quantity);
+            int cartCount;
 
-            // Get updated cart count
-            var cartItems = await _cartService.GetCartItemsAsync(email);
-            var cartCount = cartItems.Sum(c => c.Quantity);
+            if (User.Identity?.IsAuthenticated == true)
+            {
+                // Authenticated user: add to database cart
+                var email = User.FindFirst(System.Security.Claims.ClaimTypes.Email)?.Value;
+                if (string.IsNullOrEmpty(email))
+                {
+                    return RedirectToAction("Login", "Account", new { area = "Identity" });
+                }
+
+                await _cartService.AddToCartAsync(email, itemId, quantity);
+                var cartItems = await _cartService.GetCartItemsAsync(email);
+                cartCount = cartItems.Sum(c => c.Quantity);
+            }
+            else
+            {
+                // Guest user: add to session cart
+                await _guestCartService.AddToCartAsync(itemId, quantity);
+                var cartItems = await _guestCartService.GetCartItemsAsync();
+                cartCount = cartItems.Sum(c => c.Quantity);
+            }
 
             // Check if this is an AJAX request
             var isAjax = Request.Headers["X-Requested-With"] == "XMLHttpRequest" ||
@@ -245,26 +282,52 @@ public class CartController : AuthenticatedControllerBase
     {
         if (quantity < 1) quantity = 1;
 
-        var authResult = RequireAuthenticatedUser(out var email);
-        if (authResult != null) return authResult;
+        if (User.Identity?.IsAuthenticated == true)
+        {
+            // Authenticated user: update database cart
+            var email = User.FindFirst(System.Security.Claims.ClaimTypes.Email)?.Value;
+            if (string.IsNullOrEmpty(email))
+            {
+                return RedirectToAction("Login", "Account", new { area = "Identity" });
+            }
 
-        await _cartService.UpdateQuantityAsync(email, cartId, quantity);
+            await _cartService.UpdateQuantityAsync(email, cartId, quantity);
+        }
+        else
+        {
+            // Guest user: update session cart (cartId is productId for guests)
+            await _guestCartService.UpdateQuantityAsync(cartId, quantity);
+        }
+
         return RedirectToAction(nameof(Index));
     }
 
     /// <summary>
     /// Removes a single item from the user's cart.
     /// </summary>
-    /// <param name="cartId">Cart item ID to remove</param>
+    /// <param name="cartId">Cart item ID to remove (productId for guest users)</param>
     /// <returns>Redirects to cart index</returns>
     [HttpPost]
     [ValidateAntiForgeryToken]
     public async Task<IActionResult> Remove(int cartId)
     {
-        var authResult = RequireAuthenticatedUser(out var email);
-        if (authResult != null) return authResult;
+        if (User.Identity?.IsAuthenticated == true)
+        {
+            // Authenticated user: remove from database cart
+            var email = User.FindFirst(System.Security.Claims.ClaimTypes.Email)?.Value;
+            if (string.IsNullOrEmpty(email))
+            {
+                return RedirectToAction("Login", "Account", new { area = "Identity" });
+            }
 
-        await _cartService.RemoveFromCartAsync(email, cartId);
+            await _cartService.RemoveFromCartAsync(email, cartId);
+        }
+        else
+        {
+            // Guest user: remove from session cart (cartId is productId for guests)
+            await _guestCartService.RemoveFromCartAsync(cartId);
+        }
+
         return RedirectToAction(nameof(Index));
     }
 
@@ -276,11 +339,24 @@ public class CartController : AuthenticatedControllerBase
     [ValidateAntiForgeryToken]
     public async Task<IActionResult> Clear()
     {
-        var authResult = RequireAuthenticatedUser(out var email);
-        if (authResult != null) return authResult;
+        if (User.Identity?.IsAuthenticated == true)
+        {
+            // Authenticated user: clear database cart
+            var email = User.FindFirst(System.Security.Claims.ClaimTypes.Email)?.Value;
+            if (string.IsNullOrEmpty(email))
+            {
+                return RedirectToAction("Login", "Account", new { area = "Identity" });
+            }
 
-        await _cartService.ClearCartAsync(email);
-        SetSuccessMessage("Cart cleared.");
+            await _cartService.ClearCartAsync(email);
+        }
+        else
+        {
+            // Guest user: clear session cart
+            await _guestCartService.ClearCartAsync();
+        }
+
+        TempData["Message"] = "success,Cart cleared.";
         return RedirectToAction(nameof(Index));
     }
 
@@ -290,6 +366,7 @@ public class CartController : AuthenticatedControllerBase
 
     /// <summary>
     /// Quick purchase: Add single item and immediately create order, bypassing cart.
+    /// AUTHENTICATED USERS ONLY - Guest users must use standard checkout.
     /// </summary>
     /// <param name="itemId">Product ID to purchase</param>
     /// <param name="quantity">Quantity to purchase</param>
@@ -311,34 +388,51 @@ public class CartController : AuthenticatedControllerBase
     /// STREAMLINED UX:
     /// Bypasses traditional cart viewing for single-item purchases,
     /// reducing friction for impulse buys and mobile users.
+    ///
+    /// AUTHENTICATION:
+    /// Guest users redirected to login - BuyNow requires stored delivery address.
     /// </remarks>
     [HttpPost]
     [ValidateAntiForgeryToken]
     public async Task<IActionResult> BuyNow(int itemId, int quantity)
     {
-        var authResult = RequireAuthenticatedUser(out var email);
-        if (authResult != null) return authResult;
+        if (User.Identity?.IsAuthenticated != true)
+        {
+            return RedirectToAction("Login", "Account", new { area = "Identity", returnUrl = Url.Action("Details", "Product", new { id = itemId }) });
+        }
 
-        var orderId = await _cartService.BuyNowAsync(email, itemId, quantity);
+        var email = User.FindFirst(System.Security.Claims.ClaimTypes.Email)?.Value;
+        if (string.IsNullOrEmpty(email))
+        {
+            return RedirectToAction("Login", "Account", new { area = "Identity" });
+        }
+
+        // TODO: Replace with shipping method selection from checkout UI
+        const int DEFAULT_SHIPPING_METHOD_ID = 1; // Standard Shipping
+        var orderId = await _cartService.BuyNowAsync(email, itemId, quantity, DEFAULT_SHIPPING_METHOD_ID);
         switch (orderId)
         {
+            case -3:
+                TempData["Message"] = "warning,Invalid shipping method selected.";
+                return RedirectToAction("Details", "Product", new { id = itemId });
             case -2:
-                SetWarningMessage("Please add a delivery address before purchasing.");
+                TempData["Message"] = "warning,Please add a delivery address before purchasing.";
                 return RedirectToAction("Addresses", "User");
             case -1:
-                SetWarningMessage("This item is currently out of stock.");
+                TempData["Message"] = "warning,This item is currently out of stock.";
                 return RedirectToAction("Details", "Product", new { id = itemId });
             case 0:
-                SetWarningMessage("Unable to complete purchase. Please try again.");
+                TempData["Message"] = "warning,Unable to complete purchase. Please try again.";
                 return RedirectToAction("Details", "Product", new { id = itemId });
             default:
-                SetSuccessMessage("Order placed successfully!");
+                TempData["Message"] = "success,Order placed successfully!";
                 return RedirectToAction("Details", "Order", new { id = orderId });
         }
     }
 
     /// <summary>
     /// Creates an order from all items currently in the user's cart.
+    /// AUTHENTICATED USERS ONLY - Guest users must use guest checkout flow.
     /// </summary>
     /// <returns>Redirects based on operation status (see status codes in remarks)</returns>
     /// <remarks>
@@ -359,27 +453,43 @@ public class CartController : AuthenticatedControllerBase
     /// ATOMICITY:
     /// Order creation is transactional - all items must be available
     /// or the entire order fails (no partial orders).
+    ///
+    /// AUTHENTICATION:
+    /// Guest users redirected to guest checkout - PlaceOrder requires stored delivery address.
     /// </remarks>
     [HttpPost]
     [ValidateAntiForgeryToken]
     public async Task<IActionResult> PlaceOrder()
     {
-        var authResult = RequireAuthenticatedUser(out var email);
-        if (authResult != null) return authResult;
+        if (User.Identity?.IsAuthenticated != true)
+        {
+            return RedirectToAction("Guest", "Checkout");
+        }
 
-        var orderId = await _cartService.PlaceOrderAsync(email);
+        var email = User.FindFirst(System.Security.Claims.ClaimTypes.Email)?.Value;
+        if (string.IsNullOrEmpty(email))
+        {
+            return RedirectToAction("Login", "Account", new { area = "Identity" });
+        }
+
+        // TODO: Replace with shipping method selection from checkout UI
+        const int DEFAULT_SHIPPING_METHOD_ID = 1; // Standard Shipping
+        var orderId = await _cartService.PlaceOrderAsync(email, DEFAULT_SHIPPING_METHOD_ID);
         switch (orderId)
         {
+            case -3:
+                TempData["Message"] = "warning,Invalid shipping method selected.";
+                return RedirectToAction(nameof(Index));
             case -2:
-                SetWarningMessage("Please add a delivery address to your account before placing an order.");
+                TempData["Message"] = "warning,Please add a delivery address to your account before placing an order.";
                 return RedirectToAction("Addresses", "User");
             case -1:
-                SetWarningMessage("One or more items in your cart are out of stock. Please update your cart.");
+                TempData["Message"] = "warning,One or more items in your cart are out of stock. Please update your cart.";
                 return RedirectToAction(nameof(Index));
             case 0:
                 return RedirectToAction(nameof(Index));
             default:
-                SetSuccessMessage("Order placed successfully");
+                TempData["Message"] = "success,Order placed successfully";
                 return RedirectToAction("Details", "Order", new { id = orderId });
         }
     }

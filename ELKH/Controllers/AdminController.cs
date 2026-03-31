@@ -19,35 +19,60 @@ namespace ELKH.Controllers
     /// All actions require the Admin role for access.
     /// </summary>
     /// <remarks>
-    /// TABLE OF CONTENTS
+    /// TABLE OF CONTENTS (643 lines)
     /// ================================================================================
-    /// 1. Fields & Constructor
-    /// 2. Dashboard & Analytics
+    /// 1. Fields & Constructor ......................................... Lines   55-75
+    ///    - Dependency injection setup for services and context
+    /// 
+    /// 2. Dashboard & Analytics ........................................ Lines   77-150
     ///    - Index()                               // GET: Admin dashboard with metrics
     ///    - ManageSales()                         // GET: Sales analytics and charts
-    /// 3. User Management
+    /// 
+    /// 3. User Management .............................................. Lines  152-350
     ///    - ListUsers()                           // GET: Paginated user list with filtering
     ///    - AccountDetails(id)                    // GET: User account details
     ///    - RemoveRole()                          // POST: Remove role from user
-    /// 4. Search Index Management
+    ///    - User role assignment and management operations
+    /// 
+    /// 4. Search Index Management ...................................... Lines  352-450
     ///    - ReindexFTS()                          // POST: Rebuild full-text search index
     ///    - ReindexHealth()                       // GET: Background service health status
-    /// 5. Cache Management
+    ///    - FTS table maintenance and optimization
+    /// 
+    /// 5. Cache Management ............................................. Lines  452-550
     ///    - CacheStats()                          // GET: Cache statistics
     ///    - ClearFuzzyCache()                     // POST: Clear fuzzy search cache
-    /// 6. Payload Models
+    ///    - Memory cache operations and registry cleanup
+    /// 
+    /// 6. System Health & Monitoring .................................. Lines  552-600
+    ///    - Background service status monitoring
+    ///    - Performance metrics collection
+    ///    - System health dashboard integration
+    /// 
+    /// 7. Payload Models ............................................... Lines  602-643
     ///    - ReindexPayload                        // Request model for reindex operation
     ///    - ClearCachePayload                     // Request model for cache clearing
+    ///    - Audit trail and validation models
     /// ================================================================================
     /// 
-    /// Security:
-    /// - All endpoints require [Authorize(Roles = "Admin")]
-    /// - State-changing operations use [ValidateAntiForgeryToken]
-    /// - All administrative actions are audited to the AuditEntries table
+    /// SECURITY & COMPLIANCE:
+    /// • All endpoints require [Authorize(Roles = "Admin")] for access control
+    /// • State-changing operations use [ValidateAntiForgeryToken] for CSRF protection
+    /// • All administrative actions are audited to the AuditEntries table
+    /// • Rate limiting applied to prevent abuse of system operations
     /// 
-    /// Performance Considerations:
-    /// - User listing uses server-side filtering to minimize memory usage
-    /// - Role lookups are performed only on paginated results
+    /// PERFORMANCE CONSIDERATIONS:
+    /// • User listing uses server-side filtering to minimize memory usage
+    /// • Role lookups are performed only on paginated results
+    /// • Cache operations are optimized for minimal impact on active users
+    /// • Background service coordination prevents operation conflicts
+    /// 
+    /// INTEGRATION POINTS:
+    /// • Coordinates with AdminSystemController for specialized operations
+    /// • Integrates with IFuzzyReindexService for search maintenance
+    /// • Uses IMemoryCache for performance optimization
+    /// • Logs all operations through ILogger for monitoring
+    /// </remarks>
     /// - Sales analytics fetches data in bulk and processes in-memory
     /// - Cache operations include error handling to prevent service disruption
     /// </remarks>

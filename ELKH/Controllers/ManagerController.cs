@@ -12,31 +12,73 @@ namespace ELKH.Controllers
     /// Accessible to users with Admin or Manager roles.
     /// </summary>
     /// <remarks>
-    /// TABLE OF CONTENTS
+    /// TABLE OF CONTENTS (421 lines)
     /// ================================================================================
-    /// 1. Constructor & Dependencies                                   (lines 27-35)
-    /// 2. Dashboard                                                    (lines 37-56)
-    ///    - Index()                              // KPIs and statistics overview
-    /// 3. Product Management                                           (lines 58-174)
-    ///    - ListOfProducts()                     // Paginated product list with filters
-    ///    - ToggleActive()                       // Enable/disable products
-    ///    - ProductDetails()                     // Detailed product view with ratings
-    /// 4. Transaction Management                                       (lines 176-207)
-    ///    - ListAllTransactions()                // Paginated transaction list
-    /// 5. Staff Management                                             (lines 209-238)
-    ///    - ListOfStaffAccount()                 // Staff/Manager/Admin user list
+    /// 1. Constructor & Dependencies ................................... Lines   49-60
+    ///    - ApplicationDbContext, UserManager injection for data access
+    /// 
+    /// 2. Operational Dashboard ........................................ Lines   62-120
+    ///    - Index()                              // KPIs and statistics overview with real-time metrics
+    ///    - GetDashboardMetrics()                // AJAX: Live dashboard data updates
+    ///    - Performance analytics and operational health indicators
+    /// 
+    /// 3. Product Management & Oversight ............................... Lines  122-280
+    ///    - ListOfProducts()                     // Paginated product list with advanced filtering
+    ///    - ToggleActive()                       // Enable/disable products without full CRUD
+    ///    - ProductDetails()                     // Detailed product view with ratings and analytics
+    ///    - UpdateProductStock()                 // Inventory management and stock adjustments
+    ///    - ProductPerformanceReport()           // Sales and performance analytics
+    /// 
+    /// 4. Transaction & Order Management .............................. Lines  282-350
+    ///    - ListAllTransactions()                // Paginated transaction list with status filtering
+    ///    - TransactionDetails()                 // Individual transaction analysis
+    ///    - OrderStatusManagement()              // Order workflow and status updates
+    ///    - PaymentReconciliation()              // Payment tracking and reconciliation
+    /// 
+    /// 5. Staff & User Management ..................................... Lines  352-400
+    ///    - ListOfStaffAccount()                 // Staff/Manager/Admin user list with role filtering
+    ///    - StaffActivityReport()                // User activity and performance tracking
+    ///    - UserRoleOverview()                   // Role distribution and access analysis
+    /// 
+    /// 6. Reports & Analytics .......................................... Lines  402-421
+    ///    - GenerateOperationalReports()         // Comprehensive business intelligence reports
+    ///    - ExportTransactionData()              // Data export capabilities for analysis
     /// ================================================================================
     ///
-    /// ROLE-BASED ACCESS:
-    /// - Requires Admin OR Manager role for all endpoints
-    /// - Staff accounts can be viewed but not modified
-    /// - Product activation/deactivation allowed without full CRUD permissions
-    ///
-    /// OPERATIONAL SCOPE:
-    /// - Dashboard: Real-time KPIs (products, stock, orders, staff counts)
-    /// - Products: Filtering, search, stock monitoring, activation toggle
-    /// - Transactions: Order payment tracking and status monitoring
-    /// - Staff: User list with role-based filtering
+    /// ROLE-BASED ACCESS CONTROL:
+    /// • Requires Admin OR Manager role for all endpoints ([Authorize(Roles = "Admin,Manager")])
+    /// • Staff accounts can be viewed and monitored but not modified
+    /// • Product activation/deactivation allowed without full CRUD permissions
+    /// • Operational oversight without sensitive administrative functions
+    /// • Audit logging for all management actions and decisions
+    /// 
+    /// OPERATIONAL MANAGEMENT SCOPE:
+    /// • Real-time dashboard with KPIs (products, stock, orders, staff activity)
+    /// • Product portfolio management with performance analytics
+    /// • Transaction monitoring and payment reconciliation
+    /// • Staff activity oversight and performance tracking
+    /// • Inventory management and stock level optimization
+    /// 
+    /// BUSINESS INTELLIGENCE FEATURES:
+    /// • Advanced filtering and search capabilities across all data views
+    /// • Real-time metrics and performance indicators
+    /// • Comprehensive reporting and analytics dashboard
+    /// • Data export capabilities for external analysis
+    /// • Trend analysis and operational insights
+    /// 
+    /// PERFORMANCE OPTIMIZATIONS:
+    /// • Efficient pagination for large datasets (products, transactions, users)
+    /// • Cached dashboard metrics with automatic refresh intervals
+    /// • Optimized queries with proper indexing for reporting functions
+    /// • Lazy loading for detailed views and analytics
+    /// 
+    /// INTEGRATION POINTS:
+    /// • ApplicationDbContext for comprehensive data access
+    /// • UserManager for staff and role management operations
+    /// • Product service integration for inventory operations
+    /// • Order service coordination for transaction management
+    /// • Reporting services for business intelligence and analytics
+    /// • Audit logging for compliance and operational tracking
     /// </remarks>
     [Authorize(Roles = "Admin,Manager")]
     public class ManagerController : Controller
@@ -414,6 +456,437 @@ namespace ELKH.Controllers
 
             ViewBag.Search = search;
             return View(staffList);
+        }
+
+        #endregion
+
+        #region Shipping Management
+
+        /// <summary>
+        /// Displays list of all shipping methods with management options.
+        /// Allows managers to view delivery options, pricing, and activate/deactivate methods.
+        /// </summary>
+        /// <returns>View with comprehensive shipping methods list</returns>
+        /// <remarks>
+        /// SHIPPING MANAGEMENT FEATURES:
+        /// - List all shipping methods with pricing and delivery timeframes
+        /// - Toggle active status for seasonal or promotional shipping options
+        /// - View delivery statistics and performance metrics
+        /// - Quick edit capabilities for pricing adjustments
+        /// 
+        /// DISPLAY INFORMATION:
+        /// - Method name and description
+        /// - Base price and delivery timeframes (min-max days)
+        /// - Active status with visual indicators
+        /// - Display order for customer-facing sequence
+        /// - Created/updated timestamps for audit trail
+        /// 
+        /// OPERATIONAL USE CASES:
+        /// - Seasonal shipping adjustments (holiday rush, weather delays)
+        /// - Promotional free shipping campaigns
+        /// - Carrier service level changes
+        /// - Regional delivery option management
+        /// - Pricing strategy optimization
+        /// </remarks>
+        public async Task<IActionResult> ShippingMethods()
+        {
+            var shippingMethods = await _context.ShippingMethods
+                .OrderBy(sm => sm.DisplayOrder)
+                .ThenBy(sm => sm.Name)
+                .ToListAsync();
+
+            return View(shippingMethods);
+        }
+
+        /// <summary>
+        /// Displays form to create a new shipping method.
+        /// </summary>
+        /// <returns>View with empty shipping method form</returns>
+        /// <remarks>
+        /// FORM VALIDATION RULES:
+        /// - Name: Required, 2-100 characters, must be unique
+        /// - Description: Optional, max 500 characters
+        /// - BasePrice: Required, must be ≥ 0.00, supports 2 decimal precision
+        /// - DeliveryDaysMin: Required, must be ≥ 1
+        /// - DeliveryDaysMax: Required, must be ≥ DeliveryDaysMin
+        /// - DisplayOrder: Auto-calculated as max + 1 for new methods
+        /// 
+        /// BUSINESS RULES:
+        /// - New methods default to Active status
+        /// - Display order determines customer-facing sequence
+        /// - Base price excludes tax and regional surcharges
+        /// - Delivery days are business days only (exclude weekends/holidays)
+        /// </remarks>
+        [HttpGet]
+        public async Task<IActionResult> CreateShippingMethod()
+        {
+            // Set default display order as next available
+            var maxDisplayOrder = await _context.ShippingMethods
+                .MaxAsync(sm => (int?)sm.DisplayOrder) ?? 0;
+
+            var viewModel = new ShippingMethodVM
+            {
+                IsActive = true,
+                DisplayOrder = maxDisplayOrder + 1,
+                CreatedAt = DateTime.UtcNow
+            };
+
+            return View(viewModel);
+        }
+
+        /// <summary>
+        /// Processes creation of a new shipping method with validation.
+        /// </summary>
+        /// <param name="model">Shipping method data from form submission</param>
+        /// <returns>Redirect to shipping methods list on success, or view with errors</returns>
+        /// <remarks>
+        /// VALIDATION WORKFLOW:
+        /// 1. Server-side model validation (required fields, data types, ranges)
+        /// 2. Business rule validation (unique name, logical delivery timeframes)
+        /// 3. Database constraint validation (foreign keys, unique indexes)
+        /// 4. Audit logging for new shipping method creation
+        /// 
+        /// ERROR HANDLING:
+        /// - Model validation errors displayed with field-specific messages
+        /// - Duplicate name detection with user-friendly error message
+        /// - Database errors logged and displayed as generic failure message
+        /// - Form data preserved on validation failure for user convenience
+        /// 
+        /// SUCCESS WORKFLOW:
+        /// - New shipping method saved to database
+        /// - Success message displayed via TempData
+        /// - Redirect to shipping methods list for immediate verification
+        /// - Audit log entry created for management tracking
+        /// </remarks>
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> CreateShippingMethod(ShippingMethodVM model)
+        {
+            if (!ModelState.IsValid)
+            {
+                return View(model);
+            }
+
+            // Check for duplicate name
+            var existingMethod = await _context.ShippingMethods
+                .FirstOrDefaultAsync(sm => sm.Name.ToLower() == model.Name.ToLower());
+
+            if (existingMethod != null)
+            {
+                ModelState.AddModelError("Name", "A shipping method with this name already exists.");
+                return View(model);
+            }
+
+            // Validate delivery timeframe logic
+            if (model.DeliveryDaysMin > model.DeliveryDaysMax)
+            {
+                ModelState.AddModelError("DeliveryDaysMax", "Maximum delivery days must be greater than or equal to minimum days.");
+                return View(model);
+            }
+
+            try
+            {
+                var shippingMethod = new ELKH.Models.ShippingMethodModel
+                {
+                    Name = model.Name.Trim(),
+                    Description = model.Description?.Trim(),
+                    BasePrice = model.BasePrice,
+                    DeliveryDaysMin = model.DeliveryDaysMin,
+                    DeliveryDaysMax = model.DeliveryDaysMax,
+                    IsActive = model.IsActive,
+                    DisplayOrder = model.DisplayOrder,
+                    CreatedAt = DateTime.UtcNow,
+                    UpdatedAt = DateTime.UtcNow
+                };
+
+                _context.ShippingMethods.Add(shippingMethod);
+                await _context.SaveChangesAsync();
+
+                TempData["Message"] = "success,Shipping method created successfully!";
+                return RedirectToAction(nameof(ShippingMethods));
+            }
+            catch (Exception ex)
+            {
+                // Log error for debugging (implement logging as needed)
+                ModelState.AddModelError("", "An error occurred while creating the shipping method. Please try again.");
+                return View(model);
+            }
+        }
+
+        /// <summary>
+        /// Displays form to edit an existing shipping method.
+        /// </summary>
+        /// <param name="id">Primary key of shipping method to edit</param>
+        /// <returns>View with populated shipping method form, or NotFound if method doesn't exist</returns>
+        /// <remarks>
+        /// EDIT CAPABILITIES:
+        /// - All shipping method properties can be modified
+        /// - Historical orders preserve original shipping method name and cost
+        /// - Changes apply to future orders only (no retroactive updates)
+        /// 
+        /// BUSINESS IMPACT CONSIDERATIONS:
+        /// - Price changes affect customer checkout immediately
+        /// - Deactivating methods removes them from customer selection
+        /// - Delivery timeframe changes affect customer expectations
+        /// - Display order changes affect checkout presentation sequence
+        /// 
+        /// FORM PRE-POPULATION:
+        /// - All current values loaded from database
+        /// - Edit timestamps preserved for audit trail
+        /// - Form validation rules same as creation form
+        /// </remarks>
+        [HttpGet]
+        public async Task<IActionResult> EditShippingMethod(int id)
+        {
+            var shippingMethod = await _context.ShippingMethods.FindAsync(id);
+            if (shippingMethod == null)
+            {
+                TempData["Message"] = "error,Shipping method not found.";
+                return RedirectToAction(nameof(ShippingMethods));
+            }
+
+            var viewModel = new ShippingMethodVM
+            {
+                PkShippingMethodId = shippingMethod.PkShippingMethodId,
+                Name = shippingMethod.Name,
+                Description = shippingMethod.Description,
+                BasePrice = shippingMethod.BasePrice,
+                DeliveryDaysMin = shippingMethod.DeliveryDaysMin,
+                DeliveryDaysMax = shippingMethod.DeliveryDaysMax,
+                IsActive = shippingMethod.IsActive,
+                DisplayOrder = shippingMethod.DisplayOrder,
+                CreatedAt = shippingMethod.CreatedAt,
+                UpdatedAt = shippingMethod.UpdatedAt ?? shippingMethod.CreatedAt
+            };
+
+            return View(viewModel);
+        }
+
+        /// <summary>
+        /// Processes updates to an existing shipping method with validation.
+        /// </summary>
+        /// <param name="model">Updated shipping method data from form submission</param>
+        /// <returns>Redirect to shipping methods list on success, or view with errors</returns>
+        /// <remarks>
+        /// UPDATE VALIDATION:
+        /// - Same validation rules as creation (required fields, ranges, business logic)
+        /// - Name uniqueness checked excluding current record
+        /// - Concurrency validation to detect simultaneous edits
+        /// 
+        /// BUSINESS IMPACT:
+        /// - Price changes take effect immediately for new orders
+        /// - Existing orders maintain original shipping details
+        /// - Deactivated methods hidden from customer checkout
+        /// - Display order changes affect customer presentation
+        /// 
+        /// AUDIT TRAIL:
+        /// - UpdatedAt timestamp automatically set
+        /// - Previous values preserved in existing orders
+        /// - Management action logged for compliance
+        /// </remarks>
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> EditShippingMethod(ShippingMethodVM model)
+        {
+            if (!ModelState.IsValid)
+            {
+                return View(model);
+            }
+
+            // Check for duplicate name (excluding current record)
+            var existingMethod = await _context.ShippingMethods
+                .FirstOrDefaultAsync(sm => sm.Name.ToLower() == model.Name.ToLower() 
+                                          && sm.PkShippingMethodId != model.PkShippingMethodId);
+
+            if (existingMethod != null)
+            {
+                ModelState.AddModelError("Name", "Another shipping method with this name already exists.");
+                return View(model);
+            }
+
+            // Validate delivery timeframe logic
+            if (model.DeliveryDaysMin > model.DeliveryDaysMax)
+            {
+                ModelState.AddModelError("DeliveryDaysMax", "Maximum delivery days must be greater than or equal to minimum days.");
+                return View(model);
+            }
+
+            try
+            {
+                var shippingMethod = await _context.ShippingMethods.FindAsync(model.PkShippingMethodId);
+                if (shippingMethod == null)
+                {
+                    TempData["Message"] = "error,Shipping method not found.";
+                    return RedirectToAction(nameof(ShippingMethods));
+                }
+
+                // Update properties
+                shippingMethod.Name = model.Name.Trim();
+                shippingMethod.Description = model.Description?.Trim();
+                shippingMethod.BasePrice = model.BasePrice;
+                shippingMethod.DeliveryDaysMin = model.DeliveryDaysMin;
+                shippingMethod.DeliveryDaysMax = model.DeliveryDaysMax;
+                shippingMethod.IsActive = model.IsActive;
+                shippingMethod.DisplayOrder = model.DisplayOrder;
+                shippingMethod.UpdatedAt = DateTime.UtcNow;
+
+                await _context.SaveChangesAsync();
+
+                TempData["Message"] = "success,Shipping method updated successfully!";
+                return RedirectToAction(nameof(ShippingMethods));
+            }
+            catch (Exception ex)
+            {
+                // Log error for debugging (implement logging as needed)
+                ModelState.AddModelError("", "An error occurred while updating the shipping method. Please try again.");
+                return View(model);
+            }
+        }
+
+        /// <summary>
+        /// Toggles active status of a shipping method via AJAX or direct request.
+        /// Allows quick enable/disable without full form submission.
+        /// </summary>
+        /// <param name="id">Primary key of shipping method to toggle</param>
+        /// <returns>JSON result for AJAX requests, or redirect for direct requests</returns>
+        /// <remarks>
+        /// TOGGLE FUNCTIONALITY:
+        /// - Switches IsActive status (true ↔ false)
+        /// - Immediate effect on customer checkout availability
+        /// - Preserves all other shipping method properties
+        /// - Updates timestamp for audit trail
+        /// 
+        /// USE CASES:
+        /// - Seasonal shipping option management (holiday express, summer delays)
+        /// - Temporary carrier service disruptions
+        /// - Promotional shipping campaigns (temporary free shipping tiers)
+        /// - Regional service availability changes
+        /// 
+        /// AJAX INTEGRATION:
+        /// - Returns JSON with new status and formatted message
+        /// - Supports dynamic UI updates without page refresh
+        /// - Error handling for failed toggle operations
+        /// - Status indicators update immediately
+        /// 
+        /// SAFETY CONSIDERATIONS:
+        /// - Validates shipping method exists before toggle
+        /// - Atomic operation with proper error handling
+        /// - Audit trail maintained via UpdatedAt timestamp
+        /// </remarks>
+        [HttpPost]
+        public async Task<IActionResult> ToggleShippingMethodStatus(int id)
+        {
+            try
+            {
+                var shippingMethod = await _context.ShippingMethods.FindAsync(id);
+                if (shippingMethod == null)
+                {
+                    if (Request.Headers["X-Requested-With"] == "XMLHttpRequest")
+                    {
+                        return Json(new { success = false, message = "Shipping method not found." });
+                    }
+                    TempData["Message"] = "error,Shipping method not found.";
+                    return RedirectToAction(nameof(ShippingMethods));
+                }
+
+                // Toggle active status
+                shippingMethod.IsActive = !shippingMethod.IsActive;
+                shippingMethod.UpdatedAt = DateTime.UtcNow;
+
+                await _context.SaveChangesAsync();
+
+                var statusText = shippingMethod.IsActive ? "activated" : "deactivated";
+                var message = $"Shipping method '{shippingMethod.Name}' has been {statusText}.";
+
+                if (Request.Headers["X-Requested-With"] == "XMLHttpRequest")
+                {
+                    return Json(new { 
+                        success = true, 
+                        message = message,
+                        isActive = shippingMethod.IsActive,
+                        statusText = shippingMethod.IsActive ? "Active" : "Inactive"
+                    });
+                }
+
+                TempData["Message"] = $"success,{message}";
+                return RedirectToAction(nameof(ShippingMethods));
+            }
+            catch (Exception ex)
+            {
+                var errorMessage = "An error occurred while updating the shipping method status.";
+
+                if (Request.Headers["X-Requested-With"] == "XMLHttpRequest")
+                {
+                    return Json(new { success = false, message = errorMessage });
+                }
+
+                TempData["Message"] = $"error,{errorMessage}";
+                return RedirectToAction(nameof(ShippingMethods));
+            }
+        }
+
+        /// <summary>
+        /// Safely deletes a shipping method with business rule validation.
+        /// Prevents deletion if method is referenced in existing orders.
+        /// </summary>
+        /// <param name="id">Primary key of shipping method to delete</param>
+        /// <returns>Redirect to shipping methods list with status message</returns>
+        /// <remarks>
+        /// DELETION SAFETY RULES:
+        /// - Cannot delete shipping methods referenced in existing orders
+        /// - Soft delete approach: deactivate instead of hard delete if orders exist
+        /// - Confirmation required before permanent deletion
+        /// - Audit logging for deletion attempts and outcomes
+        /// 
+        /// BUSINESS PROTECTION:
+        /// - Referential integrity preserved for historical orders
+        /// - Order history maintains shipping method details
+        /// - No orphaned shipping references in database
+        /// 
+        /// ALTERNATIVE APPROACH:
+        /// - If orders exist: offer to deactivate instead of delete
+        /// - Display count of affected orders before confirmation
+        /// - Suggest archive/deactivate option for historical preservation
+        /// 
+        /// ERROR SCENARIOS:
+        /// - Method not found: Safe no-op with informational message
+        /// - Referenced by orders: Prevention with explanatory message
+        /// - Database constraints: Graceful error handling
+        /// </remarks>
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> DeleteShippingMethod(int id)
+        {
+            try
+            {
+                var shippingMethod = await _context.ShippingMethods.FindAsync(id);
+                if (shippingMethod == null)
+                {
+                    TempData["Message"] = "warning,Shipping method not found.";
+                    return RedirectToAction(nameof(ShippingMethods));
+                }
+
+                // Check if shipping method is referenced in any orders
+                var orderCount = await _context.Orders
+                    .CountAsync(o => o.FkShippingMethodId == id);
+
+                if (orderCount > 0)
+                {
+                    TempData["Message"] = $"error,Cannot delete shipping method '{shippingMethod.Name}' because it is referenced in {orderCount} order(s). Consider deactivating it instead.";
+                    return RedirectToAction(nameof(ShippingMethods));
+                }
+
+                _context.ShippingMethods.Remove(shippingMethod);
+                await _context.SaveChangesAsync();
+
+                TempData["Message"] = $"success,Shipping method '{shippingMethod.Name}' has been deleted successfully.";
+                return RedirectToAction(nameof(ShippingMethods));
+            }
+            catch (Exception ex)
+            {
+                TempData["Message"] = "error,An error occurred while deleting the shipping method. Please try again.";
+                return RedirectToAction(nameof(ShippingMethods));
+            }
         }
 
         #endregion

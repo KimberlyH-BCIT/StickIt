@@ -57,6 +57,14 @@ namespace ELKH.Controllers
             return View();
         }
 
+        /// <summary>
+        /// Demo page showcasing image optimization, lazy loading, and Kawaii UI features
+        /// </summary>
+        public IActionResult ImageDemo()
+        {
+            return View();
+        }
+
         public IActionResult Terms()
         {
             return View();

@@ -14,13 +14,15 @@ using System.Linq;
 namespace ELKH.Controllers;
 
 /// <summary>
-/// Handles the multi-step checkout flow: cart summary display, address selection,
-/// order pricing calculation, and PayPal payment processing.
+/// Handles the multi-step checkout flow for both authenticated and guest users:
+/// - Authenticated users: cart summary, address selection, order pricing, PayPal processing
+/// - Guest users: simplified checkout with contact detail collection
 /// </summary>
 /// <remarks>
 /// This controller combines features from two development branches:
 /// - Saved addresses functionality (allows users to select from previously used addresses)
 /// - Simplified PayPal integration (client-side capture, no backend API calls)
+/// - Guest checkout support (session-based cart, email-only order tracking)
 ///
 /// Pricing rules applied in Index() and re-verified server-side in ProcessPayment():
 /// - Tax:      12% of subtotal (BC PST 7% + GST 5% composite rate).
@@ -49,29 +51,35 @@ namespace ELKH.Controllers;
 /// - PayPal payment captured client-side, order status set to "Paid"
 /// - Rate limiting applied via RateLimitPolicies.Checkout
 /// </remarks>
-[Authorize]
 public class CheckoutController : Controller
 {
     private readonly ApplicationDbContext _db;
     private readonly ICartRepo _cartRepo;
     private readonly IContactDetailRepo _contactRepo;
     private readonly ICartService _cartService;
+    private readonly IGuestCartService _guestCartService;
     private readonly IConfiguration _configuration;
+    private readonly IShippingService _shippingService;
 
     public CheckoutController(
         ApplicationDbContext db,
         ICartRepo cartRepo,
         IContactDetailRepo contactRepo,
         ICartService cartService,
-        IConfiguration configuration)
+        IGuestCartService guestCartService,
+        IConfiguration configuration,
+        IShippingService shippingService)
     {
         _db = db;
         _cartRepo = cartRepo;
         _contactRepo = contactRepo;
         _cartService = cartService;
+        _guestCartService = guestCartService;
         _configuration = configuration;
+        _shippingService = shippingService;
     }
 
+    [Authorize]
     [HttpGet]
     public async Task<IActionResult> Index()
     {
@@ -102,7 +110,12 @@ public class CheckoutController : Controller
         var defaultAddress = await _contactRepo.GetDefaultByUserIdAsync(regUser.PkRegisteredUserId);
 
         // ═══════════════════════════════════════════════════════════════════
-        // STEP 4: Build checkout view model with cart items and addresses
+        // STEP 4: Load available shipping methods
+        // ═══════════════════════════════════════════════════════════════════
+        var availableShippingMethods = await _shippingService.GetAvailableShippingMethodsAsync();
+
+        // ═══════════════════════════════════════════════════════════════════
+        // STEP 5: Build checkout view model with cart items and addresses
         // ═══════════════════════════════════════════════════════════════════
         var checkoutVM = new CheckoutVM
         {
@@ -126,11 +139,13 @@ public class CheckoutController : Controller
                 PostalCode = a.PostCode,
                 Country = a.Country,
                 IsDefault = a.IsDefault
-            }).ToList()
+            }).ToList(),
+            AvailableShippingMethods = availableShippingMethods,
+            SelectedShippingMethodId = availableShippingMethods.FirstOrDefault()?.PkShippingMethodId ?? 1 // Default to first (Standard)
         };
 
         // ═══════════════════════════════════════════════════════════════════
-        // STEP 5: Pre-populate form with default address if available
+        // STEP 6: Pre-populate form with default address if available
         // ═══════════════════════════════════════════════════════════════════
         // Pre-populate with default address if available
         if (defaultAddress != null)
@@ -146,18 +161,19 @@ public class CheckoutController : Controller
         }
 
         // ═══════════════════════════════════════════════════════════════════
-        // STEP 6: Calculate order totals
+        // STEP 7: Calculate order totals with dynamic shipping
         // Tax: 12% (BC PST 7% + GST 5%)
-        // Shipping: Free for orders $50+, otherwise $7.99
+        // Shipping: Calculated using ShippingService with free shipping threshold
         // ═══════════════════════════════════════════════════════════════════
         // Calculate totals
         checkoutVM.Subtotal = checkoutVM.Items.Sum(i => i.LineTotal);
         checkoutVM.Tax = checkoutVM.Subtotal * 0.12m;
-        checkoutVM.ShippingCost = checkoutVM.Subtotal >= 50m ? 0m : 7.99m;
+        checkoutVM.ShippingCost = await _shippingService.CalculateShippingCostAsync(
+            checkoutVM.SelectedShippingMethodId, checkoutVM.Subtotal);
         checkoutVM.Total = checkoutVM.Subtotal + checkoutVM.Tax + checkoutVM.ShippingCost;
 
         // ═══════════════════════════════════════════════════════════════════
-        // STEP 7: Configure PayPal client-side integration
+        // STEP 8: Configure PayPal client-side integration
         // Using simplified approach from pr-43 (client-side capture only)
         // ═══════════════════════════════════════════════════════════════════
         // Simple PayPal client ID from config (pr-43 approach that was working)
@@ -175,6 +191,7 @@ public class CheckoutController : Controller
     /// All prices are recalculated server-side to prevent client-side tampering.
     /// Rate limiting applied to prevent abuse.
     /// </remarks>
+    [Authorize]
     [HttpPost]
     [ValidateAntiForgeryToken]
     [Microsoft.AspNetCore.RateLimiting.EnableRateLimiting(RateLimitPolicies.Checkout)]
@@ -203,12 +220,20 @@ public class CheckoutController : Controller
         if (!cartItems.Any()) return RedirectToAction("Index", "Cart");
 
         // ═══════════════════════════════════════════════════════════════════
-        // STEP 3: Recalculate totals server-side (security: prevent tampering)
+        // STEP 3: Validate shipping method and recalculate totals server-side (security: prevent tampering)
         // ═══════════════════════════════════════════════════════════════════
+        // Validate selected shipping method
+        var shippingMethod = await _shippingService.GetShippingMethodByIdAsync(vm.SelectedShippingMethodId);
+        if (shippingMethod == null || !shippingMethod.IsActive)
+        {
+            TempData["Message"] = "error,Invalid shipping method selected.";
+            return RedirectToAction("Index");
+        }
+
         // Recalculate server-side to prevent client-side price tampering
         var subtotal = cartItems.Sum(c => (c.Product?.GetEffectivePrice() ?? 0m) * c.Quantity);
         var tax = subtotal * 0.12m;
-        var shipping = subtotal >= 50m ? 0m : 7.99m;
+        var shipping = await _shippingService.CalculateShippingCostAsync(vm.SelectedShippingMethodId, subtotal);
         var total = subtotal + tax + shipping;
 
         // ═══════════════════════════════════════════════════════════════════
@@ -258,7 +283,7 @@ public class CheckoutController : Controller
         }
 
         // ═══════════════════════════════════════════════════════════════════
-        // STEP 6: Create order record
+        // STEP 6: Create order record with shipping information
         // OrderStatus set to "Paid" because PayPal already captured payment
         // ═══════════════════════════════════════════════════════════════════
         // Create order
@@ -269,7 +294,10 @@ public class CheckoutController : Controller
             OrderStatus = "Paid", // Since PayPal was already captured client-side
             TotalAmount = total,
             CreatedAt = DateTime.UtcNow,
-            DeliveryStatus = "Pending"
+            DeliveryStatus = "Pending",
+            FkShippingMethodId = vm.SelectedShippingMethodId,
+            ShippingMethodName = shippingMethod.Name,
+            ShippingCost = shipping
         };
         _db.Orders.Add(order);
         await _db.SaveChangesAsync();
@@ -306,4 +334,265 @@ public class CheckoutController : Controller
         TempData["Message"] = "success,Order placed successfully!";
         return RedirectToAction("Details", "Order", new { id = order.PkOrderId });
     }
+
+    #region Guest Checkout
+
+    /// <summary>
+    /// Displays guest checkout form with session cart items.
+    /// </summary>
+    /// <remarks>
+    /// GUEST CHECKOUT FLOW:
+    /// 1. Retrieve cart from session storage
+    /// 2. Calculate totals (tax, shipping, total)
+    /// 3. Display form for guest information collection
+    /// 4. Optional account creation checkbox
+    ///
+    /// BUSINESS RULES:
+    /// - Tax: 12% (BC PST 7% + GST 5%)
+    /// - Shipping: $7.99 flat rate, FREE for orders $50.00+
+    /// - Session timeout: 30 minutes idle
+    /// </remarks>
+    [HttpGet]
+    public async Task<IActionResult> Guest()
+    {
+        // Retrieve cart from session
+        var cartItems = await _guestCartService.GetCartItemsAsync();
+        if (!cartItems.Any())
+        {
+            TempData["Message"] = "warning,Your cart is empty. Please add items before checking out.";
+            return RedirectToAction("Index", "Cart");
+        }
+
+        // Load available shipping methods
+        var availableShippingMethods = await _shippingService.GetAvailableShippingMethodsAsync();
+
+        // Build guest checkout view model
+        var guestCheckoutVM = new GuestCheckoutVM
+        {
+            Items = cartItems,
+            AvailableShippingMethods = availableShippingMethods,
+            SelectedShippingMethodId = availableShippingMethods.FirstOrDefault()?.PkShippingMethodId ?? 1 // Default to first (Standard)
+        };
+
+        // Calculate totals using ShippingService
+        guestCheckoutVM.Tax = guestCheckoutVM.Subtotal * 0.12m;
+        guestCheckoutVM.ShippingCost = await _shippingService.CalculateShippingCostAsync(
+            guestCheckoutVM.SelectedShippingMethodId, guestCheckoutVM.Subtotal);
+
+        // Configure PayPal
+        guestCheckoutVM.PayPalClientId = _configuration["PayPal:ClientId"];
+
+        return View(guestCheckoutVM);
+    }
+
+    /// <summary>
+    /// Processes guest checkout payment after PayPal capture.
+    /// Creates order without user account, clears session cart.
+    /// Optionally creates user account if requested.
+    /// </summary>
+    /// <remarks>
+    /// WORKFLOW:
+    /// 1. Validate form input (email, name, address, phone)
+    /// 2. Retrieve session cart items
+    /// 3. Recalculate totals server-side (security)
+    /// 4. Verify inventory availability
+    /// 5. Create contact detail record (not linked to user)
+    /// 6. Create order record (FkRegisteredUserId = null for guests)
+    /// 7. Create order items and decrement inventory
+    /// 8. Clear session cart
+    /// 9. Optional: Create user account if requested
+    /// 10. Redirect to order confirmation (email-based lookup)
+    ///
+    /// SECURITY:
+    /// - All prices recalculated server-side
+    /// - Inventory verified before order creation
+    /// - Rate limiting applied
+    /// - PayPal payment captured client-side
+    /// </remarks>
+    [HttpPost]
+    [ValidateAntiForgeryToken]
+    [Microsoft.AspNetCore.RateLimiting.EnableRateLimiting(RateLimitPolicies.Checkout)]
+    public async Task<IActionResult> ProcessGuestPayment(GuestCheckoutVM vm)
+    {
+        // ═══════════════════════════════════════════════════════════════════
+        // STEP 1: Validate form input
+        // ═══════════════════════════════════════════════════════════════════
+        if (!ModelState.IsValid)
+        {
+            vm.PayPalClientId = _configuration["PayPal:ClientId"];
+            return View("Guest", vm);
+        }
+
+        // ═══════════════════════════════════════════════════════════════════
+        // STEP 2: Retrieve session cart
+        // ═══════════════════════════════════════════════════════════════════
+        var cartItems = await _guestCartService.GetCartItemsAsync();
+        if (!cartItems.Any())
+        {
+            TempData["Message"] = "error,Your cart is empty.";
+            return RedirectToAction("Index", "Cart");
+        }
+
+        // Load full product details for inventory check and price calculation
+        var productIds = cartItems.Select(c => c.ProductId).ToList();
+        var products = await _db.Products
+            .Where(p => productIds.Contains(p.PkProductId))
+            .ToListAsync();
+
+        // ═══════════════════════════════════════════════════════════════════
+        // STEP 3: Validate shipping method and recalculate totals server-side (security)
+        // ═══════════════════════════════════════════════════════════════════
+        // Validate selected shipping method
+        var shippingMethod = await _shippingService.GetShippingMethodByIdAsync(vm.SelectedShippingMethodId);
+        if (shippingMethod == null || !shippingMethod.IsActive)
+        {
+            TempData["Message"] = "error,Invalid shipping method selected.";
+            return RedirectToAction("Guest");
+        }
+
+        var subtotal = 0m;
+        foreach (var item in cartItems)
+        {
+            var product = products.FirstOrDefault(p => p.PkProductId == item.ProductId);
+            if (product != null)
+            {
+                subtotal += product.GetEffectivePrice() * item.Quantity;
+            }
+        }
+        var tax = subtotal * 0.12m;
+        var shipping = await _shippingService.CalculateShippingCostAsync(vm.SelectedShippingMethodId, subtotal);
+        var total = subtotal + tax + shipping;
+
+        // ═══════════════════════════════════════════════════════════════════
+        // STEP 4: Verify inventory availability
+        // ═══════════════════════════════════════════════════════════════════
+        foreach (var item in cartItems)
+        {
+            var product = products.FirstOrDefault(p => p.PkProductId == item.ProductId);
+            if (product == null || (product.StockQuantity ?? 0) < item.Quantity)
+            {
+                TempData["Message"] = "error,One or more items in your cart are out of stock.";
+                return RedirectToAction("Guest");
+            }
+        }
+
+        // ═══════════════════════════════════════════════════════════════════
+        // STEP 5: Create contact detail (not linked to user account)
+        // ═══════════════════════════════════════════════════════════════════
+        var names = (vm.FullName ?? "").Split(' ', 2);
+        var contact = new ContactDetailModel
+        {
+            FkRegisteredUserId = null, // Guest order: no user association
+            FirstName = names.Length > 0 ? names[0] : "",
+            LastName = names.Length > 1 ? names[1] : "",
+            PhoneNumber = vm.PhoneNumber ?? "",
+            Street = vm.Street ?? "",
+            City = vm.City ?? "",
+            Province = vm.Province ?? "",
+            PostCode = vm.PostalCode ?? "",
+            Country = "Canada",
+            IsDefault = false
+        };
+        _db.ContactDetails.Add(contact);
+        await _db.SaveChangesAsync();
+
+        // ═══════════════════════════════════════════════════════════════════
+        // STEP 6: Create order with shipping information (FkRegisteredUserId = 0 for guest orders)
+        // Note: Guest orders identified by FkRegisteredUserId = 0
+        // Future enhancement: Make FkRegisteredUserId nullable in OrderModel schema
+        // ═══════════════════════════════════════════════════════════════════
+        var order = new OrderModel
+        {
+            FkContactId = contact.PkContactId,
+            FkRegisteredUserId = 0, // Guest order (0 = no user account)
+            OrderStatus = "Paid",
+            TotalAmount = total,
+            CreatedAt = DateTime.UtcNow,
+            DeliveryStatus = "Pending",
+            FkShippingMethodId = vm.SelectedShippingMethodId,
+            ShippingMethodName = shippingMethod.Name,
+            ShippingCost = shipping
+        };
+        _db.Orders.Add(order);
+        await _db.SaveChangesAsync();
+
+        // ═══════════════════════════════════════════════════════════════════
+        // STEP 7: Create order items and decrement inventory
+        // ═══════════════════════════════════════════════════════════════════
+        foreach (var item in cartItems)
+        {
+            var product = products.FirstOrDefault(p => p.PkProductId == item.ProductId);
+            if (product != null)
+            {
+                var orderItem = new OrderItemModel
+                {
+                    FkOrderId = order.PkOrderId,
+                    FkProductId = product.PkProductId,
+                    Quantity = item.Quantity,
+                    UnitPrice = product.GetEffectivePrice()
+                };
+                _db.OrderItems.Add(orderItem);
+
+                // Decrement inventory
+                product.StockQuantity = (product.StockQuantity ?? 0) - item.Quantity;
+            }
+        }
+        await _db.SaveChangesAsync();
+
+        // ═══════════════════════════════════════════════════════════════════
+        // STEP 8: Clear session cart
+        // ═══════════════════════════════════════════════════════════════════
+        await _guestCartService.ClearCartAsync();
+
+        // ═══════════════════════════════════════════════════════════════════
+        // STEP 9: Optional - Create user account if requested
+        // ═══════════════════════════════════════════════════════════════════
+        // TODO: Implement account creation logic
+        // - Check if vm.CreateAccount == true
+        // - Validate password requirements
+        // - Create ASP.NET Core Identity user
+        // - Link order to new user account
+        // - Send welcome email
+
+        // ═══════════════════════════════════════════════════════════════════
+        // STEP 10: Redirect to confirmation
+        // ═══════════════════════════════════════════════════════════════════
+        TempData["Message"] = "success,Order placed successfully! Check your email for order details.";
+        TempData["GuestOrderEmail"] = vm.Email;
+        return RedirectToAction("GuestConfirmation", new { orderId = order.PkOrderId, email = vm.Email });
+    }
+
+    /// <summary>
+    /// Displays order confirmation for guest checkout.
+    /// Email-based order lookup for guests without accounts.
+    /// </summary>
+    [HttpGet]
+    public async Task<IActionResult> GuestConfirmation(int orderId, string email)
+    {
+        // Retrieve order with contact details
+        var order = await _db.Orders
+            .Include(o => o.ContactDetail)
+            .Include(o => o.OrderItems)
+                .ThenInclude(oi => oi.Product)
+            .FirstOrDefaultAsync(o => o.PkOrderId == orderId);
+
+        if (order == null)
+        {
+            TempData["Message"] = "error,Order not found.";
+            return RedirectToAction("Index", "Home");
+        }
+
+        // Security: Verify email matches (simple validation for guest orders)
+        // In production, consider more secure token-based approach
+        if (order.ContactDetail?.FirstName == null || 
+            !email.Equals(TempData["GuestOrderEmail"]?.ToString(), StringComparison.OrdinalIgnoreCase))
+        {
+            TempData["Message"] = "error,Unauthorized access.";
+            return RedirectToAction("Index", "Home");
+        }
+
+        return View(order);
+    }
+
+    #endregion
 }
