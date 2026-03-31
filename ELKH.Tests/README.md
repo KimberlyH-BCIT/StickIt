@@ -1,0 +1,264 @@
+# ELKH Test Coverage and Execution Configuration
+
+## Overview
+This directory contains comprehensive test coverage configuration and execution scripts for the ELKH project.
+
+## Test Coverage Configuration
+
+### Coverage Tools
+- **Coverlet**: Cross-platform code coverage library for .NET
+- **ReportGenerator**: Creates reports from coverage data in various formats
+- **Built-in MSBuild Integration**: Automatic coverage collection during test runs
+
+### Coverage Targets
+- **Line Coverage Target**: 80% minimum
+- **Branch Coverage Target**: 70% minimum  
+- **Method Coverage Target**: 85% minimum
+
+## Running Tests with Coverage
+
+### Basic Coverage Collection
+```bash
+# Run all tests with coverage
+dotnet test --collect:"XPlat Code Coverage"
+
+# Run tests with detailed coverage output
+dotnet test --collect:"XPlat Code Coverage" --logger trx --results-directory ./TestResults
+```
+
+### Advanced Coverage with Filtering
+```bash
+# Exclude specific assemblies from coverage
+dotnet test --collect:"XPlat Code Coverage" -- DataCollectionRunSettings.DataCollectors.DataCollector.Configuration.ExcludeByFile="**/Migrations/**/*.cs"
+```
+
+### Generate HTML Coverage Reports
+```bash
+# Install ReportGenerator globally
+dotnet tool install -g dotnet-reportgenerator-globaltool
+
+# Generate HTML report from coverage results
+reportgenerator -reports:"./TestResults/**/coverage.cobertura.xml" -targetdir:"./CoverageReport" -reporttypes:Html
+```
+
+## Test Categories
+
+### 1. Unit Tests (`ELKH.Tests`)
+- **Service Tests**: Business logic and data access
+- **Controller Tests**: HTTP endpoints and authentication
+- **Utility Tests**: Helper classes and extensions
+- **Model Tests**: Data validation and business rules
+
+### 2. Integration Tests (`ELKH.Tests\Integration`)
+- **Workflow Tests**: End-to-end user scenarios
+- **Authentication Tests**: Security and authorization flows
+- **Performance Tests**: Load and response time validation
+- **Database Integration**: Data persistence and retrieval
+
+### 3. Business Logic Tests (`ELKH.Tests\BusinessLogic`)
+- **Inventory Management**: Stock validation and updates
+- **Order Processing**: Cart-to-order workflows
+- **Pricing Rules**: Discount and tax calculations
+- **Concurrency**: Race condition and data integrity
+
+## Test Execution Strategies
+
+### Development Testing
+```bash
+# Run all unit tests
+dotnet test --filter Category=Unit
+
+# Run specific test class
+dotnet test --filter ClassName=UserServiceTests
+
+# Run tests with live output
+dotnet test --logger console --verbosity normal
+```
+
+### CI/CD Pipeline Testing
+```bash
+# Complete test suite with coverage
+dotnet test --configuration Release --collect:"XPlat Code Coverage" --logger trx --results-directory ./TestResults
+
+# Fail build if coverage below threshold
+dotnet test --configuration Release --collect:"XPlat Code Coverage" -- DataCollectionRunSettings.DataCollectors.DataCollector.Configuration.Threshold=80
+```
+
+### Performance Testing
+```bash
+# Run performance-specific tests
+dotnet test --filter Category=Performance --logger console
+
+# Run with memory profiling
+dotnet test --filter Category=Performance --collect:"Code Coverage" --diag ./TestResults/diag.log
+```
+
+## Coverage Exclusions
+
+### Auto-Generated Code
+- `**/Migrations/*.cs`
+- `**/Program.cs` (startup configuration)
+- `**/Areas/Identity/Pages/**/*.cs` (scaffolded Identity UI)
+
+### Infrastructure Code
+- `**/wwwroot/**/*.cs`
+- `**/bin/**/*.cs`
+- `**/obj/**/*.cs`
+
+### Test Code
+- `**/Tests/**/*.cs`
+- `**/*Tests.cs`
+- `**/*Test.cs`
+
+## Test Data Management
+
+### In-Memory Databases
+- Each test class uses isolated in-memory database
+- Test data created using `TestDataFactory`
+- Automatic cleanup after each test
+
+### Test Data Patterns
+```csharp
+// Use consistent test data creation
+var user = TestDataFactory.CreateUser(email: "test@example.com");
+var product = TestDataFactory.CreateProduct(price: 19.99m, stock: 100);
+
+// Seed database in test setup
+protected override void SeedDatabase()
+{
+    var categories = TestDataFactory.CreateCategories(3);
+    _context.Categories.AddRange(categories);
+    _context.SaveChanges();
+}
+```
+
+## Continuous Integration
+
+### GitHub Actions Integration
+```yaml
+# Test execution in CI pipeline
+- name: Run tests with coverage
+  run: dotnet test --configuration Release --collect:"XPlat Code Coverage" --results-directory ./TestResults
+
+- name: Generate coverage report
+  run: reportgenerator -reports:"./TestResults/**/coverage.cobertura.xml" -targetdir:"./CoverageReport" -reporttypes:Html
+
+- name: Upload coverage to Codecov
+  uses: codecov/codecov-action@v3
+  with:
+    file: ./TestResults/**/coverage.cobertura.xml
+```
+
+### Quality Gates
+- **Build fails** if any test fails
+- **Build fails** if coverage drops below 75%
+- **Build warns** if coverage drops below 80%
+- **Performance regression** detection for critical paths
+
+## Test Organization Best Practices
+
+### Test File Structure
+```
+ELKH.Tests/
+├── Controllers/
+│   ├── ProductControllerTests.cs
+│   ├── CartControllerTests.cs
+│   └── AdminControllerTests.cs
+├── Services/
+│   ├── UserServiceTests.cs
+│   ├── SearchServiceTests.cs
+│   └── ImageOptimizationServiceTests.cs
+├── BusinessLogic/
+│   ├── BusinessLogicValidationTests.cs
+│   └── InventoryManagementTests.cs
+├── Integration/
+│   ├── UserWorkflowIntegrationTests.cs
+│   └── AdminWorkflowIntegrationTests.cs
+└── Utilities/
+    ├── BaseTest.cs
+    ├── TestDataFactory.cs
+    └── MockHelpers.cs
+```
+
+### Test Naming Conventions
+- **Test Class**: `{ClassUnderTest}Tests`
+- **Test Method**: `{MethodUnderTest}_{Scenario}_{ExpectedResult}`
+- **Integration Test**: `{Workflow}_{UserType}_{ExpectedOutcome}`
+
+### Test Categories
+```csharp
+[Fact, Trait("Category", "Unit")]
+public async Task AddToCart_WithValidProduct_ShouldAddSuccessfully()
+
+[Fact, Trait("Category", "Integration")]
+public async Task CheckoutWorkflow_AuthenticatedUser_CompletesSuccessfully()
+
+[Fact, Trait("Category", "Performance")]
+public async Task ProductSearch_WithLargeDataset_RespondsQuickly()
+```
+
+## Troubleshooting
+
+### Common Issues
+
+#### 1. Coverage Not Collected
+```bash
+# Ensure coverlet is installed
+dotnet add package coverlet.msbuild
+
+# Verify coverage settings
+dotnet test --collect:"XPlat Code Coverage" --verbosity detailed
+```
+
+#### 2. Integration Tests Failing
+```bash
+# Check test database isolation
+# Ensure unique database names per test class
+private readonly string _testDatabaseName = $"TestDb_{Guid.NewGuid()}";
+```
+
+#### 3. Performance Tests Unstable
+```bash
+# Run on isolated environment
+# Use appropriate timeouts for CI environment
+execution.Should().BeLessThan(TimeSpan.FromSeconds(5)); // CI timeout
+```
+
+### Debugging Tests
+```bash
+# Debug specific test
+dotnet test --filter "FullyQualifiedName=ELKH.Tests.Services.UserServiceTests.GetByEmailAsync_WithValidEmail_ShouldReturnUser"
+
+# Run with detailed logging
+dotnet test --logger console --verbosity diagnostic
+```
+
+## Metrics and Reporting
+
+### Coverage Metrics
+- **Current Coverage**: Target 80% line coverage
+- **Trend Analysis**: Track coverage over time
+- **Hotspot Identification**: Focus on high-complexity, low-coverage areas
+
+### Test Metrics
+- **Test Execution Time**: Monitor for performance regression
+- **Test Reliability**: Track flaky test patterns
+- **Coverage Quality**: Branch vs line coverage analysis
+
+### Quality Dashboard
+- Integration with code review tools
+- Automated coverage reporting
+- Performance trend monitoring
+- Test reliability metrics
+
+## Next Steps
+
+1. **Achieve 80% Coverage**: Focus on untested service methods
+2. **Add E2E Tests**: Playwright-based browser testing
+3. **Load Testing**: Stress test critical workflows
+4. **Mutation Testing**: Validate test quality with mutation testing tools
+5. **Security Testing**: Add penetration testing for admin functions
+
+---
+
+*Updated: March 2026 | .NET 10 Testing Standards | ELKH Project*
