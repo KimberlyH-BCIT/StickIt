@@ -4,8 +4,8 @@
 ## This file prevents sensitive data, build artifacts, and temporary
 ## files from being committed to version control.
 ##
-## Last Updated: 2026
-## Target: .NET 10, ASP.NET Core, Razor Pages
+## Last Updated: March 2026
+## Target: .NET 10, ASP.NET Core, Razor Pages, ELKH Project
 ## =====================================================================
 
 # =====================================================================
@@ -60,7 +60,22 @@ bld/
 Generated\ Files/
 
 # =====================================================================
-# Test Results
+# End-to-End Testing (Playwright)
+# =====================================================================
+# Playwright writes test artifacts, traces, and screenshots here.
+# These are CI/CD outputs — they must not be committed to source control.
+test-results/
+playwright-report/
+blob-report/
+playwright/.cache/
+e2e/test-results/
+e2e/playwright-report/
+
+# Playwright HAR files and state snapshots captured during test runs.
+*.har
+
+# =====================================================================
+# Test Results & Coverage
 # =====================================================================
 [Tt]est[Rr]esult*/
 [Bb]uild[Ll]og.*
@@ -155,7 +170,6 @@ ipch/
 _ReSharper*/
 *.[Rr]e[Ss]harper
 *.DotSettings.user
-.idea/
 
 # =====================================================================
 # Build Tools
@@ -258,7 +272,7 @@ _pkginfo.txt
 # =====================================================================
 # Database Files
 # =====================================================================
-# SQLite databases (development only)
+# SQLite databases (development and test)
 *.db
 *.db-shm
 *.db-wal
@@ -276,10 +290,15 @@ _pkginfo.txt
 # Database backups
 *.bak
 
-# Project-specific: Development database
-/ELKH/app.db
-/ELKH/app.db-shm
-/ELKH/app.db-wal
+# Project-specific: Development databases
+app.db
+app.db-shm
+app.db-wal
+ImageStore.db
+ImageStore.db-shm
+ImageStore.db-wal
+/ELKH/app.db*
+/ELKH/ImageStore.db*
 
 # =====================================================================
 # Secrets & Configuration
@@ -287,27 +306,35 @@ _pkginfo.txt
 # User secrets (ASP.NET Core)
 **/secrets.json
 secrets.*
+user-secrets.json
 
-# All environment-specific appsettings overrides — NEVER commit production credentials.
-# The base appsettings.json (no environment suffix) is intentionally tracked.
+# Environment-specific appsettings - NEVER commit production credentials
+# The base appsettings.json (no environment suffix) is intentionally tracked
+appsettings.Development.json
+appsettings.Staging.json
+appsettings.Production.json
 appsettings.*.json
 
-# FileEmailSender output directory — may contain Identity confirmation tokens
-# and other sensitive email content written during local development.
+# FileEmailSender output directory — may contain sensitive email content
 SavedEmails/
 **/SavedEmails/
 
 # Environment variables
 .env
+.env.*
 .env.local
-.env.*.local
+.env.development
+.env.staging
+.env.production
+!.env.example
 
-# Certificates
+# Certificates and Keys
 *.pfx
 *.p12
 *.key
 *.cer
 *.crt
+*.pem
 
 # API keys and tokens
 **/apikeys.json
@@ -323,9 +350,17 @@ temp/
 tmp/
 
 # Health checks DB
-healthchecksdb
-healthchecksdb-shm
-healthchecksdb-wal
+healthchecksdb*
+
+# =====================================================================
+# Docker & Containerization
+# =====================================================================
+# Docker volumes data
+Data/
+data/
+
+# Container logs
+docker-compose.override.yml
 
 # =====================================================================
 # Backup & Migration Files
@@ -387,8 +422,28 @@ tools/**
 OpenCover/
 
 # =====================================================================
-# Binary and Structured Logs
+# Security & Monitoring
 # =====================================================================
+# Application Insights offline cache
+ApplicationInsightsOfflineCache/
+
+# Security audit reports (keep public reports, exclude sensitive ones)
+*security-audit-private.json
+*penetration-test-results.json
+
+# =====================================================================
+# Performance & Profiling
+# =====================================================================
+# BenchmarkDotNet
+BenchmarkDotNet.Artifacts/
+
+# Profiler results
+*.diagsession
+
+# Memory dumps
+*.dmp
+
+# Binary logs
 *.binlog
 
 # =====================================================================
@@ -439,46 +494,145 @@ ehthumbs_vista.db
 $RECYCLE.BIN/
 
 # =====================================================================
-# Project-Specific
+# ELKH Project-Specific
 # =====================================================================
-# wwwroot compiled assets (if using build tools)
-# Uncomment if you compile CSS/JS into wwwroot
-# wwwroot/css/*.min.css
-# wwwroot/js/*.min.js
-# wwwroot/lib/
+# Supplemental documentation and analysis files (working documents)
+docs/supplementalDocs/
 
-# Uploaded files (user-generated content)
-# Uncomment if you store uploads in wwwroot
-# wwwroot/uploads/
-# wwwroot/images/user-uploads/
+# Uploaded user content (if stored locally during development)
+wwwroot/uploads/user-content/
+wwwroot/images/user-uploads/
 
-# =====================================================================
-# Documentation (Generated)
-# =====================================================================
-# API documentation
-api-docs/
+# Email test output
+test-emails/
 
-# Code metrics reports
-metrics-report/
+# EF Core Migrations (uncomment if causing merge conflicts)
+# Migrations/
+
+# Static web asset manifests (generated)
+*.staticwebassetsmanifest.json
 
 # =====================================================================
-# Performance & Profiling
+# AI & Development Tools
 # =====================================================================
-# BenchmarkDotNet
-BenchmarkDotNet.Artifacts/
+# GitHub Copilot logs (these contain private coding sessions)
+.copilot/
+copilot-*.log
 
-# Profiler results
-*.diagsession
-
-# Memory dumps
-*.dmp
+# JetBrains dotMemory/dotTrace/dotPeek
+*.dotMemoryUnit
 
 # =====================================================================
-# Security Scanning
+# Monitoring & Observability
 # =====================================================================
-# Dependency check
-dependency-check-report.html
+# Grafana provisioning (if using local Grafana)
+grafana/data/
+grafana/logs/
+
+# Prometheus data
+prometheus-data/
 
 # =====================================================================
-# END OF .GITIGNORE
+# E2E Testing Specific
 # =====================================================================
+# Playwright browser downloads
+e2e/.cache/
+
+# Test screenshots and videos
+screenshots/
+videos/
+traces/
+
+# =====================================================================
+# Additional Security Patterns
+# =====================================================================
+# Backup configuration files that might contain sensitive data
+*.config.backup
+*.json.backup
+
+# JWT tokens and auth files
+jwt-*.json
+auth-*.json
+oauth-*.json
+
+# Application Insights data
+ApplicationInsights.config
+
+# =====================================================================
+# .NET Hot Reload (.NET 6+) - Enhancement
+# =====================================================================
+# Hot Reload runtime configuration files
+*.runtimeconfig.dev.json
+*.HotReloadInfo.json
+
+# Hot Reload temporary files
+*.hotreload.json
+HotReloadServer*/
+
+# =====================================================================
+# JetBrains Profiling Tools - Enhancement
+# =====================================================================
+# dotMemory/dotTrace memory dumps and workspaces
+*.dmw
+*.dpw
+*.dwp
+*.workspace
+
+# Profiling session files
+*.dtp
+*.dtp.*
+
+# Performance snapshots
+*.snapshots
+
+# =====================================================================
+# Azure Functions & Cloud Development - Enhancement
+# =====================================================================
+# Function app publish profiles
+PublishProfiles/
+
+# Azure deployment credentials
+.deployment
+deploy.cmd
+
+# Azure Resource Manager deployment outputs
+azuredeploy.parameters.dev.json
+azuredeploy.parameters.staging.json
+
+# =====================================================================
+# Modern Development Tools - Enhancement
+# =====================================================================
+# Tye (Microsoft orchestrator)
+.tye/
+
+# DevContainers (if not already using)
+.devcontainer/
+
+# GitHub Codespaces
+.codespaces/
+
+# =====================================================================
+# Additional Security Patterns - Enhancement
+# =====================================================================
+# Connection strings files
+connectionstrings.*.json
+connectionstrings.json
+
+# JWT token files
+*.jwt
+tokens.txt
+
+# License files with keys
+license.json
+license.xml
+license.txt
+
+# =====================================================================
+# Performance & Monitoring - Enhancement
+# =====================================================================
+# Diagnostic dumps (additional patterns)
+*.dump
+
+# Performance counters
+*.perfcounter
+perfmon.log

@@ -463,6 +463,9 @@ $RECYCLE.BIN/
 # =====================================================================
 # Project-Specific
 # =====================================================================
+# Supplemental documentation and analysis files (working documents)
+../docs/supplementalDocs/
+
 # wwwroot compiled assets (if using build tools)
 # Uncomment if you compile CSS/JS into wwwroot
 # wwwroot/css/*.min.css

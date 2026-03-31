@@ -1,53 +1,177 @@
-###############################################################################
-# Set default behavior to automatically normalize line endings.
-###############################################################################
+# =====================================================================
+# Git Attributes for ELKH .NET 10 Project - Best Practices
+# =====================================================================
+# Controls how Git handles line endings and file merging
+# Last Updated: March 2026
+# =====================================================================
+
+# Auto detect text files and perform LF normalization
 * text=auto
 
-###############################################################################
-# Set default behavior for command prompt diff.
-#
-# This is need for earlier builds of msysgit that does not have it on by
-# default for csharp files.
-# Note: This is only used by command line
-###############################################################################
-#*.cs     diff=csharp
+# =====================================================================
+# Source Code Files
+# =====================================================================
+*.cs text diff=csharp
+*.csx text diff=csharp
+*.vb text
+*.fs text
+*.fsx text
+*.fsi text
 
-###############################################################################
-# Set the merge driver for project and solution files
-#
-# Merging from the command prompt will add diff markers to the files if there
-# are conflicts (Merging from VS is not affected by the settings below, in VS
-# the diff markers are never inserted). Diff markers may cause the following 
-# file extensions to fail to load in VS. An alternative would be to treat
-# these files as binary and thus will always conflict and require user
-# intervention with every merge. To do so, just uncomment the entries below
-###############################################################################
-#*.sln       merge=binary
-#*.csproj    merge=binary
-#*.vbproj    merge=binary
-#*.vcxproj   merge=binary
-#*.vcproj    merge=binary
-#*.dbproj    merge=binary
-#*.fsproj    merge=binary
-#*.lsproj    merge=binary
-#*.wixproj   merge=binary
-#*.modelproj merge=binary
-#*.sqlproj   merge=binary
-#*.wwaproj   merge=binary
+# =====================================================================
+# Web Files
+# =====================================================================
+*.html text diff=html
+*.htm text diff=html
+*.cshtml text diff=html
+*.razor text diff=html
+*.css text diff=css
+*.scss text diff=css
+*.sass text diff=css
+*.less text diff=css
+*.js text
+*.ts text
+*.tsx text
+*.jsx text
+*.json text
+*.xml text
+*.yml text
+*.yaml text
 
-###############################################################################
-# behavior for image files
-#
-# image files are treated as binary by default.
-###############################################################################
-#*.jpg   binary
-#*.png   binary
-#*.gif   binary
+# =====================================================================
+# Configuration Files
+# =====================================================================
+*.config text
+*.conf text
+*.ini text
+*.cfg text
+*.properties text
+*.settings text
 
-###############################################################################
-# diff behavior for common document formats
-# 
-# Convert binary document formats to text before diffing them. This feature
+# =====================================================================
+# Documentation
+# =====================================================================
+*.md text diff=markdown
+*.txt text
+*.rtf text
+*.rst text
+
+# =====================================================================
+# Project Files (union merge for better collaboration)
+# =====================================================================
+*.csproj text merge=union
+*.vbproj text merge=union
+*.fsproj text merge=union
+*.sln text merge=union
+*.props text
+*.targets text
+*.nuspec text
+
+# =====================================================================
+# Database & Migrations
+# =====================================================================
+*.sql text
+
+# =====================================================================
+# Scripts
+# =====================================================================
+*.ps1 text eol=crlf
+*.bat text eol=crlf
+*.cmd text eol=crlf
+*.sh text eol=lf
+
+# =====================================================================
+# Binary Files (explicit binary marking)
+# =====================================================================
+*.png binary
+*.jpg binary
+*.jpeg binary
+*.gif binary
+*.ico binary
+*.svg binary
+*.webp binary
+*.bmp binary
+*.tiff binary
+*.tif binary
+
+# Documents
+*.pdf binary
+*.doc binary
+*.docx binary
+*.xls binary
+*.xlsx binary
+*.ppt binary
+*.pptx binary
+
+# Archives
+*.zip binary
+*.7z binary
+*.tar binary
+*.gz binary
+*.rar binary
+
+# Executables and Libraries
+*.exe binary
+*.dll binary
+*.lib binary
+*.a binary
+*.so binary
+*.dylib binary
+
+# Fonts
+*.woff binary
+*.woff2 binary
+*.eot binary
+*.ttf binary
+*.otf binary
+
+# Database files
+*.db binary
+*.sqlite binary
+*.sqlite3 binary
+
+# =====================================================================
+# Merge Strategies
+# =====================================================================
+# Use union merge for changelog files
+CHANGELOG.md merge=union
+CHANGELOG.txt merge=union
+
+# Don't merge generated files
+*.designer.cs -merge
+*.Designer.cs -merge
+*.generated.cs -merge
+*.g.cs -merge
+*.g.i.cs -merge
+
+# =====================================================================
+# Platform-specific line endings
+# =====================================================================
+# Ensure shell scripts use LF on all platforms
+*.sh text eol=lf
+Dockerfile text eol=lf
+*.dockerfile text eol=lf
+docker-compose*.yml text eol=lf
+
+# Ensure batch files use CRLF on all platforms  
+*.bat text eol=crlf
+*.cmd text eol=crlf
+
+# =====================================================================
+# Visual Studio specific
+# =====================================================================
+*.resx text
+*.vsixmanifest text
+*.vsct text
+
+# =====================================================================
+# Special files
+# =====================================================================
+# License and readme files
+LICENSE text
+COPYING text
+README text
+readme.txt text
 # is only available from the command line. Turn it on by uncommenting the 
 # entries below.
 ###############################################################################

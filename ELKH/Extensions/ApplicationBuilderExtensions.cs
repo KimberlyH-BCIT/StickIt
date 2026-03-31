@@ -16,10 +16,13 @@ namespace ELKH.Extensions
         /// <param name="env">The hosting environment (used to conditionally enable compression).</param>
         /// <remarks>
         /// Order is critical in ASP.NET Core. This method enforces:
-        /// Security Headers → HTTPS → Compression (Production only) → Output Cache → Routing → Authentication → Authorization
+        /// Security Headers → HTTPS → Compression (Production only) → Output Cache → Session → Routing → Authentication → Authorization
         ///
         /// Response compression is disabled in Development to allow Browser Link and Browser Refresh middleware
         /// to inject their scripts into HTML responses. These dev tools cannot inject into compressed responses.
+        ///
+        /// Session middleware is added after caching but before routing to enable guest checkout functionality
+        /// while maintaining security and performance optimizations.
         ///
         /// Note on Response Compression + HTTPS (<c>EnableForHttps = true</c>):
         /// Compressing secret values (e.g. CSRF tokens, session IDs) over HTTPS is theoretically
@@ -30,7 +33,10 @@ namespace ELKH.Extensions
         /// </remarks>
         public static IApplicationBuilder UseApplicationMiddleware(this IApplicationBuilder app, IWebHostEnvironment env)
         {
-            // 0. Exception handler — must be first so it catches errors from all subsequent middleware.
+            // 0. Global Exception Handling — must be first to catch all errors with structured logging
+            app.UseMiddleware<ELKH.Middleware.GlobalExceptionMiddleware>();
+
+            // 1. Exception handler — standard ASP.NET Core handler for additional coverage
             //    In Development the developer exception page is used instead (configured in Program.cs).
             app.UseExceptionHandler("/Error");
 
@@ -38,33 +44,39 @@ namespace ELKH.Extensions
             // so users see a consistent branded error page rather than a blank response.
             app.UseStatusCodePagesWithReExecute("/Error/{0}");
 
-            // 1. Security Headers — set on every response before any content is written.
+            // 2. Security Headers — set on every response before any content is written.
             //    Added first so headers are present even on error pages and redirects.
             app.UseSecurityHeaders();
 
-            // 2. HTTPS Redirection — redirect plain HTTP requests to HTTPS
+            // 3. HTTPS Redirection — redirect plain HTTP requests to HTTPS
             app.UseHttpsRedirection();
 
-            // 3. Response Compression — compress before caching so cached responses are already compressed
+            // 4. Correlation ID Middleware — add correlation IDs for request tracing
+            app.UseMiddleware<ELKH.Middleware.CorrelationIdMiddleware>();
+
+            // 4. Response Compression — compress before caching so cached responses are already compressed
             //    Disabled in Development to allow Browser Link and hot reload script injection
             if (!env.IsDevelopment())
             {
                 app.UseResponseCompression();
             }
 
-            // 4. Rate Limiting — reject excess requests before they hit the cache or business logic
+            // 5. Rate Limiting — reject excess requests before they hit the cache or business logic
             app.UseRateLimiter();
 
-            // 5. Output Cache — cache compressed responses with tag-based invalidation
+            // 6. Output Cache — cache compressed responses with tag-based invalidation
             app.UseOutputCache();
 
-            // 6. Routing — endpoint routing resolution (must precede auth middleware)
+            // 7. Session — enable session state for guest checkout (must be before routing)
+            app.UseSession();
+
+            // 8. Routing — endpoint routing resolution (must precede auth middleware)
             app.UseRouting();
 
-            // 7. Authentication — establish the user's identity from cookies/tokens
+            // 9. Authentication — establish the user's identity from cookies/tokens
             app.UseAuthentication();
 
-            // 8. Authorization — enforce access policies against the established identity
+            // 10. Authorization — enforce access policies against the established identity
             app.UseAuthorization();
 
             return app;

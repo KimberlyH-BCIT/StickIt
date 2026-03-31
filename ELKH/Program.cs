@@ -7,6 +7,8 @@ using ELKH.Services;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.AspNetCore.Identity.UI.Services;
+using Microsoft.AspNetCore.Mvc.Versioning;
+using Microsoft.AspNetCore.Mvc.ApiExplorer;
 
 // =====================================================================
 // PROGRAM.CS - APPLICATION STARTUP AND CONFIGURATION
@@ -75,6 +77,45 @@ builder.Services.AddHealthChecks()
         failureStatus: Microsoft.Extensions.Diagnostics.HealthChecks.HealthStatus.Degraded,
         tags: new[] { "external", "smtp", "live" });
 
+// Add Swagger/OpenAPI documentation
+builder.Services.AddSwaggerDocumentation();
+
+// -- Application Insights & Monitoring
+// Azure Application Insights for telemetry, performance monitoring, and diagnostics
+builder.Services.AddApplicationInsightsTelemetry(options =>
+{
+    options.ConnectionString = builder.Configuration.GetConnectionString("ApplicationInsights");
+    options.DeveloperMode = builder.Environment.IsDevelopment();
+    options.EnableAdaptiveSampling = !builder.Environment.IsDevelopment();
+    options.EnableQuickPulseMetricStream = true;
+    options.EnableAuthenticationTrackingJavaScript = true;
+    options.EnableDependencyTrackingTelemetryModule = true;
+    options.EnablePerformanceCounterCollectionModule = true;
+    options.EnableRequestTrackingTelemetryModule = true;
+});
+
+// Add structured logging service for enhanced observability
+builder.Services.AddSingleton<ELKH.Services.IStructuredLoggingService, ELKH.Services.StructuredLoggingService>();
+
+// Add API versioning
+builder.Services.AddApiVersioning(options =>
+{
+    options.DefaultApiVersion = new Microsoft.AspNetCore.Mvc.ApiVersion(1, 0);
+    options.AssumeDefaultVersionWhenUnspecified = true;
+    options.ApiVersionReader = ApiVersionReader.Combine(
+        new QueryStringApiVersionReader("v"),
+        new HeaderApiVersionReader("X-API-Version"),
+        new UrlSegmentApiVersionReader()
+    );
+    options.ReportApiVersions = true;
+});
+
+builder.Services.AddVersionedApiExplorer(setup =>
+{
+    setup.GroupNameFormat = "'v'VVV";
+    setup.SubstituteApiVersionInUrl = true;
+});
+
 // ASP.NET Core Identity with email confirmation requirement.
 // Users must confirm their email before they can sign in.
 // AddRoles<IdentityRole>() is required for [Authorize(Roles = "...")] to function —
@@ -118,6 +159,16 @@ builder.Services.AddResponseCompression(options =>
 builder.Services.AddMemoryCache();
 builder.Services.AddOutputCachingPolicies();
 
+// -- Session Support (for guest checkout)
+builder.Services.AddSession(options =>
+{
+    options.IdleTimeout = TimeSpan.FromMinutes(30); // Session expires after 30 minutes of inactivity
+    options.Cookie.HttpOnly = true; // Prevent JavaScript access to session cookie
+    options.Cookie.IsEssential = true; // Required for guest checkout functionality
+    options.Cookie.SecurePolicy = CookieSecurePolicy.Always; // HTTPS only
+    options.Cookie.SameSite = SameSiteMode.Lax; // CSRF protection
+});
+
 // -- Rate Limiting (brute-force / enumeration protection)
 builder.Services.AddRateLimitingPolicies();
 
@@ -139,6 +190,16 @@ builder.Services.AddBackgroundServices();  // FuzzyReindexService, FuzzyHelperSe
 builder.Services.AddApplicationServices(); // UserService, SearchService, RatingService, ModerationService, ProductService, CartService
 builder.Services.AddEmailServices();       // SmtpEmailSender, EmailSenderAdapter, IEmailSender
 builder.Services.AddRepositories();        // All repository implementations with base class inheritance
+
+// -- Image Optimization Services
+builder.Services.AddScoped<IImageOptimizationService, ImageOptimizationService>();
+
+// -- Enhanced Logging Services
+builder.Services.AddScoped<IStructuredLoggingService, StructuredLoggingService>();
+builder.Services.AddHttpContextAccessor(); // Required for CorrelationId access and session-based cart
+
+// -- Guest Checkout Services
+builder.Services.AddScoped<IGuestCartService, GuestCartService>();
 
 
 
@@ -207,12 +268,20 @@ if (app.Environment.IsDevelopment())
     // Development: show detailed error page with stack traces and DB queries.
     app.UseDeveloperExceptionPage();
     app.UseMigrationsEndPoint();
+
+    // Enable Swagger in development
+    var devApiVersionProvider = app.Services.GetRequiredService<IApiVersionDescriptionProvider>();
+    app.UseSwaggerDocumentation(devApiVersionProvider);
 }
 else
 {
     // HSTS: Enforce HTTPS for 30 days (prevents downgrade attacks).
     // Exception handling and status-code pages are registered inside UseApplicationMiddleware.
     app.UseHsts();
+
+    // Enable Swagger in production for API documentation (consider security implications)
+    var prodApiVersionProvider = app.Services.GetRequiredService<IApiVersionDescriptionProvider>();
+    app.UseSwaggerDocumentation(prodApiVersionProvider);
 }
 
 app.UseApplicationMiddleware(app.Environment);
@@ -260,8 +329,9 @@ await using (var scope = app.Services.CreateAsyncScope())
         var roleManager = sp.GetRequiredService<RoleManager<IdentityRole>>();
 
         await DbSeeder.SeedProductsAsync(db);
-        await DbSeeder.SeedAdminAsync(userManager, roleManager, app.Configuration);
-        await DbSeeder.SeedCustomersAsync(db, userManager, app.Environment.WebRootPath);
+        await DbSeeder.SeedShippingMethodsAsync(db); // Seed shipping options
+        await DbSeeder.SeedUsersAndRolesAsync(userManager, roleManager, app.Configuration);
+        await DbSeeder.SeedCustomersAndOrdersAsync(db, userManager, app.Environment.WebRootPath);
         await DbSeeder.SeedStoreReviewsAsync(db, userManager); // Seed featured homepage reviews
     }
 }

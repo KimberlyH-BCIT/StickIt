@@ -58,6 +58,8 @@ namespace ELKH.Extensions
             services.AddScoped<IProductService, ProductService>();
             services.AddScoped<ICartService, CartService>();
             services.AddScoped<IWishlistService, WishlistService>();
+            services.AddScoped<IShippingService, ShippingService>();
+            services.AddScoped<ICouponService, CouponService>(); // Coupon and promotional system
             services.AddScoped<IOrderEmailService, OrderEmailService>();
             services.AddScoped<IStoreReviewService, StoreReviewService>(); // Store review system
             services.AddScoped<IStockNotificationService, StockNotificationService>(); // Back-in-stock notifications
