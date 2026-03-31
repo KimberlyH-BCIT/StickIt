@@ -1,0 +1,632 @@
+:root {
+    /* Color palette from your boards */
+    --sky: #A9DEF9;
+    --butter: #F2E6A3;
+    --peach: #FECCA3;
+    --pink: #F694C1;
+    --mint: #D3FFE4;
+    --lavender: #E4C1F9;
+
+    /* Supporting tones */
+    --purple: #7B5FB6;
+    --purple-dark: #6A4FA3;
+    --ink: #6B5A87;
+    --ink-soft: #8B7BA7;
+    --white: #FFFFFF;
+    --surface: rgba(255, 255, 255, 0.82);
+    --surface-strong: rgba(255, 255, 255, 0.94);
+
+    /* Borders & shadows */
+    --outline: #D9D4F3;
+    --outline-sky: #95CFF8;
+    --outline-pink: #F3A4C5;
+    --outline-lavender: #CDB6F5;
+
+    --shadow-soft: 0 8px 24px rgba(148, 171, 219, 0.18);
+    --shadow-card: 0 10px 30px rgba(130, 150, 210, 0.16);
+    --shadow-pill: 0 4px 10px rgba(150, 160, 220, 0.18);
+    --shadow-press: inset 0 2px 4px rgba(255,255,255,0.55);
+
+    /* Radius */
+    --radius-xl: 32px;
+    --radius-lg: 24px;
+    --radius-md: 18px;
+    --radius-pill: 999px;
+
+    /* Typography */
+    --font-heading: "Sniglet", cursive;
+    --font-body: "Nunito", sans-serif;
+
+    /* Spacing */
+    --container-width: 1200px;
+    --section-gap: 2rem;
+
+    /* Transitions */
+    --transition-fast: 0.18s ease;
+    --transition-med: 0.28s ease;
+}
+
+*,
+*::before,
+*::after {
+    box-sizing: border-box;
+}
+
+html {
+    font-size: 16px;
+    scroll-behavior: smooth;
+}
+
+body {
+    margin: 0;
+    font-family: var(--font-body);
+    color: var(--ink);
+    background:
+        radial-gradient(circle at top left, rgba(255,255,255,0.75) 0%, rgba(255,255,255,0) 22%),
+        linear-gradient(180deg, #dff7f2 0%, #dff0ff 40%, #eae4ff 75%, #fdf2f8 100%);
+    min-height: 100vh;
+    line-height: 1.6;
+}
+
+/* Optional cloud/floating dreamy overlay */
+body::before {
+    content: "";
+    position: fixed;
+    inset: 0;
+    pointer-events: none;
+    opacity: 0.35;
+    background:
+        radial-gradient(circle at 10% 20%, rgba(255,255,255,0.8) 0 40px, transparent 41px),
+        radial-gradient(circle at 25% 12%, rgba(255,255,255,0.55) 0 32px, transparent 33px),
+        radial-gradient(circle at 70% 18%, rgba(255,255,255,0.8) 0 48px, transparent 49px),
+        radial-gradient(circle at 82% 78%, rgba(255,255,255,0.7) 0 42px, transparent 43px),
+        radial-gradient(circle at 15% 82%, rgba(255,255,255,0.7) 0 54px, transparent 55px);
+    z-index: -1;
+}
+
+.container-kawaii {
+    width: min(100% - 2rem, var(--container-width));
+    margin-inline: auto;
+    padding-block: 2rem 3rem;
+}
+
+/* =========================
+   TYPOGRAPHY
+========================= */
+h1, h2, h3, h4, .font-heading {
+    font-family: var(--font-heading);
+    line-height: 1.15;
+    margin-top: 0;
+    color: var(--purple);
+}
+
+h1,
+.display-title {
+    font-size: clamp(2.25rem, 4vw, 3.5rem);
+    color: var(--purple);
+    text-shadow: 0 2px 0 rgba(255,255,255,0.65);
+}
+
+h2,
+.section-title {
+    font-size: clamp(1.6rem, 2.5vw, 2.4rem);
+}
+
+h3,
+.card-title {
+    font-size: clamp(1.25rem, 2vw, 1.75rem);
+}
+
+p,
+li,
+label,
+input,
+button,
+select,
+textarea {
+    font-family: var(--font-body);
+}
+
+.text-pink { color: var(--pink); }
+.text-sky { color: #6BAEE7; }
+.text-purple { color: var(--purple); }
+.text-mint { color: #66B8A2; }
+.text-butter { color: #D39A2D; }
+
+/* =========================
+   HERO / BANNER
+========================= */
+.kawaii-hero {
+    position: relative;
+    text-align: center;
+    padding: 2rem 1rem 1rem;
+    margin-bottom: 2rem;
+}
+
+.kawaii-cloud-title {
+    display: inline-block;
+    background: var(--surface-strong);
+    border: 3px solid rgba(255,255,255,0.85);
+    border-radius: 999px;
+    padding: 1.25rem 2.5rem;
+    box-shadow: var(--shadow-card);
+    position: relative;
+}
+
+.kawaii-cloud-title::before,
+.kawaii-cloud-title::after {
+    content: "";
+    position: absolute;
+    background: var(--surface-strong);
+    border-radius: 999px;
+    z-index: -1;
+}
+
+.kawaii-cloud-title::before {
+    width: 120px;
+    height: 70px;
+    left: -32px;
+    top: 18px;
+}
+
+.kawaii-cloud-title::after {
+    width: 140px;
+    height: 80px;
+    right: -38px;
+    top: 12px;
+}
+
+.kawaii-subtitle {
+    display: inline-block;
+    margin-top: 0.8rem;
+    background: linear-gradient(180deg, #e8dcff 0%, #d8c8fa 100%);
+    color: var(--purple);
+    padding: 0.55rem 1.25rem;
+    border-radius: var(--radius-pill);
+    border: 2px solid #d2c1fa;
+    box-shadow: var(--shadow-pill);
+    font-weight: 700;
+}
+
+/* =========================
+   CARDS / PANELS
+========================= */
+.kawaii-card {
+    background: var(--surface);
+    backdrop-filter: blur(8px);
+    border: 3px solid rgba(255,255,255,0.8);
+    border-radius: var(--radius-xl);
+    box-shadow: var(--shadow-card);
+    padding: 1.5rem;
+    position: relative;
+}
+
+.kawaii-panel {
+    background: linear-gradient(180deg, rgba(255,255,255,0.92), rgba(255,255,255,0.8));
+    border: 2px solid var(--outline);
+    border-radius: var(--radius-lg);
+    box-shadow: var(--shadow-soft);
+    padding: 1.25rem;
+}
+
+.kawaii-section {
+    margin-bottom: var(--section-gap);
+}
+
+.kawaii-grid {
+    display: grid;
+    gap: 1.5rem;
+}
+
+.kawaii-grid.two {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.kawaii-grid.three {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+@media (max-width: 900px) {
+    .kawaii-grid.two,
+    .kawaii-grid.three {
+        grid-template-columns: 1fr;
+    }
+}
+
+/* =========================
+   LABEL PILLS
+========================= */
+.pill-label {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.45rem;
+    padding: 0.5rem 1rem;
+    border-radius: var(--radius-pill);
+    font-weight: 800;
+    font-family: var(--font-heading);
+    font-size: 1rem;
+    box-shadow: var(--shadow-pill);
+    border: 2px solid rgba(255,255,255,0.85);
+}
+
+.pill-mint {
+    background: linear-gradient(180deg, #bff5dd 0%, var(--mint) 100%);
+    color: #4a9c8b;
+}
+
+.pill-sky {
+    background: linear-gradient(180deg, #91d5fa 0%, var(--sky) 100%);
+    color: #4d7fc0;
+}
+
+.pill-lavender {
+    background: linear-gradient(180deg, #d7b7f6 0%, var(--lavender) 100%);
+    color: #7851b7;
+}
+
+.pill-pink {
+    background: linear-gradient(180deg, #ff8cbc 0%, var(--pink) 100%);
+    color: #ffffff;
+}
+
+.pill-butter {
+    background: linear-gradient(180deg, #ffe9a9 0%, var(--butter) 100%);
+    color: #b77d21;
+}
+
+.pill-outline {
+    background: rgba(255,255,255,0.85);
+    color: var(--purple);
+    border: 2px solid var(--outline-sky);
+}
+
+/* =========================
+   BUTTONS
+========================= */
+.btn-kawaii {
+    appearance: none;
+    border: none;
+    outline: none;
+    cursor: pointer;
+    border-radius: var(--radius-pill);
+    padding: 0.85rem 1.35rem;
+    font-weight: 800;
+    font-size: 1rem;
+    line-height: 1;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.55rem;
+    text-decoration: none;
+    transition:
+        transform var(--transition-fast),
+        box-shadow var(--transition-fast),
+        filter var(--transition-fast),
+        background var(--transition-med);
+    box-shadow: var(--shadow-pill), var(--shadow-press);
+    border: 2px solid rgba(255,255,255,0.85);
+}
+
+.btn-kawaii:hover {
+    transform: translateY(-2px);
+    filter: brightness(1.02);
+}
+
+.btn-kawaii:active {
+    transform: translateY(0);
+    box-shadow: 0 3px 8px rgba(120, 120, 180, 0.16);
+}
+
+.btn-kawaii:focus-visible {
+    outline: 3px solid rgba(123, 95, 182, 0.28);
+    outline-offset: 3px;
+}
+
+.btn-primary-kawaii {
+    background: linear-gradient(180deg, #ff8bbc 0%, #f977ac 100%);
+    color: white;
+}
+
+.btn-secondary-kawaii {
+    background: linear-gradient(180deg, #d8b8f8 0%, #c6a5ef 100%);
+    color: white;
+}
+
+.btn-outline-kawaii {
+    background: rgba(255,255,255,0.92);
+    border: 2px solid var(--outline-sky);
+    color: var(--purple);
+}
+
+.btn-sky-kawaii {
+    background: linear-gradient(180deg, #91d4fb 0%, #74c6f5 100%);
+    color: white;
+}
+
+.btn-butter-kawaii {
+    background: linear-gradient(180deg, #ffe8a6 0%, #f7d97b 100%);
+    color: #a96d18;
+}
+
+/* =========================
+   SEARCH
+========================= */
+.search-kawaii {
+    position: relative;
+    width: 100%;
+}
+
+.search-kawaii input {
+    width: 100%;
+    border: 2px solid var(--outline-sky);
+    background: rgba(255,255,255,0.92);
+    border-radius: var(--radius-pill);
+    padding: 0.95rem 3rem 0.95rem 1.2rem;
+    font-size: 1rem;
+    color: var(--ink);
+    box-shadow: var(--shadow-pill);
+    transition: border-color var(--transition-fast), box-shadow var(--transition-fast);
+}
+
+.search-kawaii input:focus {
+    outline: none;
+    border-color: #7cbbed;
+    box-shadow: 0 0 0 4px rgba(169, 222, 249, 0.32);
+}
+
+.search-kawaii .search-icon {
+    position: absolute;
+    right: 1rem;
+    top: 50%;
+    transform: translateY(-50%);
+    color: #8bbde8;
+    pointer-events: none;
+    font-size: 1.1rem;
+}
+
+/* =========================
+   CHIPS / TABS / FILTERS
+========================= */
+.chip-row,
+.tab-row {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.75rem;
+}
+
+.chip-kawaii,
+.tab-kawaii {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 42px;
+    padding: 0.65rem 1rem;
+    border-radius: var(--radius-pill);
+    border: 2px solid var(--outline);
+    background: rgba(255,255,255,0.88);
+    color: var(--purple);
+    cursor: pointer;
+    font-weight: 700;
+    box-shadow: var(--shadow-pill);
+    transition: all var(--transition-fast);
+}
+
+.chip-kawaii:hover,
+.tab-kawaii:hover {
+    transform: translateY(-1px);
+}
+
+.chip-kawaii.active,
+.tab-kawaii.active {
+    background: linear-gradient(180deg, #9fdcfb 0%, #88c8ff 100%);
+    border-color: #83b8ed;
+    color: white;
+}
+
+/* =========================
+   BADGES
+========================= */
+.badge-kawaii {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.35rem;
+    padding: 0.45rem 0.85rem;
+    border-radius: var(--radius-pill);
+    font-weight: 800;
+    font-size: 0.9rem;
+    border: 2px solid rgba(255,255,255,0.85);
+    box-shadow: var(--shadow-pill);
+}
+
+.badge-new {
+    background: linear-gradient(180deg, #ffe9a4 0%, #ffd36f 100%);
+    color: #a87012;
+}
+
+.badge-best {
+    background: linear-gradient(180deg, #ff99c5 0%, #f771af 100%);
+    color: white;
+}
+
+.badge-limited {
+    background: linear-gradient(180deg, #ffd5b0 0%, #f4bf8a 100%);
+    color: #9f6732;
+}
+
+/* =========================
+   PRODUCT CARD
+========================= */
+.product-card-kawaii {
+    max-width: 320px;
+    background: linear-gradient(180deg, rgba(255,255,255,0.96), rgba(255,255,255,0.88));
+    border: 3px solid rgba(255,255,255,0.85);
+    border-radius: 30px;
+    box-shadow: var(--shadow-card);
+    padding: 1rem;
+    overflow: hidden;
+    position: relative;
+}
+
+.product-card-kawaii .product-media {
+    background: linear-gradient(180deg, #fff7dc 0%, #ffe5d7 100%);
+    border-radius: 24px;
+    padding: 1rem;
+    min-height: 200px;
+    display: grid;
+    place-items: center;
+    margin-bottom: 1rem;
+    border: 2px solid #f6ebc7;
+}
+
+.product-card-kawaii .product-media img {
+    max-width: 100%;
+    max-height: 180px;
+    object-fit: contain;
+}
+
+.product-card-kawaii .product-title {
+    margin-bottom: 0.35rem;
+    color: var(--purple);
+    font-family: var(--font-heading);
+    font-size: 1.4rem;
+}
+
+.product-card-kawaii .product-price {
+    font-size: 2rem;
+    font-weight: 800;
+    color: var(--purple-dark);
+    margin-bottom: 1rem;
+}
+
+.product-card-kawaii .product-actions {
+    display: grid;
+    gap: 0.75rem;
+}
+
+/* =========================
+   FORM CONTROLS
+========================= */
+.input-kawaii,
+.select-kawaii,
+.textarea-kawaii {
+    width: 100%;
+    border: 2px solid var(--outline);
+    background: rgba(255,255,255,0.92);
+    border-radius: 20px;
+    padding: 0.9rem 1rem;
+    color: var(--ink);
+    font-size: 1rem;
+    box-shadow: var(--shadow-pill);
+    transition: 0.2s ease;
+}
+
+.input-kawaii:focus,
+.select-kawaii:focus,
+.textarea-kawaii:focus {
+    outline: none;
+    border-color: #8fc8ef;
+    box-shadow: 0 0 0 4px rgba(169, 222, 249, 0.3);
+}
+
+.checkbox-kawaii {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.6rem;
+    font-weight: 700;
+    color: var(--purple);
+}
+
+.checkbox-kawaii input[type="checkbox"] {
+    accent-color: #87cfff;
+    width: 18px;
+    height: 18px;
+}
+
+/* =========================
+   NAVBAR
+========================= */
+.nav-kawaii {
+    position: sticky;
+    top: 0;
+    z-index: 50;
+    background: rgba(255,255,255,0.72);
+    backdrop-filter: blur(12px);
+    border-bottom: 1px solid rgba(219, 230, 255, 0.8);
+    box-shadow: 0 4px 18px rgba(160, 180, 220, 0.12);
+}
+
+.nav-kawaii-inner {
+    width: min(100% - 2rem, var(--container-width));
+    margin-inline: auto;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+    padding: 0.85rem 0;
+}
+
+.brand-kawaii {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.7rem;
+    text-decoration: none;
+    color: var(--purple);
+    font-family: var(--font-heading);
+    font-size: 1.5rem;
+}
+
+.nav-links-kawaii {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.75rem;
+}
+
+.nav-link-kawaii {
+    text-decoration: none;
+    color: var(--purple);
+    font-weight: 800;
+    padding: 0.65rem 1rem;
+    border-radius: var(--radius-pill);
+    background: rgba(255,255,255,0.75);
+    border: 2px solid rgba(223, 232, 252, 0.95);
+    box-shadow: var(--shadow-pill);
+    transition: var(--transition-fast);
+}
+
+.nav-link-kawaii:hover,
+.nav-link-kawaii.active {
+    background: linear-gradient(180deg, #d8b7fb 0%, #c6a7f0 100%);
+    color: white;
+}
+
+/* =========================
+   DECORATIVE HELPERS
+========================= */
+.sparkle {
+    position: relative;
+}
+
+.sparkle::after {
+    content: "✦";
+    margin-left: 0.4rem;
+    color: #ffb8d7;
+    font-size: 0.9em;
+}
+
+.soft-divider {
+    border: none;
+    height: 2px;
+    background: linear-gradient(90deg, transparent, #d7d2f6, transparent);
+    margin: 1.25rem 0;
+}
+
+/* =========================
+   ACCESSIBILITY / MOTION
+========================= */
+@media (prefers-reduced-motion: reduce) {
+    * {
+        scroll-behavior: auto;
+        transition: none !important;
+        animation: none !important;
+    }
+}

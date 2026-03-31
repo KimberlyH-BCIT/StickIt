@@ -1,0 +1,63 @@
+@model ELKH.ViewModels.FeatureCardVM
+
+@*
+╔══════════════════════════════════════════════════════════════════════════════════╗
+║ Generic Feature/Action Card Component                                           ║
+║ Reusable partial for displaying feature cards with icon, title, description     ║
+║ and optional action footer - commonly used in dashboards and landing pages     ║
+║ Enhanced with comprehensive accessibility support for WCAG 2.1 AA compliance  ║
+╚══════════════════════════════════════════════════════════════════════════════════╝
+*@
+
+<div class="col-@Model.ColumnSize">
+    <article class="card border-0 shadow-sm rounded-4 h-100 @Model.CardCssClass"
+             role="button"
+             tabindex="0"
+             aria-labelledby="card-title-@(Model.Title?.Replace(" ", "-")?.ToLower())"
+             aria-describedby="card-desc-@(Model.Title?.Replace(" ", "-")?.ToLower())">
+        <div class="card-body p-4 d-flex align-items-center gap-4">
+            @if (!string.IsNullOrEmpty(Model.Icon))
+            {
+                <div class="@Model.IconWrapperClass" aria-hidden="true">
+                    @if (Model.IconType == "bootstrap")
+                    {
+                        <i class="bi bi-@Model.Icon" style="font-size:@(Model.IconSize)rem;"></i>
+                    }
+                    else
+                    {
+                        <span style="font-size:@(Model.IconSize)rem;">@Model.Icon</span>
+                    }
+                </div>
+            }
+
+            <div>
+                <h3 id="card-title-@(Model.Title?.Replace(" ", "-")?.ToLower())" 
+                    class="fw-bold mb-1 text-dark h5">
+                    @Model.Title
+                </h3>
+
+                @if (!string.IsNullOrEmpty(Model.Description))
+                {
+                    <p id="card-desc-@(Model.Title?.Replace(" ", "-")?.ToLower())" 
+                       class="text-muted small mb-2">
+                        @Model.Description
+                    </p>
+                }
+
+                @if (!string.IsNullOrEmpty(Model.Badge))
+                {
+                    <span class="@Model.BadgeCssClass" aria-label="Feature category: @Model.Badge">
+                        @Model.Badge
+                    </span>
+                }
+            </div>
+        </div>
+
+        @if (!string.IsNullOrEmpty(Model.FooterText))
+        {
+            <footer class="card-footer @Model.FooterCssClass" aria-label="Action: @Model.FooterText">
+                @Model.FooterText
+            </footer>
+        }
+    </article>
+</div>

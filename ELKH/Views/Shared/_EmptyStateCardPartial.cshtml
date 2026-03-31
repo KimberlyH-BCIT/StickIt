@@ -1,0 +1,56 @@
+@model ELKH.ViewModels.EmptyStateCardVM
+
+@*
+╔══════════════════════════════════════════════════════════════════════════════════╗
+║ Generic Empty State Card Component                                               ║
+║ Reusable partial for displaying empty states with icon, message, and CTA        ║
+╚══════════════════════════════════════════════════════════════════════════════════╝
+*@
+
+<div class="card shadow-sm border-0 text-center py-5">
+    <div class="card-body">
+        @if (!string.IsNullOrEmpty(Model.Icon))
+        {
+            @if (Model.IconType == "bootstrap")
+            {
+                <i class="bi bi-@Model.Icon display-1 text-muted mb-3"></i>
+            }
+            else
+            {
+                <span class="display-1 mb-3">@Model.Icon</span>
+            }
+        }
+        
+        <h4 class="fw-bold mb-2">@Model.Title</h4>
+        
+        @if (!string.IsNullOrEmpty(Model.Description))
+        {
+            <p class="text-muted mb-4">@Model.Description</p>
+        }
+        
+        @if (!string.IsNullOrEmpty(Model.ActionText) && !string.IsNullOrEmpty(Model.ActionController))
+        {
+            <a asp-controller="@Model.ActionController" 
+               asp-action="@Model.ActionAction" 
+               asp-route-id="@Model.ActionRouteId"
+               class="@Model.ActionButtonClass">
+                @if (!string.IsNullOrEmpty(Model.ActionIcon))
+                {
+                    <i class="bi bi-@Model.ActionIcon me-2"></i>
+                }
+                @Model.ActionText
+            </a>
+        }
+        
+        @if (!string.IsNullOrEmpty(Model.SecondaryActionText))
+        {
+            <div class="mt-3">
+                <a asp-controller="@Model.SecondaryActionController" 
+                   asp-action="@Model.SecondaryActionAction"
+                   class="@Model.SecondaryActionButtonClass">
+                    @Model.SecondaryActionText
+                </a>
+            </div>
+        }
+    </div>
+</div>

@@ -1,0 +1,44 @@
+@model ELKH.ViewModels.EmptyStateVM
+
+@*
+╔══════════════════════════════════════════════════════════════════════════════════╗
+║ Empty State Partial View Component                                               ║
+║ Provides reusable no results display with search suggestions                    ║
+╚══════════════════════════════════════════════════════════════════════════════════╝
+*@
+
+<div class="alert alert-light border text-center py-5">
+    <div class="mb-3">
+        <i class="bi bi-search display-4 text-muted"></i>
+    </div>
+    <h4 class="fw-semibold text-muted mb-3">No products found</h4>
+    
+    @if (!string.IsNullOrWhiteSpace(Model.Search))
+    {
+        <p class="text-muted mb-3">
+            No products match your search for <strong>&ldquo;@Model.Search&rdquo;</strong>
+        </p>
+        <p class="text-muted small mb-4">
+            Try adjusting your search terms or <a asp-action="Index">browse all products</a>
+        </p>
+    }
+    else if (Model.CategoryId.HasValue)
+    {
+        <p class="text-muted mb-3">
+            No products found in the selected category.
+        </p>
+        <p class="text-muted small mb-4">
+            Try selecting a different category or <a asp-action="Index">browse all products</a>
+        </p>
+    }
+    else
+    {
+        <p class="text-muted mb-4">
+            There are no products available at the moment.
+        </p>
+    }
+    
+    <a asp-action="Index" class="btn btn-primary">
+        <i class="bi bi-arrow-clockwise me-2"></i>Clear filters
+    </a>
+</div>

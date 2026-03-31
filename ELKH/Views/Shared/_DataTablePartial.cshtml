@@ -1,0 +1,57 @@
+@model ELKH.ViewModels.DataTableVM
+
+@*
+╔══════════════════════════════════════════════════════════════════════════════════╗
+║ Generic Data Table Component                                                    ║
+║ Reusable partial for displaying data tables with headers and action columns    ║
+╚══════════════════════════════════════════════════════════════════════════════════╝
+*@
+
+<div class="@Model.ContainerClass">
+    @if (!string.IsNullOrEmpty(Model.Title))
+    {
+        <h3 class="@Model.TitleClass">@Model.Title</h3>
+    }
+
+    <div class="table-responsive">
+        <table class="@Model.TableClass">
+            <thead class="@Model.HeaderClass">
+                <tr>
+                    @foreach (var header in Model.Headers)
+                    {
+                        <th class="@header.CssClass" scope="col">
+                            @if (!string.IsNullOrEmpty(header.SortController))
+                            {
+                                <a asp-controller="@header.SortController" 
+                                   asp-action="@header.SortAction"
+                                   asp-route-sort="@header.SortValue"
+                                   class="text-decoration-none @(header.IsActiveSortColumn ? "fw-bold" : "")">
+                                    @header.Title
+                                    @if (header.IsActiveSortColumn)
+                                    {
+                                        <i class="bi bi-@(header.SortDirection == "asc" ? "sort-up" : "sort-down") ms-1"></i>
+                                    }
+                                </a>
+                            }
+                            else
+                            {
+                                @header.Title
+                            }
+                        </th>
+                    }
+                </tr>
+            </thead>
+            <tbody class="@Model.BodyClass">
+                @Model.BodyContent
+            </tbody>
+        </table>
+    </div>
+
+    @if (Model.ShowNoDataMessage && !Model.HasData)
+    {
+        <div class="text-center text-muted py-4">
+            <i class="bi bi-@Model.NoDataIcon display-4 mb-2"></i>
+            <p class="mb-0">@Model.NoDataMessage</p>
+        </div>
+    }
+</div>

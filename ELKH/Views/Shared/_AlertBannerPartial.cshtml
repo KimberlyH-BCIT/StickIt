@@ -1,0 +1,97 @@
+@model ELKH.ViewModels.AlertBannerVM
+
+@*
+╔══════════════════════════════════════════════════════════════════════════════════╗
+║ Generic Alert/Info Banner Component                                             ║
+║ Reusable partial for displaying alerts, info banners, search results, etc.     ║
+╚══════════════════════════════════════════════════════════════════════════════════╝
+*@
+
+<div class="alert @Model.AlertType @Model.CssClasses" role="alert">
+    @if (Model.CssClasses.Contains("justify-content-between"))
+    {
+        @* Layout for complex alerts with actions and dismiss buttons *@
+        <div class="d-flex align-items-center">
+            @if (!string.IsNullOrEmpty(Model.Icon))
+            {
+                @if (Model.IconType == "bootstrap")
+                {
+                    <i class="bi bi-@Model.Icon me-2"></i>
+                }
+                else
+                {
+                    <span class="me-2" style="font-size: @(Model.IconSize)px;">@Model.Icon</span>
+                }
+            }
+
+            @if (!string.IsNullOrEmpty(Model.Title))
+            {
+                <h6 class="alert-heading mb-1 me-2">@Model.Title</h6>
+            }
+
+            <span id="alertMessage">@Html.Raw(Model.Message)</span>
+        </div>
+
+        <div class="d-flex gap-2 align-items-center">
+            @if (!string.IsNullOrEmpty(Model.ActionText))
+            {
+                <a asp-controller="@Model.ActionController" 
+                   asp-action="@Model.ActionAction" 
+                   asp-route-id="@Model.ActionRouteId"
+                   class="@Model.ActionButtonClass">
+                    <i class="bi bi-cart-check me-1"></i>@Model.ActionText
+                </a>
+            }
+
+            @if (Model.Dismissible)
+            {
+                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+            }
+        </div>
+    }
+    else
+    {
+        @* Simple alert layout *@
+        <div class="d-flex align-items-center">
+            @if (!string.IsNullOrEmpty(Model.Icon))
+            {
+                @if (Model.IconType == "bootstrap")
+                {
+                    <svg class="bi flex-shrink-0 me-2" width="@Model.IconSize" height="@Model.IconSize" role="img" aria-label="@Model.IconAriaLabel">
+                        <use xlink:href="#@Model.Icon"/>
+                    </svg>
+                }
+                else
+                {
+                    <span class="me-2" style="font-size: @(Model.IconSize)px;">@Model.Icon</span>
+                }
+            }
+
+            <div class="@(Model.FullWidth ? "flex-grow-1" : "")">
+                @if (!string.IsNullOrEmpty(Model.Title))
+                {
+                    <h6 class="alert-heading mb-1">@Model.Title</h6>
+                }
+
+                @Html.Raw(Model.Message)
+
+                @if (!string.IsNullOrEmpty(Model.ActionText))
+                {
+                    <div class="mt-2">
+                        <a asp-controller="@Model.ActionController" 
+                           asp-action="@Model.ActionAction" 
+                           asp-route-id="@Model.ActionRouteId"
+                           class="@Model.ActionButtonClass">
+                            @Model.ActionText
+                        </a>
+                    </div>
+                }
+            </div>
+
+            @if (Model.Dismissible)
+            {
+                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+            }
+        </div>
+    }
+</div>
