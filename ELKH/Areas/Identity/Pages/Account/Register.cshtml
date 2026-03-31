@@ -1,47 +1,138 @@
 ﻿@page
 @model RegisterModel
 @{
-    ViewData["Title"] = "Register";
+    ViewData["Title"] = "Register - Create Your Account";
 }
 
 <div class="container my-5">
+    <!-- Skip Links for Keyboard Navigation -->
+    <nav class="skip-links sr-only-focusable" aria-label="Skip navigation">
+        <a href="#registration-heading" class="skip-link btn btn-primary">Skip to registration form</a>
+        <a href="#account-credentials" class="skip-link btn btn-primary">Skip to credentials section</a>
+    </nav>
+
     <div class="row justify-content-center">
         <div class="col-lg-8 col-md-10">
-            <div class="card shadow-sm">
+            <main class="card shadow-sm" role="main">
                 <div class="card-body p-4 p-md-5">
-                    <h1 class="card-title text-center mb-4">@ViewData["Title"]</h1>
+                    <header class="text-center mb-4">
+                        <h1 class="card-title">Create Account</h1>
+                        <p class="text-muted mb-0">Join our community to start shopping and track your orders</p>
+                    </header>
 
-                    <section>
-                        <form id="registerForm" asp-route-returnUrl="@Model.ReturnUrl" method="post">
-                            <h5 class="text-muted text-center mb-4">Create a new account</h5>
+                    <section aria-labelledby="registration-heading">
+                        <h2 id="registration-heading" class="sr-only">Registration Form</h2>
 
-                            <div asp-validation-summary="ModelOnly" class="alert alert-danger" role="alert"></div>
+                        <form id="registerForm" 
+                              asp-route-returnUrl="@Model.ReturnUrl" 
+                              method="post" 
+                              aria-label="Account registration form"
+                              novalidate>
+                            <div id="registration-status" aria-live="polite" aria-atomic="true" class="sr-only"></div>
 
-                            <!-- Account Credentials -->
-                            <h6 class="text-secondary mb-3"><i class="bi bi-lock-fill me-2"></i>Account Credentials</h6>
-
-                            <div class="form-floating mb-3">
-                                <input asp-for="Input.Email" class="form-control" autocomplete="username" aria-required="true" placeholder="name@example.com" />
-                                <label asp-for="Input.Email">Email</label>
-                                <span asp-validation-for="Input.Email" class="text-danger small"></span>
+                            <div asp-validation-summary="ModelOnly" 
+                                 class="alert alert-danger" 
+                                 role="alert" 
+                                 aria-live="assertive"
+                                 aria-labelledby="validation-heading"
+                                 style="display:none;">
+                                <h3 id="validation-heading" class="alert-heading h6 mb-2">
+                                    <i class="bi bi-exclamation-triangle-fill me-1" aria-hidden="true"></i>
+                                    Please fix the following errors:
+                                </h3>
                             </div>
 
-                            <div class="row">
-                                <div class="col-md-6">
-                                    <div class="form-floating mb-3">
-                                        <input asp-for="Input.Password" class="form-control" autocomplete="new-password" aria-required="true" placeholder="password" />
-                                        <label asp-for="Input.Password">Password</label>
-                                        <span asp-validation-for="Input.Password" class="text-danger small"></span>
+                            <!-- Account Credentials Section -->
+                            <fieldset class="mb-4" id="account-credentials">
+                                <legend class="h6 text-secondary mb-3">
+                                    <i class="bi bi-lock-fill me-2" aria-hidden="true"></i>
+                                    Account Credentials
+                                </legend>
+
+                                <div class="form-floating mb-3">
+                                    <input asp-for="Input.Email" 
+                                           class="form-control" 
+                                           autocomplete="username email" 
+                                           aria-required="true" 
+                                           aria-describedby="email-help email-validation"
+                                           placeholder="name@example.com"
+                                           type="email"
+                                           inputmode="email" />
+                                    <label asp-for="Input.Email">
+                                        <span class="required-indicator" aria-label="Required field">*</span>
+                                        Email Address
+                                    </label>
+                                    <div id="email-help" class="form-text sr-only">
+                                        This will be your username for signing in
+                                    </div>
+                                    <span asp-validation-for="Input.Email" 
+                                          id="email-validation"
+                                          class="text-danger small d-block"
+                                          role="alert"
+                                          aria-live="polite"></span>
+                                </div>
+
+                                <div class="row">
+                                    <div class="col-md-6">
+                                        <div class="form-floating mb-3 position-relative">
+                                            <input asp-for="Input.Password" 
+                                                   class="form-control" 
+                                                   autocomplete="new-password" 
+                                                   aria-required="true" 
+                                                   aria-describedby="password-help password-validation"
+                                                   placeholder="Password"
+                                                   type="password" />
+                                            <label asp-for="Input.Password">
+                                                <span class="required-indicator" aria-label="Required field">*</span>
+                                                Password
+                                            </label>
+                                            <button type="button" 
+                                                    class="btn btn-sm btn-outline-secondary position-absolute top-50 end-0 translate-middle-y me-2" 
+                                                    aria-label="Show password" 
+                                                    onclick="togglePassword('Input_Password', this)">
+                                                <i class="bi bi-eye" aria-hidden="true"></i>
+                                            </button>
+                                            <div id="password-help" class="form-text small">
+                                                Must be at least 8 characters with uppercase, lowercase, number, and special character
+                                            </div>
+                                            <span asp-validation-for="Input.Password" 
+                                                  id="password-validation"
+                                                  class="text-danger small d-block"
+                                                  role="alert"
+                                                  aria-live="polite"></span>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <div class="form-floating mb-3 position-relative">
+                                            <input asp-for="Input.ConfirmPassword" 
+                                                   class="form-control" 
+                                                   autocomplete="new-password" 
+                                                   aria-required="true" 
+                                                   aria-describedby="confirm-password-help confirm-password-validation"
+                                                   placeholder="Confirm Password"
+                                                   type="password" />
+                                            <label asp-for="Input.ConfirmPassword">
+                                                <span class="required-indicator" aria-label="Required field">*</span>
+                                                Confirm Password
+                                            </label>
+                                            <button type="button" 
+                                                    class="btn btn-sm btn-outline-secondary position-absolute top-50 end-0 translate-middle-y me-2" 
+                                                    aria-label="Show password confirmation" 
+                                                    onclick="togglePassword('Input_ConfirmPassword', this)">
+                                                <i class="bi bi-eye" aria-hidden="true"></i>
+                                            </button>
+                                            <div id="confirm-password-help" class="form-text small">
+                                                Must match the password above
+                                            </div>
+                                            <span asp-validation-for="Input.ConfirmPassword" 
+                                                  id="confirm-password-validation"
+                                                  class="text-danger small d-block"
+                                                  role="alert"
+                                                  aria-live="polite"></span>
+                                        </div>
                                     </div>
                                 </div>
-                                <div class="col-md-6">
-                                    <div class="form-floating mb-3">
-                                        <input asp-for="Input.ConfirmPassword" class="form-control" autocomplete="new-password" aria-required="true" placeholder="password" />
-                                        <label asp-for="Input.ConfirmPassword">Confirm Password</label>
-                                        <span asp-validation-for="Input.ConfirmPassword" class="text-danger small"></span>
-                                    </div>
-                                </div>
-                            </div>
+                            </fieldset>
 
                             <hr class="my-4" />
 
@@ -170,4 +261,45 @@
 @section Scripts {
     <partial name="_ValidationScriptsPartial" />
     <script src="https://www.google.com/recaptcha/api.js" async defer></script>
+
+    <!-- Enhanced Accessibility Styles -->
+    <style>
+        /* Skip Links for Enhanced Keyboard Navigation */
+        .skip-links {
+            position: relative;
+            z-index: 1050;
+        }
+
+        .skip-link {
+            position: absolute !important;
+            left: -10000px !important;
+            top: auto !important;
+            width: 1px !important;
+            height: 1px !important;
+            overflow: hidden !important;
+        }
+
+        .skip-link:focus {
+            position: static !important;
+            width: auto !important;
+            height: auto !important;
+            overflow: visible !important;
+            margin: 0 0.5rem 0.5rem 0 !important;
+            padding: 0.5rem 1rem !important;
+            z-index: 1051 !important;
+        }
+
+        /* Screen Reader Only but Focusable Elements */
+        .sr-only-focusable:not(:focus):not(:focus-within) {
+            position: absolute !important;
+            width: 1px !important;
+            height: 1px !important;
+            padding: 0 !important;
+            margin: -1px !important;
+            overflow: hidden !important;
+            clip: rect(0, 0, 0, 0) !important;
+            white-space: nowrap !important;
+            border: 0 !important;
+        }
+    </style>
 }

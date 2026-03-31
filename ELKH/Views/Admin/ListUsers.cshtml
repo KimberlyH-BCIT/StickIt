@@ -1,148 +1,209 @@
 @model List<ELKH.ViewModels.UserListVM>
 
 @{
-    ViewData["Title"] = "All Users";
+    ViewData["Title"] = "User Management - View & Manage All Users | Admin Panel";
     Layout = "~/Views/Shared/_Layout.cshtml";
 
     var filterRoles = new[] { "All", "Admin", "Manager", "Staff", "Customer" };
+    var userCount = Model?.Count ?? 0;
+    var currentFilter = ViewBag.RoleFilter?.ToString() ?? "All";
+    var currentSearch = ViewBag.Search?.ToString() ?? "";
 }
 
-<div class="container mt-4 pb-5">
-
-    <div class="d-flex justify-content-between align-items-center mb-4">
-        <h2 class="fw-bold text-primary">All Users</h2>
-
-        <a asp-action="Index" class="btn btn-outline-primary rounded-pill px-4">
-            ← Back to Dashboard
-        </a>
-    </div>
-
-    <div class="card shadow-sm border-0 mb-4 rounded-4">
-        <div class="card-body p-4">
-
-            <form method="get" class="mb-4">
-                <input type="hidden" name="roleFilter" value="@ViewBag.RoleFilter" />
-
-                <div class="d-flex justify-content-center">
-                    <div class="input-group" style="max-width:500px;">
-
-                        <input type="text"
-                               name="search"
-                               value="@ViewBag.Search"
-                               class="form-control rounded-start-pill"
-                               placeholder="Search by email or role…" />
-
-                        <button type="submit" class="btn btn-primary rounded-end-pill px-4">
-                            Search
-                        </button>
-
-                    </div>
-                </div>
-
-            </form>
-
-
-            <div class="d-flex justify-content-center flex-wrap gap-2">
-
-                @foreach (var role in filterRoles)
-                {
-                    bool active = (ViewBag.RoleFilter == role) || (role == "All" && string.IsNullOrEmpty(ViewBag.RoleFilter));
-
-                    string roleClass = role switch
-                    {
-                        "Admin" => "role-admin",
-                        "Manager" => "role-manager",
-                        "Staff" => "role-staff",
-                        "Customer" => "role-customer",
-                        _ => "role-none"
-                    };
-
-                    <a asp-action="ListUsers"
-                       asp-route-roleFilter="@(role == "All" ? "" : role)"
-                       asp-route-search="@ViewBag.Search"
-                       asp-route-page="1"
-                       class="role-badge @roleClass @(active ? "active-role" : "")">
-                        @role
-                    </a>
+@section title {
+    <header class="mb-4">
+        <nav aria-label="breadcrumb">
+            <ol class="breadcrumb">
+                <li class="breadcrumb-item">
+                    <a asp-controller="Admin" asp-action="Index" aria-label="Return to admin dashboard">Admin Dashboard</a>
+                </li>
+                <li class="breadcrumb-item active" aria-current="page">User Management</li>
+            </ol>
+        </nav>
+        <h1 class="fw-bold d-flex align-items-center">
+            <i class="bi bi-people me-2" aria-hidden="true"></i>
+            User Management
+        </h1>
+        <p class="text-muted mb-0" role="status" aria-live="polite">
+            @if (userCount > 0) {
+                <text>@userCount user@(userCount != 1 ? "s" : "") found</text>
+                @if (!string.IsNullOrEmpty(currentSearch) || currentFilter != "All") {
+                    <text> matching your criteria</text>
                 }
+            } else {
+                <text>No users found</text>
+                @if (!string.IsNullOrEmpty(currentSearch) || currentFilter != "All") {
+                    <text> matching your criteria</text>
+                }
+            }
+        </p>
+    </header>
+}
 
-            </div>
+    <main class="container py-4" role="main">
 
-        </div>
-    </div>
+        <!-- User Search and Filtering -->
+        <section aria-labelledby="search-section-heading">
+            <div class="card shadow-sm border-0 mb-4 rounded-4">
+                <div class="card-body p-4">
+                    <h2 id="search-section-heading" class="fw-bold mb-4 h5 text-center">Search & Filter Users</h2>
 
+                    <!-- Search Form -->
+                    <form method="get" 
+                          class="mb-4" 
+                          role="search"
+                          aria-labelledby="search-section-heading">
+                        <input type="hidden" name="roleFilter" value="@ViewBag.RoleFilter" />
 
+                        <div class="d-flex justify-content-center">
+                            <div class="input-group" style="max-width:500px;">
 
-    <div class="d-flex justify-content-center">
+                                <label for="userSearch" class="sr-only">Search users by email or role</label>
+                                <input type="text"
+                                       id="userSearch"
+                                       name="search"
+                                       value="@ViewBag.Search"
+                                       class="form-control rounded-start-pill"
+                                       placeholder="Search by email or role…"
+                                       aria-describedby="search-help" />
 
-        <div class="card shadow-sm border-0 rounded-4" style="max-width:900px;width:100%;">
+                                <button type="submit" 
+                                        class="btn btn-primary rounded-end-pill px-4"
+                                        aria-label="Execute user search">
+                                    <i class="bi bi-search me-1" aria-hidden="true"></i>Search
+                                </button>
 
-            <div class="card-body p-0">
+                            </div>
+                        </div>
+                        <small id="search-help" class="form-text text-muted text-center d-block mt-2">
+                            Enter email address or role name to filter users
+                        </small>
 
-                <div class="table-responsive">
+                    </form>
 
-                    <table class="table table-hover table-sm align-middle mb-0 text-center">
+                    <!-- Role Filter Buttons -->
+                    <fieldset>
+                        <legend class="sr-only">Filter users by role</legend>
+                        <div class="d-flex justify-content-center flex-wrap gap-2"
+                             role="group"
+                             aria-labelledby="role-filter-heading">
+                            <p id="role-filter-heading" class="sr-only">Filter by user role:</p>
 
-                        <thead class="table-light">
-                            <tr>
-
-                                <th style="width:80px;" class="ps-3">ID</th>
-
-                                <th class="text-start">Email</th>
-
-                                <th style="width:200px;">Roles</th>
-
-                                <th style="width:120px;">Action</th>
-
-                            </tr>
-                        </thead>
-
-                        <tbody>
-
-                            @if (Model.Any())
+                            @foreach (var role in filterRoles)
                             {
-                                foreach (var user in Model)
+                                bool active = (ViewBag.RoleFilter == role) || (role == "All" && string.IsNullOrEmpty(ViewBag.RoleFilter));
+
+                                string roleClass = role switch
                                 {
+                                    "Admin" => "role-admin",
+                                    "Manager" => "role-manager", 
+                                    "Staff" => "role-staff",
+                                    "Customer" => "role-customer",
+                                    _ => "role-none"
+                                };
 
-                                    <tr>
+                                <a asp-action="ListUsers"
+                                   asp-route-roleFilter="@(role == "All" ? "" : role)"
+                                   asp-route-search="@ViewBag.Search"
+                                   asp-route-page="1"
+                                   class="role-badge @roleClass @(active ? "active-role" : "")"
+                                   role="button"
+                                   aria-pressed="@active.ToString().ToLower()"
+                                   aria-label="@(active ? "Currently showing" : "Show only") @role users">
+                                    @role
+                                    @if (active)
+                                    {
+                                        <i class="bi bi-check ms-1" aria-hidden="true"></i>
+                                    }
+                                </a>
+                            }
 
-                                        <td class="ps-3">
-                                            <span class="text-muted small font-monospace"
-                                                  title="@user.Id"
-                                                  data-bs-toggle="tooltip"
-                                                  style="cursor:default;">
-                                                @user.Id.Substring(0, Math.Min(6, user.Id.Length))…
-                                            </span>
-                                        </td>
+                        </div>
+                    </fieldset>
+
+                </div>
+            </div>
+        </section>
 
 
-                                        <td class="text-start">@user.Email</td>
+    <!-- User Management Table -->
+    <section aria-labelledby="users-table-heading">
+        <div class="d-flex justify-content-center">
+            <div class="card shadow-sm border-0 rounded-4" style="max-width:900px;width:100%;">
+                <div class="card-body p-0">
 
+                    <div class="table-responsive">
+                        <table class="table table-hover table-sm align-middle mb-0"
+                               role="table"
+                               aria-label="User management table with user details and actions"
+                               aria-describedby="users-table-desc">
+                            <caption id="users-table-desc" class="sr-only">
+                                Table showing user ID, email, assigned roles, and management actions for each user
+                            </caption>
 
-                                        <td>
+                            <thead class="table-light">
+                                <tr role="row">
+                                    <th scope="col" style="width:80px;" class="ps-3">User ID</th>
+                                    <th scope="col" class="text-start">Email Address</th>
+                                    <th scope="col" style="width:200px;" class="text-center">Assigned Roles</th>
+                                    <th scope="col" style="width:120px;" class="text-center">
+                                        <span class="sr-only">Management </span>Actions
+                                    </th>
+                                </tr>
+                            </thead>
 
-                                            @{
+                            <tbody>
 
-                                                var rolePriority = new List<string> { "Admin", "Manager", "Staff", "Customer" };
+                                @if (Model.Any())
+                                {
+                                    foreach (var user in Model)
+                                    {
 
-                                                var sortedRoles = user.Roles
-                                                .OrderBy(r => rolePriority.IndexOf(r))
-                                                .ToList();
+                                        <tr role="row">
 
-                                                string? filterRole = ViewBag.RoleFilter as string;
+                                            <td role="gridcell" class="ps-3" aria-label="User ID @user.Id.Substring(0, Math.Min(6, user.Id.Length))">
+                                                <span class="text-muted small font-monospace"
+                                                      title="@user.Id"
+                                                      data-bs-toggle="tooltip"
+                                                      style="cursor:help;"
+                                                      aria-describedby="user-id-help-@user.Id.Substring(0, 6)">
+                                                    @user.Id.Substring(0, Math.Min(6, user.Id.Length))…
+                                                </span>
+                                                <span id="user-id-help-@user.Id.Substring(0, 6)" class="sr-only">
+                                                    Full ID: @user.Id
+                                                </span>
+                                            </td>
 
-                                                                string? displayRole;
+                                            <td role="gridcell" 
+                                                class="text-start"
+                                                aria-label="Email address @user.Email">
+                                                @user.Email
+                                            </td>
 
-                                                if (!string.IsNullOrEmpty(filterRole) && sortedRoles.Contains(filterRole))
-                                                {
-                                                    displayRole = filterRole;
-                                                }
-                                                else
-                                                {
-                                                    displayRole = sortedRoles.FirstOrDefault();
-                                                }
+                                            <td role="gridcell" class="text-center">
 
-                                                int extraCount = sortedRoles.Count - 1;
+                                                @{
+
+                                                    var rolePriority = new List<string> { "Admin", "Manager", "Staff", "Customer" };
+
+                                                    var sortedRoles = user.Roles
+                                                    .OrderBy(r => rolePriority.IndexOf(r))
+                                                    .ToList();
+
+                                                    string? filterRole = ViewBag.RoleFilter as string;
+
+                                                                            string? displayRole;
+
+                                                    if (!string.IsNullOrEmpty(filterRole) && sortedRoles.Contains(filterRole))
+                                                    {
+                                                        displayRole = filterRole;
+                                                    }
+                                                    else
+                                                    {
+                                                        displayRole = sortedRoles.FirstOrDefault();
+                                                    }
+
+                                                    int extraCount = sortedRoles.Count - 1;
 
                                                 string roleClass = displayRole switch
                                                 {
@@ -156,32 +217,37 @@
 
                                             @if (displayRole != null)
                                             {
-
-                                                <span class="role-badge @roleClass">
+                                                <span class="role-badge @roleClass" 
+                                                      aria-label="Primary role: @displayRole@(extraCount > 0 ? $", plus {extraCount} additional role{(extraCount != 1 ? "s" : "")}" : "")">
                                                     @displayRole
                                                 </span>
 
                                                 @if (extraCount > 0)
                                                 {
-                                                    <span class="text-muted small ms-1">+@extraCount</span>
+                                                    <span class="text-muted small ms-1" 
+                                                          aria-label="@extraCount additional roles">
+                                                        +@extraCount
+                                                    </span>
                                                 }
 
                                             }
                                             else
                                             {
-                                                <span class="role-badge role-none">No Role</span>
+                                                <span class="role-badge role-none" aria-label="No roles assigned">
+                                                    No Role
+                                                </span>
                                             }
 
                                         </td>
 
-
-                                        <td>
+                                        <td role="gridcell" class="text-center">
 
                                             <a asp-controller="Admin"
                                                asp-action="AccountDetails"
                                                asp-route-id="@user.Id"
-                                               class="btn btn-sm btn-outline-primary rounded-pill px-3">
-                                                Details
+                                               class="btn btn-sm btn-outline-primary rounded-pill px-3"
+                                               aria-label="View account details for @user.Email">
+                                                <i class="bi bi-eye me-1" aria-hidden="true"></i>Details
                                             </a>
 
                                         </td>
@@ -192,10 +258,15 @@
                             }
                             else
                             {
-                                <tr>
-                                    <td colspan="4" class="text-center text-muted py-5">
-                                        <span style="font-size:2rem;">🔍</span><br />
-                                        No users found matching your search.
+                                <tr role="row">
+                                    <td role="gridcell" colspan="4" class="text-center text-muted py-5">
+                                        <div role="status" aria-live="polite">
+                                            <i class="bi bi-search display-1 mb-2" aria-hidden="true"></i>
+                                            <p class="mb-0">No users found matching your search criteria.</p>
+                                            @if (!string.IsNullOrEmpty(currentSearch) || currentFilter != "All") {
+                                                <p class="small text-muted">Try adjusting your filters or search terms.</p>
+                                            }
+                                        </div>
                                     </td>
                                 </tr>
                             }
@@ -207,50 +278,263 @@
                 </div>
             </div>
         </div>
-    </div>
+    </section>
 
 
-
+    <!-- Pagination Navigation -->
     @if (ViewBag.TotalPages > 1)
     {
-        <nav class="mt-4">
+        <section aria-labelledby="pagination-heading">
+            <nav aria-label="User list pagination" class="mt-4">
+                <h2 id="pagination-heading" class="sr-only">Navigate between user list pages</h2>
 
-            <ul class="pagination justify-content-center flex-wrap">
+                <ul class="pagination justify-content-center flex-wrap" role="list">
 
-                @for (int i = 1; i <= ViewBag.TotalPages; i++)
-                {
+                    @for (int i = 1; i <= ViewBag.TotalPages; i++)
+                    {
+                        bool isCurrentPage = ViewBag.CurrentPage == i;
 
-                    <li class="page-item @(ViewBag.CurrentPage == i ? "active" : "")">
+                        <li class="page-item @(isCurrentPage ? "active" : "")" role="listitem">
 
-                        <a class="page-link rounded-pill mx-1"
-                           asp-action="ListUsers"
-                           asp-route-page="@i"
-                           asp-route-search="@ViewBag.Search"
-                           asp-route-roleFilter="@ViewBag.RoleFilter">
-                            @i
-                        </a>
+                            @if (isCurrentPage)
+                            {
+                                <span class="page-link rounded-pill mx-1" 
+                                      aria-current="page"
+                                      aria-label="Current page, page @i of @ViewBag.TotalPages">
+                                    @i
+                                </span>
+                            }
+                            else
+                            {
+                                <a class="page-link rounded-pill mx-1"
+                                   asp-action="ListUsers"
+                                   asp-route-page="@i"
+                                   asp-route-search="@ViewBag.Search"
+                                   asp-route-roleFilter="@ViewBag.RoleFilter"
+                                   aria-label="Go to page @i of @ViewBag.TotalPages">
+                                    @i
+                                </a>
+                            }
 
-                    </li>
+                        </li>
 
-                }
+                    }
 
-            </ul>
+                </ul>
 
-        </nav>
+            </nav>
+        </section>
     }
 
-</div>
+</main>
 
 
 
 @section Scripts {
-
     <script>
+        // Enhanced tooltip initialization with accessibility
+        document.addEventListener('DOMContentLoaded', function() {
+            // Initialize Bootstrap tooltips
+            document.querySelectorAll('[data-bs-toggle="tooltip"]').forEach(el => {
+                new bootstrap.Tooltip(el);
+            });
 
-        document.querySelectorAll('[data-bs-toggle="tooltip"]').forEach(el=>{
-        new bootstrap.Tooltip(el);
+            // Enhanced keyboard navigation for role filter buttons
+            const roleButtons = document.querySelectorAll('.role-badge');
+            roleButtons.forEach(button => {
+                button.addEventListener('keydown', function(e) {
+                    if (e.key === 'Enter' || e.key === ' ') {
+                        e.preventDefault();
+                        this.click();
+                    }
+                });
+            });
+
+            // Enhanced form accessibility
+            const searchInput = document.getElementById('userSearch');
+            if (searchInput) {
+                searchInput.addEventListener('input', function() {
+                    // Clear any previous validation states
+                    this.setAttribute('aria-invalid', 'false');
+                });
+            }
+
+            // Enhanced table row focus management
+            const tableRows = document.querySelectorAll('tbody tr[role="row"]');
+            tableRows.forEach(row => {
+                row.addEventListener('focus', function() {
+                    this.classList.add('table-row-focused');
+                });
+
+                row.addEventListener('blur', function() {
+                    this.classList.remove('table-row-focused');
+                });
+            });
         });
-
     </script>
-
 }
+
+<style>
+    /* Role badge styling with accessibility support */
+    .role-badge {
+        display: inline-block;
+        padding: 0.375rem 0.75rem;
+        margin: 0.125rem;
+        font-size: 0.875rem;
+        font-weight: 500;
+        line-height: 1;
+        text-align: center;
+        white-space: nowrap;
+        vertical-align: baseline;
+        border-radius: 0.375rem;
+        text-decoration: none;
+        transition: all 0.15s ease-in-out;
+        border: 1px solid transparent;
+        cursor: pointer;
+    }
+
+    /* Role-specific colors */
+    .role-admin {
+        color: #dc3545;
+        background-color: rgba(220, 53, 69, 0.1);
+        border-color: rgba(220, 53, 69, 0.2);
+    }
+
+    .role-manager {
+        color: #fd7e14;
+        background-color: rgba(253, 126, 20, 0.1);
+        border-color: rgba(253, 126, 20, 0.2);
+    }
+
+    .role-staff {
+        color: #198754;
+        background-color: rgba(25, 135, 84, 0.1);
+        border-color: rgba(25, 135, 84, 0.2);
+    }
+
+    .role-customer {
+        color: #0d6efd;
+        background-color: rgba(13, 110, 253, 0.1);
+        border-color: rgba(13, 110, 253, 0.2);
+    }
+
+    .role-none {
+        color: #6c757d;
+        background-color: rgba(108, 117, 125, 0.1);
+        border-color: rgba(108, 117, 125, 0.2);
+    }
+
+    /* Active state for role filters */
+    .role-badge.active-role {
+        color: #fff;
+    }
+
+    .role-admin.active-role {
+        background-color: #dc3545;
+        border-color: #dc3545;
+    }
+
+    .role-manager.active-role {
+        background-color: #fd7e14;
+        border-color: #fd7e14;
+    }
+
+    .role-staff.active-role {
+        background-color: #198754;
+        border-color: #198754;
+    }
+
+    .role-customer.active-role {
+        background-color: #0d6efd;
+        border-color: #0d6efd;
+    }
+
+    .role-none.active-role {
+        background-color: #6c757d;
+        border-color: #6c757d;
+    }
+
+    /* Hover and focus states */
+    .role-badge:hover,
+    .role-badge:focus {
+        transform: translateY(-1px);
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        text-decoration: none;
+    }
+
+    .role-badge:focus {
+        outline: 2px solid #0d6efd;
+        outline-offset: 2px;
+    }
+
+    /* Table accessibility enhancements */
+    .table-hover tbody tr:hover {
+        background-color: rgba(0, 123, 255, 0.075);
+    }
+
+    .table-hover tbody tr:focus-within {
+        background-color: rgba(0, 123, 255, 0.1);
+        outline: 2px solid #0d6efd;
+        outline-offset: -2px;
+    }
+
+    .table-row-focused {
+        background-color: rgba(0, 123, 255, 0.1) !important;
+    }
+
+    /* Enhanced button accessibility */
+    .btn:focus {
+        box-shadow: 0 0 0 0.25rem rgba(13, 110, 253, 0.25);
+    }
+
+    /* Form control accessibility */
+    .form-control:focus {
+        border-color: #0d6efd;
+        box-shadow: 0 0 0 0.25rem rgba(13, 110, 253, 0.25);
+    }
+
+    /* Pagination accessibility */
+    .page-link:focus {
+        box-shadow: 0 0 0 0.25rem rgba(13, 110, 253, 0.25);
+    }
+
+    /* Screen reader improvements */
+    .sr-only {
+        position: absolute !important;
+        width: 1px !important;
+        height: 1px !important;
+        padding: 0 !important;
+        margin: -1px !important;
+        overflow: hidden !important;
+        clip: rect(0, 0, 0, 0) !important;
+        white-space: nowrap !important;
+        border: 0 !important;
+    }
+
+    /* High contrast improvements */
+    @@media (prefers-contrast: high) {
+        .role-badge {
+            border-width: 2px !important;
+        }
+
+        .table {
+            border: 2px solid #000 !important;
+        }
+
+        .btn {
+            border-width: 2px !important;
+        }
+    }
+
+    /* Reduced motion support */
+    @@media (prefers-reduced-motion: reduce) {
+        .role-badge {
+            transition: none;
+        }
+
+        .role-badge:hover,
+        .role-badge:focus {
+            transform: none;
+        }
+    }
+</style>

@@ -1,70 +1,502 @@
 @model IEnumerable<ELKH.Models.AuditEntryModel>
 
 @{
-    ViewData["Title"] = "Audit Log";
+    ViewData["Title"] = "System Audit Log - Security & Compliance Monitoring | Admin Panel";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+    var auditCount = Model?.Count() ?? 0;
+    var currentPage = ViewBag.Page as int? ?? 1;
+    var totalPages = ViewBag.TotalPages as int? ?? 1;
+    var fromFilter = ViewBag.FromFilter?.ToString() ?? "";
+    var toFilter = ViewBag.ToFilter?.ToString() ?? "";
+    var actorFilter = ViewBag.ActorFilter?.ToString() ?? "";
+    var actionFilter = ViewBag.ActionFilter?.ToString() ?? "";
 }
 
-<h2>Audit Log</h2>
-<p class="text-muted">Administrative audit trail for compliance and security monitoring.</p>
+@section title {
+    <header class="mb-4">
+        <nav aria-label="breadcrumb">
+            <ol class="breadcrumb">
+                <li class="breadcrumb-item">
+                    <a asp-controller="Admin" asp-action="Index" aria-label="Return to admin dashboard">Admin Dashboard</a>
+                </li>
+                <li class="breadcrumb-item active" aria-current="page">System Audit Log</li>
+            </ol>
+        </nav>
+        <h1 class="fw-bold d-flex align-items-center">
+            <i class="bi bi-clipboard-data me-2" aria-hidden="true"></i>
+            System Audit Log
+        </h1>
+        <p class="text-muted mb-0" role="status" aria-live="polite">
+            Administrative audit trail for compliance and security monitoring
+            @if (auditCount > 0) {
+                <span> - Showing @auditCount entries on page @currentPage of @totalPages</span>
+            }
+        </p>
+    </header>
+}
 
-<form method="get" class="row g-2 mb-3">
-    <div class="col-auto">
-        <input type="date" name="from" class="form-control" placeholder="From Date" />
-    </div>
-    <div class="col-auto">
-        <input type="date" name="to" class="form-control" placeholder="To Date" />
-    </div>
-    <div class="col-auto">
-        <input name="actor" placeholder="Actor" class="form-control" />
-    </div>
-    <div class="col-auto">
-        <input name="action" placeholder="Action" class="form-control" />
-    </div>
-    <div class="col-auto">
-        <button class="btn btn-primary">Filter</button>
-        <a class="btn btn-outline-secondary ms-1" href="?export=csv">Export CSV</a>
-    </div>
-</form>
+<main class="container py-4" role="main">
 
-<table class="table table-sm table-hover">
-    <thead>
-        <tr>
-            <th>Time (UTC)</th>
-            <th>Actor</th>
-            <th>Action</th>
-            <th>Keys Affected</th>
-            <th>Reason</th>
-            <th>Details</th>
-            <th></th>
-        </tr>
-    </thead>
-    <tbody>
-        @foreach (var a in Model)
-        {
-            <tr>
-                <td>@a.Timestamp.ToString("u")</td>
-                <td>@a.Actor</td>
-                <td>@a.Action</td>
-                <td>@a.AffectedKeysCount</td>
-                <td>@a.Reason</td>
-                <td style="max-width:400px;word-break:break-all;">@a.Details</td>
-                <td>
-                    @if (!string.IsNullOrEmpty(a.Details))
+    <!-- Audit Log Filters -->
+    <section aria-labelledby="filter-section-heading" class="mb-4">
+        <div class="card shadow-sm border-0">
+            <div class="card-header bg-white py-3">
+                <h2 id="filter-section-heading" class="fw-bold mb-0 h5">
+                    <i class="bi bi-funnel me-2" aria-hidden="true"></i>Filter Audit Entries
+                </h2>
+            </div>
+
+            <div class="card-body">
+                <form method="get" 
+                      class="row g-3" 
+                      role="search"
+                      aria-labelledby="filter-section-heading">
+
+                    <div class="col-md-3">
+                        <label for="from-date" class="form-label fw-semibold">From Date</label>
+                        <input type="date" 
+                               id="from-date"
+                               name="from" 
+                               class="form-control" 
+                               value="@fromFilter"
+                               aria-describedby="from-date-help" />
+                        <small id="from-date-help" class="form-text text-muted">Start of date range</small>
+                    </div>
+
+                    <div class="col-md-3">
+                        <label for="to-date" class="form-label fw-semibold">To Date</label>
+                        <input type="date" 
+                               id="to-date"
+                               name="to" 
+                               class="form-control" 
+                               value="@toFilter"
+                               aria-describedby="to-date-help" />
+                        <small id="to-date-help" class="form-text text-muted">End of date range</small>
+                    </div>
+
+                    <div class="col-md-3">
+                        <label for="actor-filter" class="form-label fw-semibold">User/Actor</label>
+                        <input type="text"
+                               id="actor-filter"
+                               name="actor" 
+                               class="form-control"
+                               value="@actorFilter"
+                               placeholder="Enter username or email"
+                               aria-describedby="actor-help" />
+                        <small id="actor-help" class="form-text text-muted">Filter by user who performed action</small>
+                    </div>
+
+                    <div class="col-md-3">
+                        <label for="action-filter" class="form-label fw-semibold">Action Type</label>
+                        <input type="text"
+                               id="action-filter"
+                               name="action" 
+                               class="form-control"
+                               value="@actionFilter"
+                               placeholder="Enter action name"
+                               aria-describedby="action-help" />
+                        <small id="action-help" class="form-text text-muted">Filter by action type or name</small>
+                    </div>
+
+                    <div class="col-12">
+                        <div class="d-flex flex-wrap gap-2">
+                            <button type="submit" 
+                                    class="btn btn-primary"
+                                    aria-label="Apply filters to audit log">
+                                <i class="bi bi-search me-1" aria-hidden="true"></i>Apply Filters
+                            </button>
+
+                            <a class="btn btn-outline-secondary" 
+                               href="?"
+                               aria-label="Clear all filters and show all audit entries">
+                                <i class="bi bi-arrow-counterclockwise me-1" aria-hidden="true"></i>Clear Filters
+                            </a>
+
+                            <a class="btn btn-success" 
+                               href="?export=csv"
+                               aria-label="Export current audit log view to CSV file"
+                               download>
+                                <i class="bi bi-download me-1" aria-hidden="true"></i>Export CSV
+                            </a>
+                        </div>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </section>
+
+<!-- Audit Log Table -->
+<section aria-labelledby="audit-table-heading">
+    <div class="card shadow-sm border-0">
+        <div class="card-header bg-white py-3">
+            <h2 id="audit-table-heading" class="fw-bold mb-0 h5">
+                <i class="bi bi-table me-2" aria-hidden="true"></i>Audit Trail Entries
+            </h2>
+        </div>
+
+        <div class="card-body p-0">
+            @if (Model?.Any() == true)
+            {
+                <div class="table-responsive">
+                    <table class="table table-hover table-striped align-middle mb-0"
+                           role="table"
+                           aria-label="System audit log showing administrative actions and security events"
+                           aria-describedby="audit-table-desc">
+                        <caption id="audit-table-desc" class="sr-only">
+                            Administrative audit trail showing timestamp, user, action, affected items, and details for security monitoring and compliance
+                        </caption>
+
+                        <thead class="table-dark">
+                            <tr role="row">
+                                <th scope="col" class="fw-semibold">
+                                    <i class="bi bi-clock me-1" aria-hidden="true"></i>Timestamp (UTC)
+                                </th>
+                                <th scope="col" class="fw-semibold">
+                                    <i class="bi bi-person me-1" aria-hidden="true"></i>User/Actor
+                                </th>
+                                <th scope="col" class="fw-semibold">
+                                    <i class="bi bi-activity me-1" aria-hidden="true"></i>Action
+                                </th>
+                                <th scope="col" class="fw-semibold text-center">
+                                    <i class="bi bi-key me-1" aria-hidden="true"></i>Items Affected
+                                </th>
+                                <th scope="col" class="fw-semibold">
+                                    <i class="bi bi-chat-text me-1" aria-hidden="true"></i>Reason
+                                </th>
+                                <th scope="col" class="fw-semibold">
+                                    <i class="bi bi-info-circle me-1" aria-hidden="true"></i>Details
+                                </th>
+                                <th scope="col" class="fw-semibold text-center">
+                                    <span class="sr-only">View Details </span>Actions
+                                </th>
+                            </tr>
+                        </thead>
+
+                        <tbody>
+                            @foreach (var audit in Model)
+                            {
+                                <tr role="row">
+                                    <td role="gridcell" 
+                                        class="font-monospace small"
+                                        aria-label="Timestamp @audit.Timestamp.ToString("yyyy-MM-dd HH:mm:ss") UTC">
+                                        @audit.Timestamp.ToString("yyyy-MM-dd")
+                                        <br />
+                                        <small class="text-muted">@audit.Timestamp.ToString("HH:mm:ss")</small>
+                                    </td>
+
+                                    <td role="gridcell" 
+                                        class="fw-medium"
+                                        aria-label="Actor @(audit.Actor ?? "System")">
+                                        @(audit.Actor ?? "System")
+                                    </td>
+
+                                    <td role="gridcell">
+                                        <span class="badge bg-primary fs-6"
+                                              aria-label="Action type @audit.Action">
+                                            @audit.Action
+                                        </span>
+                                    </td>
+
+                                    <td role="gridcell" class="text-center">
+                                        <span class="badge @(audit.AffectedKeysCount > 0 ? "bg-info" : "bg-secondary") fs-6"
+                                              aria-label="@audit.AffectedKeysCount items affected">
+                                            @audit.AffectedKeysCount
+                                        </span>
+                                    </td>
+
+                                    <td role="gridcell" 
+                                        class="small"
+                                        style="max-width: 200px; word-break: break-word;"
+                                        aria-label="Reason: @(audit.Reason ?? "No reason provided")">
+                                        @(audit.Reason ?? "—")
+                                    </td>
+
+                                    <td role="gridcell" 
+                                        class="small text-muted"
+                                        style="max-width: 250px; word-break: break-word;"
+                                        aria-label="Details: @(audit.Details ?? "No details available")">
+                                        @if (!string.IsNullOrEmpty(audit.Details))
+                                        {
+                                            <span title="@audit.Details">
+                                                @(audit.Details.Length > 50 ? audit.Details.Substring(0, 50) + "..." : audit.Details)
+                                            </span>
+                                        }
+                                        else
+                                        {
+                                            <text>—</text>
+                                        }
+                                    </td>
+
+                                    <td role="gridcell" class="text-center">
+                                        @if (!string.IsNullOrEmpty(audit.Details) && audit.AffectedKeysCount > 0)
+                                        {
+                                            <a asp-area="Admin" 
+                                               asp-controller="Audit" 
+                                               asp-action="Details" 
+                                               asp-route-id="@audit.Id"
+                                               class="btn btn-sm btn-outline-primary rounded-pill"
+                                               aria-label="View detailed information for audit entry @audit.Id">
+                                                <i class="bi bi-eye me-1" aria-hidden="true"></i>View Details
+                                            </a>
+                                        }
+                                        else
+                                        {
+                                            <span class="text-muted small" aria-label="No additional details available">—</span>
+                                        }
+                                    </td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+            }
+            else
+            {
+                <div class="text-center py-5">
+                    <div role="status" aria-live="polite">
+                        <i class="bi bi-clipboard-x display-1 text-muted mb-3" aria-hidden="true"></i>
+                        <h3 class="h5 text-muted">No Audit Entries Found</h3>
+                        <p class="text-muted">
+                            @if (!string.IsNullOrEmpty(fromFilter) || !string.IsNullOrEmpty(actorFilter) || !string.IsNullOrEmpty(actionFilter)) {
+                                <text>No entries match your current filter criteria. Try adjusting your search parameters.</text>
+                            } else {
+                                <text>No audit entries have been recorded in the system yet.</text>
+                            }
+                        </p>
+                    </div>
+                </div>
+            }
+        </div>
+    </div>
+</section>
+
+    <!-- Pagination -->
+    @if (totalPages > 1)
+    {
+        <section aria-labelledby="pagination-heading" class="mt-4">
+            <nav aria-label="Audit log pagination">
+                <h2 id="pagination-heading" class="sr-only">Navigate between audit log pages</h2>
+
+                <ul class="pagination justify-content-center" role="list">
+                    @for (int i = 1; i <= totalPages; i++)
                     {
-                        <a asp-area="Admin" asp-controller="Audit" asp-action="Details" asp-route-id="@a.Id">View Keys</a>
-                    }
-                </td>
-            </tr>
-        }
-    </tbody>
-</table>
+                        bool isCurrentPage = (i == currentPage);
 
-<nav>
-    <ul class="pagination">
-        @{ var page = ViewBag.Page as int? ?? 1; var totalPages = ViewBag.TotalPages as int? ?? 1; }
-        @for (int i = 1; i <= totalPages; i++)
-        {
-            <li class="page-item @(i == page ? "active" : "")"><a class="page-link" href="?page=@i">@i</a></li>
+                        <li class="page-item @(isCurrentPage ? "active" : "")" role="listitem">
+                            @if (isCurrentPage)
+                            {
+                                <span class="page-link" 
+                                      aria-current="page"
+                                      aria-label="Current page, page @i of @totalPages">
+                                    @i
+                                </span>
+                            }
+                            else
+                            {
+                                <a class="page-link" 
+                                   href="?page=@i&from=@fromFilter&to=@toFilter&actor=@actorFilter&action=@actionFilter"
+                                   aria-label="Go to page @i of @totalPages">
+                                    @i
+                                </a>
+                            }
+                        </li>
+                    }
+                </ul>
+            </nav>
+        </section>
+    }
+
+</main>
+
+@section Scripts {
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Enhanced table accessibility
+        const tableRows = document.querySelectorAll('tbody tr[role="row"]');
+        tableRows.forEach(row => {
+            row.addEventListener('focus', function() {
+                this.classList.add('table-row-focused');
+            });
+
+            row.addEventListener('blur', function() {
+                this.classList.remove('table-row-focused');
+            });
+        });
+
+        // Enhanced form validation
+        const fromDate = document.getElementById('from-date');
+        const toDate = document.getElementById('to-date');
+
+        if (fromDate && toDate) {
+            function validateDateRange() {
+                const fromValue = new Date(fromDate.value);
+                const toValue = new Date(toDate.value);
+
+                if (fromDate.value && toDate.value && fromValue > toValue) {
+                    toDate.setAttribute('aria-invalid', 'true');
+                    fromDate.setAttribute('aria-invalid', 'true');
+                    return false;
+                } else {
+                    toDate.setAttribute('aria-invalid', 'false');
+                    fromDate.setAttribute('aria-invalid', 'false');
+                    return true;
+                }
+            }
+
+            fromDate.addEventListener('change', validateDateRange);
+            toDate.addEventListener('change', validateDateRange);
         }
-    </ul>
-</nav>
+
+        // Enhanced button accessibility
+        const exportButton = document.querySelector('a[href*="export=csv"]');
+        if (exportButton) {
+            exportButton.addEventListener('click', function() {
+                // Announce download to screen readers
+                announceToScreenReader('Starting CSV export of audit log...');
+            });
+        }
+
+        function announceToScreenReader(message) {
+            const announcement = document.createElement('div');
+            announcement.setAttribute('aria-live', 'polite');
+            announcement.setAttribute('aria-atomic', 'true');
+            announcement.className = 'sr-only';
+            announcement.textContent = message;
+            document.body.appendChild(announcement);
+
+            setTimeout(() => {
+                document.body.removeChild(announcement);
+            }, 1000);
+        }
+
+        // Enhanced tooltips for truncated content
+        const truncatedCells = document.querySelectorAll('td[title]');
+        truncatedCells.forEach(cell => {
+            cell.addEventListener('mouseenter', function() {
+                // Additional accessibility for truncated content
+                this.setAttribute('aria-expanded', 'true');
+            });
+
+            cell.addEventListener('mouseleave', function() {
+                this.setAttribute('aria-expanded', 'false');
+            });
+        });
+    });
+</script>
+}
+
+<style>
+    /* Enhanced table accessibility */
+    .table-hover tbody tr:hover {
+        background-color: rgba(0, 123, 255, 0.075);
+    }
+
+    .table-hover tbody tr:focus-within {
+        background-color: rgba(0, 123, 255, 0.1);
+        outline: 2px solid #0d6efd;
+        outline-offset: -2px;
+    }
+
+    .table-row-focused {
+        background-color: rgba(0, 123, 255, 0.1) !important;
+    }
+
+    /* Enhanced form accessibility */
+    .form-control:focus {
+        border-color: #0d6efd;
+        box-shadow: 0 0 0 0.25rem rgba(13, 110, 253, 0.25);
+    }
+
+    .form-control[aria-invalid="true"] {
+        border-color: #dc3545;
+        box-shadow: 0 0 0 0.25rem rgba(220, 53, 69, 0.25);
+    }
+
+    /* Enhanced button accessibility */
+    .btn:focus {
+        box-shadow: 0 0 0 0.25rem rgba(13, 110, 253, 0.25);
+    }
+
+    /* Pagination accessibility */
+    .page-link:focus {
+        box-shadow: 0 0 0 0.25rem rgba(13, 110, 253, 0.25);
+    }
+
+    /* Badge enhancements */
+    .badge {
+        font-weight: 500;
+    }
+
+    /* Truncated content indicators */
+    td[title] {
+        cursor: help;
+        position: relative;
+    }
+
+    td[title]:hover {
+        background-color: rgba(0, 123, 255, 0.05);
+    }
+
+    /* Screen reader improvements */
+    .sr-only {
+        position: absolute !important;
+        width: 1px !important;
+        height: 1px !important;
+        padding: 0 !important;
+        margin: -1px !important;
+        overflow: hidden !important;
+        clip: rect(0, 0, 0, 0) !important;
+        white-space: nowrap !important;
+        border: 0 !important;
+    }
+
+    /* High contrast improvements */
+    @@media (prefers-contrast: high) {
+        .table {
+            border: 2px solid #000 !important;
+        }
+
+        .btn {
+            border-width: 2px !important;
+        }
+
+        .badge {
+            border: 1px solid #000 !important;
+        }
+
+        .card {
+            border: 2px solid #000 !important;
+        }
+    }
+
+    /* Improved responsive design */
+    @@media (max-width: 768px) {
+        .table-responsive {
+            font-size: 0.875rem;
+        }
+
+        .btn-sm {
+            padding: 0.25rem 0.5rem;
+            font-size: 0.75rem;
+        }
+
+        .small {
+            font-size: 0.75rem !important;
+        }
+    }
+
+    /* Print styles for audit compliance */
+    @@media print {
+        .btn, .pagination, .card-header {
+            display: none !important;
+        }
+
+        .table {
+            border-collapse: collapse;
+        }
+
+        .table td, .table th {
+            border: 1px solid #000 !important;
+        }
+    }
+</style>

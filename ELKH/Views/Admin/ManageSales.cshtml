@@ -1,7 +1,7 @@
 @model ELKH.ViewModels.SalesVM
 
 @{
-    ViewData["Title"] = "Sales Dashboard";
+    ViewData["Title"] = "Sales Dashboard - Analytics & Revenue Management | Admin Panel";
     Layout = "~/Views/Shared/_Layout.cshtml";
 
     var dailyLabels   = System.Text.Json.JsonSerializer.Serialize(Model.DailyLabels);
@@ -14,153 +14,250 @@
     var yearlySales   = System.Text.Json.JsonSerializer.Serialize(Model.YearlySalesData);
 }
 
-<div class="container-fluid px-4 mt-4 pb-5">
+@section title {
+    <header class="mb-4">
+        <nav aria-label="breadcrumb">
+            <ol class="breadcrumb">
+                <li class="breadcrumb-item">
+                    <a asp-controller="Admin" asp-action="Index" aria-label="Return to admin dashboard">Admin Dashboard</a>
+                </li>
+                <li class="breadcrumb-item active" aria-current="page">Sales Dashboard</li>
+            </ol>
+        </nav>
+        <h1 class="fw-bold d-flex align-items-center">
+            <i class="bi bi-graph-up me-2" aria-hidden="true"></i>
+            Sales Dashboard & Analytics
+        </h1>
+        <p class="text-muted mb-0">
+            Revenue metrics, order analysis, and performance trends across all time periods
+        </p>
+    </header>
+}
 
-    <!-- Header -->
-    <div class="d-flex justify-content-between align-items-center mb-4">
-        <div>
-            <h2 class="fw-bold mb-0">Sales Dashboard</h2>
-            <p class="text-muted small mb-0">Revenue and order metrics across all time periods.</p>
-        </div>
-        <a asp-action="Index" class="btn btn-outline-secondary rounded-pill px-4">
-            ← Back
-        </a>
-    </div>
+    <main class="container-fluid px-4 py-4" role="main">
 
-    <!-- ── 4 Summary Cards ──────────────────────────────────── -->
-    <div class="row g-3 mb-4">
+        <!-- Sales Metrics Overview -->
+        <section aria-labelledby="sales-metrics-heading">
+            <h2 id="sales-metrics-heading" class="fw-bold mb-4 h5">Sales Performance Overview</h2>
+            <div class="row g-3 mb-4">
 
-        <div class="col-6 col-xl-3">
-            <div class="card border-0 shadow-sm rounded-4 h-100"
-                 style="border-left: 4px solid #06b6d4 !important;">
-                <div class="card-body p-4">
-                    <div class="d-flex justify-content-between align-items-start">
-                        <div>
-                            <p class="text-muted small mb-1">Today's Sales</p>
-                            <h3 class="fw-bold mb-0">$@Model.DailyGrossSales.ToString("N2")</h3>
-                            <small class="text-muted">@Model.DailyTotalOrders orders today</small>
+                <!-- Daily Sales Card -->
+                <div class="col-6 col-xl-3">
+                    <article class="card border-0 shadow-sm rounded-4 h-100"
+                             style="border-left: 4px solid #06b6d4 !important;"
+                             aria-labelledby="daily-sales-title"
+                             aria-describedby="daily-sales-desc">
+                        <div class="card-body p-4">
+                            <div class="d-flex justify-content-between align-items-start">
+                                <div>
+                                    <h3 id="daily-sales-title" class="text-muted small mb-1 h6">Today's Sales</h3>
+                                    <p class="fw-bold mb-0 h4" 
+                                       aria-label="Today's revenue @Model.DailyGrossSales.ToString("C")">
+                                        @Model.DailyGrossSales.ToString("C")
+                                    </p>
+                                    <small id="daily-sales-desc" class="text-muted">
+                                        @Model.DailyTotalOrders order@(Model.DailyTotalOrders != 1 ? "s" : "") today
+                                    </small>
+                                </div>
+                                <div class="rounded-circle bg-info bg-opacity-10 p-3" aria-hidden="true">
+                                    <i class="bi bi-sun fs-4 text-info"></i>
+                                </div>
+                            </div>
                         </div>
-                        <div class="rounded-circle bg-info bg-opacity-10 p-3">
-                            <i class="bi bi-sun fs-4 text-info"></i>
+                    </article>
+                </div>
+
+                <!-- Weekly Sales Card -->
+                <div class="col-6 col-xl-3">
+                    <article class="card border-0 shadow-sm rounded-4 h-100"
+                             style="border-left: 4px solid #6366f1 !important;"
+                             aria-labelledby="weekly-sales-title"
+                             aria-describedby="weekly-sales-desc">
+                        <div class="card-body p-4">
+                            <div class="d-flex justify-content-between align-items-start">
+                                <div>
+                                    <h3 id="weekly-sales-title" class="text-muted small mb-1 h6">Weekly Sales</h3>
+                                    <p class="fw-bold mb-0 h4" 
+                                       aria-label="This week's revenue @Model.WeeklyGrossSales.ToString("C")">
+                                        @Model.WeeklyGrossSales.ToString("C")
+                                    </p>
+                                    <small id="weekly-sales-desc" class="text-muted">
+                                        @Model.WeeklyTotalOrders order@(Model.WeeklyTotalOrders != 1 ? "s" : "") this week
+                                    </small>
+                                </div>
+                                <div class="rounded-circle bg-primary bg-opacity-10 p-3" aria-hidden="true">
+                                    <i class="bi bi-calendar-week fs-4 text-primary"></i>
+                                </div>
+                            </div>
+                        </div>
+                    </article>
+                </div>
+
+                <!-- Monthly Sales Card -->
+                <div class="col-6 col-xl-3">
+                    <article class="card border-0 shadow-sm rounded-4 h-100"
+                             style="border-left: 4px solid #22c55e !important;"
+                             aria-labelledby="monthly-sales-title"
+                             aria-describedby="monthly-sales-desc">
+                        <div class="card-body p-4">
+                            <div class="d-flex justify-content-between align-items-start">
+                                <div>
+                                    <h3 id="monthly-sales-title" class="text-muted small mb-1 h6">Monthly Sales</h3>
+                                    <p class="fw-bold mb-0 h4" 
+                                       aria-label="This month's revenue @Model.MonthlyGrossSales.ToString("C")">
+                                        @Model.MonthlyGrossSales.ToString("C")
+                                    </p>
+                                    <small id="monthly-sales-desc" class="text-muted">
+                                        @Model.MonthlyTotalOrders order@(Model.MonthlyTotalOrders != 1 ? "s" : "") this month
+                                    </small>
+                                </div>
+                                <div class="rounded-circle bg-success bg-opacity-10 p-3" aria-hidden="true">
+                                    <i class="bi bi-calendar-month fs-4 text-success"></i>
+                                </div>
+                            </div>
+                        </div>
+                    </article>
+                </div>
+
+                <!-- Yearly Sales Card -->
+                <div class="col-6 col-xl-3">
+                    <article class="card border-0 shadow-sm rounded-4 h-100"
+                             style="border-left: 4px solid #f97316 !important;"
+                             aria-labelledby="yearly-sales-title"
+                             aria-describedby="yearly-sales-desc">
+                        <div class="card-body p-4">
+                            <div class="d-flex justify-content-between align-items-start">
+                                <div>
+                                    <h3 id="yearly-sales-title" class="text-muted small mb-1 h6">Yearly Sales</h3>
+                                    <p class="fw-bold mb-0 h4" 
+                                       aria-label="This year's revenue @Model.YearlyGrossSales.ToString("C")">
+                                        @Model.YearlyGrossSales.ToString("C")
+                                    </p>
+                                    <small id="yearly-sales-desc" class="text-muted">
+                                        @Model.YearlyTotalOrders order@(Model.YearlyTotalOrders != 1 ? "s" : "") this year
+                                    </small>
+                                </div>
+                                <div class="rounded-circle bg-warning bg-opacity-10 p-3" aria-hidden="true">
+                                    <i class="bi bi-calendar fs-4 text-warning"></i>
+                                </div>
+                            </div>
+                        </div>
+                    </article>
+                </div>
+
+            </div>
+        </section>
+
+    <!-- Sales Analytics Charts -->
+    <section aria-labelledby="charts-heading">
+        <h2 id="charts-heading" class="fw-bold mb-4 h5">Revenue Trends & Analytics</h2>
+
+        <!-- Charts Row 1: Daily + Weekly -->
+        <div class="row g-4 mb-4">
+
+            <div class="col-12 col-lg-6">
+                <article class="card border-0 shadow-sm rounded-4 h-100" 
+                         aria-labelledby="daily-chart-title"
+                         aria-describedby="daily-chart-desc">
+                    <div class="card-body p-4">
+                        <h3 id="daily-chart-title" class="fw-semibold text-muted mb-3 h6">
+                            <i class="bi bi-sun me-1 text-info" aria-hidden="true"></i>Daily Sales by Hour
+                        </h3>
+                        <p id="daily-chart-desc" class="sr-only">
+                            Line chart showing today's sales performance broken down by hour
+                        </p>
+                        <div role="img" aria-labelledby="daily-chart-title" aria-describedby="daily-chart-summary">
+                            <canvas id="dailyChart" 
+                                    height="220"
+                                    aria-label="Daily sales chart showing hourly revenue for today"></canvas>
+                        </div>
+                        <div id="daily-chart-summary" class="sr-only">
+                            Chart displaying @Model.DailyTotalOrders orders totaling @Model.DailyGrossSales.ToString("C") for today
                         </div>
                     </div>
-                </div>
+                </article>
             </div>
-        </div>
 
-        <div class="col-6 col-xl-3">
-            <div class="card border-0 shadow-sm rounded-4 h-100"
-                 style="border-left: 4px solid #6366f1 !important;">
-                <div class="card-body p-4">
-                    <div class="d-flex justify-content-between align-items-start">
-                        <div>
-                            <p class="text-muted small mb-1">Weekly Sales</p>
-                            <h3 class="fw-bold mb-0">$@Model.WeeklyGrossSales.ToString("N2")</h3>
-                            <small class="text-muted">@Model.WeeklyTotalOrders orders this week</small>
+            <div class="col-12 col-lg-6">
+                <article class="card border-0 shadow-sm rounded-4 h-100"
+                         aria-labelledby="weekly-chart-title"
+                         aria-describedby="weekly-chart-desc">
+                    <div class="card-body p-4">
+                        <h3 id="weekly-chart-title" class="fw-semibold text-muted mb-3 h6">
+                            <i class="bi bi-bar-chart-line me-1 text-primary" aria-hidden="true"></i>Weekly Trends - Last 7 Days
+                        </h3>
+                        <p id="weekly-chart-desc" class="sr-only">
+                            Bar chart showing sales performance for the past 7 days
+                        </p>
+                        <div role="img" aria-labelledby="weekly-chart-title" aria-describedby="weekly-chart-summary">
+                            <canvas id="weeklyChart" 
+                                    height="220"
+                                    aria-label="Weekly sales chart showing daily revenue for past 7 days"></canvas>
                         </div>
-                        <div class="rounded-circle bg-primary bg-opacity-10 p-3">
-                            <i class="bi bi-calendar-week fs-4 text-primary"></i>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        <div class="col-6 col-xl-3">
-            <div class="card border-0 shadow-sm rounded-4 h-100"
-                 style="border-left: 4px solid #22c55e !important;">
-                <div class="card-body p-4">
-                    <div class="d-flex justify-content-between align-items-start">
-                        <div>
-                            <p class="text-muted small mb-1">Monthly Sales</p>
-                            <h3 class="fw-bold mb-0">$@Model.MonthlyGrossSales.ToString("N2")</h3>
-                            <small class="text-muted">@Model.MonthlyTotalOrders orders this month</small>
-                        </div>
-                        <div class="rounded-circle bg-success bg-opacity-10 p-3">
-                            <i class="bi bi-calendar-month fs-4 text-success"></i>
+                        <div id="weekly-chart-summary" class="sr-only">
+                            Chart displaying @Model.WeeklyTotalOrders orders totaling @Model.WeeklyGrossSales.ToString("C") this week
                         </div>
                     </div>
-                </div>
+                </article>
             </div>
+
         </div>
 
-        <div class="col-6 col-xl-3">
-            <div class="card border-0 shadow-sm rounded-4 h-100"
-                 style="border-left: 4px solid #f97316 !important;">
-                <div class="card-body p-4">
-                    <div class="d-flex justify-content-between align-items-start">
-                        <div>
-                            <p class="text-muted small mb-1">Yearly Sales</p>
-                            <h3 class="fw-bold mb-0">$@Model.YearlyGrossSales.ToString("N2")</h3>
-                            <small class="text-muted">@Model.YearlyTotalOrders orders this year</small>
+        <!-- Charts Row 2: Monthly + Yearly -->
+        <div class="row g-4 mb-4">
+
+            <div class="col-12 col-lg-6">
+                <article class="card border-0 shadow-sm rounded-4 h-100"
+                         aria-labelledby="monthly-chart-title"
+                         aria-describedby="monthly-chart-desc">
+                    <div class="card-body p-4">
+                        <h3 id="monthly-chart-title" class="fw-semibold text-muted mb-3 h6">
+                            <i class="bi bi-graph-up me-1 text-success" aria-hidden="true"></i>Monthly Performance - Last 12 Months
+                        </h3>
+                        <p id="monthly-chart-desc" class="sr-only">
+                            Line chart showing monthly sales trends over the past 12 months
+                        </p>
+                        <div role="img" aria-labelledby="monthly-chart-title" aria-describedby="monthly-chart-summary">
+                            <canvas id="monthlyChart" 
+                                    height="220"
+                                    aria-label="Monthly sales chart showing revenue trends over past 12 months"></canvas>
                         </div>
-                        <div class="rounded-circle bg-warning bg-opacity-10 p-3">
-                            <i class="bi bi-calendar fs-4 text-warning"></i>
+                        <div id="monthly-chart-summary" class="sr-only">
+                            Chart displaying @Model.MonthlyTotalOrders orders totaling @Model.MonthlyGrossSales.ToString("C") this month
                         </div>
                     </div>
-                </div>
+                </article>
             </div>
-        </div>
 
-    </div>
-
-    <!-- ── Charts Row 1: Daily + Weekly ─────────────────────── -->
-    <div class="row g-4 mb-4">
-
-        <div class="col-12 col-lg-6">
-            <div class="card border-0 shadow-sm rounded-4 h-100">
-                <div class="card-body p-4">
-                    <h6 class="fw-semibold text-muted mb-3">
-                        <i class="bi bi-sun me-1 text-info"></i> Today — Sales by Hour
-                    </h6>
-                    <canvas id="dailyChart" height="220"></canvas>
-                </div>
+            <div class="col-12 col-lg-6">
+                <article class="card border-0 shadow-sm rounded-4 h-100"
+                         aria-labelledby="yearly-chart-title"
+                         aria-describedby="yearly-chart-desc">
+                    <div class="card-body p-4">
+                        <h3 id="yearly-chart-title" class="fw-semibold text-muted mb-3 h6">
+                            <i class="bi bi-calendar-range me-1 text-warning" aria-hidden="true"></i>Yearly Growth - Last 5 Years
+                        </h3>
+                        <p id="yearly-chart-desc" class="sr-only">
+                            Bar chart showing annual sales performance over the past 5 years
+                        </p>
+                        <div role="img" aria-labelledby="yearly-chart-title" aria-describedby="yearly-chart-summary">
+                            <canvas id="yearlyChart" 
+                                    height="220"
+                                    aria-label="Yearly sales chart showing annual revenue trends over past 5 years"></canvas>
+                        </div>
+                        <div id="yearly-chart-summary" class="sr-only">
+                            Chart displaying @Model.YearlyTotalOrders orders totaling @Model.YearlyGrossSales.ToString("C") this year
+                        </div>
+                    </div>
+                </article>
             </div>
+
         </div>
-
-        <div class="col-12 col-lg-6">
-            <div class="card border-0 shadow-sm rounded-4 h-100">
-                <div class="card-body p-4">
-                    <h6 class="fw-semibold text-muted mb-3">
-                        <i class="bi bi-bar-chart-line me-1 text-primary"></i> Weekly — Last 7 Days
-                    </h6>
-                    <canvas id="weeklyChart" height="220"></canvas>
-                </div>
-            </div>
-        </div>
-
-    </div>
-
-    <!-- ── Charts Row 2: Monthly + Yearly ───────────────────── -->
-    <div class="row g-4 mb-4">
-
-        <div class="col-12 col-lg-6">
-            <div class="card border-0 shadow-sm rounded-4 h-100">
-                <div class="card-body p-4">
-                    <h6 class="fw-semibold text-muted mb-3">
-                        <i class="bi bi-graph-up me-1 text-success"></i> Monthly — Last 12 Months
-                    </h6>
-                    <canvas id="monthlyChart" height="220"></canvas>
-                </div>
-            </div>
-        </div>
-
-        <div class="col-12 col-lg-6">
-            <div class="card border-0 shadow-sm rounded-4 h-100">
-                <div class="card-body p-4">
-                    <h6 class="fw-semibold text-muted mb-3">
-                        <i class="bi bi-calendar-range me-1 text-warning"></i> Yearly — Last 5 Years
-                    </h6>
-                    <canvas id="yearlyChart" height="220"></canvas>
-                </div>
-            </div>
-        </div>
-
-    </div>
+    </section>
 
     <!-- ── Top Products ──────────────────────────────────────── -->
-    
-</div>
+
+</main>
 
 @section Scripts {
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
