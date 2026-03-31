@@ -12,15 +12,12 @@ namespace ELKH.Services
     /// </summary>
     public class SmtpEmailSender : IEmailSender
     {
-        private readonly IConfiguration _config;
         private readonly ILogger<SmtpEmailSender> _logger;
-
         private readonly ELKH.Configuration.EmailOptions _options;
 
         /// <summary>
         /// Initializes a new instance of <see cref="SmtpEmailSender"/>.
         /// </summary>
-        /// <param name="config">Application configuration (retained for potential future use).</param>
         /// <param name="options">Strongly-typed SMTP settings bound from <c>appsettings.json</c>.</param>
         /// <param name="logger">Logger for delivery diagnostics and graceful skip notifications.</param>
         public SmtpEmailSender(Microsoft.Extensions.Options.IOptions<ELKH.Configuration.EmailOptions> options, ILogger<SmtpEmailSender> logger)
@@ -43,9 +40,6 @@ namespace ELKH.Services
                 return;
             }
 
-            var port = _options.Port;
-            var user = _options.User;
-            var pass = _options.Pass;
             var fromAddr = from ?? _options.From;
 
             var message = new MimeMessage();

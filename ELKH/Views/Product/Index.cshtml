@@ -66,7 +66,6 @@ else
                      data-href="@Url.Action("Details", "Product", new { id = p.ProductId })">
                     <div class="card-body d-flex flex-column p-3">
 
-                    @* Product name — single line, truncated *@
                         <h6 class="card-title text-truncate mb-2 fw-semibold"
                             title="@p.ProductName">@p.ProductName</h6>
 
@@ -90,7 +89,6 @@ else
                             }
                         </div>
 
-                    @* Action buttons — stop click from bubbling to card *@
                         <div class="mt-auto d-flex flex-column gap-2">
                             <form asp-controller="Cart" asp-action="AddToCart" method="post">
                                 @Html.AntiForgeryToken()
@@ -118,7 +116,6 @@ else
                                         data-bs-toggle="modal" data-bs-target="#wishlistSignInModal">
                                     ♡&nbsp;Wishlist
                                 </button>
-                            }
                             }
                         </div>
 
@@ -174,38 +171,6 @@ else
                     }
                 });
             });
-
-            var step = @pageSize;
-
-            window.showMoreProducts = function () {
-                var hidden = document.querySelectorAll('.extra-product.d-none');
-                var toShow = Array.prototype.slice.call(hidden, 0, step);
-                toShow.forEach(function (el) { el.classList.remove('d-none'); });
-
-                if (document.querySelectorAll('.extra-product.d-none').length === 0) {
-                    var container = document.getElementById('showMoreContainer');
-                    if (container) container.style.display = 'none';
-                }
-            };
-        })();
-    </script>
-}
-    <script>
-        (function () {
-            var shown = @pageSize;
-            var step  = @pageSize;
-
-            window.showMoreProducts = function () {
-                var hidden = document.querySelectorAll('.extra-product.d-none');
-                var toShow = Array.prototype.slice.call(hidden, 0, step);
-                toShow.forEach(function (el) { el.classList.remove('d-none'); });
-                shown += toShow.length;
-
-                if (document.querySelectorAll('.extra-product.d-none').length === 0) {
-                    var container = document.getElementById('showMoreContainer');
-                    if (container) container.style.display = 'none';
-                }
-            };
         })();
     </script>
 }
