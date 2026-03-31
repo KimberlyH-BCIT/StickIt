@@ -1,0 +1,172 @@
+/* Custom Swagger UI Styling for ELKH API Documentation */
+
+/* Header customization */
+.swagger-ui .topbar {
+    background-color: #2c3e50;
+    border-bottom: 3px solid #3498db;
+}
+
+.swagger-ui .topbar .download-url-wrapper {
+    display: none;
+}
+
+/* Add custom branding */
+.swagger-ui .topbar::before {
+    content: "🏷️ ELKH eCommerce API";
+    color: white;
+    font-size: 18px;
+    font-weight: bold;
+    padding: 15px 20px;
+    display: inline-block;
+}
+
+/* Operation styling */
+.swagger-ui .opblock.opblock-get {
+    border-color: #27ae60;
+    background: rgba(39, 174, 96, 0.1);
+}
+
+.swagger-ui .opblock.opblock-post {
+    border-color: #f39c12;
+    background: rgba(243, 156, 18, 0.1);
+}
+
+.swagger-ui .opblock.opblock-put {
+    border-color: #9b59b6;
+    background: rgba(155, 89, 182, 0.1);
+}
+
+.swagger-ui .opblock.opblock-delete {
+    border-color: #e74c3c;
+    background: rgba(231, 76, 60, 0.1);
+}
+
+/* Response styling */
+.swagger-ui .responses-inner h4,
+.swagger-ui .responses-inner h5 {
+    color: #2c3e50;
+}
+
+/* Parameter styling */
+.swagger-ui .parameters-col_description {
+    color: #34495e;
+}
+
+/* Schema styling */
+.swagger-ui .model-box {
+    background: #f8f9fa;
+    border: 1px solid #dee2e6;
+    border-radius: 4px;
+}
+
+/* Custom info section */
+.swagger-ui .info .title {
+    color: #2c3e50;
+}
+
+.swagger-ui .info .description {
+    color: #5a6c7d;
+    font-size: 14px;
+    line-height: 1.6;
+}
+
+/* Version badge styling */
+.swagger-ui .info .version {
+    background-color: #3498db;
+    color: white;
+    padding: 4px 8px;
+    border-radius: 3px;
+    font-size: 12px;
+    font-weight: bold;
+}
+
+/* Custom try-it-out button */
+.swagger-ui .btn.try-out__btn {
+    background-color: #3498db;
+    border-color: #3498db;
+}
+
+.swagger-ui .btn.try-out__btn:hover {
+    background-color: #2980b9;
+    border-color: #2980b9;
+}
+
+/* Execute button */
+.swagger-ui .btn.execute {
+    background-color: #27ae60;
+    border-color: #27ae60;
+}
+
+.swagger-ui .btn.execute:hover {
+    background-color: #229954;
+    border-color: #229954;
+}
+
+/* Response highlight */
+.swagger-ui .highlight-code {
+    background-color: #f8f9fa;
+}
+
+/* Custom scrollbar */
+.swagger-ui .responses-inner::-webkit-scrollbar {
+    width: 8px;
+}
+
+.swagger-ui .responses-inner::-webkit-scrollbar-track {
+    background: #f1f1f1;
+}
+
+.swagger-ui .responses-inner::-webkit-scrollbar-thumb {
+    background: #bdc3c7;
+    border-radius: 4px;
+}
+
+.swagger-ui .responses-inner::-webkit-scrollbar-thumb:hover {
+    background: #95a5a6;
+}
+
+/* API version selector */
+.swagger-ui select {
+    background-color: #3498db;
+    color: white;
+    border: none;
+    padding: 8px 12px;
+    border-radius: 4px;
+    font-weight: bold;
+}
+
+/* Deprecated endpoint styling */
+.swagger-ui .opblock.opblock-deprecated {
+    opacity: 0.6;
+    border-color: #e74c3c;
+}
+
+.swagger-ui .opblock.opblock-deprecated .opblock-summary-operation-id,
+.swagger-ui .opblock.opblock-deprecated .opblock-summary-path,
+.swagger-ui .opblock.opblock-deprecated .opblock-summary-description {
+    text-decoration: line-through;
+}
+
+/* Rate limit badge */
+.opblock-summary::after {
+    content: "Rate Limited";
+    background: #f39c12;
+    color: white;
+    font-size: 10px;
+    padding: 2px 6px;
+    border-radius: 3px;
+    margin-left: 8px;
+    font-weight: bold;
+}
+
+/* Custom footer */
+.swagger-ui .swagger-container::after {
+    content: "© 2024 ELKH eCommerce Platform. API Documentation powered by Swagger.";
+    display: block;
+    text-align: center;
+    padding: 20px;
+    color: #7f8c8d;
+    font-size: 12px;
+    border-top: 1px solid #ecf0f1;
+    margin-top: 40px;
+}
