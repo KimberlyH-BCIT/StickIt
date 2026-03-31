@@ -4,8 +4,6 @@ using ELKH.Repositories;
 using ELKH.ViewModels;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.AspNetCore.Mvc.Rendering;
-using SQLitePCL;
 
 namespace ELKH.Controllers
 {
@@ -13,114 +11,29 @@ namespace ELKH.Controllers
     /// Admin controller for inventory management: listing products, adjusting stock
     /// quantities, and managing product images.
     /// </summary>
-    
-    [Authorize(Roles = "Admin, Staff")]
-    public class InventoryController : Controller
-    {
-        private readonly InventoryRepo _inventoryRepo;
-        
-        
-        public InventoryController(InventoryRepo inventoryRepo)
+[Authorize(Roles = "Admin")]
+public class InventoryController : Controller
+{
+    private readonly IInventoryRepo _inventoryRepo;
+
+        public InventoryController(IInventoryRepo inventoryRepo)
         {
             _inventoryRepo = inventoryRepo;
         }
 
 
-        public async Task<IActionResult> Index(string? searchString, int page = 1)
+public async Task<IActionResult> Index()
         {
-            int pageSize = 10;
-            ViewData["CurrentFilter"] = searchString;
+            var products = await _inventoryRepo.GetAllProduct();
 
-            var products = await _inventoryRepo.GetAllProduct(searchString,page,pageSize);
-
-
-            return View(products);
-        }
-
-        public async Task<IActionResult> EditProduct(int Id)
-        {
-            //Fetch product by Id
-            var getProduct = await _inventoryRepo.GetProductById(Id);
-            var categories = await _inventoryRepo.GetAllCategories();
-
-
-
-            //Convert Entity to VM
-            var mapToVM = new ProductVM
+            var inventoryList = products.Select(p => new InventoryVM
             {
-                ProductId = Id,
-                ProductName = getProduct.Name,
-                Description = getProduct.Description,
-                Price = getProduct.Price,
-                DiscountPercent = getProduct.DiscountPercent,
-                StockQuantity = getProduct.StockQuantity,
-                IsActive = getProduct.IsActive,
-                CategoryId = getProduct.FkCategoryId,
-                ProductReviews = getProduct.ProductRatings?.Select(pr => new ReviewDisplayVM
-                {
-                    RatingId = pr.PkRatingId,
-                    Rating = pr.Rating,
-                    Description = pr.Description,
-                    CreatedAt = pr.RatedTime,
-                    LastEditedAt = pr.LastEditedAt,
-                    ReviewerFirstName = pr.RegisteredUser.Email
-                }).ToList()
-            };
+                PkProductId = p.PkProductId,
+                ProductName = p.Name,
+                Quantity = p.StockQuantity,
+            }).ToList();
 
-            ViewBag.Categories = new SelectList(categories, "PkCategoryId", "CategoryName");
-            ViewBag.Id = Id;
-            return View(mapToVM);
-        }
-
-        [HttpPost]
-        public async Task<IActionResult> EditProduct(ProductVM vm)
-        {
-            if (!ModelState.IsValid)
-            {
-                var categories = await _inventoryRepo.GetAllCategories();
-                ViewBag.Categories = new SelectList(categories, "PkCategoryId", "CategoryName");
-
-                return RedirectToAction("EditProduct", new { Id = vm.ProductId });
-            }
-
-            await _inventoryRepo.EditProduct(vm);
-
-            return RedirectToAction("Index");
-        }
-
-        [HttpPost]
-        public async Task<IActionResult> DeleteProductReview(int reviewId, int productId)
-        {
-
-            await _inventoryRepo.DeleteProductReview(reviewId);
-
-            return RedirectToAction("EditProduct", new { Id = productId });
-        }
-
-        public async Task<IActionResult> AddProduct()
-        {
-            // Initialize a non-null view model so tag helpers that read Model values
-            // (for example SelectTagHelper when using asp-for) do not throw.
-            var vm = new ProductVM();
-            var categories = await _inventoryRepo.GetAllCategories();
-            ViewBag.Categories = new SelectList(categories, "PkCategoryId", "CategoryName");
-            return View(vm);
-        }
-
-        [HttpPost]
-        public async Task<IActionResult> AddProduct(ProductVM vm)
-        {
-            if (!ModelState.IsValid)
-            {
-                var categories = await _inventoryRepo.GetAllCategories();
-                ViewBag.Categories = new SelectList(categories, "CategoryId", "Category");
-
-                return View(vm);
-            }
-
-            var saveToDataBase = await _inventoryRepo.AddProduct(vm);
-
-            return RedirectToAction("AddImage", new { productId = saveToDataBase});
+            return View(inventoryList);
         }
 
 [HttpPost]
@@ -136,11 +49,6 @@ namespace ELKH.Controllers
         public async Task<IActionResult> ProductImages(int Id)
         {
 
-
-        //Pass
-        public async Task<IActionResult> ProductImages(int Id)
-        {
-
             ViewBag.ProductId = Id;
             // GetProductImages likely returns List<ImageModel>
             var productImages = await _inventoryRepo.GetProductImages(Id);
@@ -150,35 +58,62 @@ namespace ELKH.Controllers
                 return NotFound();
             }
 
-            // Avoid accessing properties on 'pi' that may not exist (e.g. if pi is a string).
-            // Use the known productId for FkProductId. ProductImage is set to null because
-            // an IFormFile is not available when reading images from the repository.
-            var vmList = productImages.Select(pi => new ProductImageVM
-            {
-                ImageId = pi.ImageId,
-                ImageData = pi.ImageData,
-                FkProductId = Id
-            }).ToList();
+var vmList = productImages.Select(pi => new ProductImageVM
+{
+    FileName = pi.FileName,
+    Description = pi.Description,
+    ImageData = pi.ImageData
+}).ToList();
 
             return View(vmList);
         }
 
-        // GET: show add-image form for a specific product
-        public async Task<IActionResult> AddImage(int Id)
-        {
-            ViewBag.ProductId = Id;
+public async Task<IActionResult> AddImage(int productId)
+{
+    var vm = new ImageModel();
+    ViewBag.ProductId = productId;
 
-            return View();
+            return View(vm);
         }
 
 
         //Pass
         [HttpPost]
+        [ValidateAntiForgeryToken]
+        [RequestSizeLimit(5 * 1024 * 1024)]
+        [RequestFormLimits(MultipartBodyLengthLimit = 5 * 1024 * 1024)]
         public async Task<IActionResult> AddImage(int productId, IFormFile file)
         {
             if (!ModelState.IsValid)
             {
-                return RedirectToAction("AddImage", new { Id = productId });
+                ViewBag.ProductId = productId;
+                return View("AddImage");
+            }
+
+            if (file == null || file.Length == 0)
+            {
+                ModelState.AddModelError("", "Please select a file.");
+                ViewBag.ProductId = productId;
+                return View("AddImage");
+            }
+
+            var allowedExtensions = new HashSet<string>(StringComparer.OrdinalIgnoreCase)
+                { ".jpg", ".jpeg", ".png", ".gif", ".webp", ".bmp" };
+            var ext = Path.GetExtension(file.FileName);
+            if (!allowedExtensions.Contains(ext))
+            {
+                ModelState.AddModelError("", "Only image files are allowed (jpg, jpeg, png, gif, webp, bmp).");
+                ViewBag.ProductId = productId;
+                return View("AddImage");
+            }
+
+            var allowedMimeTypes = new HashSet<string>(StringComparer.OrdinalIgnoreCase)
+                { "image/jpeg", "image/png", "image/gif", "image/webp", "image/bmp" };
+            if (!allowedMimeTypes.Contains(file.ContentType))
+            {
+                ModelState.AddModelError("", "The uploaded file has an invalid content type.");
+                ViewBag.ProductId = productId;
+                return View("AddImage");
             }
 
             var addImageRepo = await _inventoryRepo.UploadImage(productId, file);
@@ -187,19 +122,12 @@ namespace ELKH.Controllers
             {
                 return RedirectToAction("ProductImages", new { id = productId });
             }
-            return View("Index");
+
+            ModelState.AddModelError("", "The file could not be saved. Ensure it is a valid image under 5 MB.");
+            ViewBag.ProductId = productId;
+            return View("AddImage");
         }
 
-        [HttpPost]
-        public async Task<IActionResult> DeleteImage(int productId ,int imageId)
-        {
-            var deleteImageRepo = await _inventoryRepo.DeleteImage(imageId);
-            if (deleteImageRepo)
-            {
-                return RedirectToAction("ProductImages", new { id = productId });
-            }
-            return View("Index");
-        }
-
+      
     }
 }

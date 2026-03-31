@@ -1,153 +1,67 @@
-﻿@model PagedResult<InventoryVM>
+﻿@model List<InventoryVM>
 
-@{
-    ViewData["Title"] = "Inventory";
-    Layout = "~/Views/Shared/_Layout.cshtml";
+@section title{
+    <h3>Inventory</h3>
 }
 
-<div class="container-fluid mt-4 px-4 pb-5">
-
-    <!-- Header -->
-    <div class="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-2">
-        <h2 class="fw-bold text-primary mb-0">Inventory</h2>
-
-        <a asp-action="AddProduct" class="btn btn-outline-primary rounded-pill px-4">
-            Add Product
-        </a>
-
-        @for (int i = 1; i <= Model.AllPages; i++)
+<table>
+    <thead>
+        <tr>
+            <td>SKU</td>
+            <td>Name</td>
+            <td>Quantity</td>
+            <td>Active</td>
+            <td>Edit</td>
+            <td>Edit Image</td>
+            <td>Edit Quantity</td>
+        </tr>
+    </thead>
+    <tbody>
+        @foreach(var pro in Model)
         {
-            <li class="page-item @(i == Model.CurrentPage ? "active" : "") ">
-                <a class="page-link" asp-action="Index" asp-route-page="@i">@i</a>
-            </li>
+            <tr>
+                <td>@pro.PkProductId</td>
+                <td>@pro.ProductName</td>
+                <td>@pro.Quantity</td>
+                <td>@pro.IsActive</td>
+                <td>
+                    <a asp-controller="Inventory" asp-action="ProductImages" asp-route-id="@pro.PkProductId">Edit</a>
+                </td>
+                <td>
+                    <a asp-controller="Inventory" asp-action="ProductImages" asp-route-id="@pro.PkProductId">Edit Product Image</a>
+                </td>
+                <td>
+                    <label for="edit-@pro.PkProductId">Edit Quantity</label>
+                    <input id="edit-@pro.PkProductId" type="checkbox" class="editQuantity" data-id="@pro.PkProductId" />
+
+                    <div class="editQuantityArea hide" data-id="@pro.PkProductId">
+                        <form method="post" asp-action="EditProductAmount" asp-controller="Inventory">
+                            <input type="hidden" name="productId" value="@pro.PkProductId" />
+                            <input type="number" name="quantityId" value="@pro.Quantity" />
+                            <button type="submit">Update</button>
+                        </form>
+                    </div>
+                </td>
+            </tr>
         }
-
-        <form asp-action="Index" method="get" class="mb-3">
-            <div class="input-group">
-                <input class="form-control" type="search" name="searchString" value="@ViewBag.SearchString" placeholder="Search Product Name" />
-                <button class="btn btn-secondary">Search</button>
-            </div>
-        </form>
-    </div>
-
-    <!-- Inventory Table -->
-    <div class="card border-0 shadow-sm rounded-4">
-        <div class="card-body p-0">
-
-            <div class="table-responsive">
-                <table class="table table-hover align-middle mb-0">
-
-                    <thead class="table-light">
-                        <tr>
-                            <th class="ps-4">SKU</th>
-                            <th>Product</th>
-                            <th class="text-center">Quantity</th>
-                            <th class="text-center">Status</th>
-                            <th class="text-center">Actions</th>
-                        </tr>
-                    </thead>
-
-                    <tbody>
-
-                        @if (Model.Items.Any())
-                        {
-                            foreach (var pro in Model.Items)
-                            {
-                                string stockClass =
-                                pro.Quantity == 0 ? "bg-secondary"
-                                : pro.Quantity < 50 ? "bg-danger"
-                                : "bg-success";
-
-                                <tr class="@(pro.Quantity == 0 ? "table-secondary" : pro.Quantity < 50 ? "table-danger" : "")">
-
-                                    <td class="ps-4 text-muted small">
-                                        @pro.PkProductId
-                                    </td>
-
-                                    <td class="fw-semibold">
-                                        @pro.ProductName
-                                    </td>
-
-                                    <!-- Quantity -->
-                                    <td class="text-center">
-                                        <span class="badge @stockClass px-2 py-1 rounded-pill">
-                                            @pro.Quantity
-                                        </span>
-                                    </td>
-
-                                    <!-- Active -->
-                                    <td class="text-center">
-                                        <span class="badge rounded-pill px-2 py-1 @(pro.IsActive ? "bg-success" : "bg-secondary")">
-                                            @(pro.IsActive ? "✅ Active" : "⛔ Inactive")
-                                        </span>
-                                    </td>
-
-                                    <!-- Actions -->
-                                    <td class="text-center">
-
-                                        <div class="d-flex justify-content-center gap-2 flex-wrap">
-
-                                            <a asp-controller="Inventory"
-                                                   asp-action="EditProduct"
-                                                   asp-route-id="@pro.PkProductId"
-                                                   class="btn btn-sm btn-outline-primary rounded-pill px-3">
-                                                Edit
-                                            </a>
-
-                                        </div>
-
-                                    </td>
-
-                                </tr>
-                            }
-                        }
-                        else
-                        {
-                            <tr>
-                                <td colspan="5" class="text-center text-muted py-5">
-
-                                    <span style="font-size:2.5rem;">📦</span>
-
-                                    <p class="mt-2 mb-0">
-                                        No inventory products found.
-                                    </p>
-
-                                </td>
-                            </tr>
-                        }
-
-                    </tbody>
-
-                </table>
-            </div>
-
-        </div>
-    </div>
-
-</div>
+    </tbody>
+</table>
 
 <script>
-    document.addEventListener("DOMContentLoaded", function () {
+    document.addEventListener("DOMContentLoaded", function() {
+        const inputCheck = document.querySelectorAll(".editQuantity");
 
-        const buttons = document.querySelectorAll(".editQuantityBtn");
+        inputCheck.forEach(box => {
+            box.addEventListener("change", function() {
+                const editArea = document.querySelector(`.editQuantityArea[data-id='${this.dataset.id}']`);
 
-        buttons.forEach(btn => {
-
-            btn.addEventListener("click", function () {
-
-                const id = this.dataset.id;
-
-                const editArea = document.querySelector(`.editQuantityArea[data-id='${id}']`);
-
-                if (editArea.classList.contains("d-none")) {
-                    editArea.classList.remove("d-none");
+                if(this.checked){
+                    editArea.classList.remove("hide");
                 } else {
-                    editArea.classList.add("d-none");
+                    editArea.classList.add("hide");
                 }
-
             });
-
         });
-
     });
 </script>
+
