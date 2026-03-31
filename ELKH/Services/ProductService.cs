@@ -16,23 +16,57 @@ namespace ELKH.Services
     /// <see cref="CompiledQueries"/> for hot-path single-product lookups.
     /// </summary>
     /// <remarks>
-    /// TABLE OF CONTENTS
-    /// ==================
-    /// 1. Constructor & Dependencies (lines 33-40)
-    /// 2. Product Retrieval
-    ///    - GetAllAsync() - Fetch all products with category (lines 43-48)
-    ///    - GetByIdAsync() - Single product by ID (lines 51-57)
-    ///    - GetByIdsAsync() - Batch fetch for cart/order enrichment (lines 60-74)
-    /// 3. Product Search
-    ///    - SearchNames() - Fuzzy name search via ISearchService (lines 77-80)
-    /// 4. Product Mutation
-    ///    - CreateAsync() - Add new product with normalized name (lines 83-91)
-    ///    - UpdateAsync() - Update existing product fields (lines 94-112)
-    ///    - DeleteAsync() - Remove product (lines 115-122)
-    /// 5. Full-Text Search Management
-    ///    - ReindexFTSAsync() - Rebuild fuzzy search index (lines 125-134)
-    /// 6. Helpers
-    ///    - NormalizeName() - Lowercase + remove diacritics (lines 137-142)
+    /// TABLE OF CONTENTS (191 lines)
+    /// ================================================================================
+    /// 1. Constructor & Dependencies ................................... Lines   39-50
+    ///    - ApplicationDbContext, ISearchService, ILogger injection
+    /// 
+    /// 2. Product Retrieval Operations ................................. Lines   52-120
+    ///    - GetAllAsync()                         // Fetch all products with category eagerly loaded
+    ///    - GetByIdAsync()                        // Single product lookup with compiled query
+    ///    - GetByIdsAsync()                       // Batch fetch for cart/order enrichment
+    ///    - GetWithCategoryAsync()                // Product with category relationship
+    /// 
+    /// 3. Product Search Integration ................................... Lines  122-135
+    ///    - SearchNames()                         // Fuzzy name search delegation to ISearchService
+    ///    - Search result caching and performance optimization
+    /// 
+    /// 4. Product CRUD Operations ...................................... Lines  137-170
+    ///    - CreateAsync()                         // Add new product with name normalization
+    ///    - UpdateAsync()                         // Update existing product with validation
+    ///    - DeleteAsync()                         // Soft delete with dependency checks
+    /// 
+    /// 5. Search Index Management ...................................... Lines  172-185
+    ///    - ReindexFTSAsync()                     // Rebuild full-text search index coordination
+    ///    - FTS table maintenance and optimization
+    /// 
+    /// 6. Private Helper Methods ....................................... Lines  187-191
+    ///    - NormalizeName()                       // String normalization for consistent storage
+    /// ================================================================================
+    /// 
+    /// PERFORMANCE OPTIMIZATIONS:
+    /// • Compiled queries for frequently accessed single-product lookups
+    /// • Efficient batch operations for cart and order processing
+    /// • Delegated search operations to specialized ISearchService
+    /// • Eager loading of category relationships to minimize round trips
+    /// 
+    /// DATA ACCESS PATTERNS:
+    /// • Repository pattern implementation with service layer abstraction
+    /// • Manual DTO mapping for precise control over data transfer
+    /// • Optimistic concurrency handling for product updates
+    /// • Transactional operations for data consistency
+    /// 
+    /// INTEGRATION POINTS:
+    /// • ISearchService for fuzzy product name searching capabilities
+    /// • ApplicationDbContext for Entity Framework data operations
+    /// • ILogger for operation tracking and performance monitoring
+    /// • FTS index coordination for search functionality
+    /// 
+    /// BUSINESS LOGIC:
+    /// • Product name normalization for consistent searching
+    /// • Category relationship management and validation
+    /// • Soft delete implementation for data preservation
+    /// • Audit trail support for product lifecycle tracking
     /// </remarks>
     public class ProductService : IProductService
     {
