@@ -1,0 +1,86 @@
+# Performance Test Configuration
+# This file defines the baseline performance requirements and thresholds for ELKH
+
+# Response Time Thresholds (in milliseconds)
+response_time:
+  homepage: 2000          # Home page should load under 2s
+  product_catalog: 3000   # Product listing under 3s
+  search: 1500           # Search results under 1.5s
+  product_details: 2000  # Product details under 2s
+  api_endpoints: 1000    # API calls under 1s
+  health_checks: 500     # Health checks under 0.5s
+
+# Throughput Requirements (requests per second)
+throughput:
+  minimum: 50            # Minimum sustained throughput
+  target: 100            # Target throughput
+  peak: 500             # Peak capacity target
+
+# Error Rate Thresholds (percentage)
+error_rates:
+  maximum: 1.0          # Maximum 1% error rate
+  warning: 0.5          # Warning at 0.5% error rate
+
+# Concurrent User Limits
+concurrent_users:
+  normal_load: 50       # Normal concurrent users
+  stress_test: 200      # Stress test concurrent users
+  spike_test: 500       # Spike test peak users
+
+# Resource Utilization Limits
+resources:
+  cpu_percent: 80       # Maximum CPU utilization
+  memory_mb: 1024       # Maximum memory usage (MB)
+  disk_io: 100         # Maximum disk I/O (MB/s)
+
+# Test Duration Settings
+test_duration:
+  load_test: 5          # Load test duration (minutes)
+  stress_test: 10       # Stress test duration (minutes)
+  soak_test: 60         # Soak test duration (minutes)
+  spike_duration: 2     # Spike duration (minutes)
+
+# Database Performance
+database:
+  query_timeout: 30000  # Query timeout (milliseconds)
+  connection_pool: 20   # Maximum connection pool size
+  max_query_time: 5000  # Maximum individual query time
+
+# Cache Performance
+cache:
+  hit_ratio: 80         # Minimum cache hit ratio (percentage)
+  response_time: 50     # Cache response time (milliseconds)
+
+# Network Performance
+network:
+  bandwidth_mbps: 100   # Required bandwidth (Mbps)
+  latency_ms: 50       # Maximum network latency
+
+# Performance Test Environment
+environment:
+  base_url: "http://localhost:5000"
+  test_data_size: 1000  # Number of test products
+  concurrent_requests: 10
+  think_time_seconds: 2
+
+# Regression Testing Thresholds
+regression:
+  response_time_increase: 10  # Alert if response time increases by 10%
+  throughput_decrease: 15     # Alert if throughput decreases by 15%
+  error_rate_increase: 50     # Alert if error rate increases by 50%
+
+# Alerting Configuration
+alerts:
+  email_recipients:
+    - "devops@company.com"
+    - "performance@company.com"
+  
+  critical_thresholds:
+    response_time_multiplier: 2.0  # 2x normal response time
+    error_rate_threshold: 5.0      # 5% error rate
+    availability_threshold: 95.0   # Below 95% availability
+  
+  warning_thresholds:
+    response_time_multiplier: 1.5  # 1.5x normal response time
+    error_rate_threshold: 2.0      # 2% error rate
+    availability_threshold: 98.0   # Below 98% availability
