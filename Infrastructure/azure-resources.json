@@ -1,0 +1,372 @@
+{
+  "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+  "contentVersion": "1.0.0.0",
+  "metadata": {
+    "_generator": {
+      "name": "bicep",
+      "version": "0.13.1.58284",
+      "templateHash": "elkh-stickers-infrastructure"
+    },
+    "description": "ELKH Sticker Store - Complete Azure Infrastructure Template"
+  },
+  "parameters": {
+    "appName": {
+      "type": "string",
+      "defaultValue": "elkh-stickers",
+      "metadata": {
+        "description": "Name of the application"
+      }
+    },
+    "environment": {
+      "type": "string",
+      "defaultValue": "dev",
+      "allowedValues": [
+        "dev",
+        "staging",
+        "prod"
+      ],
+      "metadata": {
+        "description": "Environment name"
+      }
+    },
+    "location": {
+      "type": "string",
+      "defaultValue": "[resourceGroup().location]",
+      "metadata": {
+        "description": "Location for all resources"
+      }
+    },
+    "sku": {
+      "type": "string",
+      "defaultValue": "B1",
+      "allowedValues": [
+        "B1",
+        "B2",
+        "B3",
+        "S1",
+        "S2",
+        "S3",
+        "P1V3",
+        "P2V3",
+        "P3V3"
+      ],
+      "metadata": {
+        "description": "App Service Plan SKU"
+      }
+    },
+    "containerImage": {
+      "type": "string",
+      "defaultValue": "ghcr.io/velyene/stickit:latest",
+      "metadata": {
+        "description": "Container image to deploy"
+      }
+    },
+    "databaseAdminLogin": {
+      "type": "string",
+      "defaultValue": "elkhadmin",
+      "metadata": {
+        "description": "Database administrator login name"
+      }
+    },
+    "databaseAdminPassword": {
+      "type": "securestring",
+      "metadata": {
+        "description": "Database administrator password"
+      }
+    }
+  },
+  "variables": {
+    "appServicePlanName": "[format('{0}-asp-{1}', parameters('appName'), parameters('environment'))]",
+    "webAppName": "[format('{0}-app-{1}', parameters('appName'), parameters('environment'))]",
+    "sqlServerName": "[format('{0}-sql-{1}', parameters('appName'), parameters('environment'))]",
+    "sqlDatabaseName": "[format('{0}_db_{1}', parameters('appName'), parameters('environment'))]",
+    "redisName": "[format('{0}-redis-{1}', parameters('appName'), parameters('environment'))]",
+    "storageAccountName": "[format('{0}st{1}', replace(parameters('appName'), '-', ''), parameters('environment'))]",
+    "keyVaultName": "[format('{0}-kv-{1}', parameters('appName'), parameters('environment'))]",
+    "appInsightsName": "[format('{0}-ai-{1}', parameters('appName'), parameters('environment'))]",
+    "logAnalyticsName": "[format('{0}-law-{1}', parameters('appName'), parameters('environment'))]",
+    "containerRegistryName": "[format('{0}acr{1}', replace(parameters('appName'), '-', ''), parameters('environment'))]"
+  },
+  "resources": [
+    {
+      "type": "Microsoft.Web/serverfarms",
+      "apiVersion": "2022-09-01",
+      "name": "[variables('appServicePlanName')]",
+      "location": "[parameters('location')]",
+      "properties": {
+        "reserved": true
+      },
+      "sku": {
+        "name": "[parameters('sku')]"
+      },
+      "kind": "linux",
+      "tags": {
+        "Environment": "[parameters('environment')]",
+        "Application": "[parameters('appName')]"
+      }
+    },
+    {
+      "type": "Microsoft.Web/sites",
+      "apiVersion": "2022-09-01",
+      "name": "[variables('webAppName')]",
+      "location": "[parameters('location')]",
+      "dependsOn": [
+        "[resourceId('Microsoft.Web/serverfarms', variables('appServicePlanName'))]",
+        "[resourceId('Microsoft.Sql/servers/databases', variables('sqlServerName'), variables('sqlDatabaseName'))]",
+        "[resourceId('Microsoft.Cache/Redis', variables('redisName'))]",
+        "[resourceId('Microsoft.KeyVault/vaults', variables('keyVaultName'))]",
+        "[resourceId('Microsoft.Insights/components', variables('appInsightsName'))]"
+      ],
+      "identity": {
+        "type": "SystemAssigned"
+      },
+      "properties": {
+        "serverFarmId": "[resourceId('Microsoft.Web/serverfarms', variables('appServicePlanName'))]",
+        "siteConfig": {
+          "linuxFxVersion": "[format('DOCKER|{0}', parameters('containerImage'))]",
+          "alwaysOn": true,
+          "ftpsState": "Disabled",
+          "minTlsVersion": "1.2",
+          "http20Enabled": true,
+          "appSettings": [
+            {
+              "name": "ASPNETCORE_ENVIRONMENT",
+              "value": "[if(equals(parameters('environment'), 'prod'), 'Production', 'Development')]"
+            },
+            {
+              "name": "ConnectionStrings__DefaultConnection",
+              "value": "[format('Server=tcp:{0}.database.windows.net,1433;Initial Catalog={1};Persist Security Info=False;User ID={2};Password={3};MultipleActiveResultSets=False;Encrypt=True;TrustServerCertificate=False;Connection Timeout=30;', variables('sqlServerName'), variables('sqlDatabaseName'), parameters('databaseAdminLogin'), parameters('databaseAdminPassword'))]"
+            },
+            {
+              "name": "Cache__Redis__ConnectionString",
+              "value": "[format('{0}.redis.cache.windows.net:6380,password={1},ssl=True,abortConnect=False', variables('redisName'), listKeys(resourceId('Microsoft.Cache/Redis', variables('redisName')), '2022-06-01').primaryKey)]"
+            },
+            {
+              "name": "APPLICATIONINSIGHTS_CONNECTION_STRING",
+              "value": "[reference(resourceId('Microsoft.Insights/components', variables('appInsightsName')), '2020-02-02').ConnectionString]"
+            },
+            {
+              "name": "Storage__ConnectionString",
+              "value": "[format('DefaultEndpointsProtocol=https;AccountName={0};AccountKey={1};EndpointSuffix=core.windows.net', variables('storageAccountName'), listKeys(resourceId('Microsoft.Storage/storageAccounts', variables('storageAccountName')), '2022-09-01').keys[0].value)]"
+            },
+            {
+              "name": "DOCKER_REGISTRY_SERVER_URL",
+              "value": "[format('https://{0}.azurecr.io', variables('containerRegistryName'))]"
+            },
+            {
+              "name": "WEBSITES_ENABLE_APP_SERVICE_STORAGE",
+              "value": "false"
+            },
+            {
+              "name": "WEBSITES_PORT",
+              "value": "80"
+            }
+          ],
+          "connectionStrings": []
+        },
+        "httpsOnly": true,
+        "clientAffinityEnabled": false
+      },
+      "tags": {
+        "Environment": "[parameters('environment')]",
+        "Application": "[parameters('appName')]"
+      }
+    },
+    {
+      "type": "Microsoft.Sql/servers",
+      "apiVersion": "2022-05-01-preview",
+      "name": "[variables('sqlServerName')]",
+      "location": "[parameters('location')]",
+      "properties": {
+        "administratorLogin": "[parameters('databaseAdminLogin')]",
+        "administratorLoginPassword": "[parameters('databaseAdminPassword')]",
+        "minimalTlsVersion": "1.2",
+        "publicNetworkAccess": "Enabled"
+      },
+      "tags": {
+        "Environment": "[parameters('environment')]",
+        "Application": "[parameters('appName')]"
+      }
+    },
+    {
+      "type": "Microsoft.Sql/servers/databases",
+      "apiVersion": "2022-05-01-preview",
+      "name": "[format('{0}/{1}', variables('sqlServerName'), variables('sqlDatabaseName'))]",
+      "location": "[parameters('location')]",
+      "dependsOn": [
+        "[resourceId('Microsoft.Sql/servers', variables('sqlServerName'))]"
+      ],
+      "sku": {
+        "name": "Basic",
+        "tier": "Basic",
+        "capacity": 5
+      },
+      "properties": {
+        "collation": "SQL_Latin1_General_CP1_CI_AS",
+        "maxSizeBytes": 2147483648
+      },
+      "tags": {
+        "Environment": "[parameters('environment')]",
+        "Application": "[parameters('appName')]"
+      }
+    },
+    {
+      "type": "Microsoft.Sql/servers/firewallRules",
+      "apiVersion": "2022-05-01-preview",
+      "name": "[format('{0}/{1}', variables('sqlServerName'), 'AllowAzureIPs')]",
+      "dependsOn": [
+        "[resourceId('Microsoft.Sql/servers', variables('sqlServerName'))]"
+      ],
+      "properties": {
+        "startIpAddress": "0.0.0.0",
+        "endIpAddress": "0.0.0.0"
+      }
+    },
+    {
+      "type": "Microsoft.Cache/Redis",
+      "apiVersion": "2022-06-01",
+      "name": "[variables('redisName')]",
+      "location": "[parameters('location')]",
+      "properties": {
+        "sku": {
+          "name": "Basic",
+          "family": "C",
+          "capacity": 0
+        },
+        "enableNonSslPort": false,
+        "minimumTlsVersion": "1.2",
+        "redisConfiguration": {
+          "maxmemory-policy": "allkeys-lru"
+        }
+      },
+      "tags": {
+        "Environment": "[parameters('environment')]",
+        "Application": "[parameters('appName')]"
+      }
+    },
+    {
+      "type": "Microsoft.Storage/storageAccounts",
+      "apiVersion": "2022-09-01",
+      "name": "[variables('storageAccountName')]",
+      "location": "[parameters('location')]",
+      "sku": {
+        "name": "Standard_LRS"
+      },
+      "kind": "StorageV2",
+      "properties": {
+        "supportsHttpsTrafficOnly": true,
+        "minimumTlsVersion": "TLS1_2",
+        "allowBlobPublicAccess": false
+      },
+      "tags": {
+        "Environment": "[parameters('environment')]",
+        "Application": "[parameters('appName')]"
+      }
+    },
+    {
+      "type": "Microsoft.KeyVault/vaults",
+      "apiVersion": "2022-07-01",
+      "name": "[variables('keyVaultName')]",
+      "location": "[parameters('location')]",
+      "properties": {
+        "sku": {
+          "family": "A",
+          "name": "standard"
+        },
+        "tenantId": "[subscription().tenantId]",
+        "enabledForDeployment": false,
+        "enabledForDiskEncryption": false,
+        "enabledForTemplateDeployment": true,
+        "enableSoftDelete": true,
+        "softDeleteRetentionInDays": 7,
+        "enableRbacAuthorization": true,
+        "networkAcls": {
+          "defaultAction": "Allow",
+          "bypass": "AzureServices"
+        }
+      },
+      "tags": {
+        "Environment": "[parameters('environment')]",
+        "Application": "[parameters('appName')]"
+      }
+    },
+    {
+      "type": "Microsoft.OperationalInsights/workspaces",
+      "apiVersion": "2022-10-01",
+      "name": "[variables('logAnalyticsName')]",
+      "location": "[parameters('location')]",
+      "properties": {
+        "sku": {
+          "name": "PerGB2018"
+        },
+        "retentionInDays": 30,
+        "features": {
+          "enableLogAccessUsingOnlyResourcePermissions": true
+        },
+        "workspaceCapping": {
+          "dailyQuotaGb": 1
+        }
+      },
+      "tags": {
+        "Environment": "[parameters('environment')]",
+        "Application": "[parameters('appName')]"
+      }
+    },
+    {
+      "type": "Microsoft.Insights/components",
+      "apiVersion": "2020-02-02",
+      "name": "[variables('appInsightsName')]",
+      "location": "[parameters('location')]",
+      "dependsOn": [
+        "[resourceId('Microsoft.OperationalInsights/workspaces', variables('logAnalyticsName'))]"
+      ],
+      "kind": "web",
+      "properties": {
+        "Application_Type": "web",
+        "WorkspaceResourceId": "[resourceId('Microsoft.OperationalInsights/workspaces', variables('logAnalyticsName'))]",
+        "SamplingPercentage": 100,
+        "RetentionInDays": 90
+      },
+      "tags": {
+        "Environment": "[parameters('environment')]",
+        "Application": "[parameters('appName')]"
+      }
+    },
+    {
+      "type": "Microsoft.ContainerRegistry/registries",
+      "apiVersion": "2022-12-01",
+      "name": "[variables('containerRegistryName')]",
+      "location": "[parameters('location')]",
+      "sku": {
+        "name": "Basic"
+      },
+      "properties": {
+        "adminUserEnabled": true,
+        "publicNetworkAccess": "Enabled",
+        "networkRuleBypassOptions": "AzureServices"
+      },
+      "tags": {
+        "Environment": "[parameters('environment')]",
+        "Application": "[parameters('appName')]"
+      }
+    }
+  ],
+  "outputs": {
+    "webAppUrl": {
+      "type": "string",
+      "value": "[format('https://{0}.azurewebsites.net', variables('webAppName'))]"
+    },
+    "sqlServerFqdn": {
+      "type": "string",
+      "value": "[reference(resourceId('Microsoft.Sql/servers', variables('sqlServerName'))).fullyQualifiedDomainName]"
+    },
+    "applicationInsightsInstrumentationKey": {
+      "type": "string",
+      "value": "[reference(resourceId('Microsoft.Insights/components', variables('appInsightsName'))).InstrumentationKey]"
+    },
+    "containerRegistryLoginServer": {
+      "type": "string",
+      "value": "[reference(resourceId('Microsoft.ContainerRegistry/registries', variables('containerRegistryName'))).loginServer]"
+    }
+  }
+}

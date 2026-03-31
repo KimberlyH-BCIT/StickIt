@@ -1,0 +1,103 @@
+# ELKH Application Alert Rules
+# Monitoring and alerting for critical application metrics
+
+groups:
+  - name: elkh_application_alerts
+    rules:
+      # High error rate alert
+      - alert: HighErrorRate
+        expr: rate(http_requests_total{status=~"5.."}[5m]) > 0.1
+        for: 5m
+        labels:
+          severity: critical
+          team: platform
+          service: elkh
+        annotations:
+          summary: "High error rate detected"
+          description: "Error rate is {{ $value }} errors per second for {{ $labels.instance }}"
+
+      # High response time alert
+      - alert: HighResponseTime
+        expr: histogram_quantile(0.95, rate(http_request_duration_seconds_bucket[5m])) > 1
+        for: 5m
+        labels:
+          severity: warning
+          team: platform
+          service: elkh
+        annotations:
+          summary: "High response time detected"
+          description: "95th percentile response time is {{ $value }}s for {{ $labels.instance }}"
+
+      # Database connection pool exhaustion
+      - alert: DatabaseConnectionPoolExhausted
+        expr: database_connections_active / database_connections_max > 0.8
+        for: 2m
+        labels:
+          severity: critical
+          team: platform
+          service: elkh
+        annotations:
+          summary: "Database connection pool nearly exhausted"
+          description: "Database connection pool usage is {{ $value | humanizePercentage }} for {{ $labels.instance }}"
+
+      # Application down
+      - alert: ApplicationDown
+        expr: up{job="elkh-app"} == 0
+        for: 1m
+        labels:
+          severity: critical
+          team: platform
+          service: elkh
+        annotations:
+          summary: "ELKH Application is down"
+          description: "ELKH application instance {{ $labels.instance }} has been down for more than 1 minute"
+
+      # High memory usage
+      - alert: HighMemoryUsage
+        expr: (1 - (node_memory_MemAvailable_bytes / node_memory_MemTotal_bytes)) > 0.85
+        for: 5m
+        labels:
+          severity: warning
+          team: platform
+          service: elkh
+        annotations:
+          summary: "High memory usage"
+          description: "Memory usage is {{ $value | humanizePercentage }} on {{ $labels.instance }}"
+
+      # Disk space running low
+      - alert: DiskSpaceLow
+        expr: (1 - (node_filesystem_avail_bytes / node_filesystem_size_bytes)) > 0.8
+        for: 5m
+        labels:
+          severity: warning
+          team: platform
+          service: elkh
+        annotations:
+          summary: "Disk space running low"
+          description: "Disk usage is {{ $value | humanizePercentage }} on {{ $labels.instance }}"
+
+  - name: elkh_business_alerts
+    rules:
+      # Low order rate
+      - alert: LowOrderRate
+        expr: rate(orders_created_total[1h]) < 0.1
+        for: 15m
+        labels:
+          severity: warning
+          team: business
+          service: elkh
+        annotations:
+          summary: "Low order rate detected"
+          description: "Order rate has dropped to {{ $value }} orders per second"
+
+      # High cart abandonment rate
+      - alert: HighCartAbandonmentRate
+        expr: rate(carts_abandoned_total[5m]) / rate(carts_created_total[5m]) > 0.7
+        for: 10m
+        labels:
+          severity: warning
+          team: business
+          service: elkh
+        annotations:
+          summary: "High cart abandonment rate"
+          description: "Cart abandonment rate is {{ $value | humanizePercentage }}"

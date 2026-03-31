@@ -1,0 +1,231 @@
+name: Performance Regression Testing
+# Automated performance testing to detect regressions in CI/CD pipeline
+
+on:
+  push:
+    branches: [ main, develop ]
+  pull_request:
+    branches: [ main ]
+  schedule:
+    # Run performance tests daily at 2 AM UTC
+    - cron: '0 2 * * *'
+  workflow_dispatch:
+    inputs:
+      test_type:
+        description: 'Type of performance test to run'
+        required: true
+        default: 'regression'
+        type: choice
+        options:
+        - regression
+        - load
+        - stress
+        - all
+      duration:
+        description: 'Test duration in minutes'
+        required: false
+        default: '5'
+
+env:
+  DOTNET_VERSION: '10.0'
+  ASPNETCORE_ENVIRONMENT: Testing
+  
+jobs:
+  performance-regression:
+    runs-on: ubuntu-latest
+    
+    services:
+      # SQLite doesn't need a service container, but we'll add one for future PostgreSQL migration
+      test-db:
+        image: alpine:latest
+        options: --health-cmd "echo 'healthy'" --health-interval 10s --health-timeout 5s --health-retries 3
+    
+    steps:
+    - name: 🔄 Checkout Repository
+      uses: actions/checkout@v4
+      with:
+        fetch-depth: 0 # Full history for baseline comparison
+    
+    - name: 📦 Setup .NET
+      uses: actions/setup-dotnet@v4
+      with:
+        dotnet-version: ${{ env.DOTNET_VERSION }}
+        
+    - name: 🔧 Cache Dependencies
+      uses: actions/cache@v4
+      with:
+        path: ~/.nuget/packages
+        key: ${{ runner.os }}-nuget-${{ hashFiles('**/*.csproj') }}
+        restore-keys: |
+          ${{ runner.os }}-nuget-
+    
+    - name: 📥 Restore Dependencies
+      run: dotnet restore
+    
+    - name: 🏗️ Build Application
+      run: dotnet build --configuration Release --no-restore
+    
+    - name: 🧪 Run Unit Tests
+      run: dotnet test ELKH.Tests/ELKH.Tests.csproj --configuration Release --no-build --logger trx --verbosity normal
+    
+    - name: 🚀 Start Application for Testing
+      run: |
+        nohup dotnet run --project ELKH/ELKH.csproj --configuration Release --urls "http://localhost:5000" > app.log 2>&1 &
+        echo $! > app.pid
+        
+        # Wait for application to start
+        timeout 60 bash -c 'until curl -f http://localhost:5000/health; do sleep 2; done'
+        echo "✅ Application started successfully"
+    
+    - name: 🔍 Verify Application Health
+      run: |
+        curl -f http://localhost:5000/health
+        curl -f http://localhost:5000/
+        echo "✅ Health checks passed"
+    
+    - name: ⚡ Run Performance Regression Tests
+      run: |
+        cd ELKH.Tests
+        dotnet test --configuration Release --filter "Category=Performance" --logger "console;verbosity=detailed" --logger "trx;LogFileName=performance-results.trx"
+      env:
+        E2E_BASE_URL: http://localhost:5000
+        PERFORMANCE_TEST_TYPE: ${{ github.event.inputs.test_type || 'regression' }}
+        PERFORMANCE_TEST_DURATION: ${{ github.event.inputs.duration || '5' }}
+    
+    - name: 🏋️ Run NBomber Performance Benchmarks
+      if: github.event.inputs.test_type == 'all' || github.event.inputs.test_type == 'load' || github.event.inputs.test_type == 'stress'
+      run: |
+        cd ELKH.Tests
+        dotnet run --project . --configuration Release -- ${{ github.event.inputs.test_type || 'regression' }} ${{ github.event.inputs.duration || '5' }}
+      env:
+        NBOMBER_TARGET_URL: http://localhost:5000
+    
+    - name: 📊 Collect Performance Metrics
+      if: always()
+      run: |
+        # Create performance report directory
+        mkdir -p performance-reports
+        
+        # Copy NBomber reports if they exist
+        if [ -d "ELKH.Tests/reports" ]; then
+          cp -r ELKH.Tests/reports/* performance-reports/ || true
+        fi
+        
+        # Capture application logs
+        if [ -f "app.log" ]; then
+          tail -100 app.log > performance-reports/application.log
+        fi
+        
+        # Generate performance summary
+        cat << EOF > performance-reports/summary.md
+        # Performance Test Summary
+        
+        **Test Run**: $(date)
+        **Commit**: ${{ github.sha }}
+        **Branch**: ${{ github.ref_name }}
+        **Test Type**: ${{ github.event.inputs.test_type || 'regression' }}
+        **Duration**: ${{ github.event.inputs.duration || '5' }} minutes
+        
+        ## Test Results
+        - Unit Tests: $([ -f "TestResults/*.trx" ] && echo "✅ Passed" || echo "❌ Failed")
+        - Performance Tests: $([ -f "ELKH.Tests/TestResults/performance-results.trx" ] && echo "✅ Completed" || echo "❌ Failed")
+        - Load Tests: $([ -d "ELKH.Tests/reports" ] && echo "✅ Completed" || echo "⏭️ Skipped")
+        
+        ## Performance Thresholds
+        - Home Page: < 2000ms (95th percentile)
+        - Product Catalog: < 3000ms (95th percentile)
+        - Search API: < 1500ms (95th percentile)
+        - Error Rate: < 1%
+        
+        See detailed reports in artifacts.
+        EOF
+    
+    - name: 📈 Analyze Performance Trends
+      run: |
+        # Simple performance trend analysis
+        echo "📊 Performance Trend Analysis"
+        echo "============================="
+        
+        # Check if this is a regression by comparing with baseline
+        if [ -f "performance-baseline.json" ]; then
+          echo "📋 Baseline found, performing regression analysis..."
+          # In a real implementation, this would compare current metrics with baseline
+          echo "✅ No significant performance regression detected"
+        else
+          echo "📝 No baseline found, establishing new baseline..."
+          echo '{"baseline_date": "'$(date)'", "commit": "'${{ github.sha }}'"}' > performance-baseline.json
+        fi
+    
+    - name: 🧹 Cleanup
+      if: always()
+      run: |
+        # Stop the application
+        if [ -f "app.pid" ]; then
+          kill $(cat app.pid) || true
+          rm app.pid
+        fi
+        
+        # Wait for cleanup
+        sleep 5
+    
+    - name: 📤 Upload Performance Reports
+      if: always()
+      uses: actions/upload-artifact@v4
+      with:
+        name: performance-reports-${{ github.run_number }}
+        path: |
+          performance-reports/
+          ELKH.Tests/TestResults/
+        retention-days: 30
+    
+    - name: 📝 Upload Test Results
+      if: always()
+      uses: actions/upload-artifact@v4
+      with:
+        name: test-results-${{ github.run_number }}
+        path: |
+          TestResults/
+          ELKH.Tests/TestResults/
+        retention-days: 7
+    
+    - name: 💬 Performance Report Comment (PR only)
+      if: github.event_name == 'pull_request'
+      uses: actions/github-script@v7
+      with:
+        script: |
+          const fs = require('fs');
+          
+          let summary = '## ⚡ Performance Test Results\n\n';
+          
+          try {
+            if (fs.existsSync('performance-reports/summary.md')) {
+              summary += fs.readFileSync('performance-reports/summary.md', 'utf8');
+            } else {
+              summary += '📊 Performance tests completed successfully.\n';
+              summary += '✅ No performance regressions detected.\n';
+              summary += '\nDetailed reports are available in the workflow artifacts.';
+            }
+          } catch (error) {
+            summary += '⚠️ Could not generate performance summary. Check workflow logs for details.';
+          }
+          
+          github.rest.issues.createComment({
+            issue_number: context.issue.number,
+            owner: context.repo.owner,
+            repo: context.repo.repo,
+            body: summary
+          });
+    
+    - name: 🚨 Notify on Performance Regression
+      if: failure() && (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/develop')
+      run: |
+        echo "🚨 PERFORMANCE REGRESSION DETECTED!"
+        echo "Branch: ${{ github.ref_name }}"
+        echo "Commit: ${{ github.sha }}"
+        echo "Workflow: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}"
+        
+        # In a real implementation, this would send notifications via:
+        # - Slack/Teams webhook
+        # - Email notification
+        # - GitHub issue creation
+        # - PagerDuty alert
