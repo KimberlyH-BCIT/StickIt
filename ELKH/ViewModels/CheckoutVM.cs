@@ -1,4 +1,5 @@
 using System.ComponentModel.DataAnnotations;
+using ELKH.Models;
 
 namespace ELKH.ViewModels;
 
@@ -12,6 +13,14 @@ public class CheckoutVM
 
     // Available saved addresses for the user
     public List<ContactDetailVM> SavedAddresses { get; set; } = new();
+
+    // Shipping method selection
+    [Required(ErrorMessage = "Please select a shipping method")]
+    [Display(Name = "Shipping Method")]
+    public int SelectedShippingMethodId { get; set; }
+
+    // Available shipping methods for selection
+    public List<ShippingMethodModel> AvailableShippingMethods { get; set; } = new();
 
     // Shipping info (populated from selected address or entered manually)
     [Required, Display(Name = "Full Name")]
