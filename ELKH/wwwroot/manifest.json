@@ -1,0 +1,67 @@
+{
+  "name": "ELKH - Sticker Store",
+  "short_name": "ELKH",
+  "description": "Your favorite online sticker store with a wide selection of kawaii and decorative stickers",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#ffffff",
+  "theme_color": "#6f42c1",
+  "orientation": "portrait-primary",
+  "scope": "/",
+  "lang": "en-US",
+  "categories": ["shopping", "lifestyle"],
+  "icons": [
+    {
+      "src": "logo-stickit.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "maskable"
+    },
+    {
+      "src": "logo-stickit.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any"
+    }
+  ],
+  "shortcuts": [
+    {
+      "name": "Search Products",
+      "short_name": "Search",
+      "description": "Search for stickers and products",
+      "url": "/Product?search=",
+      "icons": [
+        {
+          "src": "logo-stickit.png",
+          "sizes": "96x96"
+        }
+      ]
+    },
+    {
+      "name": "My Cart",
+      "short_name": "Cart",
+      "description": "View items in your shopping cart",
+      "url": "/Cart",
+      "icons": [
+        {
+          "src": "logo-stickit.png",
+          "sizes": "96x96"
+        }
+      ]
+    },
+    {
+      "name": "Wishlist",
+      "short_name": "Wishlist",
+      "description": "View your wishlist items",
+      "url": "/Wishlist",
+      "icons": [
+        {
+          "src": "logo-stickit.png",
+          "sizes": "96x96"
+        }
+      ]
+    }
+  ],
+  "screenshots": [],
+  "prefer_related_applications": false
+}
