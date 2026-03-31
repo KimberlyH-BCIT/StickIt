@@ -1,85 +1,139 @@
 @model ELKH.ViewModels.StoreReviewViewModel
 @{
-    ViewData["Title"] = Model.ExistingReview != null ? "Edit Your Review" : "Leave a Review";
+    ViewData["Title"] = Model.ExistingReview != null ? "Edit Your Review - Update Store Feedback" : "Leave a Review - Share Your Experience";
     var isEdit = Model.ExistingReview != null;
 }
 
-<div class="container py-5">
-    <div class="row justify-content-center">
-        <div class="col-lg-8">
-            <!-- Header -->
-            <div class="text-center mb-4">
-                <h1 class="display-5 fw-bold mb-2">@ViewData["Title"]</h1>
-                <p class="text-muted lead">
-                    @if (isEdit)
-                    {
-                        <text>Update your feedback about our store</text>
-                    }
-                    else
-                    {
-                        <text>Share your experience shopping with us</text>
-                    }
-                </p>
+@section title {
+    <header class="mb-4">
+        <nav aria-label="breadcrumb">
+            <ol class="breadcrumb">
+                <li class="breadcrumb-item">
+                    <a asp-controller="User" asp-action="Index" aria-label="Return to dashboard">Dashboard</a>
+                </li>
+                <li class="breadcrumb-item active" aria-current="page">
+                    @(isEdit ? "Edit Review" : "Leave Review")
+                </li>
+            </ol>
+        </nav>
+        <h1 class="fw-bold">
+            @(isEdit ? "Edit Your Review" : "Leave a Review")
+        </h1>
+        <p class="text-muted mb-0">
+            @if (isEdit)
+            {
+                <text>Update your feedback about our store and service</text>
+            }
+            else
+            {
+                <text>Share your shopping experience with other customers</text>
+            }
+        </p>
+    </header>
+}
 
-                @if (Model.IsVerifiedBuyer)
-                {
-                    <div class="alert alert-success d-inline-flex align-items-center gap-2 mb-0" role="alert">
-                        <i class="bi bi-patch-check-fill"></i>
-                        <strong>Verified Buyer</strong> - Your review will show the verified buyer badge
-                    </div>
-                }
-                else
-                {
-                    <div class="alert alert-info d-inline-flex align-items-center gap-2 mb-0" role="alert">
-                        <i class="bi bi-info-circle-fill"></i>
-                        Complete a purchase to become a verified buyer
-                    </div>
-                }
-            </div>
+                <main class="container py-5" role="main">
+                    <div class="row justify-content-center">
+                        <div class="col-lg-8">
+                            <!-- Buyer Status Alert -->
+                            <section aria-labelledby="buyer-status-heading" class="text-center mb-4">
+                                <h2 id="buyer-status-heading" class="sr-only">Reviewer status information</h2>
+                                @if (Model.IsVerifiedBuyer)
+                                {
+                                    <div class="alert alert-success d-inline-flex align-items-center gap-2 mb-0" 
+                                         role="status" 
+                                         aria-live="polite">
+                                        <i class="bi bi-patch-check-fill" aria-hidden="true"></i>
+                                        <strong>Verified Buyer</strong> - Your review will show the verified buyer badge
+                                    </div>
+                                }
+                                else
+                                {
+                                    <div class="alert alert-info d-inline-flex align-items-center gap-2 mb-0" 
+                                         role="alert"
+                                         aria-live="polite">
+                                        <i class="bi bi-info-circle-fill" aria-hidden="true"></i>
+                                        Complete a purchase to become a verified buyer
+                                    </div>
+                                }
+                            </section>
 
-            <!-- Review Form Card -->
-            <div class="card border-0 shadow-sm rounded-4">
-                <div class="card-body p-4 p-md-5">
-                    <form asp-action="LeaveReview" method="post" id="reviewForm">
-                        @Html.AntiForgeryToken()
-                        @if (Model.ExistingReview != null)
-                        {
-                            <input type="hidden" name="ReviewId" value="@Model.ExistingReview.PkStoreReviewId" />
-                        }
+                            <!-- Review Form Card -->
+                            <section aria-labelledby="review-form-heading">
+                                <div class="card border-0 shadow-sm rounded-4">
+                                    <div class="card-body p-4 p-md-5">
+                                        <h2 id="review-form-heading" class="sr-only">
+                                            @(isEdit ? "Edit review form" : "Create new review form")
+                                        </h2>
+
+                                        <form asp-action="LeaveReview" 
+                                              method="post" 
+                                              id="reviewForm"
+                                              novalidate
+                                              aria-labelledby="review-form-heading">
+                                            @Html.AntiForgeryToken()
+                                            @if (Model.ExistingReview != null)
+                                            {
+                                                <input type="hidden" name="ReviewId" value="@Model.ExistingReview.PkStoreReviewId" />
+                                            }
 
                         <!-- Rating Section -->
-                        <div class="mb-4">
-                            <label class="form-label fw-semibold d-flex align-items-center gap-2">
-                                <i class="bi bi-star-fill text-warning"></i>
+                        <fieldset class="mb-4">
+                            <legend class="form-label fw-semibold d-flex align-items-center gap-2">
+                                <i class="bi bi-star-fill text-warning" aria-hidden="true"></i>
                                 Overall Rating
-                            </label>
-                            <div class="rating-input d-flex gap-2 mb-2">
+                                <span aria-hidden="true">*</span>
+                            </legend>
+                            <div class="rating-input d-flex gap-2 mb-2" 
+                                 role="radiogroup" 
+                                 aria-label="Rate your overall experience from 1 to 5 stars"
+                                 aria-required="true"
+                                 aria-describedby="rating-help rating-description">
                                 @for (int i = 1; i <= 5; i++)
                                 {
                                     var isChecked = Model.Rating == i;
-                                    <label class="rating-star" data-value="@i">
+                                    var ratingLabel = GetRatingText(i);
+                                    <label class="rating-star" 
+                                           data-value="@i"
+                                           tabindex="0"
+                                           role="radio"
+                                           aria-checked="@isChecked.ToString().ToLower()"
+                                           aria-label="@i star@(i != 1 ? "s" : ""): @ratingLabel">
                                         @if (isChecked)
                                         {
                                             <input type="radio" 
                                                    asp-for="Rating" 
                                                    value="@i" 
                                                    class="visually-hidden" 
-                                                   checked="checked" />
+                                                   checked="checked"
+                                                   aria-hidden="true"
+                                                   tabindex="-1" />
                                         }
                                         else
                                         {
                                             <input type="radio" 
                                                    asp-for="Rating" 
                                                    value="@i" 
-                                                   class="visually-hidden" />
+                                                   class="visually-hidden"
+                                                   aria-hidden="true"
+                                                   tabindex="-1" />
                                         }
-                                        <i class="bi bi-star-fill fs-1 @(isChecked || i <= Model.Rating ? "text-warning" : "text-muted")"></i>
+                                        <i class="bi bi-star-fill fs-1 @(isChecked || i <= Model.Rating ? "text-warning" : "text-muted")" 
+                                           aria-hidden="true"></i>
                                     </label>
                                 }
                             </div>
-                            <div class="text-muted small" id="ratingText">@GetRatingText(Model.Rating)</div>
-                            <span asp-validation-for="Rating" class="text-danger small"></span>
-                        </div>
+                            <div id="rating-description" class="text-muted small mb-2" aria-live="polite">
+                                Current rating: @GetRatingText(Model.Rating) (@Model.Rating out of 5 stars)
+                            </div>
+                            <small id="rating-help" class="form-text text-muted">
+                                Use arrow keys or click to select a rating. Required field.
+                            </small>
+                            <span asp-validation-for="Rating" 
+                                  class="text-danger small" 
+                                  role="alert" 
+                                  aria-live="polite"></span>
+                        </fieldset>
 
                         <!-- Title Section -->
                         <div class="mb-4">

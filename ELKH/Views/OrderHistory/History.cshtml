@@ -1,6 +1,6 @@
 @model ELKH.ViewModels.OrderHistoryVM
 @{
-    ViewData["Title"] = "My Orders";
+    ViewData["Title"] = $"My Orders - Order History | {Model.Orders.Count()} Orders Found";
     Layout = "~/Views/Shared/_Layout.cshtml";
 
     string SortLink(string sortKey) =>
@@ -10,124 +10,239 @@
         Model.CurrentSort == sortKey
             ? "btn btn-sm btn-primary"
             : "btn btn-sm btn-outline-secondary";
+
+    var orderCount = Model.Orders.Count();
 }
 
 @section title {
-    <h1 class="fw-bold mb-4">My Orders 📦</h1>
+    <header class="mb-4">
+        <nav aria-label="breadcrumb">
+            <ol class="breadcrumb">
+                <li class="breadcrumb-item">
+                    <a asp-controller="User" asp-action="Index" aria-label="Return to dashboard">Dashboard</a>
+                </li>
+                <li class="breadcrumb-item active" aria-current="page">My Orders</li>
+            </ol>
+        </nav>
+        <h1 class="fw-bold d-flex align-items-center">
+            <i class="bi bi-bag-check me-2" aria-hidden="true"></i>
+            My Order History
+        </h1>
+        <p class="text-muted mb-0" role="status" aria-live="polite">
+            @if (orderCount > 0) {
+                <text>@orderCount order@(orderCount != 1 ? "s" : "") found</text>
+            } else {
+                <text>No orders found</text>
+            }
+        </p>
+    </header>
 }
 
-<div class="container py-4">
+<main class="container py-4" role="main">
 
     @if (TempData["Message"] is string msg)
-{
+    {
         var parts = msg.Split(',', 2);
         var alertType = parts[0].Trim() == "success" ? "alert-success" : "alert-warning";
-        <div class="alert @alertType alert-dismissible fade show" role="alert">
+        <div class="alert @alertType alert-dismissible fade show" 
+             role="alert"
+             aria-live="polite"
+             tabindex="-1">
             @parts[^1].Trim()
-            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+            <button type="button" 
+                    class="btn-close" 
+                    data-bs-dismiss="alert"
+                    aria-label="Close alert message"></button>
         </div>
-}
+    }
 
     @if (!Model.Orders.Any())
     {
-        <div class="text-center py-5">
-            <i class="bi bi-box display-1 text-muted"></i>
-            <p class="fs-5 text-muted mt-3">You haven't placed any orders yet.</p>
-            <a asp-controller="Product" asp-action="Index" class="btn btn-dark mt-2">Start Shopping</a>
-        </div>
+        <section aria-labelledby="no-orders-heading" class="text-center py-5">
+            <i class="bi bi-box display-1 text-muted" aria-hidden="true"></i>
+            <h2 id="no-orders-heading" class="h4 text-muted mt-3">No orders found</h2>
+            <p class="text-muted mb-4">You haven't placed any orders yet. Start shopping to see your order history here.</p>
+            <a asp-controller="Product" 
+               asp-action="Index" 
+               class="btn btn-dark"
+               aria-label="Browse products to start shopping">
+                <i class="bi bi-bag-plus me-1" aria-hidden="true"></i>Start Shopping
+            </a>
+        </section>
     }
-else
-{
+    else
+    {
         @* ── Sort controls ─────────────────────────────────────────────────── *@
-        <div class="card mb-3">
-            <div class="card-body py-2">
-                <div class="d-flex align-items-center flex-wrap gap-2">
-                    <span class="text-muted small me-1">Sort by:</span>
+        <section aria-labelledby="sort-controls-heading">
+            <div class="card mb-3">
+                <div class="card-body py-2">
+                    <div class="d-flex align-items-center flex-wrap gap-2">
+                        <h2 id="sort-controls-heading" class="text-muted small me-1 mb-0 h6">
+                            Sort orders by:
+                        </h2>
 
-                    <a href="@SortLink("date_desc")" class="@BtnClass("date_desc")">
-                        Date <span aria-hidden="true">↓</span>
-                    </a>
-                    <a href="@SortLink("date_asc")" class="@BtnClass("date_asc")">
-                        Date <span aria-hidden="true">↑</span>
-                    </a>
-                    <a href="@SortLink("total_high")" class="@BtnClass("total_high")">
-                        Total High &rarr; Low
-                    </a>
-                    <a href="@SortLink("total_low")" class="@BtnClass("total_low")">
-                        Total Low &rarr; High
-                    </a>
-                    <a href="@SortLink("status")" class="@BtnClass("status")">
-                        Status
-                    </a>
+                        <nav aria-label="Sort order options" role="group">
+                            <div class="btn-group-sm" role="group">
+                                <a href="@SortLink("date_desc")" 
+                                   class="@BtnClass("date_desc")"
+                                   aria-label="Sort by date, newest first @(Model.CurrentSort == "date_desc" ? "(currently selected)" : "")"
+                                   @(Model.CurrentSort == "date_desc" ? "aria-current=\"true\"" : "")>
+                                    Date <span aria-hidden="true">↓</span>
+                                </a>
+                                <a href="@SortLink("date_asc")" 
+                                   class="@BtnClass("date_asc")"
+                                   aria-label="Sort by date, oldest first @(Model.CurrentSort == "date_asc" ? "(currently selected)" : "")"
+                                   @(Model.CurrentSort == "date_asc" ? "aria-current=\"true\"" : "")>
+                                    Date <span aria-hidden="true">↑</span>
+                                </a>
+                                <a href="@SortLink("total_high")" 
+                                   class="@BtnClass("total_high")"
+                                   aria-label="Sort by total amount, highest to lowest @(Model.CurrentSort == "total_high" ? "(currently selected)" : "")"
+                                   @(Model.CurrentSort == "total_high" ? "aria-current=\"true\"" : "")>
+                                    Total High → Low
+                                </a>
+                                <a href="@SortLink("total_low")" 
+                                   class="@BtnClass("total_low")"
+                                   aria-label="Sort by total amount, lowest to highest @(Model.CurrentSort == "total_low" ? "(currently selected)" : "")"
+                                   @(Model.CurrentSort == "total_low" ? "aria-current=\"true\"" : "")>
+                                    Total Low → High
+                                </a>
+                                <a href="@SortLink("status")" 
+                                   class="@BtnClass("status")"
+                                   aria-label="Sort by order status @(Model.CurrentSort == "status" ? "(currently selected)" : "")"
+                                   @(Model.CurrentSort == "status" ? "aria-current=\"true\"" : "")>
+                                    Status
+                                </a>
+                            </div>
+                        </nav>
+                    </div>
                 </div>
             </div>
-        </div>
+        </section>
 
-        <div class="card shadow-sm">
-            <div class="table-responsive">
-                <table class="table table-hover mb-0">
-                    <thead class="table-light">
-            <tr>
-                <th>Order #</th>
-                <th>Date</th>
-                            <th>Items</th>
-                <th>Total</th>
-                <th>Status</th>
-                            <th>Delivery</th>
-                <th></th>
-            </tr>
-        </thead>
-        <tbody>
-                        @foreach (var order in Model.Orders)
-                        {
-                            var statusBadge = order.OrderStatus switch
-            {
-                                "Paid" => "bg-success",
-                                "Processing" => "bg-info text-dark",
-                                "Shipped" => "bg-primary",
-                                "Delivered" => "bg-success",
-                                "Cancelled" => "bg-danger",
-                                _ => "bg-secondary"
-                            };
-                            <tr class="align-middle">
-                                <td>#@order.PkOrderId</td>
-                                <td>@order.CreatedAt.ToString("MMM d, yyyy")</td>
-                                <td>@order.OrderItems.Count item@(order.OrderItems.Count != 1 ? "s" : "")</td>
-                                <td>$@order.TotalAmount.ToString("F2")</td>
-                                <td><span class="badge @statusBadge">@order.OrderStatus</span></td>
-                                <td><span class="text-muted small">@order.DeliveryStatus</span></td>
-                                <td class="d-flex gap-1 flex-wrap">
-                                    <a asp-controller="Order" asp-action="Details" asp-route-id="@order.PkOrderId"
-                                       class="btn btn-sm btn-outline-dark">View</a>
-                                    @foreach (var item in order.OrderItems)
-                                    {
-                                        if (item.Product is not null)
-                                        {
-                                            <form asp-controller="Cart" asp-action="AddToCart" method="post" class="d-inline">
-                                                @Html.AntiForgeryToken()
-                                                <input type="hidden" name="itemId"   value="@item.FkProductId" />
-                                                <input type="hidden" name="quantity" value="1" />
-                                                <button type="submit" class="btn btn-sm btn-outline-secondary"
-                                                        title="Buy @item.Product.Name again">
-                                                    <i class="bi bi-arrow-repeat me-1"></i>@item.Product.Name
-                                                </button>
-                                            </form>
-                                            @if (order.DeliveryStatus == "Delivered" || order.DeliveryStatus == "Shipped")
+        <section aria-labelledby="orders-table-heading">
+            <div class="card shadow-sm">
+                <div class="table-responsive">
+                    <table class="table table-hover mb-0"
+                           role="table"
+                           aria-label="Your order history with details, statuses, and actions">
+                        <caption id="orders-table-heading" class="sr-only">
+                            Your order history showing @orderCount order@(orderCount != 1 ? "s" : "") with order numbers, dates, items, totals, and current status
+                        </caption>
+                        <thead class="table-light">
+                            <tr role="row">
+                                <th scope="col">Order Number</th>
+                                <th scope="col">Date Placed</th>
+                                <th scope="col">Items Ordered</th>
+                                <th scope="col">Total Amount</th>
+                                <th scope="col">Order Status</th>
+                                <th scope="col">Delivery Status</th>
+                                <th scope="col">
+                                    <span class="sr-only">Order Actions</span>
+                                    Actions
+                                </th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var order in Model.Orders)
+                            {
+                                var statusBadge = order.OrderStatus switch
+                                {
+                                    "Paid" => "bg-success",
+                                    "Processing" => "bg-info text-dark",
+                                    "Shipped" => "bg-primary",
+                                    "Delivered" => "bg-success",
+                                    "Cancelled" => "bg-danger",
+                                    _ => "bg-secondary"
+                                };
+                                <tr class="align-middle" 
+                                    role="row" 
+                                    aria-labelledby="order-@order.PkOrderId-number">
+                                    <td role="gridcell" 
+                                        class="fw-semibold"
+                                        id="order-@order.PkOrderId-number"
+                                        aria-label="Order number @order.PkOrderId">
+                                        #@order.PkOrderId
+                                    </td>
+                                    <td role="gridcell" 
+                                        aria-label="Placed on @order.CreatedAt.ToString("MMMM d, yyyy")">
+                                        @order.CreatedAt.ToString("MMM d, yyyy")
+                                    </td>
+                                    <td role="gridcell" 
+                                        aria-label="@order.OrderItems.Count item@(order.OrderItems.Count != 1 ? "s" : "")">
+                                        @order.OrderItems.Count item@(order.OrderItems.Count != 1 ? "s" : "")
+                                    </td>
+                                    <td role="gridcell" 
+                                        aria-label="Total @order.TotalAmount.ToString("C")">
+                                        @order.TotalAmount.ToString("C")
+                                    </td>
+                                    <td role="gridcell">
+                                        <span class="badge @statusBadge"
+                                              role="status"
+                                              aria-label="Order status: @order.OrderStatus">
+                                            @order.OrderStatus
+                                        </span>
+                                    </td>
+                                    <td role="gridcell">
+                                        <span class="text-muted small"
+                                              aria-label="Delivery status: @order.DeliveryStatus">
+                                            @order.DeliveryStatus
+                                        </span>
+                                    </td>
+                                    <td role="gridcell">
+                                        <div class="d-flex gap-1 flex-wrap" 
+                                             role="group" 
+                                             aria-label="Actions for order @order.PkOrderId">
+                                            <a asp-controller="Order" 
+                                               asp-action="Details" 
+                                               asp-route-id="@order.PkOrderId"
+                                               class="btn btn-sm btn-outline-dark"
+                                               aria-label="View details for order @order.PkOrderId">
+                                                <i class="bi bi-eye me-1" aria-hidden="true"></i>View
+                                            </a>
+                                            @foreach (var item in order.OrderItems)
                                             {
-                                                <a asp-controller="Product" asp-action="Details" asp-route-id="@item.FkProductId" asp-fragment="reviews"
-                                                   class="btn btn-sm btn-outline-primary"
-                                                   title="Leave a review for @item.Product.Name">
-                                                    <i class="bi bi-star me-1"></i>Review
-                                                </a>
+                                                if (item.Product is not null)
+                                                {
+                                                    <form asp-controller="Cart" 
+                                                          asp-action="AddToCart" 
+                                                          method="post" 
+                                                          class="d-inline"
+                                                          aria-label="Reorder @item.Product.Name">
+                                                        @Html.AntiForgeryToken()
+                                                        <input type="hidden" name="itemId"   value="@item.FkProductId" />
+                                                        <input type="hidden" name="quantity" value="1" />
+                                                        <button type="submit" 
+                                                                class="btn btn-sm btn-outline-secondary"
+                                                                aria-label="Buy @item.Product.Name again">
+                                                            <i class="bi bi-arrow-repeat me-1" aria-hidden="true"></i>
+                                                            <span class="d-none d-sm-inline">@item.Product.Name</span>
+                                                            <span class="d-sm-none">Reorder</span>
+                                                        </button>
+                                                    </form>
+                                                    @if (order.DeliveryStatus == "Delivered" || order.DeliveryStatus == "Shipped")
+                                                    {
+                                                        <a asp-controller="Product" 
+                                                           asp-action="Details" 
+                                                           asp-route-id="@item.FkProductId" 
+                                                           asp-fragment="reviews"
+                                                           class="btn btn-sm btn-outline-primary"
+                                                           aria-label="Leave a review for @item.Product.Name">
+                                                            <i class="bi bi-star me-1" aria-hidden="true"></i>
+                                                            <span class="d-none d-sm-inline">Review</span>
+                                                            <span class="d-sm-none">Review</span>
+                                                        </a>
+                                                    }
+                                                }
                                             }
-                                        }
-                                    }
-                                </td>
-                </tr>
-            }
-        </tbody>
-    </table>
+                                        </div>
+                                    </td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
             </div>
-        </div>
-}
-</div>
+        </section>
+    }
+</main>

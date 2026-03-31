@@ -13,8 +13,9 @@
 }
 else
 {
-    <button type="button" class="btn btn-sm btn-outline-primary"
-            data-bs-toggle="modal" data-bs-target="#wishlistSignInModal">
-        <i class="bi bi-heart me-1"></i>Add to Wishlist
-    </button>
+    <a asp-area="Identity" asp-page="/Account/Login" 
+       asp-route-returnUrl="@Context.Request.Path@Context.Request.QueryString"
+       class="btn btn-sm btn-outline-primary">
+        <i class="bi bi-box-arrow-in-right me-1"></i>Sign in for Wishlist
+    </a>
 }

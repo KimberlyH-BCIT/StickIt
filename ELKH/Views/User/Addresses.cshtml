@@ -1,67 +1,128 @@
 @model IEnumerable<ELKH.ViewModels.ContactDetailVM>
 @{
-    ViewData["Title"] = "My Addresses";
+    ViewData["Title"] = "Manage Addresses - Shipping & Billing Information | User Dashboard";
+    var addressCount = Model.Count();
 }
 
-<div class="d-flex justify-content-between align-items-center mb-4">
-    <h1 class="fw-bold mb-0"><i class="bi bi-geo-alt me-2"></i>My Addresses</h1>
-    <a asp-action="AddAddress" class="btn btn-success">
-        <i class="bi bi-plus-circle me-1"></i>Add Address
-    </a>
-</div>
+@section title {
+    <header class="mb-4">
+        <nav aria-label="breadcrumb">
+            <ol class="breadcrumb">
+                <li class="breadcrumb-item">
+                    <a asp-action="Index" aria-label="Return to dashboard">Dashboard</a>
+                </li>
+                <li class="breadcrumb-item active" aria-current="page">My Addresses</li>
+            </ol>
+        </nav>
+        <h1 class="fw-bold d-flex align-items-center">
+            <i class="bi bi-geo-alt me-2" aria-hidden="true"></i>
+            My Addresses
+        </h1>
+        <p class="text-muted mb-0">
+            Manage your shipping and billing addresses
+            @if (addressCount > 0) { 
+                <span aria-live="polite">(@addressCount address@(addressCount != 1 ? "es" : "") saved)</span>
+            }
+        </p>
+    </header>
+}
 
-@if (!Model.Any())
-{
-    <div class="text-center py-5 text-muted">
-        <i class="bi bi-geo-alt display-1"></i>
-        <p class="fs-5 mt-3">No addresses saved yet.</p>
-        <a asp-action="AddAddress" class="btn btn-dark mt-2">Add Your First Address</a>
+<main class="container py-4" role="main">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2 class="sr-only">Address Management</h2>
+        <a asp-action="AddAddress" 
+           class="btn btn-success ms-auto"
+           aria-label="Add a new shipping or billing address">
+            <i class="bi bi-plus-circle me-1" aria-hidden="true"></i>Add New Address
+        </a>
     </div>
-}
-else
-{
-    <div class="row g-3">
-        @foreach (var addr in Model)
-        {
-            <div class="col-md-6">
-                <div class="card shadow-sm @(addr.IsDefault ? "border-dark" : "")">
-                    @if (addr.IsDefault)
-                    {
-                        <div class="card-header bg-dark text-white py-2 small fw-semibold">
-                            <i class="bi bi-star-fill me-1"></i>Default Address
-                        </div>
-                    }
-                    <div class="card-body">
-                        <p class="fw-bold mb-1">@addr.FirstName @addr.LastName</p>
-                        <p class="text-muted small mb-1">@addr.PhoneNumber</p>
-                        <address class="text-muted small mb-0">
-                            @addr.Street<br />
-                            @addr.City, @addr.Province @addr.PostCode<br />
-                            @addr.Country
-                        </address>
+
+    @if (!Model.Any())
+    {
+        <section aria-labelledby="no-addresses-heading" class="text-center py-5">
+            <i class="bi bi-geo-alt display-1 text-muted" aria-hidden="true"></i>
+            <h2 id="no-addresses-heading" class="h4 mt-3 text-muted">No addresses saved yet</h2>
+            <p class="text-muted mb-4">
+                Add your first address to make checkout faster and easier.
+            </p>
+            <a asp-action="AddAddress" 
+               class="btn btn-dark"
+               aria-label="Add your first shipping address">
+                <i class="bi bi-plus-circle me-1" aria-hidden="true"></i>Add Your First Address
+            </a>
+        </section>
+    }
+    else
+    {
+        <section aria-labelledby="addresses-heading">
+            <h2 id="addresses-heading" class="sr-only">Your saved addresses</h2>
+            <div class="row g-3" role="list" aria-label="Saved shipping and billing addresses">
+                @foreach (var addr in Model)
+                {
+                    <div class="col-md-6" role="listitem">
+                        <article class="card shadow-sm @(addr.IsDefault ? "border-dark" : "")"
+                                 aria-labelledby="address-@addr.ContactId-name"
+                                 aria-describedby="address-@addr.ContactId-details">
+                            @if (addr.IsDefault)
+                            {
+                                <div class="card-header bg-dark text-white py-2 small fw-semibold">
+                                    <i class="bi bi-star-fill me-1" aria-hidden="true"></i>
+                                    <span role="status" aria-label="This is your default address">Default Address</span>
+                                </div>
+                            }
+                            <div class="card-body">
+                                <h3 id="address-@addr.ContactId-name" class="fw-bold mb-1 h6">
+                                    @addr.FirstName @addr.LastName
+                                </h3>
+                                <div id="address-@addr.ContactId-details">
+                                    <p class="text-muted small mb-1" 
+                                       aria-label="Phone number @addr.PhoneNumber">
+                                        <i class="bi bi-telephone me-1" aria-hidden="true"></i>@addr.PhoneNumber
+                                    </p>
+                                    <address class="text-muted small mb-0">
+                                        @addr.Street<br />
+                                        @addr.City, @addr.Province @addr.PostCode<br />
+                                        @addr.Country
+                                    </address>
+                                </div>
+                            </div>
+                            <div class="card-footer bg-white">
+                                <nav aria-label="Actions for @addr.FirstName @addr.LastName address">
+                                    <div class="d-flex gap-2 flex-wrap">
+                                        <a asp-action="EditAddress" 
+                                           asp-route-id="@addr.ContactId"
+                                           class="btn btn-sm btn-outline-primary"
+                                           aria-label="Edit address for @addr.FirstName @addr.LastName">
+                                            <i class="bi bi-pencil me-1" aria-hidden="true"></i>Edit
+                                        </a>
+                                        @if (!addr.IsDefault)
+                                        {
+                                            <form asp-action="SetDefaultAddress" 
+                                                  method="post"
+                                                  aria-label="Set as default address">
+                                                @Html.AntiForgeryToken()
+                                                <input type="hidden" name="id" value="@addr.ContactId" />
+                                                <button type="submit" 
+                                                        class="btn btn-sm btn-outline-secondary"
+                                                        aria-label="Set @addr.FirstName @addr.LastName address as default">
+                                                    <i class="bi bi-star me-1" aria-hidden="true"></i>Set Default
+                                                </button>
+                                            </form>
+                                        }
+                                        <a asp-action="DeleteAddress" 
+                                           asp-route-id="@addr.ContactId"
+                                           class="btn btn-sm btn-outline-danger ms-auto"
+                                           onclick="return confirm('Are you sure you want to delete the address for @addr.FirstName @addr.LastName?')"
+                                           aria-label="Delete address for @addr.FirstName @addr.LastName">
+                                            <i class="bi bi-trash me-1" aria-hidden="true"></i>Delete
+                                        </a>
+                                    </div>
+                                </nav>
+                            </div>
+                        </article>
                     </div>
-                    <div class="card-footer bg-white d-flex gap-2 flex-wrap">
-                        <a asp-action="EditAddress" asp-route-id="@addr.ContactId"
-                           class="btn btn-sm btn-outline-primary">
-                            <i class="bi bi-pencil me-1"></i>Edit
-                        </a>
-                        @if (!addr.IsDefault)
-                        {
-                            <form asp-action="SetDefaultAddress" method="post">
-                                @Html.AntiForgeryToken()
-                                <input type="hidden" name="id" value="@addr.ContactId" />
-                                <button type="submit" class="btn btn-sm btn-outline-secondary">
-                                    <i class="bi bi-star me-1"></i>Set Default
-                                </button>
-                            </form>
-                        }
-                        <a asp-action="DeleteAddress" asp-route-id="@addr.ContactId"
-                           class="btn btn-sm btn-outline-danger ms-auto">
-                            <i class="bi bi-trash me-1"></i>Delete
-                        </a>
-                    </div>
-                </div>
+                }
             </div>
-        }
-    </div>
-}
+        </section>
+    }
+</main>

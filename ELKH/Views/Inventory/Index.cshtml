@@ -1,67 +1,491 @@
 ﻿@model List<InventoryVM>
 
-@section title{
-    <h3>Inventory</h3>
+@{
+    ViewData["Title"] = "Inventory Management - Product Stock & Details | Admin Panel";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+    var productCount = Model?.Count ?? 0;
 }
 
-<table>
-    <thead>
-        <tr>
-            <td>SKU</td>
-            <td>Name</td>
-            <td>Quantity</td>
-            <td>Active</td>
-            <td>Edit</td>
-            <td>Edit Image</td>
-            <td>Edit Quantity</td>
-        </tr>
-    </thead>
-    <tbody>
-        @foreach(var pro in Model)
-        {
-            <tr>
-                <td>@pro.PkProductId</td>
-                <td>@pro.ProductName</td>
-                <td>@pro.Quantity</td>
-                <td>@pro.IsActive</td>
-                <td>
-                    <a asp-controller="Inventory" asp-action="ProductImages" asp-route-id="@pro.PkProductId">Edit</a>
-                </td>
-                <td>
-                    <a asp-controller="Inventory" asp-action="ProductImages" asp-route-id="@pro.PkProductId">Edit Product Image</a>
-                </td>
-                <td>
-                    <label for="edit-@pro.PkProductId">Edit Quantity</label>
-                    <input id="edit-@pro.PkProductId" type="checkbox" class="editQuantity" data-id="@pro.PkProductId" />
+@section title {
+    <header class="mb-4">
+        <nav aria-label="breadcrumb">
+            <ol class="breadcrumb">
+                <li class="breadcrumb-item">
+                    <a asp-controller="Admin" asp-action="Index" aria-label="Return to admin dashboard">Admin Dashboard</a>
+                </li>
+                <li class="breadcrumb-item active" aria-current="page">Inventory Management</li>
+            </ol>
+        </nav>
+        <h1 class="fw-bold d-flex align-items-center">
+            <i class="bi bi-box-seam me-2" aria-hidden="true"></i>
+            Inventory Management
+        </h1>
+        <p class="text-muted mb-0" role="status" aria-live="polite">
+            @if (productCount > 0) {
+                <text>Managing @productCount product@(productCount != 1 ? "s" : "") in inventory</text>
+            } else {
+                <text>No products found in inventory</text>
+            }
+        </p>
+    </header>
+}
 
-                    <div class="editQuantityArea hide" data-id="@pro.PkProductId">
-                        <form method="post" asp-action="EditProductAmount" asp-controller="Inventory">
-                            <input type="hidden" name="productId" value="@pro.PkProductId" />
-                            <input type="number" name="quantityId" value="@pro.Quantity" />
-                            <button type="submit">Update</button>
-                        </form>
+<main class="container py-4" role="main">
+
+    <!-- Inventory Management Table -->
+    <section aria-labelledby="inventory-table-heading">
+        <div class="card shadow-sm border-0">
+            <div class="card-header bg-white py-3">
+                <h2 id="inventory-table-heading" class="fw-bold mb-0 h5">
+                    <i class="bi bi-table me-2" aria-hidden="true"></i>Product Inventory Overview
+                </h2>
+            </div>
+
+            <div class="card-body p-0">
+                @if (Model?.Any() == true)
+                {
+                    <div class="table-responsive">
+                        <table class="table table-hover table-striped align-middle mb-0"
+                               role="table"
+                               aria-label="Product inventory management table with stock levels and actions"
+                               aria-describedby="inventory-table-desc">
+                            <caption id="inventory-table-desc" class="sr-only">
+                                Table showing product SKU, name, stock quantity, status, and available management actions
+                            </caption>
+
+                            <thead class="table-dark">
+                                <tr role="row">
+                                    <th scope="col" class="fw-semibold">
+                                        <i class="bi bi-upc-scan me-1" aria-hidden="true"></i>Product SKU
+                                    </th>
+                                    <th scope="col" class="fw-semibold">
+                                        <i class="bi bi-tag me-1" aria-hidden="true"></i>Product Name
+                                    </th>
+                                    <th scope="col" class="fw-semibold text-center">
+                                        <i class="bi bi-boxes me-1" aria-hidden="true"></i>Stock Quantity
+                                    </th>
+                                    <th scope="col" class="fw-semibold text-center">
+                                        <i class="bi bi-toggle2-on me-1" aria-hidden="true"></i>Status
+                                    </th>
+                                    <th scope="col" class="fw-semibold text-center">
+                                        <i class="bi bi-pencil me-1" aria-hidden="true"></i>Product Details
+                                    </th>
+                                    <th scope="col" class="fw-semibold text-center">
+                                        <i class="bi bi-images me-1" aria-hidden="true"></i>Images
+                                    </th>
+                                    <th scope="col" class="fw-semibold text-center">
+                                        <i class="bi bi-calculator me-1" aria-hidden="true"></i>Quantity Management
+                                    </th>
+                                </tr>
+                            </thead>
+
+                            <tbody>
+                                @foreach(var product in Model)
+                                {
+                                    <tr role="row" id="product-row-@product.PkProductId">
+
+                                        <!-- SKU Column -->
+                                        <td role="gridcell" class="font-monospace fw-semibold"
+                                            aria-label="Product SKU @product.PkProductId">
+                                            @product.PkProductId
+                                        </td>
+
+                                        <!-- Product Name Column -->
+                                        <td role="gridcell" class="fw-medium"
+                                            aria-label="Product name @product.ProductName">
+                                            @product.ProductName
+                                        </td>
+
+                                        <!-- Quantity Column -->
+                                        <td role="gridcell" class="text-center">
+                                            <span class="badge @(product.Quantity <= 5 ? "bg-danger" : product.Quantity <= 20 ? "bg-warning text-dark" : "bg-success") fs-6"
+                                                  aria-label="Current stock: @product.Quantity units@(product.Quantity <= 5 ? " - Low stock warning" : "")">
+                                                @product.Quantity
+                                                @if (product.Quantity <= 5)
+                                                {
+                                                    <i class="bi bi-exclamation-triangle ms-1" aria-hidden="true"></i>
+                                                }
+                                            </span>
+                                        </td>
+
+                                        <!-- Active Status Column -->
+                                        <td role="gridcell" class="text-center">
+                                            <span class="badge @(product.IsActive ? "bg-success" : "bg-secondary") fs-6"
+                                                  role="status"
+                                                  aria-label="Product status: @(product.IsActive ? "Active and available for purchase" : "Inactive and not available")">
+                                                @if (product.IsActive)
+                                                {
+                                                    <text><i class="bi bi-check-circle me-1" aria-hidden="true"></i>Active</text>
+                                                }
+                                                else
+                                                {
+                                                    <text><i class="bi bi-x-circle me-1" aria-hidden="true"></i>Inactive</text>
+                                                }
+                                            </span>
+                                        </td>
+
+                                        <!-- Edit Product Column -->
+                                        <td role="gridcell" class="text-center">
+                                            <a asp-controller="Product" 
+                                               asp-action="Edit" 
+                                               asp-route-id="@product.PkProductId"
+                                               class="btn btn-sm btn-outline-primary rounded-pill"
+                                               aria-label="Edit product details for @product.ProductName">
+                                                <i class="bi bi-pencil me-1" aria-hidden="true"></i>Edit Details
+                                            </a>
+                                        </td>
+
+                                        <!-- Edit Images Column -->
+                                        <td role="gridcell" class="text-center">
+                                            <a asp-controller="Inventory" 
+                                               asp-action="ProductImages" 
+                                               asp-route-id="@product.PkProductId"
+                                               class="btn btn-sm btn-outline-info rounded-pill"
+                                               aria-label="Manage images for @product.ProductName">
+                                                <i class="bi bi-images me-1" aria-hidden="true"></i>Manage Images
+                                            </a>
+                                        </td>
+
+                                        <!-- Edit Quantity Column -->
+                                        <td role="gridcell" class="text-center">
+                                            <div class="d-flex flex-column align-items-center gap-2">
+                                                <button type="button" 
+                                                        class="btn btn-sm btn-outline-warning rounded-pill editQuantityToggle"
+                                                        data-product-id="@product.PkProductId"
+                                                        aria-expanded="false"
+                                                        aria-controls="quantity-form-@product.PkProductId"
+                                                        aria-label="Toggle quantity editor for @product.ProductName">
+                                                    <i class="bi bi-calculator me-1" aria-hidden="true"></i>Update Stock
+                                                </button>
+
+                                                <div id="quantity-form-@product.PkProductId" 
+                                                     class="editQuantityArea d-none w-100" 
+                                                     aria-hidden="true"
+                                                     data-product-id="@product.PkProductId">
+                                                    <form method="post" 
+                                                          asp-action="EditProductAmount" 
+                                                          asp-controller="Inventory"
+                                                          class="p-3 border rounded bg-light"
+                                                          aria-labelledby="quantity-form-title-@product.PkProductId">
+
+                                                        <h3 id="quantity-form-title-@product.PkProductId" class="h6 mb-2">
+                                                            Update Stock for @product.ProductName
+                                                        </h3>
+
+                                                        <input type="hidden" name="productId" value="@product.PkProductId" />
+
+                                                        <div class="mb-2">
+                                                            <label for="quantity-@product.PkProductId" class="form-label small fw-semibold">
+                                                                New Quantity
+                                                            </label>
+                                                            <input type="number" 
+                                                                   id="quantity-@product.PkProductId"
+                                                                   name="quantityId" 
+                                                                   value="@product.Quantity" 
+                                                                   min="0"
+                                                                   max="9999"
+                                                                   class="form-control form-control-sm"
+                                                                   aria-describedby="quantity-help-@product.PkProductId"
+                                                                   required />
+                                                            <small id="quantity-help-@product.PkProductId" class="form-text text-muted">
+                                                                Current: @product.Quantity units
+                                                            </small>
+                                                        </div>
+
+                                                        <div class="d-flex gap-2">
+                                                            <button type="submit" 
+                                                                    class="btn btn-success btn-sm"
+                                                                    aria-label="Save new quantity for @product.ProductName">
+                                                                <i class="bi bi-check me-1" aria-hidden="true"></i>Update
+                                                            </button>
+                                                            <button type="button" 
+                                                                    class="btn btn-secondary btn-sm cancelQuantityEdit"
+                                                                    data-product-id="@product.PkProductId"
+                                                                    aria-label="Cancel quantity update for @product.ProductName">
+                                                                <i class="bi bi-x me-1" aria-hidden="true"></i>Cancel
+                                                            </button>
+                                                        </div>
+                                                    </form>
+                                                </div>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                }
+                            </tbody>
+                        </table>
                     </div>
-                </td>
-            </tr>
-        }
-    </tbody>
-</table>
+                }
+                else
+                {
+                    <div class="text-center py-5">
+                        <div role="status" aria-live="polite">
+                            <i class="bi bi-inbox display-1 text-muted mb-3" aria-hidden="true"></i>
+                            <h3 class="h5 text-muted">No Products in Inventory</h3>
+                            <p class="text-muted">There are currently no products to manage.</p>
+                            <a asp-controller="Product" asp-action="Create" 
+                               class="btn btn-primary rounded-pill"
+                               aria-label="Add first product to inventory">
+                                <i class="bi bi-plus-circle me-1" aria-hidden="true"></i>Add Product
+                            </a>
+                        </div>
+                    </div>
+                }
+            </div>
+        </div>
+    </section>
 
+</main>
+
+@section Scripts {
 <script>
     document.addEventListener("DOMContentLoaded", function() {
-        const inputCheck = document.querySelectorAll(".editQuantity");
+        // Enhanced quantity editing with accessibility
+        const editButtons = document.querySelectorAll(".editQuantityToggle");
+        const cancelButtons = document.querySelectorAll(".cancelQuantityEdit");
 
-        inputCheck.forEach(box => {
-            box.addEventListener("change", function() {
-                const editArea = document.querySelector(`.editQuantityArea[data-id='${this.dataset.id}']`);
+        // Handle edit quantity toggle
+        editButtons.forEach(button => {
+            button.addEventListener("click", function() {
+                const productId = this.getAttribute('data-product-id');
+                const formArea = document.getElementById(`quantity-form-${productId}`);
+                const isExpanded = this.getAttribute('aria-expanded') === 'true';
 
-                if(this.checked){
-                    editArea.classList.remove("hide");
+                if (!isExpanded) {
+                    // Show form
+                    formArea.classList.remove('d-none');
+                    formArea.setAttribute('aria-hidden', 'false');
+                    this.setAttribute('aria-expanded', 'true');
+                    this.innerHTML = '<i class="bi bi-x me-1" aria-hidden="true"></i>Close Editor';
+                    this.classList.remove('btn-outline-warning');
+                    this.classList.add('btn-warning');
+
+                    // Focus the quantity input
+                    const quantityInput = formArea.querySelector('input[type="number"]');
+                    if (quantityInput) {
+                        quantityInput.focus();
+                        quantityInput.select();
+                    }
+
+                    // Announce to screen readers
+                    announceToScreenReader(`Quantity editor opened for product ${productId}`);
                 } else {
-                    editArea.classList.add("hide");
+                    // Hide form
+                    closeQuantityForm(productId);
+                }
+            });
+
+            // Add keyboard support
+            button.addEventListener('keydown', function(e) {
+                if (e.key === 'Enter' || e.key === ' ') {
+                    e.preventDefault();
+                    this.click();
                 }
             });
         });
+
+        // Handle cancel buttons
+        cancelButtons.forEach(button => {
+            button.addEventListener("click", function() {
+                const productId = this.getAttribute('data-product-id');
+                closeQuantityForm(productId);
+            });
+        });
+
+        // Enhanced form validation
+        const quantityForms = document.querySelectorAll('form[asp-action="EditProductAmount"]');
+        quantityForms.forEach(form => {
+            form.addEventListener('submit', function(e) {
+                const quantityInput = this.querySelector('input[type="number"]');
+                const value = parseInt(quantityInput.value);
+
+                if (isNaN(value) || value < 0 || value > 9999) {
+                    e.preventDefault();
+                    quantityInput.setAttribute('aria-invalid', 'true');
+                    quantityInput.focus();
+                    announceToScreenReader('Please enter a valid quantity between 0 and 9999');
+                    return false;
+                }
+
+                quantityInput.setAttribute('aria-invalid', 'false');
+                announceToScreenReader('Updating product quantity...');
+            });
+        });
+
+        // Enhanced table accessibility
+        const tableRows = document.querySelectorAll('tbody tr[role="row"]');
+        tableRows.forEach(row => {
+            row.addEventListener('focus', function() {
+                this.classList.add('table-row-focused');
+            });
+
+            row.addEventListener('blur', function() {
+                this.classList.remove('table-row-focused');
+            });
+        });
+
+        function closeQuantityForm(productId) {
+            const formArea = document.getElementById(`quantity-form-${productId}`);
+            const toggleButton = document.querySelector(`[data-product-id="${productId}"].editQuantityToggle`);
+
+            if (formArea && toggleButton) {
+                formArea.classList.add('d-none');
+                formArea.setAttribute('aria-hidden', 'true');
+                toggleButton.setAttribute('aria-expanded', 'false');
+                toggleButton.innerHTML = '<i class="bi bi-calculator me-1" aria-hidden="true"></i>Update Stock';
+                toggleButton.classList.remove('btn-warning');
+                toggleButton.classList.add('btn-outline-warning');
+
+                // Return focus to toggle button
+                toggleButton.focus();
+
+                // Reset form validation
+                const quantityInput = formArea.querySelector('input[type="number"]');
+                if (quantityInput) {
+                    quantityInput.setAttribute('aria-invalid', 'false');
+                }
+
+                announceToScreenReader(`Quantity editor closed for product ${productId}`);
+            }
+        }
+
+        function announceToScreenReader(message) {
+            const announcement = document.createElement('div');
+            announcement.setAttribute('aria-live', 'polite');
+            announcement.setAttribute('aria-atomic', 'true');
+            announcement.className = 'sr-only';
+            announcement.textContent = message;
+            document.body.appendChild(announcement);
+
+            setTimeout(() => {
+                document.body.removeChild(announcement);
+            }, 1000);
+        }
+
+        // Escape key to close forms
+        document.addEventListener('keydown', function(e) {
+            if (e.key === 'Escape') {
+                const openForms = document.querySelectorAll('.editQuantityArea:not(.d-none)');
+                openForms.forEach(form => {
+                    const productId = form.getAttribute('data-product-id');
+                    if (productId) {
+                        closeQuantityForm(productId);
+                    }
+                });
+            }
+        });
     });
 </script>
+}
+
+<style>
+    /* Enhanced table accessibility */
+    .table-hover tbody tr:hover {
+        background-color: rgba(0, 123, 255, 0.075);
+    }
+
+    .table-hover tbody tr:focus-within {
+        background-color: rgba(0, 123, 255, 0.1);
+        outline: 2px solid #0d6efd;
+        outline-offset: -2px;
+    }
+
+    .table-row-focused {
+        background-color: rgba(0, 123, 255, 0.1) !important;
+    }
+
+    /* Quantity form styling */
+    .editQuantityArea {
+        min-width: 200px;
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    }
+
+    /* Enhanced button accessibility */
+    .btn:focus {
+        box-shadow: 0 0 0 0.25rem rgba(13, 110, 253, 0.25);
+    }
+
+    /* Form control accessibility */
+    .form-control:focus {
+        border-color: #0d6efd;
+        box-shadow: 0 0 0 0.25rem rgba(13, 110, 253, 0.25);
+    }
+
+    .form-control[aria-invalid="true"] {
+        border-color: #dc3545;
+        box-shadow: 0 0 0 0.25rem rgba(220, 53, 69, 0.25);
+    }
+
+    /* Badge enhancements */
+    .badge {
+        font-weight: 500;
+    }
+
+    /* Stock level visual indicators */
+    .badge.bg-danger {
+        animation: pulse 2s infinite;
+    }
+
+    @@keyframes pulse {
+        0% { opacity: 1; }
+        50% { opacity: 0.7; }
+        100% { opacity: 1; }
+    }
+
+    /* Screen reader improvements */
+    .sr-only {
+        position: absolute !important;
+        width: 1px !important;
+        height: 1px !important;
+        padding: 0 !important;
+        margin: -1px !important;
+        overflow: hidden !important;
+        clip: rect(0, 0, 0, 0) !important;
+        white-space: nowrap !important;
+        border: 0 !important;
+    }
+
+    /* High contrast improvements */
+    @@media (prefers-contrast: high) {
+        .table {
+            border: 2px solid #000 !important;
+        }
+
+        .btn {
+            border-width: 2px !important;
+        }
+
+        .badge {
+            border: 1px solid #000 !important;
+        }
+    }
+
+    /* Reduced motion support */
+    @@media (prefers-reduced-motion: reduce) {
+        .badge.bg-danger {
+            animation: none;
+        }
+
+        * {
+            transition: none !important;
+        }
+    }
+
+    /* Focus management for complex interactions */
+    .editQuantityArea:not(.d-none) {
+        position: relative;
+        z-index: 10;
+    }
+
+    /* Improved spacing for mobile */
+    @@media (max-width: 768px) {
+        .table-responsive {
+            font-size: 0.875rem;
+        }
+
+        .btn-sm {
+            padding: 0.25rem 0.5rem;
+            font-size: 0.75rem;
+        }
+    }
+</style>
 

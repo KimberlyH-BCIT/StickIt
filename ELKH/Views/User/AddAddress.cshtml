@@ -1,86 +1,290 @@
 @model ELKH.ViewModels.ContactDetailVM
 @{
-    ViewData["Title"] = "Add Address";
+    ViewData["Title"] = "Add New Address - Shipping & Billing Information | User Dashboard";
 }
 
-<div class="row justify-content-center">
-    <div class="col-lg-6">
-        <nav aria-label="breadcrumb" class="mb-4">
+@section title {
+    <header class="mb-4">
+        <nav aria-label="breadcrumb">
             <ol class="breadcrumb">
-                <li class="breadcrumb-item"><a asp-action="Index">My Account</a></li>
-                <li class="breadcrumb-item"><a asp-action="Addresses">Addresses</a></li>
-                <li class="breadcrumb-item active">Add Address</li>
+                <li class="breadcrumb-item">
+                    <a asp-action="Index" aria-label="Return to dashboard">My Account</a>
+                </li>
+                <li class="breadcrumb-item">
+                    <a asp-action="Addresses" aria-label="Return to address list">Addresses</a>
+                </li>
+                <li class="breadcrumb-item active" aria-current="page">Add Address</li>
             </ol>
         </nav>
+        <h1 class="fw-bold">Add New Address</h1>
+        <p class="text-muted mb-0">
+            Create a new shipping or billing address for faster checkout
+        </p>
+    </header>
+}
 
-        <div class="card shadow-sm">
-            <div class="card-header fw-bold"><i class="bi bi-plus-circle me-2"></i>Add Address</div>
-            <div class="card-body p-4">
-                <form asp-action="AddAddress" method="post">
-                    @Html.AntiForgeryToken()
-                    <div asp-validation-summary="ModelOnly" class="alert alert-danger" role="alert"></div>
+        <main class="container py-4" role="main">
+            <div class="row justify-content-center">
+                <div class="col-lg-6">
+                    <section aria-labelledby="add-address-heading">
+                        <div class="card shadow-sm">
+                            <div class="card-header fw-bold">
+                                <h2 id="add-address-heading" class="mb-0 h5">
+                                    <i class="bi bi-plus-circle me-2" aria-hidden="true"></i>
+                                    Address Information
+                                </h2>
+                            </div>
+                            <div class="card-body p-4">
+                                <form asp-action="AddAddress" 
+                                      method="post"
+                                      novalidate
+                                      aria-labelledby="add-address-heading">
+                                    @Html.AntiForgeryToken()
+                                    <div asp-validation-summary="ModelOnly" 
+                                         class="alert alert-danger" 
+                                         role="alert"
+                                         aria-live="polite"
+                                         style="display: @(ViewData.ModelState.IsValid ? "none" : "block")">
+                                    </div>
 
-                    <div class="row g-3">
-                        <div class="col-md-6">
-                            <label asp-for="FirstName" class="form-label fw-semibold"></label>
-                            <input asp-for="FirstName" class="form-control" />
-                            <span asp-validation-for="FirstName" class="text-danger small"></span>
-                        </div>
-                        <div class="col-md-6">
-                            <label asp-for="LastName" class="form-label fw-semibold"></label>
-                            <input asp-for="LastName" class="form-control" />
-                            <span asp-validation-for="LastName" class="text-danger small"></span>
-                        </div>
-                        <div class="col-12">
-                            <label asp-for="PhoneNumber" class="form-label fw-semibold"></label>
-                            <input asp-for="PhoneNumber" class="form-control" placeholder="e.g. 604-555-0100" />
-                            <span asp-validation-for="PhoneNumber" class="text-danger small"></span>
-                        </div>
-                        <div class="col-12">
-                            <label asp-for="Street" class="form-label fw-semibold"></label>
-                            <input asp-for="Street" class="form-control" placeholder="123 Main St" />
-                            <span asp-validation-for="Street" class="text-danger small"></span>
-                        </div>
-                        <div class="col-md-5">
-                            <label asp-for="City" class="form-label fw-semibold"></label>
-                            <input asp-for="City" class="form-control" />
-                            <span asp-validation-for="City" class="text-danger small"></span>
-                        </div>
-                        <div class="col-md-4">
-                            <label asp-for="Province" class="form-label fw-semibold"></label>
-                            <input asp-for="Province" class="form-control" placeholder="BC" />
-                            <span asp-validation-for="Province" class="text-danger small"></span>
-                        </div>
-                        <div class="col-md-3">
-                            <label asp-for="PostCode" class="form-label fw-semibold"></label>
-                            <input asp-for="PostCode" class="form-control" placeholder="V6B 1A1" />
-                            <span asp-validation-for="PostCode" class="text-danger small"></span>
-                        </div>
-                        <div class="col-12">
-                            <label asp-for="Country" class="form-label fw-semibold"></label>
-                            <input asp-for="Country" class="form-control" />
-                            <span asp-validation-for="Country" class="text-danger small"></span>
-                        </div>
-                        <div class="col-12">
-                            <div class="form-check">
-                                <input asp-for="IsDefault" class="form-check-input" type="checkbox" />
-                                <label asp-for="IsDefault" class="form-check-label">Set as my default address</label>
+                                    <fieldset>
+                                        <legend class="sr-only">Personal information</legend>
+
+                                        <div class="row g-3">
+                                            <div class="col-md-6">
+                                                <label asp-for="FirstName" class="form-label fw-semibold">
+                                                    <span aria-hidden="true">*</span> First Name
+                                                </label>
+                                                <input asp-for="FirstName" 
+                                                       class="form-control" 
+                                                       required
+                                                       aria-describedby="firstname-error firstname-help"
+                                                       autocomplete="given-name" />
+                                                <small id="firstname-help" class="form-text text-muted">
+                                                    Enter the recipient's first name
+                                                </small>
+                                                <span id="firstname-error" asp-validation-for="FirstName" 
+                                                      class="text-danger small" role="alert" aria-live="polite"></span>
+                                            </div>
+                                            <div class="col-md-6">
+                                                <label asp-for="LastName" class="form-label fw-semibold">
+                                                    <span aria-hidden="true">*</span> Last Name
+                                                </label>
+                                                <input asp-for="LastName" 
+                                                       class="form-control" 
+                                                       required
+                                                       aria-describedby="lastname-error lastname-help"
+                                                       autocomplete="family-name" />
+                                                <small id="lastname-help" class="form-text text-muted">
+                                                    Enter the recipient's last name
+                                                </small>
+                                                <span id="lastname-error" asp-validation-for="LastName" 
+                                                      class="text-danger small" role="alert" aria-live="polite"></span>
+                                            </div>
+
+                                            <div class="col-12">
+                                                <label asp-for="PhoneNumber" class="form-label fw-semibold">
+                                                    <span aria-hidden="true">*</span> Phone Number
+                                                </label>
+                                                <input asp-for="PhoneNumber" 
+                                                       class="form-control" 
+                                                       placeholder="e.g. 604-555-0100"
+                                                       required
+                                                       aria-describedby="phone-error phone-help"
+                                                       autocomplete="tel"
+                                                       type="tel" />
+                                                <small id="phone-help" class="form-text text-muted">
+                                                    Include area code for delivery contact purposes
+                                                </small>
+                                                <span id="phone-error" asp-validation-for="PhoneNumber" 
+                                                      class="text-danger small" role="alert" aria-live="polite"></span>
+                                            </div>
+                                        </div>
+                                    </fieldset>
+
+                                    <fieldset class="mt-4">
+                                        <legend class="sr-only">Address details</legend>
+
+                                        <div class="row g-3">
+                                            <div class="col-12">
+                                                <label asp-for="Street" class="form-label fw-semibold">
+                                                    <span aria-hidden="true">*</span> Street Address
+                                                </label>
+                                                <input asp-for="Street" 
+                                                       class="form-control" 
+                                                       placeholder="123 Main Street, Apt 4B"
+                                                       required
+                                                       aria-describedby="street-error street-help"
+                                                       autocomplete="street-address" />
+                                                <small id="street-help" class="form-text text-muted">
+                                                    Include house number, street name, and apartment/unit if applicable
+                                                </small>
+                                                <span id="street-error" asp-validation-for="Street" 
+                                                      class="text-danger small" role="alert" aria-live="polite"></span>
+                                            </div>
+
+                                            <div class="col-md-5">
+                                                <label asp-for="City" class="form-label fw-semibold">
+                                                    <span aria-hidden="true">*</span> City
+                                                </label>
+                                                <input asp-for="City" 
+                                                       class="form-control" 
+                                                       required
+                                                       aria-describedby="city-error"
+                                                       autocomplete="address-level2"
+                                                       placeholder="Enter city name" />
+                                                <span id="city-error" asp-validation-for="City" 
+                                                      class="text-danger small" role="alert" aria-live="polite"></span>
+                                            </div>
+
+                                            <div class="col-md-4">
+                                                <label asp-for="Province" class="form-label fw-semibold">
+                                                    <span aria-hidden="true">*</span> Province/State
+                                                </label>
+                                                <input asp-for="Province" 
+                                                       class="form-control" 
+                                                       placeholder="BC"
+                                                       required
+                                                       aria-describedby="province-error"
+                                                       autocomplete="address-level1" />
+                                                <span id="province-error" asp-validation-for="Province" 
+                                                      class="text-danger small" role="alert" aria-live="polite"></span>
+                                            </div>
+
+                                            <div class="col-md-3">
+                                                <label asp-for="PostCode" class="form-label fw-semibold">
+                                                    <span aria-hidden="true">*</span> Postal Code
+                                                </label>
+                                                <input asp-for="PostCode" 
+                                                       class="form-control" 
+                                                       placeholder="V6B 1A1"
+                                                       required
+                                                       aria-describedby="postcode-error"
+                                                       autocomplete="postal-code" />
+                                                <span id="postcode-error" asp-validation-for="PostCode" 
+                                                      class="text-danger small" role="alert" aria-live="polite"></span>
+                                            </div>
+
+                                            <div class="col-12">
+                                                <label asp-for="Country" class="form-label fw-semibold">
+                                                    <span aria-hidden="true">*</span> Country
+                                                </label>
+                                                <input asp-for="Country" 
+                                                       class="form-control" 
+                                                       required
+                                                       aria-describedby="country-error"
+                                                       autocomplete="country-name"
+                                                       placeholder="Enter country name" />
+                                                <span id="country-error" asp-validation-for="Country" 
+                                                      class="text-danger small" role="alert" aria-live="polite"></span>
+                                            </div>
+                                        </div>
+                                    </fieldset>
+
+                                    <fieldset class="mt-4">
+                                        <legend class="sr-only">Address preferences</legend>
+
+                                        <div class="form-check">
+                                            <input asp-for="IsDefault" 
+                                                   class="form-check-input" 
+                                                   type="checkbox"
+                                                   aria-describedby="default-help" />
+                                            <label asp-for="IsDefault" class="form-check-label fw-semibold">
+                                                Set as my default address
+                                            </label>
+                                            <small id="default-help" class="form-text text-muted d-block mt-1">
+                                                Default address will be pre-selected during checkout
+                                            </small>
+                                        </div>
+                                    </fieldset>
+
+                                    <div class="d-flex gap-2 mt-4">
+                                        <button type="submit" 
+                                                class="btn btn-success px-4"
+                                                aria-describedby="save-help">
+                                            <i class="bi bi-check-circle me-1" aria-hidden="true"></i>Save Address
+                                        </button>
+                                        <a asp-action="Addresses" 
+                                           class="btn btn-outline-secondary"
+                                           aria-label="Cancel and return to address list">
+                                            Cancel
+                                        </a>
+                                        <small id="save-help" class="form-text text-muted d-block mt-2 w-100">
+                                            Address will be saved to your account for future use
+                                        </small>
+                                    </div>
+                                </form>
                             </div>
                         </div>
-                    </div>
-
-                    <div class="d-flex gap-2 mt-4">
-                        <button type="submit" class="btn btn-success px-4">
-                            <i class="bi bi-check-circle me-1"></i>Save Address
-                        </button>
-                        <a asp-action="Addresses" class="btn btn-outline-secondary">Cancel</a>
-                    </div>
-                </form>
+                    </section>
+                </div>
             </div>
-        </div>
-    </div>
-</div>
+        </main>
 
 @section Scripts {
-    <partial name="_ValidationScriptsPartial" />
+    @await Html.PartialAsync("_ValidationScriptsPartial")
+
+    <script>
+        // Enhanced form validation accessibility
+        document.addEventListener('DOMContentLoaded', function() {
+            // Real-time validation feedback
+            const requiredFields = document.querySelectorAll('[required]');
+
+            requiredFields.forEach(field => {
+                field.addEventListener('blur', function() {
+                    const errorElement = document.getElementById(this.id + '-error') || 
+                                        document.querySelector(`[data-valmsg-for="${this.name}"]`);
+
+                    if (this.value.trim() === '' && errorElement) {
+                        this.setAttribute('aria-invalid', 'true');
+                        if (!errorElement.textContent.trim()) {
+                            errorElement.textContent = `${this.labels[0]?.textContent?.replace('*', '').trim() || 'This field'} is required`;
+                        }
+                    } else if (errorElement && errorElement.textContent.trim() === '') {
+                        this.setAttribute('aria-invalid', 'false');
+                    }
+                });
+
+                field.addEventListener('input', function() {
+                    if (this.value.trim() !== '') {
+                        this.setAttribute('aria-invalid', 'false');
+                        const errorElement = document.getElementById(this.id + '-error') || 
+                                            document.querySelector(`[data-valmsg-for="${this.name}"]`);
+                        if (errorElement && errorElement.textContent.includes('is required')) {
+                            errorElement.textContent = '';
+                        }
+                    }
+                });
+            });
+
+            // Focus management for form submission
+            const form = document.querySelector('form');
+            if (form) {
+                form.addEventListener('submit', function(e) {
+                    const invalidFields = [];
+                    requiredFields.forEach(field => {
+                        if (field.value.trim() === '') {
+                            invalidFields.push(field.labels[0]?.textContent?.replace('*', '').trim() || field.name);
+                            field.setAttribute('aria-invalid', 'true');
+                        }
+                    });
+
+                    if (invalidFields.length > 0) {
+                        e.preventDefault();
+                        // Focus first invalid field
+                        const firstInvalidField = requiredFields.find(field => field.value.trim() === '');
+                        if (firstInvalidField) {
+                            firstInvalidField.focus();
+                        }
+                    }
+                });
+            }
+
+            // Country field default value
+            const countryField = document.querySelector('input[name="Country"]');
+            if (countryField && !countryField.value) {
+                countryField.value = 'Canada';
+            }
+        });
+    </script>
 }

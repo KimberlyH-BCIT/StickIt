@@ -1,7 +1,7 @@
 @model List<ELKH.ViewModels.ProductVM>
 
 @{
-    ViewData["Title"] = "Products";
+    ViewData["Title"] = "Products Management - Inventory Overview";
     Layout = "~/Views/Shared/_Layout.cshtml";
 
     string stockFilter  = ViewBag.StockFilter  as string ?? "";
@@ -17,37 +17,70 @@
     };
 }
 
-<div class="container-fluid mt-4 px-4 pb-5">
+<!-- Skip Links for Keyboard Navigation -->
+<nav class="skip-links sr-only-focusable mb-2" aria-label="Skip navigation">
+    <a href="#main-heading" class="skip-link btn btn-primary">Skip to products</a>
+    <a href="#filter-controls" class="skip-link btn btn-primary">Skip to filters</a>
+    <a href="#products-list" class="skip-link btn btn-primary">Skip to product list</a>
+</nav>
 
-    <div class="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-2">
-        <div>
-            <h2 class="fw-bold text-primary mb-0">Products</h2>
-            @if (!string.IsNullOrEmpty(filterLabel))
-            {
-                <span class="badge bg-secondary bg-opacity-10 text-secondary border mt-1">
-                    Filtered: @filterLabel
-                </span>
-            }
-        </div>
-        <a asp-action="Index" class="btn btn-outline-primary rounded-pill px-4">← Dashboard</a>
-    </div>
+<main role="main" aria-labelledby="main-heading">
+    <div class="container-fluid mt-4 px-4 pb-5">
+
+        <!-- Enhanced Header with Accessibility -->
+        <header class="products-header mb-4">
+            <div class="d-flex justify-content-between align-items-center flex-wrap gap-2">
+                <div>
+                    <h1 id="main-heading" class="fw-bold text-primary mb-0">Products Management</h1>
+                    @if (!string.IsNullOrEmpty(filterLabel))
+                    {
+                        <div class="mt-2">
+                            <span class="badge bg-secondary bg-opacity-10 text-secondary border"
+                                  role="status"
+                                  aria-label="Current filter: @filterLabel">
+                                Filtered: @filterLabel
+                            </span>
+                        </div>
+                    }
+                </div>
+                <nav aria-label="Return to dashboard">
+                    <a asp-action="Index" class="btn btn-outline-primary rounded-pill px-4">← Dashboard</a>
+                </nav>
+            </div>
+        </header>
 
     @if (TempData["Success"] != null)
     {
-        <div class="alert alert-success alert-dismissible fade show rounded-3" role="alert">
-            ✅ @TempData["Success"]
-            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        <div class="alert alert-success alert-dismissible fade show rounded-3" 
+             role="alert" 
+             aria-live="assertive"
+             aria-atomic="true">
+            <span aria-hidden="true">✅</span> @TempData["Success"]
+            <button type="button" 
+                    class="btn-close" 
+                    data-bs-dismiss="alert"
+                    aria-label="Close success message"></button>
         </div>
     }
 
-    <!-- ── Filter Bar ─────────────────────────────────────────── -->
-    <div class="card border-0 shadow-sm rounded-4 mb-4">
-        <div class="card-body p-4">
-            <form method="get" class="d-flex gap-2 mb-3">
-                <input type="hidden" name="stockFilter"  value="@stockFilter" />
-                <input type="hidden" name="activeFilter" value="@activeFilter" />
-                <input type="text" name="search" value="@ViewBag.Search"
-                       class="form-control rounded-pill"
+    <!-- Enhanced Filter Bar with Accessibility -->
+    <section aria-labelledby="filter-heading" id="filter-controls">
+        <h2 id="filter-heading" class="sr-only">Product Filter Controls</h2>
+
+        <div class="card border-0 shadow-sm rounded-4 mb-4">
+            <div class="card-body p-4">
+                <form method="get" 
+                      class="d-flex gap-2 mb-3" 
+                      aria-label="Filter products by search term">
+                    <input type="hidden" name="stockFilter"  value="@stockFilter" />
+                    <input type="hidden" name="activeFilter" value="@activeFilter" />
+                    <input type="text" 
+                           name="search" 
+                           value="@ViewBag.Search"
+                           class="form-control rounded-pill"
+                           placeholder="Search products by name..."
+                           aria-label="Search products by name"
+                           aria-describedby="search-help" />
                        placeholder="Search by name or category..." />
                 <button type="submit" class="btn btn-primary rounded-pill px-4">Search</button>
                 @if (!string.IsNullOrEmpty(ViewBag.Search as string) || !string.IsNullOrEmpty(stockFilter) || !string.IsNullOrEmpty(activeFilter))

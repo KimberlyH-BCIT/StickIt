@@ -1,31 +1,45 @@
 ﻿
 @*
 ╔══════════════════════════════════════════════════════════════════════════════════╗
-║ TABLE OF CONTENTS - _Layout.cshtml                                               ║
+║ TABLE OF CONTENTS - _Layout.cshtml (645 lines)                                   ║
 ╠══════════════════════════════════════════════════════════════════════════════════╣
-║ 1. HTML Document Head ...................................... Lines    4-25     ║
-║    - Meta tags, CSRF token generation, and external resource links              ║
+║ 1. HTML Document Head ...................................... Lines   34-105    ║
+║    - Meta tags, CSRF token generation, PWA manifest                             ║
+║    - Google Fonts integration for Kawaii theme                                  ║
 ║    - Security headers and responsive viewport configuration                      ║
+║    - Open Graph and Twitter Card meta tags for social sharing                   ║
 ║                                                                                  ║
-║ 2. Header Navigation ....................................... Lines   28-85     ║
+║ 2. Header Navigation ....................................... Lines  107-325    ║
 ║    - Top bar: brand logo and user authentication status                         ║
 ║    - Search bar: product search with autocomplete functionality                 ║
 ║    - Main navigation: category links and user account access                    ║
+║    - Mobile hamburger menu with responsive design                               ║
 ║                                                                                  ║
-║ 3. Main Content Area ....................................... Lines   87-95     ║
+║ 3. Main Content Area ....................................... Lines  327-375    ║
 ║    - Dynamic content container with alert notifications                         ║
+║    - TempData message handling with Bootstrap alerts                            ║
 ║    - Page-specific content injection point                                      ║
 ║                                                                                  ║
-║ 4. Footer Section .......................................... Lines   97-175    ║
+║ 4. Footer Section .......................................... Lines  377-475    ║
 ║    - Company information and contact details                                    ║
 ║    - Legal links: privacy policy, terms of service, accessibility              ║
 ║    - Social media links and newsletter signup                                   ║
+║    - Wishlist authentication modal                                              ║
 ║                                                                                  ║
-║ 5. Scripts Section ......................................... Lines  177-384    ║
-║    - Bootstrap framework and jQuery library loading                             ║
-║    - Custom JavaScript for search autocomplete                                  ║
-║    - AJAX functionality for cart and wishlist operations                        ║
+║ 5. Scripts Section ......................................... Lines  477-645    ║
+║    - Core libraries: jQuery, Bootstrap, validation                              ║
+║    - Custom modules: site.js, cart-ajax.js, kawaii-ui.js                       ║
+║    - Performance features: lazy-loading.js                                      ║
+║    - PWA functionality: service worker registration                             ║
+║    - Install prompts, offline detection, connection status                      ║
 ║    - Page-specific script injection point                                       ║
+║                                                                                  ║
+║ ARCHITECTURE NOTES:                                                              ║
+║ • PWA-ready with service worker and manifest                                    ║
+║ • Kawaii UI theme integration with Google Fonts                                 ║
+║ • CSRF protection with meta token for AJAX operations                           ║
+║ • Responsive design with mobile-first navigation                                ║
+║ • Performance optimization with lazy loading and caching                        ║
 ╚══════════════════════════════════════════════════════════════════════════════════╝
 *@
 
@@ -34,6 +48,7 @@
 <head>
     @using Microsoft.AspNetCore.Identity
     @using Microsoft.AspNetCore.Antiforgery
+    @using Microsoft.AspNetCore.Http.Extensions
     @inject SignInManager<IdentityUser> SignInManager
     @inject IAntiforgery AntiforgeryService
     <meta charset="utf-8" />
@@ -51,22 +66,187 @@
         var csrfToken = AntiforgeryService.GetAndStoreTokens(Context).RequestToken;
     }
     <meta name="csrf-token" content="@csrfToken" />
+
+    @* ═══════════════════════════════════════════════════════════════════════════════ *@
+    @* ║ PWA (Progressive Web App) Configuration                                      ║ *@
+    @* ═══════════════════════════════════════════════════════════════════════════════ *@
+
+    <!-- PWA Manifest -->
+    <link rel="manifest" href="~/manifest.json" />
+
+    <!-- Theme and Display Configuration -->
+    <meta name="theme-color" content="#6f42c1" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="default" />
+    <meta name="apple-mobile-web-app-title" content="ELKH" />
+    <meta name="msapplication-TileColor" content="#6f42c1" />
+    <meta name="msapplication-config" content="~/browserconfig.xml" />
+
+    <!-- Apple Touch Icons -->
+    <link rel="apple-touch-icon" sizes="180x180" href="~/logo-stickit.png" />
+    <link rel="icon" type="image/png" sizes="32x32" href="~/logo-stickit.png" />
+    <link rel="icon" type="image/png" sizes="16x16" href="~/logo-stickit.png" />
+    <link rel="mask-icon" href="~/logo-stickit.png" color="#6f42c1" />
+
+    <!-- Standard favicon -->
     <link rel="icon" type="image/png" href="~/logo-stickit.png" />
+
+    <!-- Open Graph for social sharing -->
+    <meta property="og:type" content="website" />
+    <meta property="og:title" content="@ViewData["Title"] - ELKH" />
+    <meta property="og:description" content="Your favorite online sticker store with kawaii and decorative stickers" />
+    <meta property="og:image" content="~/logo-stickit.png" />
+    <meta property="og:url" content="@Context.Request.GetDisplayUrl()" />
+
+    <!-- Twitter Card -->
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content="@ViewData["Title"] - ELKH" />
+    <meta name="twitter:description" content="Your favorite online sticker store with kawaii and decorative stickers" />
+    <meta name="twitter:image" content="~/logo-stickit.png" />
+
 <title>@ViewData["Title"] - ELKH</title>
     <script type="importmap"></script>
+
+    @* ═══════════════════════════════════════════════════════════════════════════════ *@
+    @* ║ Google Fonts for Kawaii Theme                                               ║ *@
+    @* ═══════════════════════════════════════════════════════════════════════════════ *@
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Sniglet:wght@400;800&family=Nunito:ital,wght@0,200..1000;1,200..1000&display=swap" rel="stylesheet">
+
     <link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.min.css" />
     <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
+    <link rel="stylesheet" href="~/css/kawaii-theme.css" asp-append-version="true" />
     <link rel="stylesheet" href="~/ELKH.styles.css" asp-append-version="true" />
+
+    <!-- Global Accessibility Styles -->
+    <style>
+        /* ═══════════════════════════════════════════════════════════════════════════ */
+        /* ║ GLOBAL ACCESSIBILITY STYLES - WCAG 2.1 AA COMPLIANCE                   ║ */
+        /* ═══════════════════════════════════════════════════════════════════════════ */
+
+        /* Skip links for keyboard navigation */
+        .skip-links {
+            position: absolute;
+            top: -40px;
+            left: 6px;
+            z-index: 10000;
+        }
+
+        .skip-links a {
+            position: absolute;
+            top: 0;
+            background: #000;
+            color: #fff;
+            padding: 8px 16px;
+            text-decoration: none;
+            border-radius: 0 0 4px 4px;
+            font-weight: bold;
+            transition: top 0.3s;
+        }
+
+        .skip-links a:focus,
+        .skip-links a:active {
+            top: 0;
+            position: relative;
+        }
+
+        /* Enhanced focus indicators */
+        *:focus,
+        *:focus-visible {
+            outline: 2px solid #0066cc !important;
+            outline-offset: 2px !important;
+        }
+
+        .btn:focus,
+        .form-control:focus,
+        .form-select:focus {
+            border-color: #0066cc !important;
+            box-shadow: 0 0 0 0.25rem rgba(0, 102, 204, 0.25) !important;
+        }
+
+        /* High contrast mode support */
+        @@media (prefers-contrast: high) {
+            .text-white-50 {
+                color: #ccc !important;
+            }
+
+            .text-muted {
+                color: #666 !important;
+            }
+
+            .border-secondary {
+                border-color: #999 !important;
+            }
+        }
+
+        /* Reduced motion support */
+        @@media (prefers-reduced-motion: reduce) {
+            *, *::before, *::after {
+                animation-duration: 0.01ms !important;
+                animation-iteration-count: 1 !important;
+                transition-duration: 0.01ms !important;
+                scroll-behavior: auto !important;
+            }
+        }
+
+        /* Screen reader only content */
+        .sr-only {
+            position: absolute !important;
+            width: 1px !important;
+            height: 1px !important;
+            padding: 0 !important;
+            margin: -1px !important;
+            overflow: hidden !important;
+            clip: rect(0, 0, 0, 0) !important;
+            white-space: nowrap !important;
+            border: 0 !important;
+        }
+
+        /* Ensure sufficient color contrast */
+        .text-white-50 {
+            color: rgba(255, 255, 255, 0.75) !important; /* Improved contrast */
+        }
+
+        /* Focus management for dynamic content */
+        [aria-live="polite"] {
+            position: relative;
+        }
+
+        /* Accessible dropdown indicators */
+        .dropdown-toggle::after {
+            margin-left: 0.5em;
+        }
+
+        /* Mobile touch target sizes (minimum 44x44px) */
+        @@media (max-width: 768px) {
+            .btn, .nav-link, .dropdown-item {
+                min-height: 44px;
+                min-width: 44px;
+                padding: 12px 16px;
+            }
+        }
+    </style>
 </head>
 
 <body>
-<header class="site-header bg-white box-shadow mb-3">
+    <!-- Skip Navigation Links for Screen Reader and Keyboard Users -->
+    <div class="skip-links">
+        <a href="#main-content">Skip to main content</a>
+        <a href="#site-navigation">Skip to navigation</a>
+        <a href="#search-form">Skip to search</a>
+        <a href="#site-footer">Skip to footer</a>
+    </div>
+
+<header class="site-header bg-white box-shadow mb-3" role="banner" id="site-header">
 
     @* â‘  Top bar: brand + login greeting *@
     <div class="header-top border-bottom py-2">
         <div class="container-fluid d-flex align-items-center justify-content-between flex-wrap gap-2">
-            <a class="navbar-brand mb-0 h1" asp-area="" asp-controller="Home" asp-action="Index">ELKH</a>
-            <div class="d-flex align-items-center flex-wrap gap-2">
+            <a class="navbar-brand mb-0 h1" 
+               asp-area="" asp-controller="Home" asp-action="Index"
+               aria-label="ELKH - Go to homepage">ELKH</a>
+            <div class="d-flex align-items-center flex-wrap gap-2" role="navigation" aria-label="User account and cart actions">
                 <partial name="_LoginPartial" />
                 <partial name="_CartIconPartial" />
             </div>
@@ -77,32 +257,46 @@
         <div class="header-search py-2">
             <div class="container-fluid d-flex justify-content-center">
                 <div class="header-search-wrap position-relative">
-                    <form asp-controller="Product" asp-action="Index" method="get" class="d-flex" role="search">
+                     <form asp-controller="Product" asp-action="Index" method="get" class="d-flex" role="search" id="search-form">
+                        <label for="productNameInput" class="sr-only">Search for products</label>
                         <input id="productNameInput"
                                type="search"
                                name="search"
                                class="form-control"
                                placeholder="Search products"
                                autocomplete="off"
-                               aria-label="Search products" />
-                        <button type="submit" class="btn btn-outline-secondary ms-2">Search</button>
+                               aria-label="Search for products"
+                               aria-describedby="productNameSuggestions"
+                               aria-expanded="false"
+                               aria-autocomplete="list"
+                               role="combobox" />
+                        <button type="submit" class="btn btn-outline-secondary ms-2" aria-label="Submit search">
+                            <span class="sr-only">Search</span>
+                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16" aria-hidden="true">
+                                <path d="M11.742 10.344a6.5 6.5 0 1 0-1.397 1.398h-.001c.03.04.062.078.098.115l3.85 3.85a1 1 0 0 0 1.415-1.414l-3.85-3.85a1.007 1.007 0 0 0-.115-.1zM12 6.5a5.5 5.5 0 1 1-11 0 5.5 5.5 0 0 1 11 0z"/>
+                            </svg>
+                        </button>
                     </form>
                     <div id="productNameSuggestions"
                          class="list-group position-absolute w-100 shadow-sm"
-                         style="z-index:1050;display:none;"></div>
+                         style="z-index:1050;display:none;"
+                         role="listbox"
+                         aria-label="Search suggestions"></div>
                 </div>
             </div>
         </div>
 
         @* â‘¢ Nav strip â€” sits at the bottom of the header, separated by border-top *@
-        <nav class="header-nav border-top">
+        <nav class="header-nav border-top" role="navigation" aria-label="Main navigation" id="site-navigation">
             <div class="container-fluid d-flex align-items-center">
                 <button class="nav-hamburger flex-shrink-0 me-2"
                         type="button"
                         data-bs-toggle="offcanvas"
                         data-bs-target="#navOffcanvas"
                         aria-controls="navOffcanvas"
+                        aria-expanded="false"
                         aria-label="Open navigation menu">
+                    <span class="sr-only">Menu</span>
                     <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" fill="currentColor" viewBox="0 0 16 16" aria-hidden="true">
                         <path fill-rule="evenodd" d="M2.5 12a.5.5 0 0 1 .5-.5h10a.5.5 0 0 1 0 1H3a.5.5 0 0 1-.5-.5zm0-4a.5.5 0 0 1 .5-.5h10a.5.5 0 0 1 0 1H3a.5.5 0 0 1-.5-.5zm0-4a.5.5 0 0 1 .5-.5h10a.5.5 0 0 1 0 1H3a.5.5 0 0 1-.5-.5z"/>
                     </svg>
@@ -134,10 +328,10 @@
                             <a class="nav-link text-dark" asp-area="" asp-controller="Product" asp-action="Index">Products</a>
                         </li>
                         <li class="nav-item dropdown">
-                            <a class="nav-link dropdown-toggle text-dark" href="#" id="navbarCategoriesDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                            <a class="nav-link dropdown-toggle text-dark" href="#" id="navbarCategoriesDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false" aria-haspopup="true">
                                 Categories
                             </a>
-                            <ul class="dropdown-menu" aria-labelledby="navbarCategoriesDropdown">
+                            <ul class="dropdown-menu" aria-labelledby="navbarCategoriesDropdown" role="menu">
                                 <li><a class="dropdown-item" asp-controller="Product" asp-action="Index" asp-route-category="Canadian">Canadian</a></li>
                                 <li><a class="dropdown-item" asp-controller="Product" asp-action="Index" asp-route-category="Christmas">Christmas</a></li>
                                 <li><a class="dropdown-item" asp-controller="Product" asp-action="Index" asp-route-category="Cute Animals">Cute Animals</a></li>
@@ -294,30 +488,28 @@
                     "info" => "alert-info",
                     _ => "alert-secondary"
                 };
+
                 if (!string.IsNullOrEmpty(text))
                 {
+                    var isOnCartPage = Context.Request.Path.StartsWithSegments("/Cart");
+
+                    var globalAlertVM = new ELKH.ViewModels.AlertBannerVM
+                    {
+                        Message = $"<strong>{text}</strong>",
+                        AlertType = alertClass,
+                        Icon = level == "success" ? "check-circle-fill" : null,
+                        IconType = "bootstrap",
+                        Dismissible = true,
+                        CssClasses = "alert-dismissible fade show d-flex align-items-center justify-content-between",
+                        ActionText = (level == "success" && isCartMessage && !isOnCartPage) ? "View Cart" : null,
+                        ActionController = (level == "success" && isCartMessage && !isOnCartPage) ? "Cart" : null,
+                        ActionAction = (level == "success" && isCartMessage && !isOnCartPage) ? "Index" : null,
+                        ActionButtonClass = "btn btn-sm btn-success me-2"
+                    };
         <div class="row">
             <div class="col-12">
-                <div id="globalAlert" class="alert @alertClass alert-dismissible fade show d-flex align-items-center justify-content-between" role="alert">
-                    <div>
-                        @if (level == "success")
-                        {
-                            <i class="bi bi-check-circle-fill me-2"></i>
-                        }
-                        <strong id="alertMessage">@text</strong>
-                    </div>
-                    <div class="d-flex gap-2 align-items-center">
-                        @{
-                            var isOnCartPage = Context.Request.Path.StartsWithSegments("/Cart");
-                        }
-                        @if (level == "success" && isCartMessage && !isOnCartPage)
-                        {
-                            <a asp-controller="Cart" asp-action="Index" class="btn btn-sm btn-success">
-                                <i class="bi bi-cart-check me-1"></i>View Cart
-                            </a>
-                        }
-                        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-                    </div>
+                <div id="globalAlert">
+                    @await Html.PartialAsync("_AlertBannerPartial", globalAlertVM)
                 </div>
             </div>
         </div>
@@ -327,7 +519,7 @@
         <!-- ═══════════════════════════════════════════════════════════════════════════ -->
         <!-- ║ Main Content Area - Dynamic page content injection point              ║ -->
         <!-- ═══════════════════════════════════════════════════════════════════════════ -->
-        <main role="main" class="pb-3">
+        <main role="main" class="pb-3" id="main-content">
             @RenderBody()
         </main>
 
@@ -336,13 +528,14 @@
     <!-- ════════════════════════════════════════════════════════════════════════════════ -->
     <!-- ║ Site Footer - Company information, legal links, and contact details       ║ -->
     <!-- ════════════════════════════════════════════════════════════════════════════════ -->
-    <footer style="background:#111;">
+    <footer style="background:#111;" role="contentinfo" id="site-footer">
         <div class="container py-5 text-white-50 small">
             <div class="row g-4">
 
                 <div class="col-6 col-lg-3">
-                    <div class="text-white fw-bold mb-2">Useful links</div>
-                    <ul class="list-unstyled mb-0">
+                    <h3 class="text-white fw-bold mb-2 h5">Useful links</h3>
+                    <nav aria-label="Footer useful links">
+                        <ul class="list-unstyled mb-0">
                         <li class="mb-2"><a class="text-white-50 text-decoration-none" asp-controller="Home" asp-action="Index">Home</a></li>
                         <li class="mb-2"><a class="text-white-50 text-decoration-none" asp-controller="Product" asp-action="Index">All Products</a></li>
                         <li class="mb-2"><a class="text-white-50 text-decoration-none" asp-controller="Cart" asp-action="Index">Cart</a></li>
@@ -355,42 +548,65 @@
                             <li><a class="text-white-50 text-decoration-none" asp-area="Identity" asp-page="/Account/Login">My Orders</a></li>
                         }
                     </ul>
+                    </nav>
                 </div>
 
                 <div class="col-6 col-lg-3">
-                    <div class="text-white fw-bold mb-2">Support</div>
-                    <ul class="list-unstyled mb-0">
-                        <li class="mb-2"><a class="text-white-50 text-decoration-none" asp-controller="Home" asp-action="Contact">Contact</a></li>
-                        <li class="mb-2"><a class="text-white-50 text-decoration-none" asp-controller="Home" asp-action="FAQ">FAQ</a></li>
-                        <li class="mb-2"><a class="text-white-50 text-decoration-none" asp-controller="Home" asp-action="Shipping">Shipping</a></li>
-                        <li><a class="text-white-50 text-decoration-none" asp-controller="Home" asp-action="Returns">Returns</a></li>
-                    </ul>
+                    <h3 class="text-white fw-bold mb-2 h5">Support</h3>
+                    <nav aria-label="Footer support links">
+                        <ul class="list-unstyled mb-0">
+                            <li class="mb-2"><a class="text-white-50 text-decoration-none" asp-controller="Home" asp-action="Contact">Contact</a></li>
+                            <li class="mb-2"><a class="text-white-50 text-decoration-none" asp-controller="Home" asp-action="FAQ">FAQ</a></li>
+                            <li class="mb-2"><a class="text-white-50 text-decoration-none" asp-controller="Home" asp-action="Shipping">Shipping</a></li>
+                            <li><a class="text-white-50 text-decoration-none" asp-controller="Home" asp-action="Returns">Returns</a></li>
+                        </ul>
+                    </nav>
                 </div>
 
                 <div class="col-6 col-lg-3">
-                    <div class="text-white fw-bold mb-2">Company</div>
-                    <ul class="list-unstyled mb-0">
+                    <h3 class="text-white fw-bold mb-2 h5">Company</h3>
+                    <nav aria-label="Footer company links">
+                        <ul class="list-unstyled mb-0">
                         <li class="mb-2"><a class="text-white-50 text-decoration-none" asp-controller="Home" asp-action="About">About</a></li>
                         <li class="mb-2"><a class="text-white-50 text-decoration-none" asp-controller="Home" asp-action="Privacy">Privacy</a></li>
                         <li class="mb-2"><a class="text-white-50 text-decoration-none" asp-controller="Home" asp-action="Terms">Terms</a></li>
                         <li><a class="text-white-50 text-decoration-none" asp-controller="Home" asp-action="Accessibility">Accessibility</a></li>
                     </ul>
+                    </nav>
                 </div>
 
                 <div class="col-12 col-lg-3">
-                    <div class="text-white fw-bold mb-2">Stay connected</div>
+                    <h3 class="text-white fw-bold mb-2 h5">Stay connected</h3>
                     <div class="text-white-50 mb-3">Subscribe for product drops and updates.</div>
 
-                    <form id="newsletter-form" class="d-flex gap-2 mb-3">
-                        <input id="newsletter-email" name="email" class="form-control form-control-sm" type="email" placeholder="Email address" aria-label="Email address for newsletter" autocomplete="email" required />
-                        <button id="newsletter-btn" class="btn btn-warning btn-sm fw-bold" type="submit">Subscribe</button>
+                    <form id="newsletter-form" class="d-flex gap-2 mb-3" aria-label="Newsletter subscription">
+                        <label for="newsletter-email" class="sr-only">Email address for newsletter</label>
+                        <input id="newsletter-email" 
+                               name="email" 
+                               class="form-control form-control-sm" 
+                               type="email" 
+                               placeholder="Email address" 
+                               aria-label="Email address for newsletter" 
+                               autocomplete="email" 
+                               required 
+                               aria-describedby="newsletter-description" />
+                        <button id="newsletter-btn" class="btn btn-warning btn-sm fw-bold" type="submit" aria-label="Subscribe to newsletter">Subscribe</button>
                     </form>
+                    <div id="newsletter-description" class="sr-only">Subscribe to receive product updates and promotional emails</div>
 
-                    <div class="d-flex gap-3 fs-5">
-                        <a class="text-white-50" href="#"><i class="bi bi-instagram"></i></a>
-                        <a class="text-white-50" href="#"><i class="bi bi-facebook"></i></a>
-                        <a class="text-white-50" href="#"><i class="bi bi-youtube"></i></a>
-                        <a class="text-white-50" href="#"><i class="bi bi-tiktok"></i></a>
+                    <div class="d-flex gap-3 fs-5" role="navigation" aria-label="Social media links">
+                        <a class="text-white-50" href="#" aria-label="Follow us on Instagram">
+                            <i class="bi bi-instagram" aria-hidden="true"></i>
+                        </a>
+                        <a class="text-white-50" href="#" aria-label="Follow us on Facebook">
+                            <i class="bi bi-facebook" aria-hidden="true"></i>
+                        </a>
+                        <a class="text-white-50" href="#" aria-label="Follow us on YouTube">
+                            <i class="bi bi-youtube" aria-hidden="true"></i>
+                        </a>
+                        <a class="text-white-50" href="#" aria-label="Follow us on TikTok">
+                            <i class="bi bi-tiktok" aria-hidden="true"></i>
+                        </a>
                     </div>
                 </div>
 
@@ -408,14 +624,14 @@
         </div>
     <!-- Wishlist sign-in prompt (shared across all pages; shown when a guest clicks any wishlist button) -->
     <div class="modal fade" id="wishlistSignInModal" tabindex="-1"
-         aria-labelledby="wishlistSignInModalLabel" aria-hidden="true">
+         aria-labelledby="wishlistSignInModalLabel" aria-hidden="true" role="dialog">
         <div class="modal-dialog modal-dialog-centered">
             <div class="modal-content">
                 <div class="modal-header">
                     <h5 class="modal-title" id="wishlistSignInModalLabel">
-                        <i class="bi bi-heart me-2"></i>Save to Wishlist
+                        <i class="bi bi-heart me-2" aria-hidden="true"></i>Save to Wishlist
                     </h5>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close modal"></button>
                 </div>
                 <div class="modal-body">
                     <p class="mb-0">Sign in to save items to your wishlist and access them any time.</p>
@@ -423,13 +639,15 @@
                 <div class="modal-footer justify-content-start gap-2">
                     <a asp-area="Identity" asp-page="/Account/Login"
                        asp-route-returnUrl="@(Context.Request.Path + Context.Request.QueryString)"
-                       class="btn btn-dark">
-                        <i class="bi bi-box-arrow-in-right me-1"></i>Sign In
+                       class="btn btn-dark"
+                       aria-label="Sign in to your account">
+                        <i class="bi bi-box-arrow-in-right me-1" aria-hidden="true"></i>Sign In
                     </a>
                     <a asp-area="Identity" asp-page="/Account/Register"
                        asp-route-returnUrl="@(Context.Request.Path + Context.Request.QueryString)"
-                       class="btn btn-outline-secondary">
-                        <i class="bi bi-person-plus me-1"></i>Create an Account
+                       class="btn btn-outline-secondary"
+                       aria-label="Create a new account">
+                        <i class="bi bi-person-plus me-1" aria-hidden="true"></i>Create an Account
                     </a>
                 </div>
             </div>
@@ -443,6 +661,156 @@
     <script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
     <script src="~/js/site.js" asp-append-version="true"></script>
     <script src="~/js/cart-ajax.js" asp-append-version="true"></script>
+
+    @* ═══════════════════════════════════════════════════════════════════════════════ *@
+    @* ║ Kawaii UI Components                                                         ║ *@
+    @* ═══════════════════════════════════════════════════════════════════════════════ *@
+    <script src="~/js/kawaii-ui.js" asp-append-version="true"></script>
+
+    @* ═══════════════════════════════════════════════════════════════════════════════ *@
+    @* ║ Image Optimization & Lazy Loading                                           ║ *@
+    @* ═══════════════════════════════════════════════════════════════════════════════ *@
+    <script src="~/js/lazy-loading.js" asp-append-version="true"></script>
+
+    @* ═══════════════════════════════════════════════════════════════════════════════ *@
+    @* ║ Progressive Web App (PWA) Service Worker Registration                       ║ *@
+    @* ═══════════════════════════════════════════════════════════════════════════════ *@
+    <script>
+        // PWA Service Worker Registration
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', async () => {
+                try {
+                    const registration = await navigator.serviceWorker.register('/sw.js');
+                    console.log('PWA: Service Worker registered successfully:', registration.scope);
+
+                    // Handle service worker updates
+                    registration.addEventListener('updatefound', () => {
+                        const newWorker = registration.installing;
+                        if (newWorker) {
+                            newWorker.addEventListener('statechange', () => {
+                                if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
+                                    // New content available, show update notification
+                                    if (confirm('New version available! Refresh to update?')) {
+                                        window.location.reload();
+                                    }
+                                }
+                            });
+                        }
+                    });
+                } catch (error) {
+                    console.log('PWA: Service Worker registration failed:', error);
+                }
+            });
+        }
+
+        // PWA Install Prompt
+        let deferredPrompt;
+
+        window.addEventListener('beforeinstallprompt', (e) => {
+            console.log('PWA: Install prompt available');
+            e.preventDefault();
+            deferredPrompt = e;
+
+            // Show custom install button or banner
+            showInstallPromotion();
+        });
+
+        window.addEventListener('appinstalled', (evt) => {
+            console.log('PWA: App was installed successfully');
+            hideInstallPromotion();
+        });
+
+        function showInstallPromotion() {
+            // Create install promotion banner
+            if (document.getElementById('pwa-install-banner')) return;
+
+            const banner = document.createElement('div');
+            banner.id = 'pwa-install-banner';
+            banner.className = 'alert alert-info alert-dismissible fade show d-flex align-items-center justify-content-between mb-0';
+            banner.style.cssText = 'position: fixed; top: 0; left: 0; right: 0; z-index: 9999; border-radius: 0; margin: 0;';
+            banner.setAttribute('role', 'banner');
+            banner.setAttribute('aria-live', 'polite');
+            banner.setAttribute('aria-label', 'Install app notification');
+            banner.innerHTML = `
+                <div class="d-flex align-items-center">
+                    <i class="bi bi-download me-2" aria-hidden="true"></i>
+                    <span>Install ELKH app for a better shopping experience!</span>
+                </div>
+                <div class="d-flex gap-2">
+                    <button class="btn btn-sm btn-primary" onclick="installPWA()" aria-label="Install ELKH app">Install</button>
+                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close install notification"></button>
+                </div>
+            `;
+
+            document.body.prepend(banner);
+
+            // Auto-hide after 10 seconds
+            setTimeout(() => {
+                if (banner.parentNode) {
+                    banner.remove();
+                }
+            }, 10000);
+        }
+
+        function hideInstallPromotion() {
+            const banner = document.getElementById('pwa-install-banner');
+            if (banner) {
+                banner.remove();
+            }
+        }
+
+        function installPWA() {
+            if (deferredPrompt) {
+                deferredPrompt.prompt();
+                deferredPrompt.userChoice.then((choiceResult) => {
+                    if (choiceResult.outcome === 'accepted') {
+                        console.log('PWA: User accepted the install prompt');
+                    } else {
+                        console.log('PWA: User dismissed the install prompt');
+                    }
+                    deferredPrompt = null;
+                    hideInstallPromotion();
+                });
+            }
+        }
+
+        // Online/Offline status handling
+        function updateConnectionStatus() {
+            if (navigator.onLine) {
+                console.log('PWA: Back online');
+                document.body.classList.remove('offline');
+
+                // Hide offline indicator if present
+                const offlineIndicator = document.getElementById('offline-indicator');
+                if (offlineIndicator) {
+                    offlineIndicator.remove();
+                }
+            } else {
+                console.log('PWA: Gone offline');
+                document.body.classList.add('offline');
+
+                // Show offline indicator
+                if (!document.getElementById('offline-indicator')) {
+                    const indicator = document.createElement('div');
+                    indicator.id = 'offline-indicator';
+                    indicator.className = 'alert alert-warning alert-dismissible mb-0 text-center';
+                    indicator.style.cssText = 'position: fixed; bottom: 0; left: 0; right: 0; z-index: 9999; border-radius: 0;';
+                    indicator.innerHTML = `
+                        <i class="bi bi-wifi-off me-2"></i>You're offline. Some features may be limited.
+                        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                    `;
+                    document.body.appendChild(indicator);
+                }
+            }
+        }
+
+        window.addEventListener('online', updateConnectionStatus);
+        window.addEventListener('offline', updateConnectionStatus);
+
+        // Initial status check
+        updateConnectionStatus();
+    </script>
+
     @await Html.PartialAsync("_ValidationScriptsPartial")
 
     <!-- Page-specific script injection point for additional functionality -->
