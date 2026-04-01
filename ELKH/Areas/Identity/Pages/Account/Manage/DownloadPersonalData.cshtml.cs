@@ -91,7 +91,9 @@ namespace ELKH.Areas.Identity.Pages.Account.Manage
         {
             _userManager = userManager;
             _logger = logger;
-        }        public IActionResult OnGet()
+        }
+
+        public IActionResult OnGet()
         {
             return NotFound();
         }
