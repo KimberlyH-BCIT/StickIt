@@ -1,4 +1,4 @@
-﻿using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations;
 using System.Collections.Generic;
 
 namespace ELKH.Models
@@ -82,6 +82,6 @@ public ICollection<TransactionModel>? Transactions { get; set; }
 
 // Relationship with Order
 public ICollection<OrderModel> Orders { get; set; } = new List<OrderModel>();
-        public string UserId { get; internal set; }
+        public string UserId { get; set; } = string.Empty;
     }
 }
