@@ -15,17 +15,17 @@ namespace ELKH.Controllers
     /// <remarks>
     /// TABLE OF CONTENTS (771 lines)
     /// ================================================================================
-    /// 1. Constructor & Dependencies ................................... Lines   55-75
+    /// 1. Constructor and Dependencies ................................... Lines   55-75
     ///    - IRegisteredUserProfileRepo, IRegisteredUserLogRepo, IContactDetailRepo
     ///    - IRatingService, IStoreReviewService, ILogger injection
     /// 
-    /// 2. User Dashboard & Profile Management ......................... Lines   77-200
+    /// 2. User Dashboard and Profile Management ......................... Lines   77-200
     ///    - Index()                               // GET: User dashboard with activity summary
     ///    - Profile()                             // GET: View/edit profile form
     ///    - Profile() POST                        // POST: Update profile with validation
     ///    - GetProfileData()                      // AJAX: Profile data for dynamic updates
     /// 
-    /// 3. Account History & Analytics .................................. Lines  202-280
+    /// 3. Account History and Analytics .................................. Lines  202-280
     ///    - History()                             // GET: Login history and activity tracking
     ///    - LoginActivity()                       // GET: Detailed login analytics
     ///    - AccountSummary()                      // GET: Account metrics and statistics
@@ -40,13 +40,13 @@ namespace ELKH.Controllers
     ///    - DeleteAddressConfirmed() POST         // POST: Confirm address deletion
     ///    - SetDefaultAddress() POST              // POST: Set primary address
     /// 
-    /// 5. Order History & Management ................................... Lines  502-620
+    /// 5. Order History and Management ................................... Lines  502-620
     ///    - OrderHistory()                        // GET: User's order history with pagination
     ///    - OrderDetails(id)                      // GET: Detailed order view
     ///    - TrackOrder(id)                        // GET: Order tracking information
     ///    - CancelOrder() POST                    // POST: Order cancellation requests
     /// 
-    /// 6. Wishlist & Preferences ...................................... Lines  622-720
+    /// 6. Wishlist and Preferences ...................................... Lines  622-720
     ///    - WishlistManagement()                  // GET: Wishlist items and management
     ///    - UpdatePreferences() POST              // POST: User preferences and settings
     ///    - NotificationSettings()                // GET/POST: Email and SMS preferences
