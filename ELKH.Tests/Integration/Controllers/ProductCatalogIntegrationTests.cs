@@ -64,13 +64,13 @@ public class ProductCatalogIntegrationTests : IClassFixture<ELKHWebApplicationFa
         var product = await db.Products.FirstAsync();
 
         // Act
-        var response = await _client.GetAsync($"/Product/Details/{product.ProductId}");
+        var response = await _client.GetAsync($"/Product/Details/{product.PkProductId}");
 
         // Assert
         response.StatusCode.Should().Be(HttpStatusCode.OK);
         var content = await response.Content.ReadAsStringAsync();
         
-        content.Should().Contain(product.ProductName);
+        content.Should().Contain(product.Name);
         content.Should().Contain(product.Description);
         content.Should().Contain(product.Price.ToString("C")); // Price formatting
     }
