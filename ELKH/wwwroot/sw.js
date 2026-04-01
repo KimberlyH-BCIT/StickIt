@@ -108,6 +108,22 @@ self.addEventListener('fetch', event => {
   const request = event.request;
   const url = new URL(request.url);
 
+  // =====================================================================
+  // FILTER OUT UNSUPPORTED URL SCHEMES
+  // =====================================================================
+  // Chrome extensions, browser extensions, and other special schemes
+  // cannot be cached by Service Workers. Skip these to prevent errors.
+  const unsupportedSchemes = ['chrome-extension:', 'moz-extension:', 'safari-extension:', 'edge-extension:'];
+  if (unsupportedSchemes.some(scheme => request.url.startsWith(scheme))) {
+    // Let the browser handle extension requests normally
+    return;
+  }
+
+  // Only handle http/https requests - skip blob:, data:, file:, etc.
+  if (!request.url.startsWith('http://') && !request.url.startsWith('https://')) {
+    return;
+  }
+
   // Only handle GET requests - POST/PUT/DELETE go directly to network
   // This prevents interference with form submissions and API mutations
   if (request.method !== 'GET') {

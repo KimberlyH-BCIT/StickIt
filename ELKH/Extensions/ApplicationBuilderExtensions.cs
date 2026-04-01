@@ -178,6 +178,23 @@ namespace ELKH.Extensions
                 // Prevent Adobe Flash and PDF readers from making cross-domain requests.
                 context.Response.Headers["X-Permitted-Cross-Domain-Policies"] = "none";
 
+                // =====================================================================
+                // CONTENT SECURITY POLICY (CSP) - DISABLED
+                // =====================================================================
+                // CSP has been disabled to prevent compatibility issues with browser
+                // extensions and third-party scripts. This reduces security but improves
+                // compatibility and developer experience.
+                // 
+                // WARNING: Disabling CSP removes protection against:
+                // - Cross-Site Scripting (XSS) attacks
+                // - Data injection attacks
+                // - Unauthorized script execution
+                // 
+                // To re-enable CSP, uncomment the code below and adjust the policy
+                // as needed for your third-party integrations.
+                // =====================================================================
+
+                /*
                 // Primary browser-side XSS defence: restrict sources for scripts, styles,
                 // images, and other resource types to same-origin by default.
                 // PayPal SDK is loaded from www.paypal.com; it communicates with the PayPal
@@ -201,6 +218,7 @@ namespace ELKH.Extensions
                     $"connect-src {connectSrc}; " +
                     "frame-src https://www.paypal.com https://www.sandbox.paypal.com https://www.google.com; " +
                     "frame-ancestors 'self';";
+                */
 
                 await next();
             });
