@@ -1,8 +1,3 @@
-using ELKH.Data;
-using ELKH.Models;
-using Microsoft.EntityFrameworkCore;
-using Microsoft.Extensions.Logging;
-
 namespace ELKH.Services;
 
 /// <summary>
@@ -52,17 +47,8 @@ namespace ELKH.Services;
 /// • FreeShipping: Shipping cost waived regardless of order value
 /// • Future: Category-specific, user-tier, BOGO implementations
 /// </remarks>
-public class CouponService : ICouponService
+public class CouponService(ApplicationDbContext context, ILogger<CouponService> logger) : ICouponService
 {
-    private readonly ApplicationDbContext _context;
-    private readonly ILogger<CouponService> _logger;
-
-    public CouponService(ApplicationDbContext context, ILogger<CouponService> logger)
-    {
-        _context = context;
-        _logger = logger;
-    }
-
     #region Validation & Application
 
     /// <summary>
@@ -76,46 +62,46 @@ public class CouponService : ICouponService
 
         var normalizedCode = NormalizeCouponCode(couponCode);
         
-        var coupon = await _context.Coupons
+        var coupon = await context.Coupons
             .AsNoTracking()
             .FirstOrDefaultAsync(c => c.Code == normalizedCode);
 
         if (coupon == null)
         {
-            _logger.LogInformation("Coupon validation failed: Code '{CouponCode}' not found", couponCode);
+            logger.LogInformation("Coupon validation failed: Code '{CouponCode}' not found", couponCode);
             return null;
         }
 
         // Check if coupon is active
         if (!coupon.IsActive)
         {
-            _logger.LogInformation("Coupon validation failed: Code '{CouponCode}' is inactive", couponCode);
+            logger.LogInformation("Coupon validation failed: Code '{CouponCode}' is inactive", couponCode);
             return null;
         }
 
         // Check expiration dates
         if (IsExpired(coupon))
         {
-            _logger.LogInformation("Coupon validation failed: Code '{CouponCode}' is expired", couponCode);
+            logger.LogInformation("Coupon validation failed: Code '{CouponCode}' is expired", couponCode);
             return null;
         }
 
         // Check usage limits
         if (!HasUsageRemaining(coupon))
         {
-            _logger.LogInformation("Coupon validation failed: Code '{CouponCode}' usage limit exceeded", couponCode);
+            logger.LogInformation("Coupon validation failed: Code '{CouponCode}' usage limit exceeded", couponCode);
             return null;
         }
 
         // Check minimum order value
         if (orderSubtotal < coupon.MinimumOrderValue)
         {
-            _logger.LogInformation("Coupon validation failed: Order subtotal {Subtotal:C} is below minimum {MinOrder:C} for coupon '{CouponCode}'", 
+            logger.LogInformation("Coupon validation failed: Order subtotal {Subtotal:C} is below minimum {MinOrder:C} for coupon '{CouponCode}'", 
                 orderSubtotal, coupon.MinimumOrderValue, couponCode);
             return null;
         }
 
-        _logger.LogInformation("Coupon validation successful: Code '{CouponCode}' is valid for order subtotal {Subtotal:C}", 
+        logger.LogInformation("Coupon validation successful: Code '{CouponCode}' is valid for order subtotal {Subtotal:C}", 
             couponCode, orderSubtotal);
         return coupon;
     }
@@ -140,7 +126,7 @@ public class CouponService : ICouponService
                 if (coupon.MaxDiscountAmount.HasValue && discountAmount > coupon.MaxDiscountAmount.Value)
                 {
                     discountAmount = coupon.MaxDiscountAmount.Value;
-                    _logger.LogInformation("Percentage discount capped at {MaxDiscount:C} for coupon '{CouponCode}'", 
+                    logger.LogInformation("Percentage discount capped at {MaxDiscount:C} for coupon '{CouponCode}'", 
                         coupon.MaxDiscountAmount.Value, coupon.Code);
                 }
                 break;
@@ -156,7 +142,7 @@ public class CouponService : ICouponService
                 break;
 
             default:
-                _logger.LogWarning("Unknown discount type '{DiscountType}' for coupon '{CouponCode}'", 
+                logger.LogWarning("Unknown discount type '{DiscountType}' for coupon '{CouponCode}'", 
                     coupon.DiscountType, coupon.Code);
                 break;
         }
@@ -165,7 +151,7 @@ public class CouponService : ICouponService
         var maxPossibleDiscount = orderSubtotal + (coupon.DiscountType.ToUpperInvariant() == "FREESHIPPING" ? shippingCost : 0);
         discountAmount = Math.Min(discountAmount, maxPossibleDiscount);
 
-        _logger.LogInformation("Calculated discount amount {DiscountAmount:C} for coupon '{CouponCode}' on order {Subtotal:C}", 
+        logger.LogInformation("Calculated discount amount {DiscountAmount:C} for coupon '{CouponCode}' on order {Subtotal:C}", 
             discountAmount, coupon.Code, orderSubtotal);
 
         return Math.Max(0, discountAmount); // Ensure non-negative
@@ -191,19 +177,19 @@ public class CouponService : ICouponService
             AppliedAt = DateTime.UtcNow
         };
 
-        _context.OrderCoupons.Add(orderCoupon);
+        context.OrderCoupons.Add(orderCoupon);
 
         // Increment coupon usage count
-        var coupon = await _context.Coupons.FindAsync(couponId);
+        var coupon = await context.Coupons.FindAsync(couponId);
         if (coupon != null)
         {
             coupon.CurrentUsageCount++;
             coupon.UpdatedAt = DateTime.UtcNow;
         }
 
-        await _context.SaveChangesAsync();
+        await context.SaveChangesAsync();
 
-        _logger.LogInformation("Recorded coupon usage: Coupon {CouponId} used in order {OrderId} for discount {DiscountAmount:C}", 
+        logger.LogInformation("Recorded coupon usage: Coupon {CouponId} used in order {OrderId} for discount {DiscountAmount:C}", 
             couponId, orderId, discountAmount);
     }
 
@@ -212,13 +198,13 @@ public class CouponService : ICouponService
     /// </summary>
     public async Task<CouponUsageStats> GetCouponUsageStatsAsync(int couponId)
     {
-        var usages = await _context.OrderCoupons
+        var usages = await context.OrderCoupons
             .Where(oc => oc.FkCouponId == couponId)
             .Include(oc => oc.Order)
             .AsNoTracking()
             .ToListAsync();
 
-        if (!usages.Any())
+        if (usages.Count == 0)
         {
             return new CouponUsageStats();
         }
@@ -246,7 +232,7 @@ public class CouponService : ICouponService
     {
         var now = DateTime.UtcNow;
         
-        return await _context.Coupons
+        return await context.Coupons
             .AsNoTracking()
             .Where(c => c.IsActive &&
                        (c.ValidFrom == null || c.ValidFrom <= now) &&
@@ -261,7 +247,7 @@ public class CouponService : ICouponService
     /// </summary>
     public async Task<List<CouponModel>> GetAllCouponsAsync(bool includeInactive = false, bool includeExpired = false)
     {
-        var query = _context.Coupons.AsNoTracking().AsQueryable();
+        var query = context.Coupons.AsNoTracking().AsQueryable();
 
         if (!includeInactive)
         {
@@ -284,7 +270,7 @@ public class CouponService : ICouponService
     /// </summary>
     public async Task<CouponModel?> GetCouponByIdAsync(int couponId)
     {
-        return await _context.Coupons
+        return await context.Coupons
             .AsNoTracking()
             .FirstOrDefaultAsync(c => c.PkCouponId == couponId);
     }
@@ -302,10 +288,10 @@ public class CouponService : ICouponService
         // Validate business rules
         ValidateDiscountConfiguration(coupon);
 
-        _context.Coupons.Add(coupon);
-        await _context.SaveChangesAsync();
+        context.Coupons.Add(coupon);
+        await context.SaveChangesAsync();
 
-        _logger.LogInformation("Created new coupon: {CouponCode} ({DiscountType}: {DiscountValue})", 
+        logger.LogInformation("Created new coupon: {CouponCode} ({DiscountType}: {DiscountValue})", 
             coupon.Code, coupon.DiscountType, coupon.DiscountValue);
 
         return coupon;
@@ -323,10 +309,10 @@ public class CouponService : ICouponService
         // Validate business rules
         ValidateDiscountConfiguration(coupon);
 
-        _context.Coupons.Update(coupon);
-        await _context.SaveChangesAsync();
+        context.Coupons.Update(coupon);
+        await context.SaveChangesAsync();
 
-        _logger.LogInformation("Updated coupon: {CouponCode}", coupon.Code);
+        logger.LogInformation("Updated coupon: {CouponCode}", coupon.Code);
     }
 
     /// <summary>
@@ -334,14 +320,14 @@ public class CouponService : ICouponService
     /// </summary>
     public async Task DeactivateCouponAsync(int couponId)
     {
-        var coupon = await _context.Coupons.FindAsync(couponId);
+        var coupon = await context.Coupons.FindAsync(couponId);
         if (coupon != null)
         {
             coupon.IsActive = false;
             coupon.UpdatedAt = DateTime.UtcNow;
-            await _context.SaveChangesAsync();
+            await context.SaveChangesAsync();
 
-            _logger.LogInformation("Deactivated coupon: {CouponCode}", coupon.Code);
+            logger.LogInformation("Deactivated coupon: {CouponCode}", coupon.Code);
         }
     }
 

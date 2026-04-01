@@ -104,8 +104,8 @@ public class OrderController : AuthenticatedControllerBase
         var productDict = await _productService.GetByIdsAsync(productIds);
 
         var productVms = order.OrderItems
-            .Select(oi => productDict.ContainsKey(oi.FkProductId)
-                ? productDict[oi.FkProductId]
+            .Select(oi => productDict.TryGetValue(oi.FkProductId, out var product)
+                ? product
                 : null)
             .ToList();
 

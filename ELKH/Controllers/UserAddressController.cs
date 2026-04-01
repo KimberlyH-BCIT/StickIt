@@ -12,6 +12,73 @@ namespace ELKH.Controllers;
 /// Handles CRUD operations for shipping and billing addresses.
 /// </summary>
 /// <remarks>
+/// TABLE OF CONTENTS (373 lines)
+/// ================================================================================
+/// 1. Constructor & Dependencies ................................. Lines   38-49
+///    - IContactDetailRepo for address data operations
+///    - IRegisteredUserLogRepo for user activity logging
+///    - IUserService and ApplicationDbContext via UserControllerBase
+/// 
+/// 2. Address Listing ......................................... Lines   51-77
+///    - Index()                            // Display paginated address list
+///    - User address retrieval with security validation
+/// 
+/// 3. Address Creation ........................................ Lines   79-137
+///    - Create()                           // GET: Display new address form
+///    - Create(ContactDetailVM)            // POST: Process new address creation
+///    - Model validation and user ownership assignment
+/// 
+/// 4. Address Editing ........................................ Lines  139-215
+///    - Edit(int)                          // GET: Display edit form
+///    - Edit(ContactDetailVM)              // POST: Process address updates
+///    - Ownership validation and security checks
+/// 
+/// 5. Address Deletion ....................................... Lines  217-290
+///    - Delete(int)                        // GET: Display delete confirmation
+///    - DeleteConfirmed(int)               // POST: Process address deletion
+///    - Default address protection and validation
+/// 
+/// 6. Default Address Management ............................. Lines  292-373
+///    - SetDefault(int)                    // POST: Set address as default
+///    - Automatic default management and user activity logging
+/// ================================================================================
+/// 
+/// ARCHITECTURAL CONTEXT:
+/// • Extracted from UserController for focused address management responsibility
+/// • Inherits UserControllerBase providing user authentication and common user operations
+/// • Uses Repository pattern for data access abstraction and testability
+/// • Integrates activity logging for audit trails and user behavior tracking
+/// 
+/// BUSINESS LOGIC:
+/// • Each user maintains their own address book with multiple addresses
+/// • One address can be marked as default for streamlined checkout experience
+/// • Address ownership is strictly enforced - users can only access their own addresses
+/// • Default address management ensures users always have a primary shipping destination
+/// 
+/// SECURITY & AUTHORIZATION:
+/// • Inherits authentication requirements from UserControllerBase
+/// • All operations include address ownership validation
+/// • User isolation enforced through registered user ID filtering
+/// • Anti-forgery token validation for all state-changing operations
+/// 
+/// DATA VALIDATION:
+/// • Model validation using ContactDetailVM with data annotations
+/// • Business rule validation for default address management
+/// • Input sanitization and validation for all user-provided data
+/// • Address format validation and normalization
+/// 
+/// PERFORMANCE CONSIDERATIONS:
+/// • Efficient address queries filtered by user ID to minimize data access
+/// • Repository pattern enables caching and query optimization
+/// • Minimal database queries through strategic entity loading
+/// • Activity logging designed for asynchronous processing to avoid blocking UI
+/// 
+/// INTEGRATION POINTS:
+/// • IContactDetailRepo for address persistence and retrieval
+/// • IRegisteredUserLogRepo for user activity tracking and audit trails
+/// • UserControllerBase for common user authentication and operations
+/// • ContactDetailVM for validated data transfer between controller and views
+/// 
 /// <para><strong>Extracted from UserController</strong></para>
 /// This controller handles all address-related functionality that was previously
 /// in the monolithic UserController, providing focused address management.

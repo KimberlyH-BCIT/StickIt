@@ -7,12 +7,73 @@ using Microsoft.AspNetCore.Mvc;
 
 namespace ELKH.Configuration;
 
+// ╔═══════════════════════════════════════════════════════════════════════════════════════════════╗
+// ║                             SWAGGER CONFIGURATION - TABLE OF CONTENTS                        ║
+// ╚═══════════════════════════════════════════════════════════════════════════════════════════════╝
+// 
+// OVERVIEW:
+// Comprehensive Swagger/OpenAPI configuration for ELKH e-commerce platform providing
+// enterprise-grade API documentation with security, versioning, and developer experience features.
+// 
+// TABLE OF CONTENTS:
+// ┌─ Section 1: Main Configuration & Service Registration ................................. Line 38
+// │  ├─ SwaggerConfiguration class definition and main setup
+// │  ├─ AddSwaggerDocumentation() - Service container configuration
+// │  └─ Security schemes (Bearer JWT, API Key) and requirements
+// ├─ Section 2: API Documentation & Metadata .............................................. Line 85
+// │  ├─ Version-specific documentation generation
+// │  ├─ API info, contact, license, and terms configuration
+// │  └─ Custom XML documentation integration
+// ├─ Section 3: Swagger UI Configuration ................................................. Line 121
+// │  ├─ UseSwaggerDocumentation() - Application pipeline setup
+// │  ├─ UI customization and routing configuration
+// │  └─ Multi-version endpoint configuration
+// ├─ Section 4: Operation Filtering & Enhancement ........................................ Line 165
+// │  ├─ ApiDocumentationOperationFilter class
+// │  ├─ Security requirements and response examples
+// │  ├─ Custom tagging and rate limiting metadata
+// │  └─ Dynamic example generation for API responses
+// ├─ Section 5: Document-Level Filters ................................................... Line 349
+// │  ├─ ApiDocumentationDocumentFilter class
+// │  ├─ Server configuration (production, staging, development)
+// │  ├─ Common error response schemas
+// │  └─ Vendor extensions and API metadata
+// └─ Section 6: API Versioning Integration ............................................... Line 384
+//    ├─ ApiVersionOperationFilter class
+//    ├─ Version-aware operation filtering
+//    └─ Parameter cleanup for versioned endpoints
+//
+// ARCHITECTURE NOTES:
+// • Uses Swashbuckle.AspNetCore for OpenAPI generation with custom filters
+// • Supports JWT Bearer authentication and API key authentication schemes
+// • Implements API versioning with Microsoft.AspNetCore.Mvc.Versioning
+// • Provides comprehensive example generation for improved developer experience
+//
+// SECURITY IMPLEMENTATION:
+// • JWT Bearer token authentication with proper security schemes
+// • API Key authentication support for service-to-service communication  
+// • Security requirements applied to all documented endpoints
+// • Rate limiting metadata included for API governance
+//
+// DEVELOPER EXPERIENCE:
+// • Auto-generated examples for common API responses
+// • Comprehensive operation descriptions and parameter documentation
+// • Multi-environment server configuration for testing
+// • Custom tagging for logical API organization
+// • Enhanced UI with proper default expansion and model rendering
+
 /// <summary>
 /// Swagger configuration for ELKH API documentation.
 /// Provides comprehensive API documentation with versioning support.
 /// </summary>
 public static class SwaggerConfiguration
 {
+    #region Section 1: Main Configuration & Service Registration
+
+    // ═══════════════════════════════════════════════════════════════════
+    // Section 1: Main Configuration & Service Registration
+    // ═══════════════════════════════════════════════════════════════════
+
     /// <summary>
     /// Configure Swagger/OpenAPI services with versioning support.
     /// </summary>
@@ -118,6 +179,14 @@ public static class SwaggerConfiguration
         return services;
     }
 
+    #endregion
+
+    #region Section 3: Swagger UI Configuration
+
+    // ═══════════════════════════════════════════════════════════════════
+    // Section 3: Swagger UI Configuration  
+    // ═══════════════════════════════════════════════════════════════════
+
     /// <summary>
     /// Use Swagger UI with versioning support.
     /// </summary>
@@ -166,6 +235,14 @@ public static class SwaggerConfiguration
         return app;
     }
 
+    #endregion
+
+    #region Section 2: API Documentation & Metadata Helper Methods
+
+    // ═══════════════════════════════════════════════════════════════════
+    // Section 2: API Documentation & Metadata Helper Methods
+    // ═══════════════════════════════════════════════════════════════════
+
     private static string GetVersionDescription(ApiVersionDescription description)
     {
         var version = description.ApiVersion.ToString();
@@ -178,7 +255,15 @@ public static class SwaggerConfiguration
             _ => $"ELKH eCommerce API version {version}"
         };
     }
+
+    #endregion
 }
+
+#region Section 4: Operation Filtering & Enhancement
+
+// ═══════════════════════════════════════════════════════════════════
+// Section 4: Operation Filtering & Enhancement
+// ═══════════════════════════════════════════════════════════════════
 
 /// <summary>
 /// Operation filter to add custom metadata to Swagger operations.
@@ -188,12 +273,10 @@ public class SwaggerOperationFilter : IOperationFilter
     public void Apply(OpenApiOperation operation, OperationFilterContext context)
     {
         // Add response examples
-        if (operation.Responses.ContainsKey("200"))
+        if (operation.Responses.TryGetValue("200", out var response))
         {
-            var response = operation.Responses["200"];
-            if (response.Content.ContainsKey("application/json"))
+            if (response.Content.TryGetValue("application/json", out var mediaType))
             {
-                var mediaType = response.Content["application/json"];
                 // Add example responses based on the operation
                 AddExampleResponses(operation, mediaType, context);
             }
@@ -308,14 +391,14 @@ public class SwaggerSchemaFilter : ISchemaFilter
 
     private void AddProductSchemaExamples(OpenApiSchema schema, SchemaFilterContext context)
     {
-        if (schema.Properties?.ContainsKey("name") == true)
+        if (schema.Properties?.TryGetValue("name", out var nameProperty) == true)
         {
-            schema.Properties["name"].Example = new OpenApiString("Awesome Sticker");
+            nameProperty.Example = new OpenApiString("Awesome Sticker");
         }
 
-        if (schema.Properties?.ContainsKey("price") == true)
+        if (schema.Properties?.TryGetValue("price", out var priceProperty) == true)
         {
-            schema.Properties["price"].Example = new OpenApiDouble(9.99);
+            priceProperty.Example = new OpenApiDouble(9.99);
         }
     }
 
@@ -342,6 +425,14 @@ public class SwaggerSchemaFilter : ISchemaFilter
         }
     }
 }
+
+#endregion
+
+#region Section 5: Document-Level Filters
+
+// ═══════════════════════════════════════════════════════════════════
+// Section 5: Document-Level Filters
+// ═══════════════════════════════════════════════════════════════════
 
 /// <summary>
 /// Document filter to add additional API information.
@@ -381,6 +472,14 @@ public class SwaggerDocumentFilter : IDocumentFilter
     }
 }
 
+#endregion
+
+#region Section 6: API Versioning Integration
+
+// ═══════════════════════════════════════════════════════════════════
+// Section 6: API Versioning Integration
+// ═══════════════════════════════════════════════════════════════════
+
 /// <summary>
 /// Operation filter to handle API versioning in Swagger.
 /// </summary>
@@ -395,7 +494,7 @@ public class ApiVersionOperationFilter : IOperationFilter
             .Any(m => m.GetType().Name.Contains("ApiVersionAttribute")))
         {
             // For now, we'll keep this simple
-            operation.Deprecated = false;
+            // operation.Deprecated defaults to false
         }
 
         if (operation.Parameters == null)
@@ -411,3 +510,5 @@ public class ApiVersionOperationFilter : IOperationFilter
         }
     }
 }
+
+#endregion

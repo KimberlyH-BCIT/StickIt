@@ -4,6 +4,7 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using System.Globalization;
 
 namespace ELKH.Controllers
 {
@@ -87,6 +88,9 @@ namespace ELKH.Controllers
 
         private readonly ApplicationDbContext _context;
         private readonly UserManager<IdentityUser> _userManager;
+
+        // CA1861: Constant arrays to avoid repeated allocations
+        private static readonly string[] StaffRoles = { "Manager", "Staff", "Admin" };
 
         public ManagerController(ApplicationDbContext context, UserManager<IdentityUser> userManager)
         {
@@ -311,7 +315,7 @@ namespace ELKH.Controllers
             // ─────────────────────────────────────────────────────────
             double avgRating = 0;
             int ratingCount = 0;
-            if (p.ProductRatings != null && p.ProductRatings.Any())
+            if (p.ProductRatings != null && p.ProductRatings.Count > 0)
             {
                 var approved = p.ProductRatings.Where(r => r.Approved && !r.IsDeleted).ToList();
                 ratingCount = approved.Count;
@@ -426,24 +430,36 @@ namespace ELKH.Controllers
         /// </remarks>
         public async Task<IActionResult> ListOfStaffAccount(string search)
         {
-            var staffRoles = new[] { "Manager", "Staff", "Admin" };
+            // Optimized approach: Get all users and their roles in bulk to avoid N+1 queries
             var allUsers = _userManager.Users.ToList();
+
+            // Get all user-role relationships in a single query
+            var userRoles = from user in _context.Users
+                           join userRole in _context.UserRoles on user.Id equals userRole.UserId
+                           join role in _context.Roles on userRole.RoleId equals role.Id
+                           select new { UserId = user.Id, RoleName = role.Name };
+
+            var userRoleDict = userRoles.ToList()
+                .GroupBy(ur => ur.UserId)
+                .ToDictionary(g => g.Key, g => g.Select(ur => ur.RoleName).ToList());
+
             var staffList = new List<UserListVM>();
 
-            // N+1 pattern: GetRolesAsync called for each user
-            // Acceptable for small staff counts (<100 users)
+            // Process users with pre-loaded roles (no more N+1 queries)
             foreach (var user in allUsers)
             {
-                var roles = await _userManager.GetRolesAsync(user);
+                var roles = userRoleDict.TryGetValue(user.Id, out var userRoleList) 
+                    ? userRoleList 
+                    : new List<string>();
 
                 // Include user if they have any staff-related role
-                if (roles.Any(r => staffRoles.Contains(r)))
+                if (roles.Any(r => StaffRoles.Contains(r)))
                     staffList.Add(new UserListVM
                     {
                         Id = user.Id,
                         Email = user.Email ?? "",
                         Name = user.UserName ?? "",
-                        Roles = roles.ToList()
+                        Roles = roles
                     });
             }
 
@@ -569,7 +585,7 @@ namespace ELKH.Controllers
 
             // Check for duplicate name
             var existingMethod = await _context.ShippingMethods
-                .FirstOrDefaultAsync(sm => sm.Name.ToLower() == model.Name.ToLower());
+                .FirstOrDefaultAsync(sm => sm.Name.ToLower(CultureInfo.InvariantCulture) == model.Name.ToLower(CultureInfo.InvariantCulture));
 
             if (existingMethod != null)
             {

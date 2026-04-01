@@ -10,6 +10,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Caching.Memory;
 using Microsoft.Extensions.Logging;
+using System.Globalization;
 
 namespace ELKH.Controllers
 {
@@ -182,8 +183,8 @@ namespace ELKH.Controllers
             var monthlyTx = allTransactions.Where(t => t.TransactionDate >= monthStart).ToList();
 
             // ── Summary card metrics ──────────────────────────────────────
-            decimal weeklyGross = weeklyTx.Any() ? weeklyTx.Sum(t => t.Amount) : 0m;
-            decimal monthlyGross = monthlyTx.Any() ? monthlyTx.Sum(t => t.Amount) : 0m;
+            decimal weeklyGross = weeklyTx.Count > 0 ? weeklyTx.Sum(t => t.Amount) : 0m;
+            decimal monthlyGross = monthlyTx.Count > 0 ? monthlyTx.Sum(t => t.Amount) : 0m;
             int weeklyOrders = weeklyTx.Count;
             int monthlyOrders = monthlyTx.Count;
             int totalOrders = await _context.Orders.CountAsync();
@@ -196,8 +197,8 @@ namespace ELKH.Controllers
             {
                 var day = now.AddDays(-d).Date;
                 var dayTx = allTransactions.Where(t => t.TransactionDate.Date == day).ToList();
-                weeklyLabels.Add(day.ToString("ddd dd"));
-                weeklySalesData.Add(dayTx.Any() ? dayTx.Sum(t => t.Amount) : 0m);
+                weeklyLabels.Add(day.ToString("ddd dd", CultureInfo.InvariantCulture));
+                weeklySalesData.Add(dayTx.Count > 0 ? dayTx.Sum(t => t.Amount) : 0m);
             }
 
             // ── Monthly chart data: last 12 months ────────────────────────
@@ -211,8 +212,8 @@ namespace ELKH.Controllers
                     .Where(t => t.TransactionDate.Year == month.Year
                              && t.TransactionDate.Month == month.Month)
                     .ToList();
-                monthlyLabels.Add(month.ToString("MMM yyyy"));
-                monthlySalesData.Add(monthTx.Any() ? monthTx.Sum(t => t.Amount) : 0m);
+                monthlyLabels.Add(month.ToString("MMM yyyy", CultureInfo.InvariantCulture));
+                monthlySalesData.Add(monthTx.Count > 0 ? monthTx.Sum(t => t.Amount) : 0m);
             }
 
             // ── Top 5 products by revenue ─────────────────────────────────
@@ -585,7 +586,7 @@ WHERE PkProductId NOT IN (SELECT rowid FROM ProductFTS);
             var keys = _context.CachedFuzzyKeys.ToList();
             var registryCount = 0;
 
-            if (keys.Any())
+            if (keys.Count > 0)
             {
                 // Remove each key from IMemoryCache
                 foreach (var k in keys)

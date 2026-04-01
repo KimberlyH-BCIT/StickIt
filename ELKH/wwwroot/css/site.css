@@ -1,58 +1,25 @@
+/* ═══════════════════════════════════════════════════════════════════════════════════════ */
+/* ║ SITE-SPECIFIC STYLES - NON-DESIGN-SYSTEM UTILITIES                                  ║ */
+/* ═══════════════════════════════════════════════════════════════════════════════════════ */
+/*
+ * This file contains site-specific styles that are not part of the kawaii design system.
+ * For design system components, use kawaii-theme.css instead.
+ * 
+ * WHAT BELONGS HERE:
+ * - Base HTML/body layout styles
+ * - Responsive font sizing
+ * - Admin/backend specific overrides
+ * - Legacy compatibility styles
+ * 
+ * WHAT DOESN'T BELONG HERE:
+ * - Component styles (use kawaii-theme.css)
+ * - Design system variables (use kawaii-theme.css)
+ * - Customer-facing UI components (use kawaii-theme.css)
+ */
 
-/* =====================================================
-   STICKIT SITE STYLESHEET
-
-   TABLE OF CONTENTS
-   ==================
-   1. BASE SETTINGS................................................ lines 6-34
-      - HTML/Body base styles
-      - Responsive font sizing
-      - Gradient background
-      - Main container (.kawaii-container)
-
-   2. NAVBAR...................................................... lines 36-70
-      - Navbar styling (.kawaii-navbar)
-      - Logo styling
-      - Brand and link styles with hover effects
-
-   3. HERO SECTION................................................ lines 72-118
-      - Hero box container with border
-      - Hero image, title, subtitle
-      - Brand text and description
-
-   4. BUTTONS.................................................... lines 120-151
-      - Purple kawaii buttons (.kawaii-btn-purple)
-      - Pink kawaii buttons (.kawaii-btn-pink)
-
-   5. STICKIT THEME (Pastel + Mint).......................... lines 152-265
-      - Theme CSS variables and color tokens
-      - Mint gradient buttons (.stickit-btn, .stickit-btn-outline)
-      - Bootstrap button overrides for mint theme
-      - Navbar and footer pastel styling
-
-   6. PASTEL REPLACEMENTS FOR DARK BLOCKS.................... lines 266-288
-      - Overrides for .bg-dark and dark inline styles
-      - Converts dark backgrounds to soft pastel gradients
-
-   7. FOOTER..................................................... lines 290-301
-      - Kawaii footer styling with rounded corners
-
-   8. DECORATIVE ELEMENTS........................................ lines 303-311
-      - Top gradient bar
-
-   9. FORM IMPROVEMENTS.......................................... lines 313-344
-      - Focus states for buttons and inputs
-      - Placeholder animations
-      - Footer inline style overrides
-
-   10. CARDS & POLISH............................................ lines 345-350
-       - Card and accordion border radius
-       - Shadow improvements
-===================================================== */
-
-/* =====================================================
-   BASE SETTINGS
-===================================================== */
+/* ═══════════════════════════════════════════════════════════════════════════════════════ */
+/* ║ RESPONSIVE BASE SETTINGS                                                             ║ */
+/* ═══════════════════════════════════════════════════════════════════════════════════════ */
 
 html {
     font-size: 14px;
@@ -71,395 +38,112 @@ html, body {
 body {
     display: flex;
     flex-direction: column;
-    background: linear-gradient(to bottom, #dff6f5, #e8e4ff);
-    font-family: 'Nunito', sans-serif;
+    font-family: var(--font-body);
 }
 
-.kawaii-container {
-    flex: 1;
-    background: white;
-    padding: 25px 30px;
-    border-radius: 25px;
-    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.05);
+/* ═══════════════════════════════════════════════════════════════════════════════════════ */
+/* ║ ADMIN/BACKEND COMPATIBILITY STYLES                                                   ║ */
+/* ═══════════════════════════════════════════════════════════════════════════════════════ */
+
+/* Admin pages should maintain Bootstrap styling */
+.admin-page .btn,
+.manager-page .btn {
+    /* Ensure admin buttons don't inherit kawaii styles */
+    border-radius: 0.375rem !important;
+    font-family: inherit !important;
 }
 
-
-/* =====================================================
-   NAVBAR
-===================================================== */
-
-.kawaii-navbar {
-    background-color: #ffffff;
-    border-radius: 20px;
-    margin: 15px;
-    padding: 10px 20px;
+/* Legacy compatibility for admin forms */
+.admin-form input,
+.admin-form select,
+.admin-form textarea {
+    border-radius: 0.375rem;
+    border: 1px solid #ced4da;
 }
 
-.navbar-logo {
-    height: 80px;
-    width: auto;
-}
+/* ═══════════════════════════════════════════════════════════════════════════════════════ */
+/* ║ ACCESSIBILITY ENHANCEMENTS                                                           ║ */
+/* ═══════════════════════════════════════════════════════════════════════════════════════ */
 
-.kawaii-brand {
-    font-weight: bold;
-    font-size: 22px;
-    color: #a084dc !important;
-}
-
-.kawaii-link {
-    color: #6c63ff !important;
-    font-weight: 600;
-    border-radius: 20px;
-    padding: 6px 14px;
-    transition: 0.3s;
-}
-
-    .kawaii-link:hover {
-        background-color: #ffd6ec;
-        color: #ff6fa5 !important;
-    }
-
-
-/* =====================================================
-   HERO SECTION
-===================================================== */
-
-.hero-box {
-    padding: 30px 15px;
-    border-radius: 30px;
-    border: 3px solid #f8c8dc;
-    background: #ffffff;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    gap: 14px; 
-}
-
-    .hero-box h1,
-    .hero-box p {
-        margin: 0;
-    }
-
-.hero-image {
-    width: 200px;
-    height: auto;
-}
-
-.hero-title {
-    font-size: 40px;
-    font-weight: 800;
-    color: #6c63ff;
-}
-
-.brand-text {
-    color: #ff6fa5;
-}
-
-.hero-subtitle {
-    font-size: 20px;
-    color: #a084dc;
-}
-
-.hero-description {
-    font-size: 16px;
-    color: #555;
-    max-width: 600px;
-    text-align: center;
-}
-
-
-/* =====================================================
-   BUTTONS
-===================================================== */
-
-.kawaii-btn-purple {
-    background: #6c63ff;
-    color: white;
-    border-radius: 30px;
-    padding: 10px 25px;
-    font-weight: 600;
-    border: none;
-    transition: 0.3s;
-}
-
-    .kawaii-btn-purple:hover {
-        background: #574fd6;
-    }
-
-.kawaii-btn-pink {
-    background: #ff6fa5;
-    color: white;
-    border-radius: 30px;
-    padding: 10px 25px;
-    font-weight: 600;
-    border: none;
-    transition: 0.3s;
-}
-
-    .kawaii-btn-pink:hover {
-        background: #e85b92;
-    }
-
-/* =========================
-   StickIt — Pastel + Mint Theme (clean)
-   - Keeps Bootstrap layout
-   - Replaces dark blocks with soft pastel gradients
-   - Makes primary buttons mint (solid + outline)
-   ========================= */
-
-/* ---------- Theme tokens ---------- */
-:root{
-    --text:#20324a;
-    --muted:#6b7a90;
-
-    /* mint */
-    --mint:#66d1c1;
-    --mint2:#9be7db;
-    --mintLine: rgba(102,209,193,.55);
-
-    /* background */
-    --bgA:#eaf6ff;
-    --bgB:#fff0f6;
-
-    /* cards */
-    --card: rgba(255,255,255,.88);
-    --shadow: 0 18px 50px rgba(20,30,60,.12);
-}
-
-/* ---------- Base ---------- */
-html, body { height:100%; }
-body{
-    margin:0;
-    min-height:100vh;
-    color: var(--text);
-    background:
-            radial-gradient(900px 500px at 20% 0%, var(--bgA) 0%, transparent 60%),
-            radial-gradient(900px 500px at 80% 0%, var(--bgB) 0%, transparent 60%),
-            linear-gradient(180deg, #ffffff 0%, #f7fbff 100%);
-}
-
-/* footer to bottom */
-body{ display:flex; flex-direction:column; }
-main{ flex:1; }
-
-/* ---------- Navbar + Footer helpers ---------- */
-.stickit-nav{
-    background: rgba(255,255,255,.92) !important;
-    border-bottom: 1px solid rgba(255,140,198,.18);
-    backdrop-filter: blur(10px);
-}
-.stickit-nav .nav-link{
-    color: var(--text) !important;
-    font-weight: 700;
-}
-.stickit-nav .nav-link:hover{ color: var(--mint) !important; }
-.stickit-nav .navbar-toggler{ border-color: rgba(255,140,198,.18); }
-
-.stickit-footer{
-    background: linear-gradient(180deg,
-    rgba(255, 220, 236, 0.95),
-    rgba(210, 236, 255, 0.95)) !important;
-    border-top: 1px solid rgba(255,140,198,.18);
-}
-.stickit-footer, .stickit-footer *{
-    color: rgba(32,50,74,.78) !important;
-}
-.stickit-footer a:hover{
-    color: var(--mint) !important;
-    text-decoration: underline !important;
-}
-
-/* ---------- Mint buttons (use these anywhere) ---------- */
-.stickit-btn{
-    background: linear-gradient(90deg, var(--mint), var(--mint2));
-    border: 0 !important;
-    color:#fff !important;
-    font-weight: 800;
-    border-radius: 999px;
-    padding: 10px 18px;
-    box-shadow: 0 10px 25px rgba(102,209,193,.22);
-}
-.stickit-btn:hover{ filter: brightness(.97); }
-
-.stickit-btn-outline{
-    background: #fff;
-    border: 2px solid var(--mintLine) !important;
-    color: var(--text) !important;
-    font-weight: 800;
-    border-radius: 999px;
-    padding: 10px 18px;
-    transition: background .15s ease, border-color .15s ease, transform .15s ease;
-}
-.stickit-btn-outline:hover{
-    background: rgba(102,209,193,.18) !important;
-    border-color: var(--mint) !important;
-}
-
-/* Map common Bootstrap button classes to mint (so you don't have to change every view) */
-.btn-warning{
-    background: linear-gradient(90deg, var(--mint), var(--mint2)) !important;
-    border: 0 !important;
-    color:#fff !important;
-    font-weight: 800 !important;
-}
-.btn-outline-light,
-.btn-outline-dark{
-    border-color: var(--mintLine) !important;
-    color: var(--text) !important;
-}
-.btn-outline-light:hover,
-.btn-outline-dark:hover{
-    background: rgba(102,209,193,.18) !important;
-    border-color: var(--mint) !important;
-    color: var(--text) !important;
-}
-
-/* ---------- Pastel replacements for DARK blocks (keep layout the same) ---------- */
-
-/* If your hero section uses Bootstrap bg-dark text-white */
-.bg-dark.text-white,
-section.bg-dark.text-white{
-    background: radial-gradient(1200px 600px at 15% 20%,
-    rgba(255,196,225,.90) 0%,
-    rgba(210,236,255,.90) 45%,
-    rgba(255,255,255,.98) 100%) !important;
-    color: var(--text) !important;
-}
-.bg-dark .text-white-50{ color: rgba(32,50,74,.70) !important; }
-
-
-/* Inline dark cards like style="background:#111;" */
-[style*="background:#111"]{
-    background: var(--card) !important;
-    border: 1px solid rgba(255,140,198,.22) !important;
-    box-shadow: 0 12px 30px rgba(20,30,60,.10) !important;
-    color: var(--text) !important;
-}
-[style*="background:#111"] .text-white-50{ color: rgba(32,50,74,.70) !important; }
-
-
-/* =====================================================
-   FOOTER
-===================================================== */
-
-.kawaii-footer {
-    background: #ffffff;
-    padding: 20px;
-    border-radius: 20px;
-    margin: 20px;
-    box-shadow: 0 5px 20px rgba(0, 0, 0, 0.05);
-}
-
-
-/* =====================================================
-   DECORATIVE ELEMENTS
-===================================================== */
-
-.top-gradient-bar {
-    height: 8px;
-    background: linear-gradient(to right, #ffd6ec, #c8f2ef, #dcd6ff);
-}
-
-
-/* =====================================================
-   FORM IMPROVEMENTS 
-===================================================== */
-
-.btn:focus,
-.btn:active:focus,
-.btn-link.nav-link:focus,
-.form-control:focus,
-.form-check-input:focus {
-    box-shadow: 0 0 0 0.1rem white, 0 0 0 0.25rem #258cfb;
-}
-
-.form-floating > .form-control-plaintext::placeholder,
-.form-floating > .form-control::placeholder {
-    color: var(--bs-secondary-color);
-    text-align: end;
-}
-
-.form-floating > .form-control-plaintext:focus::placeholder,
-.form-floating > .form-control:focus::placeholder {
-    text-align: start;
-}
-/* Inline dark footer like <footer style="background:#111;"> */
-footer[style*="background:#111"]{
-    background: linear-gradient(180deg,
-    rgba(255, 220, 236, 0.95),
-    rgba(210, 236, 255, 0.95)) !important;
-    border-top: 1px solid rgba(255,140,198,.18) !important;
-}
-footer[style*="background:#111"] *{ color: rgba(32,50,74,.78) !important; }
-footer[style*="background:#111"] a:hover{ color: var(--mint) !important; }
-
-/* ---------- Cards / accordion polish ---------- */
-.card, .accordion-item{
-    border-radius: 18px !important;
-    border-color: rgba(255,140,198,.18) !important;
-}
-.shadow-sm{ box-shadow: 0 12px 28px rgba(20,30,60,.10) !important; }
-
-/* Focus ring */
-.btn:focus, .btn:active:focus,
-.btn-link.nav-link:focus,
-.form-control:focus,
-.form-check-input:focus{
-    box-shadow: 0 0 0 .15rem rgba(102,209,193,.25) !important;
-}
-
-.hide{
-    display:none;
-}
-/* =====================================================
-   user list role icons
-===================================================== */
-.role-badge {
-    padding: 6px 16px;
-    border-radius: 20px;
-    font-weight: 600;
-    font-size: 0.8rem;
-    border: 2px solid;
-    background: white;
-    display: inline-block;
-    min-width: 85px;
-    text-align: center;
+/* Skip links - always available regardless of design system */
+.skip-link {
+    position: absolute !important;
+    top: -40px;
+    left: 6px;
+    z-index: 999999;
+    padding: 8px 16px;
+    background: #000;
+    color: #fff;
     text-decoration: none;
+    border-radius: 4px;
 }
 
-.active-role {
-    background: #f8f9fa;
-    box-shadow: 0 2px 6px rgba(0,0,0,0.08);
+.skip-link:focus {
+    top: 6px;
 }
 
-.role-admin    { border-color: #dc3545; color: #dc3545; }
-.role-manager  { border-color: #0d6efd; color: #0d6efd; }
-.role-staff    { border-color: #0dcaf0; color: #0dcaf0; }
-.role-customer { border-color: #6c757d; color: #6c757d; }
-.role-none     { border-color: #adb5bd; color: #adb5bd; }
-
-/* Inline dark footer like <footer style="background:#111;"> */
-footer[style*="background:#111"]{
-    background: linear-gradient(180deg,
-    rgba(255, 220, 236, 0.95),
-    rgba(210, 236, 255, 0.95)) !important;
-    border-top: 1px solid rgba(255,140,198,.18) !important;
-}
-footer[style*="background:#111"] *{ color: rgba(32,50,74,.78) !important; }
-footer[style*="background:#111"] a:hover{ color: var(--mint) !important; }
-
-/* ---------- Cards / accordion polish ---------- */
-.card, .accordion-item{
-    border-radius: 18px !important;
-    border-color: rgba(255,140,198,.18) !important;
-}
-.shadow-sm{ box-shadow: 0 12px 28px rgba(20,30,60,.10) !important; }
-
-/* Focus ring */
-.btn:focus, .btn:active:focus,
-.btn-link.nav-link:focus,
-.form-control:focus,
-.form-check-input:focus{
-    box-shadow: 0 0 0 .15rem rgba(102,209,193,.25) !important;
+/* Screen reader only content */
+.visually-hidden:not(.visually-hidden:focus):not(.visually-hidden:active) {
+    position: absolute !important;
+    width: 1px !important;
+    height: 1px !important;
+    padding: 0 !important;
+    margin: -1px !important;
+    overflow: hidden !important;
+    clip: rect(0, 0, 0, 0) !important;
+    white-space: nowrap !important;
+    border: 0 !important;
 }
 
+/* High contrast mode support */
+@media (prefers-contrast: high) {
+    .kawaii-card,
+    .btn-kawaii {
+        border: 2px solid !important;
+    }
+}
+
+/* Reduced motion support */
+@media (prefers-reduced-motion: reduce) {
+    *,
+    *::before,
+    *::after {
+        animation-duration: 0.01ms !important;
+        animation-iteration-count: 1 !important;
+        transition-duration: 0.01ms !important;
+        scroll-behavior: auto !important;
+    }
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════════════════ */
+/* ║ PRINT STYLES                                                                         ║ */
+/* ═══════════════════════════════════════════════════════════════════════════════════════ */
+
+@media print {
+    .skip-links,
+    .navbar,
+    .footer,
+    .btn-kawaii,
+    .admin-sidebar {
+        display: none !important;
+    }
+    
+    .kawaii-card {
+        border: 1px solid #000 !important;
+        box-shadow: none !important;
+    }
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════════════════ */
+/* ║ LEGACY SUPPORT (TO BE REMOVED IN FUTURE VERSIONS)                                   ║ */
+/* ═══════════════════════════════════════════════════════════════════════════════════════ */
+
+/* Temporary: Support for any missed Bootstrap overrides */
+.legacy-bootstrap-compat {
+    /* Add any temporary compatibility styles here */
+    /* TODO: Remove once all components are converted */
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════════════════ */
+/* ║ END OF SITE-SPECIFIC STYLES                                                          ║ */
+/* ═══════════════════════════════════════════════════════════════════════════════════════ */

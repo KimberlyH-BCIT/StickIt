@@ -4,6 +4,10 @@ using Microsoft.Extensions.Options;
 
 namespace ELKH.Services;
 
+/// <summary>
+/// Google reCAPTCHA verification service implementation providing security validation
+/// for forms and user interactions by validating reCAPTCHA tokens through Google's API.
+/// </summary>
 public class ReCaptchaService : IReCaptchaService
 {
     private readonly HttpClient _http;

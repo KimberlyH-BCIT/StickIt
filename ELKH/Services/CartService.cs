@@ -1,13 +1,6 @@
-using System.Linq;
-using System.Threading.Tasks;
-using ELKH.Data;
-using ELKH.Models;
 using ELKH.Extensions;
-using Microsoft.EntityFrameworkCore;
-using System.Collections.Generic;
 
-namespace ELKH.Services
-{
+namespace ELKH.Services;
     /// <summary>
     /// Service for managing shopping cart operations and order placement.
     /// Handles cart item management, inventory validation, and order processing with atomic transactions.
@@ -108,7 +101,7 @@ namespace ELKH.Services
                 .Where(c => c.FkRegisteredUserId == user.PkRegisteredUserId)
                 .ToListAsync();
 
-            if (!items.Any()) return;
+            if (items.Count == 0) return;
 
             _db.Carts.RemoveRange(items);
             await _db.SaveChangesAsync();
@@ -388,7 +381,7 @@ namespace ELKH.Services
                 .ToListAsync();
 
             // Step 3: Validate cart is not empty
-            if (!items.Any()) return 0;
+            if (items.Count == 0) return 0;
 
             // Step 4: Validate shipping method and calculate shipping cost
             var shippingMethod = await _shippingService.GetShippingMethodByIdAsync(shippingMethodId);
@@ -484,5 +477,3 @@ namespace ELKH.Services
                 }
             }
     }
-    
-}

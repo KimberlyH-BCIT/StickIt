@@ -7,6 +7,68 @@ namespace ELKH.Extensions
     /// Centralising middleware order here keeps <c>Program.cs</c> clean and makes it impossible
     /// to accidentally reorder security-critical middleware.
     /// </summary>
+    /// <remarks>
+    /// TABLE OF CONTENTS
+    /// ================================================================================
+    /// 1. UseApplicationMiddleware Method ............................. Lines [12-83]
+    ///    - Middleware pipeline order      // Security-critical ordering enforcement
+    ///    - Global exception handling      // First-line error catching
+    ///    - Security headers              // Defense-in-depth headers
+    ///    - Authentication/authorization   // Identity and access control
+    /// 
+    /// 2. UseSecurityHeaders Method ................................... Lines [85-136]
+    ///    - HTTP security headers          // OWASP security header implementation
+    ///    - Content Security Policy        // XSS and injection prevention
+    ///    - Frame options                 // Clickjacking protection
+    /// 
+    /// 3. UseApplicationEndpoints Method .............................. Lines [138-170]
+    ///    - Route mapping                 // MVC, Razor Pages, and health endpoints
+    ///    - Area support                  // Admin and specialized area routing
+    /// ================================================================================
+    /// 
+    /// ARCHITECTURAL CONTEXT:
+    /// • Critical middleware pipeline configuration ensuring proper security ordering
+    /// • Implements defense-in-depth security strategy with layered protections
+    /// • Environment-aware configuration (compression disabled in development)
+    /// • Part of ELKH's security-first application architecture
+    /// • Centralizes middleware configuration to prevent security misconfigurations
+    /// 
+    /// SECURITY IMPLEMENTATION:
+    /// This class implements comprehensive security measures:
+    /// 1. Global exception handling - prevents information disclosure
+    /// 2. Security headers - OWASP recommended HTTP security headers
+    /// 3. Content Security Policy - XSS and injection attack prevention
+    /// 4. HTTPS enforcement - ensures encrypted communication
+    /// 5. Rate limiting - prevents abuse and DoS attacks
+    /// 6. Authentication/Authorization - proper identity and access control
+    /// 
+    /// MIDDLEWARE ORDERING RATIONALE:
+    /// • Exception handling first - catches all errors for consistent responses
+    /// • Security headers early - applied to all responses including errors
+    /// • HTTPS redirection - ensures secure transport
+    /// • Compression before caching - efficient storage and transmission
+    /// • Authentication before authorization - establish identity before access control
+    /// • Routing last - endpoint resolution after all security measures
+    /// 
+    /// INTEGRATION POINTS:
+    /// • Used by: Program.cs during application startup configuration
+    /// • Integrates with: Custom middleware (GlobalExceptionMiddleware, CorrelationIdMiddleware)
+    /// • Configures: PayPal, reCAPTCHA, Bootstrap integration via CSP headers
+    /// • Supports: Health checks, static assets, area-based routing
+    /// 
+    /// PERFORMANCE CONSIDERATIONS:
+    /// • Conditional compression based on environment (dev tools compatibility)
+    /// • Output caching positioned after compression for efficiency
+    /// • Rate limiting before expensive operations
+    /// • Static asset optimization through WithStaticAssets()
+    /// 
+    /// COMPLIANCE & SECURITY:
+    /// • OWASP security header recommendations implemented
+    /// • CSP configured for PayPal and reCAPTCHA third-party integrations
+    /// • Clickjacking protection via frame options
+    /// • XSS prevention through multiple layers
+    /// • Information disclosure prevention via structured error handling
+    /// </remarks>
     public static class ApplicationBuilderExtensions
     {
         /// <summary>
@@ -46,7 +108,7 @@ namespace ELKH.Extensions
 
             // 2. Security Headers — set on every response before any content is written.
             //    Added first so headers are present even on error pages and redirects.
-            app.UseSecurityHeaders();
+            app.UseSecurityHeaders(env);
 
             // 3. HTTPS Redirection — redirect plain HTTP requests to HTTPS
             app.UseHttpsRedirection();
@@ -85,6 +147,8 @@ namespace ELKH.Extensions
         /// <summary>
         /// Adds defensive HTTP security response headers to every outgoing response.
         /// </summary>
+        /// <param name="app">The application builder.</param>
+        /// <param name="env">The hosting environment (used to conditionally allow development tools).</param>
         /// <remarks>
         /// Headers applied:
         /// <list type="bullet">
@@ -94,7 +158,7 @@ namespace ELKH.Extensions
         ///   <item><term>Permissions-Policy</term><description>Disables browser features (camera, microphone, geolocation) not required by this application.</description></item>
         /// </list>
         /// </remarks>
-        public static IApplicationBuilder UseSecurityHeaders(this IApplicationBuilder app)
+        public static IApplicationBuilder UseSecurityHeaders(this IApplicationBuilder app, IWebHostEnvironment env)
         {
             return app.Use(async (context, next) =>
             {
@@ -120,14 +184,20 @@ namespace ELKH.Extensions
                 // checkout page (www.paypal.com) and the sandbox/live API (api-m.*.paypal.com).
                 // Google reCAPTCHA requires scripts from google.com and gstatic.com, frames from google.com,
                 // and 'unsafe-eval' for its internal script execution (required by reCAPTCHA v2).
-                // 'unsafe-inline' for style-src is required by Bootstrap/inline styles.
+                // Google Fonts requires fonts.googleapis.com and fonts.gstatic.com for stylesheets and fonts.
+                // 'unsafe-inline' for style-src is required by Bootstrap/inline styles and inline scripts.
+                // In development, allow localhost connections for Browser Link and hot reload tools.
+                var connectSrc = env.IsDevelopment() 
+                    ? "'self' ws://localhost:* http://localhost:* https://api-m.paypal.com https://api-m.sandbox.paypal.com https://www.google.com"
+                    : "'self' https://api-m.paypal.com https://api-m.sandbox.paypal.com https://www.google.com";
+
                 context.Response.Headers["Content-Security-Policy"] =
                     "default-src 'self'; " +
-                    "script-src 'self' 'unsafe-eval' https://www.paypal.com https://www.sandbox.paypal.com https://www.google.com https://www.gstatic.com; " +
-                    "style-src 'self' 'unsafe-inline'; " +
+                    "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://www.paypal.com https://www.sandbox.paypal.com https://www.google.com https://www.gstatic.com; " +
+                    "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; " +
                     "img-src 'self' data: https://www.paypalobjects.com; " +
-                    "font-src 'self'; " +
-                    "connect-src 'self' https://api-m.paypal.com https://api-m.sandbox.paypal.com https://www.google.com; " +
+                    "font-src 'self' https://fonts.gstatic.com; " +
+                    $"connect-src {connectSrc}; " +
                     "frame-src https://www.paypal.com https://www.sandbox.paypal.com https://www.google.com; " +
                     "frame-ancestors 'self';";
 

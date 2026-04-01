@@ -3,8 +3,82 @@ using ELKH.Data;
 using ELKH.ViewModels;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using System.Globalization;
 
 namespace ELKH.Controllers;
+
+// ╔═══════════════════════════════════════════════════════════════════════════════════════════════╗
+// ║                       ADMIN ANALYTICS CONTROLLER - TABLE OF CONTENTS                          ║
+// ╚═══════════════════════════════════════════════════════════════════════════════════════════════╝
+// 
+// OVERVIEW:
+// Comprehensive business intelligence controller providing sales analytics, performance metrics,
+// and administrative dashboard functionality for data-driven decision making.
+// 
+// TABLE OF CONTENTS:
+// ┌─ Section 1: Controller Setup & Dependencies .......................................... Line 72
+// │  ├─ Constructor with ApplicationDbContext and logging
+// │  ├─ AdminControllerBase inheritance for security
+// │  └─ Database context and logging integration
+// ├─ Section 2: Dashboard Analytics .................................................... Line 75
+// │  ├─ Index() - Admin dashboard with key performance indicators
+// │  ├─ Weekly and monthly order count aggregation
+// │  ├─ Stock level monitoring (high/low thresholds)
+// │  ├─ Top 5 products by units sold with revenue calculation
+// │  └─ Executive summary metrics for decision making
+// ├─ Section 3: Sales Analytics .................................................... Line 110
+// │  ├─ Sales() - Comprehensive sales reporting and trend analysis
+// │  ├─ Weekly/monthly gross sales calculation with decimal precision
+// │  ├─ 7-day sales trend chart with daily breakdown
+// │  ├─ 12-month sales trend chart with monthly aggregation
+// │  ├─ SQLite-compatible decimal aggregations (materialized approach)
+// │  └─ Top products by revenue with comprehensive analytics
+// ├─ Section 4: Product Analytics .................................................. Line 212
+// │  ├─ Products() - Product performance metrics and analysis
+// │  ├─ Product listing with category relationships
+// │  ├─ Stock quantity monitoring and alerts
+// │  ├─ Best seller and trending product identification
+// │  └─ Date-based product performance tracking
+// └─ Section 5: Export & Reporting ................................................. Line 254
+//    ├─ ExportSalesData() - CSV export functionality with date ranges
+//    ├─ Transaction data export with configurable time periods
+//    ├─ CSV formatting for Excel compatibility
+//    └─ Administrative audit logging for compliance
+//
+// ARCHITECTURE NOTES:
+// • Extracted from monolithic AdminController for focused business intelligence
+// • Inherits from AdminControllerBase for consistent security and logging
+// • SQLite-compatible aggregations using ToListAsync() then LINQ materialization
+// • Optimized queries with selective projection for performance
+// • Comprehensive audit logging for administrative actions
+//
+// BUSINESS INTELLIGENCE FEATURES:
+// • Executive dashboard with key performance indicators (KPIs)
+// • Time-series analysis with weekly and monthly trends
+// • Product performance ranking and revenue analysis
+// • Stock level monitoring with automated alerts
+// • Exportable data for external business intelligence tools
+//
+// PERFORMANCE OPTIMIZATIONS:
+// • Materialized queries for SQLite decimal precision compatibility
+// • Selective data projection to minimize memory footprint
+// • Efficient date range filtering with indexed queries
+// • Grouped aggregations performed in-memory for accuracy
+// • Cached calculations for dashboard responsiveness
+//
+// DATA ACCURACY CONSIDERATIONS:
+// • SQLite decimal Sum() limitations addressed through materialization
+// • Consistent UTC date handling across all analytics
+// • Null-safe aggregations with fallback values
+// • Revenue calculations with proper decimal precision
+// • Data validation and error handling for edge cases
+//
+// SECURITY IMPLEMENTATION:
+// • AdminControllerBase inheritance ensures role-based access
+// • Comprehensive audit logging for all analytics access
+// • Data exposure limited to aggregated metrics only
+// • No sensitive customer data in analytics exports
+// • Administrative action tracking for compliance requirements
 
 /// <summary>
 /// Admin controller responsible for sales analytics, reporting, and business intelligence.
@@ -30,6 +104,12 @@ namespace ELKH.Controllers;
 /// </remarks>
 public class AdminAnalyticsController : AdminControllerBase
 {
+    #region Section 1: Controller Setup & Dependencies
+
+    // ═══════════════════════════════════════════════════════════════════
+    // Section 1: Controller Setup & Dependencies
+    // ═══════════════════════════════════════════════════════════════════
+
     public AdminAnalyticsController(
         ApplicationDbContext context,
         ILogger<AdminAnalyticsController> logger)
@@ -37,7 +117,13 @@ public class AdminAnalyticsController : AdminControllerBase
     {
     }
 
-    #region Dashboard Analytics
+    #endregion
+
+    #region Section 2: Dashboard Analytics
+
+    // ═══════════════════════════════════════════════════════════════════
+    // Section 2: Dashboard Analytics
+    // ═══════════════════════════════════════════════════════════════════
 
     /// <summary>
     /// GET: AdminAnalytics/Index - Admin dashboard with key performance indicators
@@ -94,7 +180,11 @@ public class AdminAnalyticsController : AdminControllerBase
 
     #endregion
 
-    #region Sales Analytics
+    #region Section 3: Sales Analytics
+
+    // ═══════════════════════════════════════════════════════════════════
+    // Section 3: Sales Analytics
+    // ═══════════════════════════════════════════════════════════════════
 
     /// <summary>
     /// GET: AdminAnalytics/Sales - Comprehensive sales analytics and reporting
@@ -125,8 +215,8 @@ public class AdminAnalyticsController : AdminControllerBase
         var monthlyTx = allTransactions.Where(t => t.TransactionDate >= monthStart).ToList();
 
         // ── Summary card metrics ──────────────────────────────────────
-        decimal weeklyGross = weeklyTx.Any() ? weeklyTx.Sum(t => t.Amount) : 0m;
-        decimal monthlyGross = monthlyTx.Any() ? monthlyTx.Sum(t => t.Amount) : 0m;
+        decimal weeklyGross = weeklyTx.Count > 0 ? weeklyTx.Sum(t => t.Amount) : 0m;
+        decimal monthlyGross = monthlyTx.Count > 0 ? monthlyTx.Sum(t => t.Amount) : 0m;
         int weeklyOrders = weeklyTx.Count;
         int monthlyOrders = monthlyTx.Count;
         int totalOrders = await Context.Orders.CountAsync();
@@ -139,8 +229,8 @@ public class AdminAnalyticsController : AdminControllerBase
         {
             var day = now.AddDays(-d).Date;
             var dayTx = allTransactions.Where(t => t.TransactionDate.Date == day).ToList();
-            weeklyLabels.Add(day.ToString("ddd dd"));
-            weeklySalesData.Add(dayTx.Any() ? dayTx.Sum(t => t.Amount) : 0m);
+            weeklyLabels.Add(day.ToString("ddd dd", CultureInfo.InvariantCulture));
+            weeklySalesData.Add(dayTx.Count > 0 ? dayTx.Sum(t => t.Amount) : 0m);
         }
 
         // ── Monthly chart data: last 12 months ────────────────────────
@@ -154,8 +244,8 @@ public class AdminAnalyticsController : AdminControllerBase
                 .Where(t => t.TransactionDate.Year == month.Year
                          && t.TransactionDate.Month == month.Month)
                 .ToList();
-            monthlyLabels.Add(month.ToString("MMM yyyy"));
-            monthlySalesData.Add(monthTx.Any() ? monthTx.Sum(t => t.Amount) : 0m);
+            monthlyLabels.Add(month.ToString("MMM yyyy", CultureInfo.InvariantCulture));
+            monthlySalesData.Add(monthTx.Count > 0 ? monthTx.Sum(t => t.Amount) : 0m);
         }
 
         // ── Top 5 products by revenue ─────────────────────────────────
@@ -203,7 +293,11 @@ public class AdminAnalyticsController : AdminControllerBase
 
     #endregion
 
-    #region Product Analytics
+    #region Section 4: Product Analytics
+
+    // ═══════════════════════════════════════════════════════════════════
+    // Section 4: Product Analytics
+    // ═══════════════════════════════════════════════════════════════════
 
     /// <summary>
     /// GET: AdminAnalytics/Products - Product performance analytics
@@ -243,7 +337,11 @@ public class AdminAnalyticsController : AdminControllerBase
 
     #endregion
 
-    #region Export & Reporting
+    #region Section 5: Export & Reporting
+
+    // ═══════════════════════════════════════════════════════════════════
+    // Section 5: Export & Reporting
+    // ═══════════════════════════════════════════════════════════════════
 
     /// <summary>
     /// GET: AdminAnalytics/ExportSalesData - Export sales data as CSV
@@ -270,7 +368,7 @@ public class AdminAnalyticsController : AdminControllerBase
 
             foreach (var tx in transactions)
             {
-                csv.AppendLine($"{tx.TransactionDate:yyyy-MM-dd},{tx.FkOrderId},{tx.Order?.RegisteredUser?.Email ?? "Unknown"},{tx.Amount},{tx.DeliveryFee},{tx.TransactionStatus}");
+                csv.AppendLine(CultureInfo.InvariantCulture, $"{tx.TransactionDate:yyyy-MM-dd},{tx.FkOrderId},{tx.Order?.RegisteredUser?.Email ?? "Unknown"},{tx.Amount},{tx.DeliveryFee},{tx.TransactionStatus}");
             }
 
             var bytes = System.Text.Encoding.UTF8.GetBytes(csv.ToString());

@@ -23,7 +23,7 @@ namespace ELKH.Services
                 CategoryName = model.Category?.CategoryName ?? "Unknown",
                 Thumbnail = model.ProductImage?.FirstOrDefault()?.ProductImageURL ?? string.Empty,
                 IsActive = model.IsActive,
-                AverageRating = model.ProductRatings?.Any() == true
+                AverageRating = model.ProductRatings?.Count > 0 == true
                     ? model.ProductRatings.Average(r => r.Rating)
                     : 0.0,
                 DateAdded = model.DateAdded,

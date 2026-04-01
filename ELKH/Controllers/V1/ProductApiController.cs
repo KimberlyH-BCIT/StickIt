@@ -2,19 +2,114 @@ using Microsoft.AspNetCore.Mvc;
 using ELKH.Services;
 using ELKH.ViewModels;
 using ELKH.Models.Api;
+using System.Globalization;
 
 namespace ELKH.Controllers.V1;
+
+// ╔═══════════════════════════════════════════════════════════════════════════════════════════════╗
+// ║                        PRODUCT API CONTROLLER - TABLE OF CONTENTS                            ║
+// ╚═══════════════════════════════════════════════════════════════════════════════════════════════╝
+// 
+// OVERVIEW:
+// RESTful API controller providing comprehensive product catalog functionality with support
+// for filtering, pagination, search, and availability checking through standardized endpoints.
+// 
+// TABLE OF CONTENTS:
+// ┌─ Section 1: Controller Setup & Dependencies .......................................... Line 57
+// │  ├─ Constructor with dependency injection
+// │  ├─ Service integrations (IProductService, ISearchService)
+// │  └─ API versioning and routing configuration
+// ├─ Section 2: Product Catalog Operations .............................................. Line 59
+// │  ├─ GetProducts() - Retrieve paginated product list with filtering/sorting
+// │  ├─ Parameter validation (page size limits, sort options)
+// │  ├─ Search integration with ISearchService
+// │  ├─ Category filtering and advanced sorting logic
+// │  └─ Comprehensive pagination with metadata
+// ├─ Section 3: Single Product Operations ............................................... Line 140
+// │  ├─ GetProduct() - Retrieve individual product by ID
+// │  ├─ Product-to-API model transformation
+// │  ├─ Not found handling with standardized errors
+// │  └─ Full product detail serialization
+// ├─ Section 4: Search & Discovery Services ............................................. Line 200
+// │  ├─ GetSearchSuggestions() - Autocomplete/typeahead functionality
+// │  ├─ Query validation and limit enforcement
+// │  ├─ Search service integration for name matching
+// │  └─ Optimized suggestion retrieval
+// └─ Section 5: Inventory & Availability Management ..................................... Line 248
+//    ├─ CheckAvailability() - Real-time stock and availability checking
+//    ├─ Stock status classification (In Stock, Low Stock, Out of Stock)
+//    ├─ Low stock threshold management (< 10 items)
+//    └─ Availability model with comprehensive status information
+//
+// ARCHITECTURE NOTES:
+// • RESTful API design following OpenAPI/Swagger standards
+// • Versioned endpoints with v1.0 API versioning strategy
+// • Standardized response models (ApiResponse<T>, ApiErrorResponse)
+// • Comprehensive error handling with structured error codes
+// • Pagination support with configurable limits and metadata
+//
+// API DESIGN PATTERNS:
+// • Resource-based URL patterns (/api/v1.0/ProductApi)
+// • HTTP verbs for semantic actions (GET for retrieval operations)
+// • Query parameters for filtering and configuration
+// • Consistent response envelope with success/error patterns
+// • Comprehensive Swagger documentation with response types
+//
+// BUSINESS LOGIC:
+// • Product catalog browsing with advanced filtering capabilities
+// • Search integration for product discovery and suggestions
+// • Real-time inventory status and availability checking
+// • Category-based filtering for organized product browsing
+// • Price-based and date-based sorting for user preferences
+//
+// PERFORMANCE CONSIDERATIONS:
+// • Page size limits prevent excessive data transfer (max 100 items)
+// • Search service integration for optimized product discovery
+// • Lazy loading and filtering applied at service layer
+// • Efficient pagination with skip/take operations
+// • Minimal API model transformation for reduced payload
+//
+// SECURITY IMPLEMENTATION:
+// • Public API endpoints (no authentication required for catalog browsing)
+// • Input validation on all parameters (pagination, search queries)
+// • Parameter sanitization and bounds checking
+// • Error message standardization to prevent information disclosure
+// • Structured logging for audit and monitoring
 
 /// <summary>
 /// Product API Controller - Version 1.0
 /// Provides product catalog functionality via RESTful API endpoints.
 /// </summary>
+/// <remarks>
+/// <para><strong>API Version 1.0 Endpoints</strong></para>
+/// This controller provides comprehensive product catalog access through RESTful endpoints
+/// with support for advanced filtering, search, pagination, and real-time availability checking.
+/// 
+/// <para><strong>Supported Operations:</strong></para>
+/// <list type="bullet">
+/// <item>Product catalog browsing with filtering and pagination</item>
+/// <item>Individual product detail retrieval</item>
+/// <item>Search suggestions and autocomplete functionality</item>
+/// <item>Real-time inventory and availability status</item>
+/// <item>Category-based filtering and sorting options</item>
+/// </list>
+/// 
+/// <para><strong>Response Format:</strong></para>
+/// All endpoints return standardized JSON responses using ApiResponse&lt;T&gt; envelope pattern
+/// with consistent success/error handling and structured error codes for client integration.
+/// </remarks>
 [ApiController]
 [ApiVersion("1.0")]
 [Route("api/v{version:apiVersion}/[controller]")]
 [Produces("application/json")]
 public class ProductApiController : ControllerBase
 {
+    #region Section 1: Controller Setup & Dependencies
+
+    // ═══════════════════════════════════════════════════════════════════
+    // Section 1: Controller Setup & Dependencies
+    // ═══════════════════════════════════════════════════════════════════
+
     private readonly IProductService _productService;
     private readonly ISearchService _searchService;
     private readonly ILogger<ProductApiController> _logger;
@@ -29,6 +124,14 @@ public class ProductApiController : ControllerBase
         _logger = logger;
     }
 
+    #endregion
+
+    #region Section 2: Product Catalog Operations
+
+    // ═══════════════════════════════════════════════════════════════════
+    // Section 2: Product Catalog Operations
+    // ═══════════════════════════════════════════════════════════════════
+
     /// <summary>
     /// Get all products with optional filtering and pagination
     /// </summary>
@@ -39,6 +142,7 @@ public class ProductApiController : ControllerBase
     /// <param name="sort">Sort order (name_asc, name_desc, price_low, price_high, newest, oldest)</param>
     /// <returns>Paginated list of products</returns>
     [HttpGet]
+    [ResponseCache(CacheProfileName = "ProductCatalog")]
     [ProducesResponseType(typeof(ApiResponse<PagedResult<ProductApiModel>>), 200)]
     [ProducesResponseType(typeof(ApiErrorResponse), 400)]
     public async Task<IActionResult> GetProducts(
@@ -73,7 +177,7 @@ public class ProductApiController : ControllerBase
             }
 
             // Apply sorting
-            filtered = sort.ToLower() switch
+            filtered = sort.ToLower(CultureInfo.InvariantCulture) switch
             {
                 "name_desc" => filtered.OrderByDescending(p => p.ProductName),
                 "price_low" => filtered.OrderBy(p => p.Price),
@@ -132,12 +236,21 @@ public class ProductApiController : ControllerBase
         }
     }
 
+    #endregion
+
+    #region Section 3: Single Product Operations
+
+    // ═══════════════════════════════════════════════════════════════════
+    // Section 3: Single Product Operations
+    // ═══════════════════════════════════════════════════════════════════
+
     /// <summary>
     /// Get a specific product by ID
     /// </summary>
     /// <param name="id">Product ID</param>
     /// <returns>Product details</returns>
     [HttpGet("{id:int}")]
+    [ResponseCache(CacheProfileName = "ProductDetails")]
     [ProducesResponseType(typeof(ApiResponse<ProductApiModel>), 200)]
     [ProducesResponseType(typeof(ApiErrorResponse), 404)]
     public async Task<IActionResult> GetProduct(int id)
@@ -191,6 +304,14 @@ public class ProductApiController : ControllerBase
         }
     }
 
+    #endregion
+
+    #region Section 4: Search & Discovery Services
+
+    // ═══════════════════════════════════════════════════════════════════
+    // Section 4: Search & Discovery Services
+    // ═══════════════════════════════════════════════════════════════════
+
     /// <summary>
     /// Search products with suggestions
     /// </summary>
@@ -198,6 +319,7 @@ public class ProductApiController : ControllerBase
     /// <param name="limit">Maximum number of suggestions (default: 10, max: 20)</param>
     /// <returns>List of search suggestions</returns>
     [HttpGet("search-suggestions")]
+    [ResponseCache(CacheProfileName = "SearchResults")]
     [ProducesResponseType(typeof(ApiResponse<List<string>>), 200)]
     public async Task<IActionResult> GetSearchSuggestions(
         [FromQuery] string query,
@@ -239,6 +361,14 @@ public class ProductApiController : ControllerBase
             });
         }
     }
+
+    #endregion
+
+    #region Section 5: Inventory & Availability Management
+
+    // ═══════════════════════════════════════════════════════════════════
+    // Section 5: Inventory & Availability Management
+    // ═══════════════════════════════════════════════════════════════════
 
     /// <summary>
     /// Check product availability and stock status
@@ -296,4 +426,6 @@ public class ProductApiController : ControllerBase
             });
         }
     }
+
+    #endregion
 }

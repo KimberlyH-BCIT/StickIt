@@ -14,12 +14,10 @@ namespace ELKH.Extensions
         /// </summary>
         public static bool IsValidQuantity(this int quantity, ModelStateDictionary modelState, string fieldName = "Quantity")
         {
-            if (quantity <= 0)
-            {
-                modelState.AddModelError(fieldName, "Quantity must be greater than zero.");
-                return false;
-            }
-            return true;
+            if (quantity > 0) return true;
+
+            modelState.AddModelError(fieldName, "Quantity must be greater than zero.");
+            return false;
         }
 
         /// <summary>
@@ -27,26 +25,20 @@ namespace ELKH.Extensions
         /// </summary>
         public static bool IsInStock(this ProductModel product, int requestedQuantity, ModelStateDictionary modelState)
         {
-            if (product == null)
+            return product switch
             {
-                modelState.AddModelError(string.Empty, "Product not found.");
-                return false;
-            }
+                null => AddErrorAndReturnFalse(modelState, "Product not found."),
+                { IsActive: false } => AddErrorAndReturnFalse(modelState, "This product is no longer available."),
+                { StockQuantity: var stock } when stock < requestedQuantity => 
+                    AddErrorAndReturnFalse(modelState, $"Only {stock} items available in stock."),
+                _ => true
+            };
+        }
 
-            if (!product.IsActive)
-            {
-                modelState.AddModelError(string.Empty, "This product is no longer available.");
-                return false;
-            }
-
-            if (product.StockQuantity < requestedQuantity)
-            {
-                modelState.AddModelError(string.Empty, 
-                    $"Only {product.StockQuantity} items available in stock.");
-                return false;
-            }
-
-            return true;
+        private static bool AddErrorAndReturnFalse(ModelStateDictionary modelState, string errorMessage)
+        {
+            modelState.AddModelError(string.Empty, errorMessage);
+            return false;
         }
 
         /// <summary>

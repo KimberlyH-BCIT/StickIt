@@ -1,15 +1,5 @@
-using Microsoft.AspNetCore.Authorization;
-using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
-using Microsoft.Extensions.Configuration;
-using ELKH.ViewModels;
-using ELKH.Data;
-using ELKH.Services;
-using ELKH.Models;
-using ELKH.Repositories;
 using ELKH.Extensions;
-using System.Security.Claims;
-using System.Linq;
+using ELKH.Services;
 
 namespace ELKH.Controllers;
 
@@ -217,7 +207,7 @@ public class CheckoutController : Controller
         if (regUser is null) return RedirectToAction("Index", "Cart");
 
         var cartItems = (await _cartRepo.GetByUserIdAsync(regUser.PkRegisteredUserId)).ToList();
-        if (!cartItems.Any()) return RedirectToAction("Index", "Cart");
+        if (cartItems.Count == 0) return RedirectToAction("Index", "Cart");
 
         // ═══════════════════════════════════════════════════════════════════
         // STEP 3: Validate shipping method and recalculate totals server-side (security: prevent tampering)
@@ -357,7 +347,7 @@ public class CheckoutController : Controller
     {
         // Retrieve cart from session
         var cartItems = await _guestCartService.GetCartItemsAsync();
-        if (!cartItems.Any())
+        if (cartItems.Count == 0)
         {
             TempData["Message"] = "warning,Your cart is empty. Please add items before checking out.";
             return RedirectToAction("Index", "Cart");
@@ -427,7 +417,7 @@ public class CheckoutController : Controller
         // STEP 2: Retrieve session cart
         // ═══════════════════════════════════════════════════════════════════
         var cartItems = await _guestCartService.GetCartItemsAsync();
-        if (!cartItems.Any())
+        if (cartItems.Count == 0)
         {
             TempData["Message"] = "error,Your cart is empty.";
             return RedirectToAction("Index", "Cart");
@@ -547,9 +537,9 @@ public class CheckoutController : Controller
         // ═══════════════════════════════════════════════════════════════════
         // STEP 9: Optional - Create user account if requested
         // ═══════════════════════════════════════════════════════════════════
-        // TODO: Implement account creation logic
+        // Account creation functionality is planned for future release:
         // - Check if vm.CreateAccount == true
-        // - Validate password requirements
+        // - Validate password requirements  
         // - Create ASP.NET Core Identity user
         // - Link order to new user account
         // - Send welcome email

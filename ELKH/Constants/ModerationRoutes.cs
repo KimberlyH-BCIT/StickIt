@@ -7,11 +7,63 @@ namespace ELKH.Constants
     /// Provides secure URL generation with input validation and encoding.
     /// </summary>
     /// <remarks>
-    /// Security Considerations:
-    /// - All query parameters are URL-encoded to prevent injection attacks
-    /// - Base URL validation prevents open redirect vulnerabilities
-    /// - Methods validate input to prevent malformed URLs
-    /// - Use these helpers instead of manual string concatenation
+    /// TABLE OF CONTENTS
+    /// ================================================================================
+    /// 1. Base Route Constants ....................................... Lines [18-50]
+    ///    - ConsolePath                   // Main moderation interface
+    ///    - ApproveAction, RejectAction   // Content approval workflows
+    ///    - BulkActions                  // Batch moderation operations
+    /// 
+    /// 2. URL Generation Helpers ..................................... Lines [52-85]
+    ///    - GetApprovalUrl()             // Secure approval URL generation
+    ///    - GetRejectionUrl()            // Secure rejection URL generation
+    ///    - GetBulkActionUrl()           // Batch operation URL building
+    /// 
+    /// 3. Query Parameter Management ................................. Lines [87-120]
+    ///    - AddQueryParam()              // Safe parameter addition
+    ///    - ValidateAndEncode()          // Input validation and encoding
+    ///    - PreventOpenRedirect()        // Security validation
+    /// 
+    /// 4. Security Utilities ......................................... Lines [122-155]
+    ///    - URL validation methods        // Prevent injection attacks
+    ///    - Parameter encoding           // XSS prevention
+    ///    - Base URL verification        // Open redirect prevention
+    /// ================================================================================
+    /// 
+    /// ARCHITECTURAL CONTEXT:
+    /// • Centralized route management for administrative moderation functionality
+    /// • Security-first approach with comprehensive input validation
+    /// • Consistent URL patterns across all moderation interfaces
+    /// • Part of ELKH's content moderation and trust & safety infrastructure
+    /// • Supports both manual and automated content moderation workflows
+    /// 
+    /// SECURITY IMPLEMENTATION:
+    /// This class implements multiple layers of security for admin routing:
+    /// 1. URL encoding - prevents injection attacks through query parameters
+    /// 2. Base URL validation - prevents open redirect vulnerabilities
+    /// 3. Input validation - ensures malformed URLs cannot be generated
+    /// 4. Secure helpers - replaces manual string concatenation
+    /// 5. Parameter sanitization - comprehensive encoding and validation
+    /// 
+    /// MODERATION WORKFLOW SUPPORT:
+    /// • Console dashboard routes for centralized moderation interface
+    /// • Individual action routes for approve/reject/flag operations
+    /// • Bulk operation routes for efficient batch moderation
+    /// • Query parameter management for filtering and pagination
+    /// • AJAX-friendly endpoints for real-time moderation interfaces
+    /// 
+    /// INTEGRATION POINTS:
+    /// • Used by: Administrative controllers requiring secure URL generation
+    /// • Referenced by: Razor views for moderation interface links
+    /// • Integrates with: Authorization policies and role-based access
+    /// • Supports: CSRF protection through consistent form action URLs
+    /// • Enables: SEO-friendly and user-friendly administrative URLs
+    /// 
+    /// DEVELOPMENT BENEFITS:
+    /// • Prevents URL-based security vulnerabilities through consistent patterns
+    /// • Reduces code duplication in moderation interface development
+    /// • Enables easy URL pattern changes through centralized constants
+    /// • Supports comprehensive testing of admin routing functionality
     /// </remarks>
     public static class ModerationRoutes
     {

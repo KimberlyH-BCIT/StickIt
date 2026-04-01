@@ -1,15 +1,6 @@
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading;
-using System.Threading.Tasks;
-using ELKH.Data;
-using ELKH.Models;
-using ELKH.ViewModels;
-using Microsoft.EntityFrameworkCore;
+using System.Globalization;
 
-namespace ELKH.Services
-{
+namespace ELKH.Services;
     /// <summary>
     /// Service for managing product ratings and reviews.
     /// Provides operations for querying, retrieving, and approving customer ratings.
@@ -444,14 +435,14 @@ namespace ELKH.Services
                 if (rating == null)
                 {
                     // No rating exists for this order item — the user may submit one.
-                    eligibleItems.Add(new ViewModels.EligibleOrderItemVM { Id = oi.PkOrderItemId, Label = oi.Order!.CreatedAt.ToString("g") });
+                    eligibleItems.Add(new ViewModels.EligibleOrderItemVM { Id = oi.PkOrderItemId, Label = oi.Order!.CreatedAt.ToString("g", CultureInfo.InvariantCulture) });
                 }
                 else if (rating.IsDeleted && rating.DeletedAt.HasValue
                       && (DateTime.UtcNow - rating.DeletedAt.Value).TotalHours >= 24)
                 {
                     // The previous rating was deleted more than 24 hours ago — the cooldown
                     // has expired, so this order item becomes eligible again.
-                    eligibleItems.Add(new ViewModels.EligibleOrderItemVM { Id = oi.PkOrderItemId, Label = oi.Order!.CreatedAt.ToString("g") });
+                    eligibleItems.Add(new ViewModels.EligibleOrderItemVM { Id = oi.PkOrderItemId, Label = oi.Order!.CreatedAt.ToString("g", CultureInfo.InvariantCulture) });
                 }
                 else if (existingRating == null)
                 {
@@ -504,4 +495,3 @@ namespace ELKH.Services
             return productsToReview;
         }
     }
-}

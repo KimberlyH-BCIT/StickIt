@@ -1,5 +1,9 @@
 namespace ELKH.Services;
 
+/// <summary>
+/// Email service implementation for order-related communications providing
+/// order confirmation, shipping notifications, and customer communication functionality.
+/// </summary>
 /// <inheritdoc />
 public class OrderEmailService : IOrderEmailService
 {

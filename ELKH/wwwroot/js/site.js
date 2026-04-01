@@ -1,40 +1,27 @@
 ﻿/*
 ╔══════════════════════════════════════════════════════════════════════════════════╗
-║ TABLE OF CONTENTS - site.js                                                      ║
-╠══════════════════════════════════════════════════════════════════════════════════╣
-║ 1. Entry Points & Initialization ........................... Lines    4-8      ║
-║    - DOMContentLoaded event handlers for core functionality                      ║
-║                                                                                  ║
-║ 2. Utility Helper Functions ................................ Lines    9-43     ║
-║    - escapeHtml(): XSS prevention for dynamic content                           ║
-║    - showTempMessage(): Bootstrap alert notifications                           ║
-║                                                                                  ║
-║ 3. Product Search Autocomplete ............................. Lines   44-311    ║
-║    - initProductAutocomplete(): Search input with live suggestions              ║
-║    - Debounced search requests and ARIA accessibility support                   ║
-║    - Keyboard navigation (Arrow keys, Enter, Escape)                            ║
-║    - buildSuggestionItem(): HTML generation for search results                  ║
-║    - highlightMatch(): Query highlighting in search results                     ║
-║                                                                                  ║
-║ 4. Wishlist AJAX Operations ................................ Lines  312-435    ║
-║    - initWishlistAjax(): Add/remove wishlist functionality                      ║
-║    - AJAX form submission with user feedback                                    ║
-║    - Dynamic UI updates and error handling                                      ║
-║                                                                                  ║
-║ 5. Product Card Navigation ................................. Lines  436-466    ║
-║    - initProductCardNavigation(): Clickable product cards                       ║
-║    - Event delegation for dynamic product grid interaction                      ║
-║                                                                                  ║
-║ 6. Newsletter Subscription ................................. Lines  467-500+   ║
-║    - Newsletter form handling with validation                                   ║
-║    - Email subscription with success/error feedback                             ║
-║                                                                                  ║
-║ Security & Accessibility:                                                       ║
-║ - All dynamic content is XSS-protected via escapeHtml()                        ║
-║ - WAI-ARIA compliant autocomplete with screen reader support                    ║
-║ - CSRF tokens preserved for all AJAX form submissions                           ║
-║ - Progressive enhancement: all features work without JavaScript                 ║
+║ CORE APPLICATION JAVASCRIPT - Data & Business Logic                             ║
+║ Handles AJAX operations, data processing, and core application functionality   ║
 ╚══════════════════════════════════════════════════════════════════════════════════╝
+
+TABLE OF CONTENTS:
+- Entry Points & Initialization: DOMContentLoaded event handlers
+- Utility Helper Functions: XSS prevention, alert notifications
+- Product Search Autocomplete: Live search with API integration
+- Wishlist AJAX Operations: Add/remove wishlist functionality  
+- Product Card Navigation: Clickable product card behaviors
+- Newsletter Subscription: Email subscription with validation
+
+PURPOSE:
+This file contains JavaScript for core application functionality including
+AJAX operations, API communication, data processing, and business logic.
+For UI interactions and design system behaviors, see kawaii-ui.js.
+
+SECURITY & ACCESSIBILITY:
+- All dynamic content is XSS-protected via escapeHtml()
+- WAI-ARIA compliant with screen reader support
+- CSRF tokens preserved for all AJAX form submissions
+- Progressive enhancement: all features work without JavaScript
 */
 
 // Please see documentation at https://learn.microsoft.com/aspnet/core/client-side/bundling-and-minification

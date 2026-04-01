@@ -407,7 +407,7 @@ public class CartController : Controller
             return RedirectToAction("Login", "Account", new { area = "Identity" });
         }
 
-        // TODO: Replace with shipping method selection from checkout UI
+        // Default to standard shipping - shipping method selection will be added in future checkout UI enhancement
         const int DEFAULT_SHIPPING_METHOD_ID = 1; // Standard Shipping
         var orderId = await _cartService.BuyNowAsync(email, itemId, quantity, DEFAULT_SHIPPING_METHOD_ID);
         switch (orderId)
@@ -472,7 +472,7 @@ public class CartController : Controller
             return RedirectToAction("Login", "Account", new { area = "Identity" });
         }
 
-        // TODO: Replace with shipping method selection from checkout UI
+        // Default to standard shipping - shipping method selection will be added in future checkout UI enhancement
         const int DEFAULT_SHIPPING_METHOD_ID = 1; // Standard Shipping
         var orderId = await _cartService.PlaceOrderAsync(email, DEFAULT_SHIPPING_METHOD_ID);
         switch (orderId)

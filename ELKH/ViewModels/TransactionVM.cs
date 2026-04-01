@@ -1,8 +1,13 @@
-﻿using ELKH.Models;
+using ELKH.Models;
 using System.ComponentModel.DataAnnotations;
 
 namespace ELKH.ViewModels;
-    public class TransactionVM
+
+/// <summary>
+/// View model for transaction information containing payment details,
+/// transaction status, and financial data for transaction management and reporting.
+/// </summary>
+public class TransactionVM
     {
         public string FirstName { get; set; } = string.Empty;
         public int PkTransactionId { get; set; }
@@ -19,4 +24,3 @@ namespace ELKH.ViewModels;
         public int FkOrderId { get; set; }
         public OrderModel Order { get; set; } = new OrderModel();
     }
-   

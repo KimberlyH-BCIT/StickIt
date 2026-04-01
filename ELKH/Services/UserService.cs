@@ -1,17 +1,4 @@
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading;
-using System.Threading.Tasks;
-using ELKH.Data;
-using ELKH.Models;
-using ELKH.ViewModels;
-using Microsoft.EntityFrameworkCore;
-using Microsoft.Extensions.Caching.Memory;
-using Microsoft.Extensions.Options;
-
-namespace ELKH.Services
-{
+namespace ELKH.Services;
     /// <summary>
     /// User service implementation providing user lookups, dashboard data aggregation,
     /// and cached user profile retrieval.
@@ -91,29 +78,17 @@ namespace ELKH.Services
     /// </remarks>
     /// Historical orders: Delivered, Cancelled, Refunded, Failed
     /// </remarks>
-    public class UserService : IUserService
+    /// <param name="db">EF Core context for user, order, and wishlist queries.</param>
+    /// <param name="cache">In-memory cache for short-lived email-keyed user lookups.</param>
+    /// <param name="cacheOptions">Expiration settings for user cache entries.</param>
+    public class UserService(
+        ApplicationDbContext db,
+        IMemoryCache cache,
+        IOptions<ELKH.Configuration.CacheOptions> cacheOptions) : IUserService
     {
         #region Constructor & Dependencies
 
-        private readonly ApplicationDbContext _db;
-        private readonly IMemoryCache _cache;
-        private readonly ELKH.Configuration.CacheOptions _cacheOptions;
-
-        /// <summary>
-        /// Initializes a new instance of <see cref="UserService"/>.
-        /// </summary>
-        /// <param name="db">EF Core context for user, order, and wishlist queries.</param>
-        /// <param name="cache">In-memory cache for short-lived email-keyed user lookups.</param>
-        /// <param name="cacheOptions">Expiration settings for user cache entries.</param>
-        public UserService(
-            ApplicationDbContext db,
-            IMemoryCache cache,
-            IOptions<ELKH.Configuration.CacheOptions> cacheOptions)
-        {
-            _db = db;
-            _cache = cache;
-            _cacheOptions = cacheOptions.Value;
-        }
+        private readonly ELKH.Configuration.CacheOptions _cacheOptions = cacheOptions.Value;
 
         #endregion
 
@@ -154,23 +129,23 @@ namespace ELKH.Services
             var cacheKey = GetCacheKey(email);
 
             // Cache hit: return immediately
-            if (_cache.TryGetValue(cacheKey, out RegisteredUserModel? cachedUser))
+            if (cache.TryGetValue(cacheKey, out RegisteredUserModel? cachedUser))
                 return cachedUser;
 
             // Cache miss: query database
-            var user = await CompiledQueries.GetUserByEmail(_db, email, ct);
+            var user = await CompiledQueries.GetUserByEmail(db, email, ct);
 
             // Cache the result if user found
             if (user != null)
             {
-                var cacheOptions = new MemoryCacheEntryOptions
+                var cacheEntryOptions = new MemoryCacheEntryOptions
                 {
                     // Absolute expiration: cache entry evicted after this time regardless of access
                     AbsoluteExpirationRelativeToNow = TimeSpan.FromMinutes(_cacheOptions.UserLookupExpirationMinutes),
                     // Sliding expiration: cache entry evicted if not accessed within this time
                     SlidingExpiration = TimeSpan.FromMinutes(_cacheOptions.UserLookupExpirationMinutes / 2.0)
                 };
-                _cache.Set(cacheKey, user, cacheOptions);
+                cache.Set(cacheKey, user, cacheEntryOptions);
             }
 
             return user;
@@ -191,7 +166,7 @@ namespace ELKH.Services
         /// </remarks>
         public async Task<RegisteredUserModel?> GetByIdAsync(int id, CancellationToken ct = default)
         {
-            return await _db.RegisteredUsers
+            return await db.RegisteredUsers
                 .AsNoTracking()
                 .FirstOrDefaultAsync(u => u.PkRegisteredUserId == id, ct);
         }
@@ -214,7 +189,7 @@ namespace ELKH.Services
             if (!string.IsNullOrEmpty(email))
             {
                 var cacheKey = GetCacheKey(email);
-                _cache.Remove(cacheKey);
+                cache.Remove(cacheKey);
             }
         }
 
@@ -253,7 +228,7 @@ namespace ELKH.Services
         /// <returns>Total number of wishlist items</returns>
         public async Task<int> GetWishlistCountAsync(int userId, CancellationToken ct = default)
         {
-            return await _db.WishListItems
+            return await db.WishListItems
                 .CountAsync(wi => wi.WishList.FkUserId == userId, ct);
         }
 
@@ -291,7 +266,7 @@ namespace ELKH.Services
         {
             const int pageSize = 10;
 
-            var baseQuery = _db.WishListItems
+            var baseQuery = db.WishListItems
                 .AsNoTracking()
                 .Where(wi => wi.WishList.FkUserId == userId)
                 .Include(wi => wi.Product);
@@ -378,7 +353,7 @@ namespace ELKH.Services
         {
             const int pageSize = 10;
 
-            var statusQuery = _db.Orders
+            var statusQuery = db.Orders
                 .AsNoTracking()
                 .Where(o => o.FkRegisteredUserId == userId);
 
@@ -469,4 +444,3 @@ namespace ELKH.Services
 
         #endregion
     }
-}

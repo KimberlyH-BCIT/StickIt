@@ -1,50 +1,126 @@
+/* ═══════════════════════════════════════════════════════════════════════════════════════ */
+/* ║ KAWAII THEME SYSTEM - LAYERED DESIGN APPROACH                                        ║ */
+/* ═══════════════════════════════════════════════════════════════════════════════════════ */
+/*
+ * LAYER 1 — FOUNDATION: Base variables, typography, backgrounds, core components
+ * LAYER 2 — SHOP COMPONENTS: Navbar, search, tabs, badges, product cards
+ * LAYER 3 — POLISH: Sparkles, cloud effects, micro-interactions, success states
+ */
+
 :root {
-    /* Color palette from your boards */
+    /* ═══════════════════════════════════════════════════════════════════════════ */
+    /* ║ LAYER 1 FOUNDATION - REFINED COLOR SYSTEM & DESIGN TOKENS              ║ */
+    /* ═══════════════════════════════════════════════════════════════════════════ */
+    /*
+     * REFINED Color Usage Guidelines (Hierarchy-Focused):
+     * 
+     * 🎯 PRIMARY FOCUS:
+     * - Pink: SPARINGLY for primary CTAs and featured badges only
+     * - Purple/Ink: Body text with strong contrast for readability
+     * 
+     * 🌸 SUPPORTIVE PALETTE:
+     * - Mint: Page backgrounds, large soft sections
+     * - Sky: Secondary actions, tab states, outlines
+     * - Lavender: Category areas, alternate sections  
+     * - Butter: "New", sale labels, highlights (not primary CTA)
+     */
+
+    /* Primary color palette - strategic usage */
     --sky: #A9DEF9;
     --butter: #F2E6A3;
     --peach: #FECCA3;
-    --pink: #F694C1;
+    --pink: #F694C1;        /* 💕 Use sparingly for hierarchy */
     --mint: #D3FFE4;
     --lavender: #E4C1F9;
 
-    /* Supporting tones */
+    /* Foundation colors - enhanced for readability */
     --purple: #7B5FB6;
     --purple-dark: #6A4FA3;
-    --ink: #6B5A87;
-    --ink-soft: #8B7BA7;
+    --purple-light: #9B7FD6;
+
+    /* 📖 IMPROVED TEXT CONTRAST - Darker for readability */
+    --ink: #4A3B5C;           /* Darker base text (was #6B5A87) */
+    --ink-medium: #5D4A73;    /* Medium contrast text */
+    --ink-soft: #7A6B8F;     /* Soft contrast text (lighter) */
+    --ink-light: #A09BB0;    /* Light text for secondary info */
     --white: #FFFFFF;
-    --surface: rgba(255, 255, 255, 0.82);
-    --surface-strong: rgba(255, 255, 255, 0.94);
 
-    /* Borders & shadows */
-    --outline: #D9D4F3;
-    --outline-sky: #95CFF8;
-    --outline-pink: #F3A4C5;
-    --outline-lavender: #CDB6F5;
+    /* Surface colors - Foundation Layer */
+    --surface: rgba(255, 255, 255, 0.85);
+    --surface-strong: rgba(255, 255, 255, 0.95);
+    --surface-soft: rgba(255, 255, 255, 0.70);
+    --surface-mint: rgba(211, 255, 228, 0.35);
+    --surface-sky: rgba(169, 222, 249, 0.25);
+    --surface-lavender: rgba(228, 193, 249, 0.30);
 
-    --shadow-soft: 0 8px 24px rgba(148, 171, 219, 0.18);
-    --shadow-card: 0 10px 30px rgba(130, 150, 210, 0.16);
-    --shadow-pill: 0 4px 10px rgba(150, 160, 220, 0.18);
-    --shadow-press: inset 0 2px 4px rgba(255,255,255,0.55);
+    /* Borders & outlines - softer approach */
+    --outline: #E2DEF0;              /* Softer than before */
+    --outline-soft: rgba(226, 222, 240, 0.7);
+    --outline-sky: #B3D9FA;
+    --outline-pink: #F8B8D1;        /* Reserved for special use */
+    --outline-lavender: #D9C8F7;
+    --outline-butter: rgba(242, 230, 163, 0.85);
 
-    /* Radius */
-    --radius-xl: 32px;
-    --radius-lg: 24px;
-    --radius-md: 18px;
-    --radius-pill: 999px;
+    /* 🌟 REFINED SHADOW SYSTEM - Softer, less gray-heavy */
+    --shadow-soft: 0 8px 24px rgba(169, 222, 249, 0.12);      /* Sky-tinted, not gray */
+    --shadow-card: 0 10px 30px rgba(211, 255, 228, 0.15);     /* Mint-tinted */
+    --shadow-pill: 0 4px 12px rgba(228, 193, 249, 0.14);      /* Lavender-tinted */
+    --shadow-press: inset 0 2px 6px rgba(255,255,255,0.6);
+    --shadow-float: 0 16px 40px rgba(169, 222, 249, 0.18);    /* Elevated soft */
+    --shadow-hover: 0 12px 32px rgba(211, 255, 228, 0.16);    /* Gentle hover */
+    --shadow-focus: 0 0 0 4px rgba(169, 222, 249, 0.25);      /* Focus ring */
 
-    /* Typography */
-    --font-heading: "Sniglet", cursive;
-    --font-body: "Nunito", sans-serif;
+    /* 🎯 INTENTIONAL BORDER RADIUS SYSTEM - Varied for hierarchy */
+    --radius-xs: 6px;        /* Small elements like badges */
+    --radius-sm: 12px;       /* Buttons, inputs */
+    --radius-md: 18px;       /* Cards, panels */
+    --radius-lg: 24px;       /* Large cards, modals */
+    --radius-xl: 32px;       /* Hero sections, major containers */
+    --radius-pill: 999px;    /* Pills, tags, special buttons */
 
-    /* Spacing */
+    /* 🎨 PROPER TYPOGRAPHY SYSTEM - Sniglet for headings only */
+    --font-heading: "Sniglet", "Comic Sans MS", cursive;
+    --font-body: "Nunito", "Segoe UI", "Roboto", sans-serif;
+
+    /* Font weights - mapped properly */
+    --font-weight-light: 300;     /* Nunito light */
+    --font-weight-normal: 400;    /* Nunito regular, Sniglet regular */
+    --font-weight-medium: 600;    /* Nunito semibold */
+    --font-weight-bold: 700;      /* Nunito bold */
+    --font-weight-black: 800;     /* Nunito extra bold, Sniglet black */
+
+    /* Font sizes - refined scale */
+    --font-size-xs: 0.75rem;     /* 12px - captions, badges */
+    --font-size-sm: 0.875rem;    /* 14px - small body text */
+    --font-size-base: 1rem;      /* 16px - primary body text */
+    --font-size-lg: 1.125rem;    /* 18px - large body text */
+    --font-size-xl: 1.25rem;     /* 20px - small headings */
+    --font-size-2xl: 1.5rem;     /* 24px - medium headings */
+    --font-size-3xl: 2rem;       /* 32px - large headings */
+    --font-size-4xl: 2.5rem;     /* 40px - hero headings */
+
+    /* Spacing system */
+    --spacing-xs: 0.25rem;   /* 4px */
+    --spacing-sm: 0.5rem;    /* 8px */
+    --spacing-md: 1rem;      /* 16px */
+    --spacing-lg: 1.5rem;    /* 24px */
+    --spacing-xl: 2rem;      /* 32px */
+    --spacing-2xl: 3rem;     /* 48px */
+
+    /* Layout system */
     --container-width: 1200px;
-    --section-gap: 2rem;
+    --section-gap: var(--spacing-xl);
 
-    /* Transitions */
-    --transition-fast: 0.18s ease;
-    --transition-med: 0.28s ease;
+    /* ⚡ REFINED ANIMATION SYSTEM */
+    --transition-fast: 0.15s cubic-bezier(0.4, 0.0, 0.2, 1);
+    --transition-med: 0.25s cubic-bezier(0.4, 0.0, 0.2, 1);
+    --transition-slow: 0.35s cubic-bezier(0.4, 0.0, 0.2, 1);
+    --ease-bounce: cubic-bezier(0.68, -0.55, 0.265, 1.55);
 }
+
+/* ═══════════════════════════════════════════════════════════════════════════════ */
+/* ║ LAYER 1 FOUNDATION - BASE RESETS & GLOBAL STYLES                          ║ */
+/* ═══════════════════════════════════════════════════════════════════════════════ */
 
 *,
 *::before,
@@ -60,97 +136,800 @@ html {
 body {
     margin: 0;
     font-family: var(--font-body);
+    font-weight: var(--font-weight-normal);
+    line-height: 1.6;
     color: var(--ink);
     background:
         radial-gradient(circle at top left, rgba(255,255,255,0.75) 0%, rgba(255,255,255,0) 22%),
-        linear-gradient(180deg, #dff7f2 0%, #dff0ff 40%, #eae4ff 75%, #fdf2f8 100%);
+        linear-gradient(180deg, var(--mint) 0%, var(--surface-sky) 30%, var(--surface-lavender) 70%, rgba(253, 242, 248, 0.8) 100%);
     min-height: 100vh;
-    line-height: 1.6;
+    overflow-x: hidden;
 }
 
-/* Optional cloud/floating dreamy overlay */
+/* Subtle floating cloud overlay - Foundation Layer */
 body::before {
     content: "";
     position: fixed;
     inset: 0;
     pointer-events: none;
-    opacity: 0.35;
+    opacity: 0.25;
     background:
-        radial-gradient(circle at 10% 20%, rgba(255,255,255,0.8) 0 40px, transparent 41px),
-        radial-gradient(circle at 25% 12%, rgba(255,255,255,0.55) 0 32px, transparent 33px),
-        radial-gradient(circle at 70% 18%, rgba(255,255,255,0.8) 0 48px, transparent 49px),
-        radial-gradient(circle at 82% 78%, rgba(255,255,255,0.7) 0 42px, transparent 43px),
-        radial-gradient(circle at 15% 82%, rgba(255,255,255,0.7) 0 54px, transparent 55px);
+        radial-gradient(circle at 10% 20%, rgba(255,255,255,0.6) 0 35px, transparent 36px),
+        radial-gradient(circle at 25% 12%, rgba(255,255,255,0.45) 0 28px, transparent 29px),
+        radial-gradient(circle at 70% 18%, rgba(255,255,255,0.6) 0 42px, transparent 43px),
+        radial-gradient(circle at 82% 78%, rgba(255,255,255,0.5) 0 38px, transparent 39px),
+        radial-gradient(circle at 15% 82%, rgba(255,255,255,0.55) 0 48px, transparent 49px);
     z-index: -1;
+    animation: float-clouds 60s linear infinite;
+}
+
+@keyframes float-clouds {
+    0% { transform: translateX(-100px); }
+    100% { transform: translateX(100px); }
 }
 
 .container-kawaii {
-    width: min(100% - 2rem, var(--container-width));
+    width: min(100% - var(--spacing-lg), var(--container-width));
     margin-inline: auto;
-    padding-block: 2rem 3rem;
+    padding-block: var(--spacing-xl) var(--spacing-2xl);
 }
 
-/* =========================
-   TYPOGRAPHY
-========================= */
-h1, h2, h3, h4, .font-heading {
-    font-family: var(--font-heading);
-    line-height: 1.15;
+/* ═══════════════════════════════════════════════════════════════════════════════ */
+/* ║ LAYER 1 FOUNDATION - STRICT TYPOGRAPHY HIERARCHY                           ║ */
+/* ═══════════════════════════════════════════════════════════════════════════════ */
+
+/* 🎯 SNIGLET - HEADINGS ONLY (Chunky & Playful) */
+h1, h2, h3, h4, h5, h6, 
+.font-heading {
+    font-family: var(--font-heading);  /* Sniglet */
+    line-height: 1.2;
     margin-top: 0;
+    margin-bottom: var(--spacing-md);
+    color: var(--purple);
+    font-weight: var(--font-weight-black);  /* 800 */
+    letter-spacing: -0.01em;
+}
+
+h1, .display-title {
+    font-size: clamp(var(--font-size-3xl), 5vw, var(--font-size-4xl));
+    color: var(--purple);
+    text-shadow: 0 2px 8px rgba(255,255,255,0.9);
+    margin-bottom: var(--spacing-lg);
+}
+
+h2, .section-title {
+    font-size: clamp(var(--font-size-xl), 3.5vw, var(--font-size-2xl));
     color: var(--purple);
 }
 
-h1,
-.display-title {
-    font-size: clamp(2.25rem, 4vw, 3.5rem);
+h3, .card-title {
+    font-size: clamp(var(--font-size-lg), 2.5vw, var(--font-size-xl));
     color: var(--purple);
-    text-shadow: 0 2px 0 rgba(255,255,255,0.65);
 }
 
-h2,
-.section-title {
-    font-size: clamp(1.6rem, 2.5vw, 2.4rem);
+h4, .subsection-title {
+    font-size: var(--font-size-lg);
+    color: var(--purple);
 }
 
-h3,
-.card-title {
-    font-size: clamp(1.25rem, 2vw, 1.75rem);
+h5, h6 {
+    font-size: var(--font-size-base);
+    color: var(--purple);
+    font-weight: var(--font-weight-normal);  /* 400 */
 }
 
-p,
-li,
-label,
-input,
-button,
-select,
-textarea {
+/* 📖 NUNITO - BODY TEXT ONLY (Clean & Readable) */
+body {
+    font-family: var(--font-body);  /* Nunito */
+    font-weight: var(--font-weight-normal);  /* 400 */
+    line-height: 1.6;
+    color: var(--ink);  /* Darker for better readability */
+}
+
+p, li, span, div, label, input, button, select, textarea, 
+.body-text {
+    font-family: var(--font-body);  /* Nunito only */
+    color: var(--ink);  /* Strong contrast */
+    line-height: 1.6;
+}
+
+/* Body text variations with proper contrast */
+.text-large {
+    font-size: var(--font-size-lg);
+    color: var(--ink);
+}
+
+.text-small {
+    font-size: var(--font-size-sm);
+    color: var(--ink-medium);
+}
+
+.text-caption {
+    font-size: var(--font-size-xs);
+    color: var(--ink-soft);
+    font-weight: var(--font-weight-medium);
+}
+
+/* Text emphasis - still using Nunito */
+.text-bold {
+    font-weight: var(--font-weight-bold);
+    color: var(--ink);
+}
+
+.text-medium {
+    font-weight: var(--font-weight-medium);
+    color: var(--ink);
+}
+
+/* 🎨 STRATEGIC COLOR CLASSES - Pink used sparingly */
+.text-purple { color: var(--purple) !important; }
+.text-ink { color: var(--ink) !important; }
+.text-ink-soft { color: var(--ink-soft) !important; }
+.text-sky { color: var(--sky) !important; }
+.text-mint { color: var(--mint) !important; }
+.text-lavender { color: var(--lavender) !important; }
+.text-butter { color: var(--butter) !important; }
+
+/* 💕 Pink reserved for special emphasis only */
+.text-pink { 
+    color: var(--pink) !important; 
+    font-weight: var(--font-weight-bold);
+}
+
+.text-featured {
+    color: var(--pink) !important;
+    font-weight: var(--font-weight-bold);
+    text-shadow: 0 1px 3px rgba(246, 148, 193, 0.3);
+}
+
+/* ⚠️ OVERRIDE PREVENTION - Ensure no accidental Sniglet on body text */
+p, span, div:not(.font-heading), 
+label, input, button:not(.btn-kawaii), select, textarea,
+.card-text, .product-description, .nav-link:not(.kawaii-nav-link) {
+    font-family: var(--font-body) !important;  /* Force Nunito */
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════════ */
+/* ║ LAYER 1 FOUNDATION - BUTTON SYSTEM                                         ║ */
+/* ═══════════════════════════════════════════════════════════════════════════════ */
+
+.btn-kawaii {
+    appearance: none;
+    border: none;
+    outline: none;
+    cursor: pointer;
+    border-radius: var(--radius-sm);      /* Intentional size - not pill for everything */
+    padding: var(--spacing-md) var(--spacing-lg);
+    font-family: var(--font-body);       /* Nunito for buttons, not Sniglet */
+    font-weight: var(--font-weight-bold);
+    font-size: var(--font-size-base);
+    line-height: 1;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: var(--spacing-sm);
+    text-decoration: none;
+    transition:
+        transform var(--transition-fast),
+        box-shadow var(--transition-fast),
+        filter var(--transition-fast),
+        background var(--transition-med);
+    box-shadow: var(--shadow-pill);
+    border: 2px solid transparent;
+    position: relative;
+    overflow: hidden;
+    min-height: 44px;  /* Accessibility target size */
+}
+
+.btn-kawaii::before {
+    content: "";
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(90deg, transparent, rgba(255,255,255,0.3), transparent);
+    transition: left var(--transition-med);
+}
+
+.btn-kawaii:hover::before {
+    left: 100%;
+}
+
+.btn-kawaii:hover {
+    transform: translateY(-2px) scale(1.01);
+    filter: brightness(1.05);
+    box-shadow: var(--shadow-hover);
+}
+
+.btn-kawaii:active {
+    transform: translateY(0) scale(0.98);
+    box-shadow: var(--shadow-pill);
+    transition: transform 0.1s;
+}
+
+.btn-kawaii:focus-visible {
+    outline: none;
+    box-shadow: var(--shadow-focus), var(--shadow-pill);
+}
+
+/* 💕 PRIMARY (Pink) - SPARINGLY for main CTAs only */
+.btn-primary-kawaii {
+    background: linear-gradient(135deg, var(--pink) 0%, #f281b5 100%);
+    color: white;
+    border-color: var(--outline-pink);
+    /* Reserve for: "Add to Cart", "Sign Up", "Subscribe", "Buy Now" */
+}
+
+.btn-primary-kawaii:hover {
+    background: linear-gradient(135deg, #f281b5 0%, var(--pink) 100%);
+    color: white;
+}
+
+/* 🌸 SECONDARY (Sky) - Most common button, good hierarchy */
+.btn-secondary-kawaii {
+    background: linear-gradient(135deg, var(--sky) 0%, #8dd3f7 100%);
+    color: var(--ink);  /* Dark text for better readability */
+    border-color: var(--outline-sky);
+}
+
+.btn-secondary-kawaii:hover {
+    background: linear-gradient(135deg, #8dd3f7 0%, var(--sky) 100%);
+    color: var(--ink);
+}
+
+/* 🎯 OUTLINE (Neutral) - For secondary actions */
+.btn-outline-kawaii {
+    background: var(--surface-strong);
+    border: 2px solid var(--outline-sky);
+    color: var(--ink);  /* Dark text for readability */
+    backdrop-filter: blur(8px);
+}
+
+.btn-outline-kawaii:hover {
+    background: var(--surface-sky);
+    border-color: var(--sky);
+    color: var(--ink);
+}
+
+/* ⭐ BUTTER (Promotions) - For special offers only */
+.btn-butter-kawaii {
+    background: linear-gradient(135deg, var(--butter) 0%, #e6d088 100%);
+    color: var(--ink);  /* Dark text for readability */
+    border-color: var(--outline-butter);
+}
+
+.btn-butter-kawaii:hover {
+    background: linear-gradient(135deg, #e6d088 0%, var(--butter) 100%);
+    color: var(--ink);
+}
+
+/* Button size variations with intentional radius differences */
+.btn-kawaii.btn-sm {
+    padding: var(--spacing-sm) var(--spacing-md);
+    font-size: var(--font-size-sm);
+    border-radius: var(--radius-xs);  /* Smaller radius */
+    min-height: 36px;
+}
+
+.btn-kawaii.btn-lg {
+    padding: var(--spacing-lg) var(--spacing-xl);
+    font-size: var(--font-size-lg);
+    border-radius: var(--radius-md);  /* Larger radius */
+    min-height: 52px;
+}
+
+/* Special pill buttons for tags/badges only */
+.btn-kawaii.btn-pill {
+    border-radius: var(--radius-pill);
+    padding: var(--spacing-sm) var(--spacing-md);
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════════ */
+/* ║ LAYER 1 FOUNDATION - CARD & PANEL SYSTEM                                  ║ */
+/* ═══════════════════════════════════════════════════════════════════════════════ */
+
+/* ═══════════════════════════════════════════════════════════════════════════════ */
+/* ║ LAYER 1 FOUNDATION - REFINED CARD & PANEL SYSTEM                          ║ */
+/* ═══════════════════════════════════════════════════════════════════════════════ */
+
+.kawaii-card {
+    background: var(--surface);
+    backdrop-filter: blur(12px);
+    border: 3px solid rgba(255,255,255,0.85);
+    border-radius: var(--radius-lg);     /* Intentional size for cards */
+    box-shadow: var(--shadow-card);
+    padding: var(--spacing-lg);
+    position: relative;
+    transition: all var(--transition-med);
+}
+
+.kawaii-card:hover {
+    transform: translateY(-4px);
+    box-shadow: var(--shadow-float);
+}
+
+.kawaii-panel {
+    background: linear-gradient(180deg, var(--surface-strong), var(--surface));
+    border: 2px solid var(--outline-soft);
+    border-radius: var(--radius-md);     /* Medium radius for panels */
+    box-shadow: var(--shadow-soft);
+    padding: var(--spacing-lg);
+    backdrop-filter: blur(8px);
+}
+
+/* Small cards for compact content */
+.kawaii-card-sm {
+    border-radius: var(--radius-sm);     /* Smaller radius */
+    padding: var(--spacing-md);
+    box-shadow: var(--shadow-pill);
+}
+
+/* Large cards for hero sections */
+.kawaii-card-lg {
+    border-radius: var(--radius-xl);     /* Larger radius */
+    padding: var(--spacing-xl);
+    box-shadow: var(--shadow-float);
+}
+
+/* Surface variations with refined colors */
+.surface-mint {
+    background: linear-gradient(180deg, rgba(211, 255, 228, 0.6) 0%, rgba(211, 255, 228, 0.3) 100%);
+    border: 2px solid rgba(211, 255, 228, 0.8);
+}
+
+.surface-sky {
+    background: linear-gradient(180deg, rgba(169, 222, 249, 0.5) 0%, rgba(169, 222, 249, 0.2) 100%);
+    border: 2px solid var(--outline-sky);
+}
+
+.surface-lavender {
+    background: linear-gradient(180deg, rgba(228, 193, 249, 0.5) 0%, rgba(228, 193, 249, 0.2) 100%);
+    border: 2px solid var(--outline-lavender);
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════════ */
+/* ║ LAYER 1 FOUNDATION - FORM CONTROLS                                         ║ */
+/* ═══════════════════════════════════════════════════════════════════════════════ */
+
+.input-kawaii,
+.select-kawaii,
+.textarea-kawaii {
+    width: 100%;
+    border: 2px solid var(--outline);
+    background: var(--surface);
+    border-radius: var(--radius-lg);
+    padding: var(--spacing-md);
+    color: var(--ink);
+    font-size: var(--font-size-base);
     font-family: var(--font-body);
+    box-shadow: var(--shadow-pill);
+    transition: all var(--transition-fast);
+    backdrop-filter: blur(8px);
 }
 
-.text-pink { color: var(--pink); }
-.text-sky { color: #6BAEE7; }
-.text-purple { color: var(--purple); }
-.text-mint { color: #66B8A2; }
-.text-butter { color: #D39A2D; }
+.input-kawaii:focus,
+.select-kawaii:focus,
+.textarea-kawaii:focus {
+    outline: none;
+    border-color: var(--sky);
+    box-shadow: 0 0 0 4px rgba(169, 222, 249, 0.3), var(--shadow-pill);
+    background: var(--surface-strong);
+}
 
-/* =========================
-   HERO / BANNER
-========================= */
+.checkbox-kawaii {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--spacing-sm);
+    font-weight: var(--font-weight-bold);
+    color: var(--purple);
+    cursor: pointer;
+}
+
+.checkbox-kawaii input[type="checkbox"] {
+    accent-color: var(--sky);
+    width: 18px;
+    height: 18px;
+    border-radius: var(--radius-sm);
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════════ */
+/* ║ LAYER 2 SHOP COMPONENTS - NAVIGATION SYSTEM                                ║ */
+/* ═══════════════════════════════════════════════════════════════════════════════ */
+
+.kawaii-header {
+    background: linear-gradient(180deg, var(--surface-strong) 0%, rgba(255,255,255,0.98) 100%);
+    backdrop-filter: blur(16px);
+    border-bottom: 3px solid var(--outline);
+    box-shadow: 0 4px 20px rgba(169, 222, 249, 0.25);
+    position: sticky;
+    top: 0;
+    z-index: 100;
+}
+
+.kawaii-brand {
+    font-family: var(--font-heading);
+    font-weight: var(--font-weight-black);
+    color: var(--purple);
+    text-decoration: none;
+    font-size: var(--font-size-3xl);
+    text-shadow: 2px 2px 6px rgba(255,255,255,0.9);
+    transition: all var(--transition-fast);
+}
+
+.kawaii-brand:hover,
+.kawaii-brand:focus {
+    color: var(--pink);
+    text-shadow: 2px 2px 12px rgba(246, 148, 193, 0.5);
+    text-decoration: none;
+    transform: scale(1.05);
+}
+
+.kawaii-nav {
+    background: linear-gradient(180deg, rgba(255,255,255,0.95) 0%, var(--surface-lavender) 100%);
+    backdrop-filter: blur(12px);
+    border-top: 2px solid var(--outline-soft);
+    padding: var(--spacing-md) 0;
+    box-shadow: 0 -2px 10px rgba(169, 222, 249, 0.15);
+}
+
+.kawaii-nav-hamburger {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    background: var(--surface);
+    border: 2px solid var(--outline-sky);
+    padding: var(--spacing-sm);
+    border-radius: var(--radius-md);
+    color: var(--purple);
+    cursor: pointer;
+    transition: all var(--transition-fast);
+    box-shadow: var(--shadow-pill);
+}
+
+.kawaii-nav-hamburger:hover,
+.kawaii-nav-hamburger:focus {
+    background: linear-gradient(135deg, var(--sky) 0%, #8dd3f7 100%);
+    color: white;
+    transform: translateY(-2px);
+    box-shadow: var(--shadow-hover);
+}
+
+.kawaii-nav-link {
+    font-family: var(--font-heading);
+    font-weight: var(--font-weight-bold);
+    color: var(--purple);
+    text-decoration: none;
+    padding: var(--spacing-md) var(--spacing-lg);
+    border-radius: var(--radius-pill);
+    background: var(--surface);
+    border: 2px solid var(--outline-soft);
+    box-shadow: var(--shadow-pill);
+    transition: all var(--transition-fast);
+    position: relative;
+    overflow: hidden;
+}
+
+.kawaii-nav-link:hover,
+.kawaii-nav-link:focus {
+    background: linear-gradient(135deg, var(--lavender) 0%, #d8b7fb 100%);
+    color: white;
+    border-color: var(--outline-lavender);
+    box-shadow: var(--shadow-hover);
+    text-decoration: none;
+    transform: translateY(-2px);
+}
+
+/* Promotional link styling - Butter theme */
+.kawaii-promo-link {
+    background: linear-gradient(135deg, var(--butter) 0%, #e6d088 100%);
+    color: var(--purple-dark);
+    border-color: var(--outline-butter);
+    font-weight: var(--font-weight-black);
+    animation: promo-glow 2s ease-in-out infinite alternate;
+}
+
+.kawaii-promo-link:hover,
+.kawaii-promo-link:focus {
+    background: linear-gradient(135deg, #e6d088 0%, var(--butter) 100%);
+    color: var(--purple);
+    transform: translateY(-3px) scale(1.05);
+}
+
+@keyframes promo-glow {
+    0% {
+        box-shadow: var(--shadow-pill), 0 0 8px rgba(242, 230, 163, 0.6);
+    }
+    100% {
+        box-shadow: var(--shadow-hover), 0 0 20px rgba(242, 230, 163, 0.9);
+    }
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════════ */
+/* ║ LAYER 2 SHOP COMPONENTS - SEARCH SYSTEM                                    ║ */
+/* ═══════════════════════════════════════════════════════════════════════════════ */
+
+.search-kawaii {
+    position: relative;
+    width: 100%;
+    max-width: 500px;
+}
+
+.search-kawaii input {
+    width: 100%;
+    border: 3px solid var(--outline-sky);
+    background: var(--surface-strong);
+    border-radius: var(--radius-pill);
+    padding: var(--spacing-md) 3.5rem var(--spacing-md) var(--spacing-lg);
+    font-size: var(--font-size-base);
+    font-family: var(--font-body);
+    color: var(--ink);
+    box-shadow: var(--shadow-pill);
+    transition: all var(--transition-fast);
+    backdrop-filter: blur(8px);
+}
+
+.search-kawaii input:focus {
+    outline: none;
+    border-color: var(--sky);
+    box-shadow: 0 0 0 4px rgba(169, 222, 249, 0.4), var(--shadow-hover);
+    background: var(--white);
+}
+
+.search-kawaii .search-icon {
+    position: absolute;
+    right: var(--spacing-lg);
+    top: 50%;
+    transform: translateY(-50%);
+    color: var(--sky);
+    pointer-events: none;
+    font-size: var(--font-size-lg);
+}
+
+/* Search suggestions dropdown */
+.search-kawaii .search-suggestions {
+    background: var(--surface-strong);
+    border: 3px solid var(--outline-sky);
+    border-top: none;
+    border-radius: 0 0 var(--radius-lg) var(--radius-lg);
+    box-shadow: var(--shadow-card);
+    backdrop-filter: blur(12px);
+    overflow: hidden;
+}
+
+.search-kawaii .search-suggestion-item {
+    padding: var(--spacing-md);
+    transition: all var(--transition-fast);
+    border-bottom: 1px solid var(--outline-soft);
+    cursor: pointer;
+}
+
+.search-kawaii .search-suggestion-item:hover,
+.search-kawaii .search-suggestion-item:focus {
+    background: linear-gradient(135deg, var(--sky) 0%, #8dd3f7 100%);
+    color: white;
+    border-bottom-color: transparent;
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════════ */
+/* ║ LAYER 2 SHOP COMPONENTS - TABS & FILTER SYSTEM                             ║ */
+/* ═══════════════════════════════════════════════════════════════════════════════ */
+
+.tab-row,
+.filter-row {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--spacing-md);
+    margin-bottom: var(--spacing-lg);
+}
+
+.tab-kawaii,
+.filter-chip {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 44px;
+    padding: var(--spacing-sm) var(--spacing-lg);
+    border-radius: var(--radius-pill);
+    border: 2px solid var(--outline);
+    background: var(--surface);
+    color: var(--purple);
+    cursor: pointer;
+    font-family: var(--font-heading);
+    font-weight: var(--font-weight-bold);
+    font-size: var(--font-size-sm);
+    box-shadow: var(--shadow-pill);
+    transition: all var(--transition-fast);
+    text-decoration: none;
+    backdrop-filter: blur(8px);
+}
+
+.tab-kawaii:hover,
+.filter-chip:hover {
+    transform: translateY(-2px);
+    box-shadow: var(--shadow-hover);
+}
+
+.tab-kawaii.active,
+.filter-chip.active {
+    background: linear-gradient(135deg, var(--sky) 0%, #8dd3f7 100%);
+    border-color: var(--outline-sky);
+    color: white;
+    transform: translateY(-2px);
+    box-shadow: var(--shadow-hover);
+}
+
+/* Category tabs - Lavender accent */
+.category-tab {
+    background: var(--surface-lavender);
+    border-color: var(--outline-lavender);
+}
+
+.category-tab.active {
+    background: linear-gradient(135deg, var(--lavender) 0%, #d8b7fb 100%);
+    border-color: var(--outline-lavender);
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════════ */
+/* ║ LAYER 2 SHOP COMPONENTS - BADGE SYSTEM                                     ║ */
+/* ═══════════════════════════════════════════════════════════════════════════════ */
+
+.badge-kawaii {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--spacing-xs);
+    padding: var(--spacing-xs) var(--spacing-sm);
+    border-radius: var(--radius-pill);
+    font-family: var(--font-heading);
+    font-weight: var(--font-weight-black);
+    font-size: var(--font-size-xs);
+    border: 2px solid rgba(255,255,255,0.9);
+    box-shadow: var(--shadow-pill);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+/* New badge - Butter theme */
+.badge-new {
+    background: linear-gradient(135deg, var(--butter) 0%, #e6d088 100%);
+    color: var(--purple-dark);
+    animation: subtle-pulse 2s ease-in-out infinite alternate;
+}
+
+/* Sale badge - Butter theme with stronger animation */
+.badge-sale {
+    background: linear-gradient(135deg, var(--butter) 0%, #ffd36f 100%);
+    color: var(--purple-dark);
+    animation: sale-glow 1.5s ease-in-out infinite alternate;
+}
+
+/* Best/Featured badge - Pink theme */
+.badge-best {
+    background: linear-gradient(135deg, var(--pink) 0%, #f771af 100%);
+    color: white;
+    box-shadow: var(--shadow-pill), 0 0 8px rgba(246, 148, 193, 0.5);
+}
+
+/* Limited badge - Butter theme */
+.badge-limited {
+    background: linear-gradient(135deg, var(--butter) 0%, #f4bf8a 100%);
+    color: var(--purple-dark);
+}
+
+@keyframes subtle-pulse {
+    0% { transform: scale(1); opacity: 0.9; }
+    100% { transform: scale(1.05); opacity: 1; }
+}
+
+@keyframes sale-glow {
+    0% {
+        box-shadow: var(--shadow-pill), 0 0 5px rgba(242, 230, 163, 0.5);
+        transform: scale(1);
+    }
+    100% {
+        box-shadow: var(--shadow-hover), 0 0 15px rgba(242, 230, 163, 0.8);
+        transform: scale(1.08);
+    }
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════════ */
+/* ║ LAYER 2 SHOP COMPONENTS - PRODUCT CARDS                                    ║ */
+/* ═══════════════════════════════════════════════════════════════════════════════ */
+
+.product-card-kawaii {
+    max-width: 320px;
+    background: linear-gradient(180deg, var(--surface-strong), var(--surface));
+    border: 3px solid rgba(255,255,255,0.9);
+    border-radius: var(--radius-xl);
+    box-shadow: var(--shadow-card);
+    padding: var(--spacing-lg);
+    overflow: hidden;
+    position: relative;
+    transition: all var(--transition-med) var(--ease-bounce);
+    backdrop-filter: blur(8px);
+}
+
+.product-card-kawaii:hover {
+    transform: translateY(-6px) scale(1.02);
+    box-shadow: var(--shadow-float);
+    border-color: var(--outline-sky);
+}
+
+.product-card-kawaii .product-media {
+    background: linear-gradient(135deg, #fff7dc 0%, #ffe5d7 100%);
+    border-radius: var(--radius-lg);
+    padding: var(--spacing-lg);
+    min-height: 200px;
+    display: grid;
+    place-items: center;
+    margin-bottom: var(--spacing-md);
+    border: 2px solid rgba(246, 235, 199, 0.8);
+    overflow: hidden;
+    position: relative;
+}
+
+.product-card-kawaii .product-media::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    background: radial-gradient(circle at center, rgba(255,255,255,0.3) 0%, transparent 70%);
+    pointer-events: none;
+}
+
+.product-card-kawaii .product-media img {
+    max-width: 100%;
+    max-height: 180px;
+    object-fit: contain;
+    transition: transform var(--transition-med);
+}
+
+.product-card-kawaii:hover .product-media img {
+    transform: scale(1.05);
+}
+
+.product-card-kawaii .product-title {
+    margin-bottom: var(--spacing-xs);
+    color: var(--purple);
+    font-family: var(--font-heading);
+    font-size: var(--font-size-lg);
+    font-weight: var(--font-weight-black);
+    line-height: 1.2;
+}
+
+.product-card-kawaii .product-price {
+    font-size: var(--font-size-2xl);
+    font-weight: var(--font-weight-black);
+    color: var(--purple-dark);
+    margin-bottom: var(--spacing-lg);
+    font-family: var(--font-heading);
+}
+
+.product-card-kawaii .product-actions {
+    display: grid;
+    gap: var(--spacing-sm);
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════════ */
+/* ║ LAYER 3 POLISH - CLOUD HERO EFFECTS                                        ║ */
+/* ═══════════════════════════════════════════════════════════════════════════════ */
+
 .kawaii-hero {
     position: relative;
     text-align: center;
-    padding: 2rem 1rem 1rem;
-    margin-bottom: 2rem;
+    padding: var(--spacing-2xl) var(--spacing-md) var(--spacing-xl);
+    margin-bottom: var(--spacing-xl);
 }
 
 .kawaii-cloud-title {
     display: inline-block;
     background: var(--surface-strong);
-    border: 3px solid rgba(255,255,255,0.85);
-    border-radius: 999px;
-    padding: 1.25rem 2.5rem;
-    box-shadow: var(--shadow-card);
+    border: 3px solid rgba(255,255,255,0.9);
+    border-radius: var(--radius-pill);
+    padding: var(--spacing-lg) var(--spacing-2xl);
+    box-shadow: var(--shadow-float);
     position: relative;
+    backdrop-filter: blur(12px);
+    animation: float-gentle 4s ease-in-out infinite;
 }
 
 .kawaii-cloud-title::before,
@@ -158,8 +937,9 @@ textarea {
     content: "";
     position: absolute;
     background: var(--surface-strong);
-    border-radius: 999px;
+    border-radius: var(--radius-pill);
     z-index: -1;
+    opacity: 0.8;
 }
 
 .kawaii-cloud-title::before {
@@ -167,6 +947,7 @@ textarea {
     height: 70px;
     left: -32px;
     top: 18px;
+    animation: float-gentle 4s ease-in-out infinite 0.5s;
 }
 
 .kawaii-cloud-title::after {
@@ -174,48 +955,341 @@ textarea {
     height: 80px;
     right: -38px;
     top: 12px;
+    animation: float-gentle 4s ease-in-out infinite 1s;
 }
 
 .kawaii-subtitle {
     display: inline-block;
-    margin-top: 0.8rem;
-    background: linear-gradient(180deg, #e8dcff 0%, #d8c8fa 100%);
+    margin-top: var(--spacing-md);
+    background: linear-gradient(135deg, var(--lavender) 0%, #d8c8fa 100%);
     color: var(--purple);
-    padding: 0.55rem 1.25rem;
+    padding: var(--spacing-sm) var(--spacing-lg);
     border-radius: var(--radius-pill);
-    border: 2px solid #d2c1fa;
+    border: 2px solid var(--outline-lavender);
     box-shadow: var(--shadow-pill);
-    font-weight: 700;
+    font-weight: var(--font-weight-bold);
+    font-family: var(--font-heading);
 }
 
-/* =========================
-   CARDS / PANELS
-========================= */
-.kawaii-card {
-    background: var(--surface);
-    backdrop-filter: blur(8px);
-    border: 3px solid rgba(255,255,255,0.8);
-    border-radius: var(--radius-xl);
-    box-shadow: var(--shadow-card);
-    padding: 1.5rem;
+@keyframes float-gentle {
+    0%, 100% { transform: translateY(0px); }
+    50% { transform: translateY(-8px); }
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════════ */
+/* ║ ENHANCED BADGE SYSTEM - Strategic Colors & Varied Radius                   ║ */
+/* ═══════════════════════════════════════════════════════════════════════════════ */
+
+.badge-kawaii {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--spacing-xs);
+    padding: var(--spacing-xs) var(--spacing-sm);
+    border-radius: var(--radius-xs);    /* Small radius for badges by default */
+    font-family: var(--font-body);     /* Nunito for badges, not Sniglet */
+    font-weight: var(--font-weight-bold);
+    font-size: var(--font-size-xs);
+    border: 2px solid transparent;
+    box-shadow: var(--shadow-pill);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    white-space: nowrap;
+    transition: all var(--transition-fast);
+    line-height: 1.2;
+    min-height: 24px;
+}
+
+/* 🌟 NEW - Butter theme with subtle animation */
+.badge-new {
+    background: linear-gradient(135deg, var(--butter) 0%, #e6d088 100%);
+    color: var(--ink);
+    border-color: var(--outline-butter);
+    animation: subtle-pulse 2s ease-in-out infinite alternate;
+}
+
+/* 🔥 SALE - Butter theme with stronger animation */
+.badge-sale {
+    background: linear-gradient(135deg, var(--butter) 0%, #ffd36f 100%);
+    color: var(--ink);
+    border-color: var(--outline-butter);
+    animation: sale-glow 1.5s ease-in-out infinite alternate;
+    border-radius: var(--radius-sm);    /* Slightly larger for emphasis */
+}
+
+/* 💕 FEATURED/BEST - Pink theme (sparingly used) */
+.badge-best,
+.badge-featured {
+    background: linear-gradient(135deg, var(--pink) 0%, #f771af 100%);
+    color: white;
+    border-color: var(--outline-pink);
+    box-shadow: var(--shadow-pill), 0 0 8px rgba(246, 148, 193, 0.4);
+    animation: featured-glow 2s ease-in-out infinite alternate;
+    border-radius: var(--radius-sm);    /* Emphasis through size */
+}
+
+/* ⏰ LIMITED - Butter with urgency styling */
+.badge-limited {
+    background: linear-gradient(135deg, var(--butter) 0%, #f4bf8a 100%);
+    color: var(--ink);
+    border-color: var(--outline-butter);
+}
+
+/* 🎟️ PROMO - Butter with gentle animation */
+.badge-promo {
+    background: linear-gradient(135deg, var(--butter) 0%, #ffe9a4 100%);
+    color: var(--ink);
+    border-color: var(--outline-butter);
+    animation: promo-pulse 1.8s ease-in-out infinite alternate;
+}
+
+/* 🏷️ CATEGORY - Lavender theme */
+.badge-category {
+    background: linear-gradient(135deg, var(--lavender) 0%, #d8b7fb 100%);
+    color: var(--ink);  /* Dark text for readability */
+    border-color: var(--outline-lavender);
+    border-radius: var(--radius-pill);  /* Pill shape for categories */
+    transition: all var(--transition-fast);
+}
+
+.badge-category:hover {
+    background: linear-gradient(135deg, var(--purple) 0%, var(--purple-dark) 100%);
+    color: white;
+    transform: scale(1.05);
+}
+
+/* 🔥 HOT/TRENDING - Pink with intense animation */
+.badge-hot {
+    background: linear-gradient(135deg, var(--pink) 0%, #ff6b9d 100%);
+    color: white;
+    border-color: var(--outline-pink);
+    animation: hot-pulse 1.2s ease-in-out infinite alternate;
+    box-shadow: var(--shadow-pill), 0 0 10px rgba(255, 107, 157, 0.6);
+    border-radius: var(--radius-sm);
+}
+
+/* 🎨 DEFAULT - Neutral styling */
+.badge-default {
+    background: var(--surface-strong);
+    color: var(--ink);
+    border-color: var(--outline-soft);
+}
+
+/* Size variations with appropriate radius scaling */
+.badge-sm {
+    padding: 2px var(--spacing-xs);
+    font-size: 10px;
+    min-height: 20px;
+    border-radius: 4px;     /* Extra small radius */
+}
+
+.badge-lg {
+    padding: var(--spacing-sm) var(--spacing-md);
+    font-size: var(--font-size-sm);
+    min-height: 32px;
+    border-radius: var(--radius-md);   /* Larger radius */
+}
+
+/* Interactive badges for clickable elements */
+a.badge-kawaii,
+button.badge-kawaii,
+.badge-kawaii.clickable {
+    cursor: pointer;
+    transition: all var(--transition-fast);
+}
+
+a.badge-kawaii:hover,
+button.badge-kawaii:hover,
+.badge-kawaii.clickable:hover {
+    transform: translateY(-2px) scale(1.05);
+    box-shadow: var(--shadow-hover);
+    text-decoration: none;
+}
+
+/* Badge group layouts */
+.badge-group {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--spacing-xs);
+    align-items: center;
+}
+
+/* Product badge positioning */
+.product-badges {
+    position: absolute;
+    top: var(--spacing-sm);
+    left: var(--spacing-sm);
+    display: flex;
+    flex-direction: column;
+    gap: var(--spacing-xs);
+    z-index: 3;
+}
+
+/* ⚡ Badge animations - subtle and delightful */
+@keyframes subtle-pulse {
+    0% { 
+        transform: scale(1); 
+        opacity: 0.95; 
+    }
+    100% { 
+        transform: scale(1.02); 
+        opacity: 1; 
+    }
+}
+
+@keyframes sale-glow {
+    0% {
+        box-shadow: var(--shadow-pill), 0 0 5px rgba(242, 230, 163, 0.5);
+        transform: scale(1);
+    }
+    100% {
+        box-shadow: var(--shadow-hover), 0 0 15px rgba(242, 230, 163, 0.8);
+        transform: scale(1.05);
+    }
+}
+
+@keyframes featured-glow {
+    0% {
+        box-shadow: var(--shadow-pill), 0 0 8px rgba(246, 148, 193, 0.4);
+        transform: scale(1);
+    }
+    100% {
+        box-shadow: var(--shadow-hover), 0 0 20px rgba(246, 148, 193, 0.7);
+        transform: scale(1.03);
+    }
+}
+
+@keyframes promo-pulse {
+    0% {
+        box-shadow: var(--shadow-pill);
+        opacity: 0.9;
+    }
+    100% {
+        box-shadow: var(--shadow-hover), 0 0 12px rgba(242, 230, 163, 0.7);
+        opacity: 1;
+    }
+}
+
+@keyframes hot-pulse {
+    0% {
+        box-shadow: var(--shadow-pill), 0 0 10px rgba(255, 107, 157, 0.6);
+        transform: scale(1);
+    }
+    100% {
+        box-shadow: var(--shadow-hover), 0 0 25px rgba(255, 107, 157, 0.9);
+        transform: scale(1.08);
+    }
+}
+    25% { opacity: 1; transform: scale(1.2) rotate(90deg); }
+    50% { opacity: 0.8; transform: scale(1.1) rotate(180deg); }
+    75% { opacity: 1; transform: scale(1.15) rotate(270deg); }
+}
+
+/* Floating sparkles background effect */
+.sparkle-bg {
+    position: fixed;
+    inset: 0;
+    pointer-events: none;
+    z-index: -1;
+    overflow: hidden;
+}
+
+.sparkle-bg::before,
+.sparkle-bg::after {
+    content: "✦ ✧ ⭐ ✦ ✧";
+    position: absolute;
+    color: var(--pink);
+    opacity: 0.3;
+    font-size: var(--font-size-lg);
+    animation: float-sparkles 20s linear infinite;
+}
+
+.sparkle-bg::before {
+    top: 20%;
+    left: -200px;
+    animation-delay: 0s;
+}
+
+.sparkle-bg::after {
+    top: 60%;
+    left: -200px;
+    animation-delay: -10s;
+    color: var(--sky);
+}
+
+@keyframes float-sparkles {
+    0% { transform: translateX(-200px) rotate(0deg); }
+    100% { transform: translateX(calc(100vw + 200px)) rotate(360deg); }
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════════ */
+/* ║ LAYER 3 POLISH - MICRO-FEEDBACK & SUCCESS STATES                           ║ */
+/* ═══════════════════════════════════════════════════════════════════════════════ */
+
+/* "Added to Cart" success state */
+.btn-kawaii.is-added {
+    background: linear-gradient(135deg, var(--mint) 0%, #9de6c4 100%);
+    color: var(--purple-dark);
+    border-color: rgba(211, 255, 228, 0.8);
+    animation: success-bounce 0.6s var(--ease-bounce);
+}
+
+@keyframes success-bounce {
+    0% { transform: scale(1); }
+    50% { transform: scale(1.15); }
+    100% { transform: scale(1); }
+}
+
+/* Loading state */
+.btn-kawaii.is-loading {
     position: relative;
+    color: transparent;
+    pointer-events: none;
 }
 
-.kawaii-panel {
-    background: linear-gradient(180deg, rgba(255,255,255,0.92), rgba(255,255,255,0.8));
-    border: 2px solid var(--outline);
-    border-radius: var(--radius-lg);
-    box-shadow: var(--shadow-soft);
-    padding: 1.25rem;
+.btn-kawaii.is-loading::after {
+    content: "";
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 16px;
+    height: 16px;
+    margin: -8px 0 0 -8px;
+    border: 2px solid transparent;
+    border-top: 2px solid currentColor;
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
 }
 
-.kawaii-section {
-    margin-bottom: var(--section-gap);
+@keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
 }
 
+/* Hover glow effects */
+.glow-on-hover {
+    transition: all var(--transition-med);
+}
+
+.glow-on-hover:hover {
+    box-shadow: var(--shadow-hover), 0 0 20px rgba(169, 222, 249, 0.4);
+}
+
+.glow-pink:hover {
+    box-shadow: var(--shadow-hover), 0 0 20px rgba(246, 148, 193, 0.4);
+}
+
+.glow-mint:hover {
+    box-shadow: var(--shadow-hover), 0 0 20px rgba(211, 255, 228, 0.4);
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════════ */
+/* ║ UTILITY CLASSES & RESPONSIVE DESIGN                                         ║ */
+/* ═══════════════════════════════════════════════════════════════════════════════ */
+
+/* Grid system */
 .kawaii-grid {
     display: grid;
-    gap: 1.5rem;
+    gap: var(--spacing-lg);
 }
 
 .kawaii-grid.two {
@@ -226,407 +1300,510 @@ textarea {
     grid-template-columns: repeat(3, minmax(0, 1fr));
 }
 
-@media (max-width: 900px) {
-    .kawaii-grid.two,
-    .kawaii-grid.three {
-        grid-template-columns: 1fr;
-    }
+.kawaii-grid.four {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
 }
 
-/* =========================
-   LABEL PILLS
-========================= */
-.pill-label {
-    display: inline-flex;
-    align-items: center;
-    gap: 0.45rem;
-    padding: 0.5rem 1rem;
-    border-radius: var(--radius-pill);
-    font-weight: 800;
-    font-family: var(--font-heading);
-    font-size: 1rem;
-    box-shadow: var(--shadow-pill);
-    border: 2px solid rgba(255,255,255,0.85);
-}
-
-.pill-mint {
-    background: linear-gradient(180deg, #bff5dd 0%, var(--mint) 100%);
-    color: #4a9c8b;
-}
-
-.pill-sky {
-    background: linear-gradient(180deg, #91d5fa 0%, var(--sky) 100%);
-    color: #4d7fc0;
-}
-
-.pill-lavender {
-    background: linear-gradient(180deg, #d7b7f6 0%, var(--lavender) 100%);
-    color: #7851b7;
-}
-
-.pill-pink {
-    background: linear-gradient(180deg, #ff8cbc 0%, var(--pink) 100%);
-    color: #ffffff;
-}
-
-.pill-butter {
-    background: linear-gradient(180deg, #ffe9a9 0%, var(--butter) 100%);
-    color: #b77d21;
-}
-
-.pill-outline {
-    background: rgba(255,255,255,0.85);
-    color: var(--purple);
-    border: 2px solid var(--outline-sky);
-}
-
-/* =========================
-   BUTTONS
-========================= */
-.btn-kawaii {
-    appearance: none;
-    border: none;
-    outline: none;
-    cursor: pointer;
-    border-radius: var(--radius-pill);
-    padding: 0.85rem 1.35rem;
-    font-weight: 800;
-    font-size: 1rem;
-    line-height: 1;
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    gap: 0.55rem;
-    text-decoration: none;
-    transition:
-        transform var(--transition-fast),
-        box-shadow var(--transition-fast),
-        filter var(--transition-fast),
-        background var(--transition-med);
-    box-shadow: var(--shadow-pill), var(--shadow-press);
-    border: 2px solid rgba(255,255,255,0.85);
-}
-
-.btn-kawaii:hover {
-    transform: translateY(-2px);
-    filter: brightness(1.02);
-}
-
-.btn-kawaii:active {
-    transform: translateY(0);
-    box-shadow: 0 3px 8px rgba(120, 120, 180, 0.16);
-}
-
-.btn-kawaii:focus-visible {
-    outline: 3px solid rgba(123, 95, 182, 0.28);
-    outline-offset: 3px;
-}
-
-.btn-primary-kawaii {
-    background: linear-gradient(180deg, #ff8bbc 0%, #f977ac 100%);
-    color: white;
-}
-
-.btn-secondary-kawaii {
-    background: linear-gradient(180deg, #d8b8f8 0%, #c6a5ef 100%);
-    color: white;
-}
-
-.btn-outline-kawaii {
-    background: rgba(255,255,255,0.92);
-    border: 2px solid var(--outline-sky);
-    color: var(--purple);
-}
-
-.btn-sky-kawaii {
-    background: linear-gradient(180deg, #91d4fb 0%, #74c6f5 100%);
-    color: white;
-}
-
-.btn-butter-kawaii {
-    background: linear-gradient(180deg, #ffe8a6 0%, #f7d97b 100%);
-    color: #a96d18;
-}
-
-/* =========================
-   SEARCH
-========================= */
-.search-kawaii {
-    position: relative;
-    width: 100%;
-}
-
-.search-kawaii input {
-    width: 100%;
-    border: 2px solid var(--outline-sky);
-    background: rgba(255,255,255,0.92);
-    border-radius: var(--radius-pill);
-    padding: 0.95rem 3rem 0.95rem 1.2rem;
-    font-size: 1rem;
-    color: var(--ink);
-    box-shadow: var(--shadow-pill);
-    transition: border-color var(--transition-fast), box-shadow var(--transition-fast);
-}
-
-.search-kawaii input:focus {
-    outline: none;
-    border-color: #7cbbed;
-    box-shadow: 0 0 0 4px rgba(169, 222, 249, 0.32);
-}
-
-.search-kawaii .search-icon {
-    position: absolute;
-    right: 1rem;
-    top: 50%;
-    transform: translateY(-50%);
-    color: #8bbde8;
-    pointer-events: none;
-    font-size: 1.1rem;
-}
-
-/* =========================
-   CHIPS / TABS / FILTERS
-========================= */
-.chip-row,
-.tab-row {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 0.75rem;
-}
-
-.chip-kawaii,
-.tab-kawaii {
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    min-height: 42px;
-    padding: 0.65rem 1rem;
-    border-radius: var(--radius-pill);
-    border: 2px solid var(--outline);
-    background: rgba(255,255,255,0.88);
-    color: var(--purple);
-    cursor: pointer;
-    font-weight: 700;
-    box-shadow: var(--shadow-pill);
-    transition: all var(--transition-fast);
-}
-
-.chip-kawaii:hover,
-.tab-kawaii:hover {
-    transform: translateY(-1px);
-}
-
-.chip-kawaii.active,
-.tab-kawaii.active {
-    background: linear-gradient(180deg, #9fdcfb 0%, #88c8ff 100%);
-    border-color: #83b8ed;
-    color: white;
-}
-
-/* =========================
-   BADGES
-========================= */
-.badge-kawaii {
-    display: inline-flex;
-    align-items: center;
-    gap: 0.35rem;
-    padding: 0.45rem 0.85rem;
-    border-radius: var(--radius-pill);
-    font-weight: 800;
-    font-size: 0.9rem;
-    border: 2px solid rgba(255,255,255,0.85);
-    box-shadow: var(--shadow-pill);
-}
-
-.badge-new {
-    background: linear-gradient(180deg, #ffe9a4 0%, #ffd36f 100%);
-    color: #a87012;
-}
-
-.badge-best {
-    background: linear-gradient(180deg, #ff99c5 0%, #f771af 100%);
-    color: white;
-}
-
-.badge-limited {
-    background: linear-gradient(180deg, #ffd5b0 0%, #f4bf8a 100%);
-    color: #9f6732;
-}
-
-/* =========================
-   PRODUCT CARD
-========================= */
-.product-card-kawaii {
-    max-width: 320px;
-    background: linear-gradient(180deg, rgba(255,255,255,0.96), rgba(255,255,255,0.88));
-    border: 3px solid rgba(255,255,255,0.85);
-    border-radius: 30px;
-    box-shadow: var(--shadow-card);
-    padding: 1rem;
-    overflow: hidden;
-    position: relative;
-}
-
-.product-card-kawaii .product-media {
-    background: linear-gradient(180deg, #fff7dc 0%, #ffe5d7 100%);
-    border-radius: 24px;
-    padding: 1rem;
-    min-height: 200px;
-    display: grid;
-    place-items: center;
-    margin-bottom: 1rem;
-    border: 2px solid #f6ebc7;
-}
-
-.product-card-kawaii .product-media img {
-    max-width: 100%;
-    max-height: 180px;
-    object-fit: contain;
-}
-
-.product-card-kawaii .product-title {
-    margin-bottom: 0.35rem;
-    color: var(--purple);
-    font-family: var(--font-heading);
-    font-size: 1.4rem;
-}
-
-.product-card-kawaii .product-price {
-    font-size: 2rem;
-    font-weight: 800;
-    color: var(--purple-dark);
-    margin-bottom: 1rem;
-}
-
-.product-card-kawaii .product-actions {
-    display: grid;
-    gap: 0.75rem;
-}
-
-/* =========================
-   FORM CONTROLS
-========================= */
-.input-kawaii,
-.select-kawaii,
-.textarea-kawaii {
-    width: 100%;
-    border: 2px solid var(--outline);
-    background: rgba(255,255,255,0.92);
-    border-radius: 20px;
-    padding: 0.9rem 1rem;
-    color: var(--ink);
-    font-size: 1rem;
-    box-shadow: var(--shadow-pill);
-    transition: 0.2s ease;
-}
-
-.input-kawaii:focus,
-.select-kawaii:focus,
-.textarea-kawaii:focus {
-    outline: none;
-    border-color: #8fc8ef;
-    box-shadow: 0 0 0 4px rgba(169, 222, 249, 0.3);
-}
-
-.checkbox-kawaii {
-    display: inline-flex;
-    align-items: center;
-    gap: 0.6rem;
-    font-weight: 700;
-    color: var(--purple);
-}
-
-.checkbox-kawaii input[type="checkbox"] {
-    accent-color: #87cfff;
-    width: 18px;
-    height: 18px;
-}
-
-/* =========================
-   NAVBAR
-========================= */
-.nav-kawaii {
-    position: sticky;
-    top: 0;
-    z-index: 50;
-    background: rgba(255,255,255,0.72);
-    backdrop-filter: blur(12px);
-    border-bottom: 1px solid rgba(219, 230, 255, 0.8);
-    box-shadow: 0 4px 18px rgba(160, 180, 220, 0.12);
-}
-
-.nav-kawaii-inner {
-    width: min(100% - 2rem, var(--container-width));
-    margin-inline: auto;
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    gap: 1rem;
-    padding: 0.85rem 0;
-}
-
-.brand-kawaii {
-    display: inline-flex;
-    align-items: center;
-    gap: 0.7rem;
-    text-decoration: none;
-    color: var(--purple);
-    font-family: var(--font-heading);
-    font-size: 1.5rem;
-}
-
-.nav-links-kawaii {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 0.75rem;
-}
-
-.nav-link-kawaii {
-    text-decoration: none;
-    color: var(--purple);
-    font-weight: 800;
-    padding: 0.65rem 1rem;
-    border-radius: var(--radius-pill);
-    background: rgba(255,255,255,0.75);
-    border: 2px solid rgba(223, 232, 252, 0.95);
-    box-shadow: var(--shadow-pill);
-    transition: var(--transition-fast);
-}
-
-.nav-link-kawaii:hover,
-.nav-link-kawaii.active {
-    background: linear-gradient(180deg, #d8b7fb 0%, #c6a7f0 100%);
-    color: white;
-}
-
-/* =========================
-   DECORATIVE HELPERS
-========================= */
-.sparkle {
-    position: relative;
-}
-
-.sparkle::after {
-    content: "✦";
-    margin-left: 0.4rem;
-    color: #ffb8d7;
-    font-size: 0.9em;
-}
-
+/* Dividers */
 .soft-divider {
     border: none;
     height: 2px;
-    background: linear-gradient(90deg, transparent, #d7d2f6, transparent);
-    margin: 1.25rem 0;
+    background: linear-gradient(90deg, transparent, var(--outline-soft), transparent);
+    margin: var(--spacing-xl) 0;
 }
 
-/* =========================
-   ACCESSIBILITY / MOTION
-========================= */
+/* Responsive design */
+@media (max-width: 1024px) {
+    .kawaii-grid.four {
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+    }
+}
+
+@media (max-width: 768px) {
+    :root {
+        --spacing-xl: 1.5rem;
+        --spacing-2xl: 2rem;
+    }
+    
+    .kawaii-grid.two,
+    .kawaii-grid.three,
+    .kawaii-grid.four {
+        grid-template-columns: 1fr;
+    }
+    
+    .kawaii-nav-link {
+        padding: var(--spacing-sm) var(--spacing-md);
+        font-size: var(--font-size-sm);
+    }
+    
+    .kawaii-cloud-title {
+        padding: var(--spacing-md) var(--spacing-lg);
+    }
+    
+    .tab-row,
+    .filter-row {
+        gap: var(--spacing-sm);
+    }
+}
+
+@media (max-width: 480px) {
+    .kawaii-brand {
+        font-size: var(--font-size-2xl);
+    }
+    
+    .product-card-kawaii {
+        max-width: 100%;
+    }
+    
+    .search-kawaii input {
+        padding: var(--spacing-sm) 3rem var(--spacing-sm) var(--spacing-md);
+    }
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════════ */
+/* ║ ACCESSIBILITY & MOTION PREFERENCES                                          ║ */
+/* ═══════════════════════════════════════════════════════════════════════════════ */
+
 @media (prefers-reduced-motion: reduce) {
-    * {
-        scroll-behavior: auto;
-        transition: none !important;
+    *,
+    *::before,
+    *::after {
+        animation-duration: 0.01ms !important;
+        animation-iteration-count: 1 !important;
+        transition-duration: 0.01ms !important;
+        scroll-behavior: auto !important;
+    }
+    
+    .kawaii-cloud-title::before,
+    .kawaii-cloud-title::after {
+        animation: none;
+    }
+    
+    .sparkle::after {
+        animation: none;
+    }
+}
+
+/* Focus management for accessibility */
+.sr-only {
+    position: absolute !important;
+    width: 1px !important;
+    height: 1px !important;
+    padding: 0 !important;
+    margin: -1px !important;
+    overflow: hidden !important;
+    clip: rect(0, 0, 0, 0) !important;
+    white-space: nowrap !important;
+    border: 0 !important;
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════════ */
+/* ║ RESPONSIVE DESIGN & ACCESSIBILITY ENHANCEMENTS                             ║ */
+/* ═══════════════════════════════════════════════════════════════════════════════ */
+
+/* Mobile responsive typography */
+@media (max-width: 768px) {
+    h1, .display-title {
+        font-size: var(--font-size-2xl);
+    }
+
+    h2, .section-title {
+        font-size: var(--font-size-xl);
+    }
+
+    .btn-kawaii {
+        padding: var(--spacing-sm) var(--spacing-md);
+        font-size: var(--font-size-sm);
+        min-height: 40px;
+    }
+
+    .badge-kawaii {
+        font-size: 10px;
+        padding: 2px var(--spacing-xs);
+    }
+
+    .kawaii-card {
+        padding: var(--spacing-md);
+        border-radius: var(--radius-md);
+    }
+
+    /* Improve touch targets on mobile */
+    .btn-kawaii.btn-sm {
+        min-height: 36px;
+        padding: var(--spacing-xs) var(--spacing-sm);
+    }
+}
+
+/* High contrast mode support */
+@media (prefers-contrast: high) {
+    :root {
+        --ink: #2a1a3a;              /* Even darker for high contrast */
+        --ink-medium: #3d2a4f;       /* Stronger medium contrast */
+        --outline-soft: #666;        /* Stronger outlines */
+    }
+
+    .kawaii-card,
+    .kawaii-panel,
+    .btn-kawaii,
+    .tab-kawaii,
+    .filter-chip {
+        border-width: 4px;
+    }
+
+    .badge-kawaii {
+        border-width: 3px;
+        font-weight: 900;
+    }
+}
+
+/* Reduced motion preferences */
+@media (prefers-reduced-motion: reduce) {
+    .badge-new,
+    .badge-sale,
+    .badge-best,
+    .badge-featured,
+    .badge-promo,
+    .badge-hot,
+    .sparkle::after,
+    .kawaii-cloud-title,
+    .kawaii-cloud-title::before,
+    .kawaii-cloud-title::after,
+    .kawaii-promo-link {
         animation: none !important;
     }
+
+    .btn-kawaii:hover,
+    .kawaii-card:hover,
+    .product-card-kawaii:hover,
+    .badge-kawaii:hover {
+        transform: none !important;
+    }
+
+    * {
+        transition-duration: 0.01ms !important;
+        animation-duration: 0.01ms !important;
+        animation-iteration-count: 1 !important;
+    }
+}
+
+/* Print styles */
+@media print {
+    .sparkle::after,
+    .kawaii-cloud-title::before,
+    .kawaii-cloud-title::after {
+        display: none;
+    }
+
+    .kawaii-card,
+    .btn-kawaii,
+    .badge-kawaii {
+        box-shadow: none !important;
+        border: 2px solid #666 !important;
+        background: white !important;
+    }
+
+    body {
+        color: #000 !important;
+        background: #fff !important;
+        font-family: "Nunito", sans-serif !important;
+    }
+
+    h1, h2, h3, h4, h5, h6 {
+        color: #000 !important;
+        font-family: "Sniglet", serif !important;
+    }
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════════ */
+/* ║ FINAL POLISH - UTILITY CLASSES & KAWAII MAGIC ✨                           ║ */
+/* ═══════════════════════════════════════════════════════════════════════════════ */
+
+/* Intentional radius utilities for varied design */
+.radius-xs { border-radius: var(--radius-xs); }
+.radius-sm { border-radius: var(--radius-sm); }
+.radius-md { border-radius: var(--radius-md); }
+.radius-lg { border-radius: var(--radius-lg); }
+.radius-xl { border-radius: var(--radius-xl); }
+.radius-pill { border-radius: var(--radius-pill); }
+
+/* Shadow utilities with color-tinted shadows */
+.shadow-soft { box-shadow: var(--shadow-soft); }
+.shadow-card { box-shadow: var(--shadow-card); }
+.shadow-pill { box-shadow: var(--shadow-pill); }
+.shadow-hover { box-shadow: var(--shadow-hover); }
+.shadow-float { box-shadow: var(--shadow-float); }
+
+/* Visual hierarchy helpers - strategic text contrast */
+.hierarchy-primary {
+    color: var(--ink);
+    font-weight: var(--font-weight-bold);
+}
+
+.hierarchy-secondary {
+    color: var(--ink-medium);
+    font-weight: var(--font-weight-medium);
+}
+
+.hierarchy-tertiary {
+    color: var(--ink-soft);
+    font-weight: var(--font-weight-normal);
+}
+
+/* Pink accent - use SPARINGLY for hierarchy! */
+.accent-pink {
+    color: var(--pink);
+    font-weight: var(--font-weight-bold);
+    text-shadow: 0 1px 2px rgba(246, 148, 193, 0.2);
+}
+
+.accent-featured {
+    background: linear-gradient(135deg, var(--pink) 0%, #f771af 100%);
+    color: white;
+    padding: var(--spacing-xs) var(--spacing-sm);
+    border-radius: var(--radius-xs);
+    font-weight: var(--font-weight-bold);
+    box-shadow: var(--shadow-pill);
+}
+
+/* Gentle glow effects for hover states */
+.glow-on-hover:hover {
+    filter: drop-shadow(0 0 8px rgba(169, 222, 249, 0.4));
+}
+
+.glow-pink:hover {
+    filter: drop-shadow(0 0 8px rgba(246, 148, 193, 0.5));
+}
+
+.glow-mint:hover {
+    filter: drop-shadow(0 0 8px rgba(211, 255, 228, 0.5));
+}
+
+/* Focus indicators with proper contrast */
+.btn-kawaii:focus-visible,
+.input-kawaii:focus-visible,
+.badge-kawaii:focus-visible,
+a:focus-visible {
+    outline: 3px solid var(--sky);
+    outline-offset: 2px;
+}
+
+/* Screen reader support */
+.sr-only {
+    position: absolute !important;
+    width: 1px !important;
+    height: 1px !important;
+    padding: 0 !important;
+    margin: -1px !important;
+    overflow: hidden !important;
+    clip: rect(0, 0, 0, 0) !important;
+    white-space: nowrap !important;
+    border: 0 !important;
+}
+
+/* Text selection with kawaii colors */
+::selection {
+    background: var(--sky);
+    color: var(--ink);
+}
+
+::-moz-selection {
+    background: var(--sky);
+    color: var(--ink);
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════════════════ */
+/* ║ PROMOTIONAL PAGE STYLES - Special styling for promotions/deals                        ║ */
+/* ═══════════════════════════════════════════════════════════════════════════════════════ */
+
+/* Promotional Header Styles */
+.promotions-header {
+    background: linear-gradient(135deg, #fff5f5 0%, #fee2e2 100%);
+    padding: 2rem 0;
+    margin: -1rem -15px 2rem -15px;
+    border-radius: 0 0 1rem 1rem;
+}
+
+.text-gradient {
+    background: linear-gradient(45deg, #dc2626, #ef4444);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+}
+
+/* Promotional Product Card Styles */
+.promotional-product-card {
+    cursor: pointer;
+    transition: transform .2s ease, box-shadow .2s ease;
+    position: relative;
+    border: 2px solid transparent;
+    overflow: hidden;
+}
+
+.promotional-product-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 .75rem 2rem rgba(220, 38, 38, 0.15) !important;
+    border-color: rgba(220, 38, 38, 0.2);
+}
+
+/* Promotional Image Styling */
+.promotional-image {
+    height: 200px;
+    object-fit: cover;
+    transition: transform .3s ease;
+}
+
+.promotional-image-placeholder {
+    height: 200px;
+}
+
+.promotional-image-container {
+    overflow: hidden;
+}
+
+.promotional-product-card:hover .promotional-image {
+    transform: scale(1.05);
+}
+
+/* Enhanced Promotion Badge */
+.promotion-badge {
+    border-radius: 50%;
+    width: 60px;
+    height: 60px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: bold;
+    animation: pulse 2s infinite;
+    transform: rotate(-15deg);
+}
+
+.promotion-badge-content {
+    text-align: center;
+    line-height: 1;
+}
+
+.discount-percent {
+    font-size: 1.1rem;
+    font-weight: 800;
+}
+
+.discount-text {
+    font-size: 0.7rem;
+    font-weight: 600;
+    margin-top: -2px;
+}
+
+/* Promotional Pricing */
+.promotional-pricing {
+    background: #fff5f5;
+    padding: 0.75rem;
+    border-radius: 0.5rem;
+    border: 1px solid #fecaca;
+}
+
+.sale-price {
+    font-size: 1.25rem !important;
+}
+
+.savings-highlight {
+    font-size: 0.85rem;
+}
+
+/* Promotional CTA Button */
+.promotional-cta {
+    background: linear-gradient(45deg, #dc2626, #ef4444);
+    border: none;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    transition: all 0.3s ease;
+}
+
+.promotional-cta:hover {
+    background: linear-gradient(45deg, #b91c1c, #dc2626);
+    transform: translateY(-1px);
+    box-shadow: 0 4px 8px rgba(220, 38, 38, 0.3);
+}
+
+/* Pulse Animation for Promotion Badges */
+@keyframes pulse {
+    0% { box-shadow: 0 0 0 0 rgba(220, 38, 38, 0.7); }
+    70% { box-shadow: 0 0 0 10px rgba(220, 38, 38, 0); }
+    100% { box-shadow: 0 0 0 0 rgba(220, 38, 38, 0); }
+}
+
+/* Promotion Stats Box */
+.promotion-stats {
+    background: linear-gradient(135deg, #dc2626 0%, #ef4444 100%) !important;
+}
+
+/* Enhanced Focus Styles for Promotions */
+.promotional-product-card:focus-within {
+    outline: 2px solid #dc2626;
+    outline-offset: 2px;
+    transform: translateY(-3px);
+    box-shadow: 0 .75rem 2rem rgba(220, 38, 38, 0.2) !important;
+}
+
+/* Responsive Adjustments for Promotional Elements */
+@media (max-width: 768px) {
+    .promotions-header {
+        padding: 1.5rem 0;
+    }
+
+    .promotion-badge {
+        width: 50px;
+        height: 50px;
+    }
+
+    .discount-percent {
+        font-size: 0.9rem;
+    }
+
+    .discount-text {
+        font-size: 0.6rem;
+    }
+}
+
+/* Reduce Motion for Promotional Elements */
+@media (prefers-reduced-motion: reduce) {
+    .promotional-product-card,
+    .promotional-image,
+    .promotional-cta {
+        transition: none;
+    }
+
+    .promotional-product-card:hover {
+        transform: none;
+    }
+
+    .promotional-product-card:hover .promotional-image {
+        transform: none;
+    }
+
+    .promotion-badge {
+        animation: none;
+    }
+}
+
+/* High Contrast Mode for Promotional Elements */
+@media (prefers-contrast: high) {
+    .promotional-product-card {
+        border: 2px solid;
+    }
+
+    .promotion-badge {
+        border: 2px solid;
+    }
+}
+
+/* Final touch - ensure proper font loading */
+@font-face {
+    font-family: 'Sniglet';
+    font-display: swap;
+}
+
+@font-face {
+    font-family: 'Nunito';
+    font-display: swap;
 }

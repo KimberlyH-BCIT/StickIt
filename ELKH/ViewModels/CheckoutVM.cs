@@ -3,6 +3,10 @@ using ELKH.Models;
 
 namespace ELKH.ViewModels;
 
+/// <summary>
+/// View model for checkout process containing order information, payment details,
+/// shipping addresses, and customer data for order completion workflow.
+/// </summary>
 public class CheckoutVM
 {
     // PayPal order ID (created client-side, captured server-side)

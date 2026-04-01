@@ -5,6 +5,10 @@ using System.IO;
 
 namespace ELKH.Models;
 
+/// <summary>
+/// Design-time database context factory for ImageStoreContext providing Entity Framework
+/// migrations support and database context creation during development and deployment.
+/// </summary>
 public class ImageStoreContextFactory : IDesignTimeDbContextFactory<ImageStoreContext>
 {
     public ImageStoreContext CreateDbContext(string[] args)

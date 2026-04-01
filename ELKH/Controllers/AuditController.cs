@@ -93,30 +93,30 @@ namespace ELKH.Controllers
 
             // --- Date range filters (both boundaries are inclusive) ---
             // TryParse guards against malformed date strings without throwing exceptions.
-            if (req.ContainsKey("from"))
+            if (req.TryGetValue("from", out var fromValue))
             {
-                if (DateTime.TryParse(req["from"], out var from))
+                if (DateTime.TryParse(fromValue, out var from))
                     q = q.Where(a => a.Timestamp >= from);
             }
-            if (req.ContainsKey("to"))
+            if (req.TryGetValue("to", out var toValue))
             {
-                if (DateTime.TryParse(req["to"], out var to))
+                if (DateTime.TryParse(toValue, out var to))
                     q = q.Where(a => a.Timestamp <= to);
             }
             
             // --- Actor filter: substring match on the username who performed the action ---
             // Empty/whitespace values are ignored to avoid unintentionally filtering everything.
-            if (req.ContainsKey("actor"))
+            if (req.TryGetValue("actor", out var actorValue))
             {
-                var actor = req["actor"].ToString();
+                var actor = actorValue.ToString();
                 if (!string.IsNullOrEmpty(actor))
                     q = q.Where(a => a.Actor.Contains(actor));
             }
 
             // --- Action filter: substring match on the action type (e.g. "Delete", "Login") ---
-            if (req.ContainsKey("action"))
+            if (req.TryGetValue("action", out var actionValue))
             {
-                var action = req["action"].ToString();
+                var action = actionValue.ToString();
                 if (!string.IsNullOrEmpty(action))
                     q = q.Where(a => a.Action.Contains(action));
             }
@@ -125,7 +125,7 @@ namespace ELKH.Controllers
             // Checked before pagination so the export always contains every matching record,
             // not just the current page. StringBuilder is used for efficient string concatenation
             // when iterating over potentially thousands of rows.
-            if (req.ContainsKey("export") && req["export"].ToString() == "csv")
+            if (req.TryGetValue("export", out var exportValue) && exportValue.ToString() == "csv")
             {
                 var all = await q.OrderByDescending(a => a.Timestamp).ToListAsync();
                 var csv = new StringBuilder();

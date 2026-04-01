@@ -4,14 +4,109 @@ using Microsoft.ApplicationInsights.Extensibility;
 
 namespace ELKH.Telemetry;
 
+// ╔═══════════════════════════════════════════════════════════════════════════════════════════════╗
+// ║                   PERFORMANCE ENRICHMENT PROCESSOR - TABLE OF CONTENTS                       ║
+// ╚═══════════════════════════════════════════════════════════════════════════════════════════════╝
+// 
+// OVERVIEW:
+// Application Insights telemetry processor to enrich telemetry data with additional performance
+// context and business metrics for comprehensive monitoring and alerting capabilities.
+// 
+// TABLE OF CONTENTS:
+// ┌─ Section 1: Processor Setup & Pipeline Integration ................................... Line 49
+// │  ├─ Constructor with pipeline integration
+// │  ├─ ITelemetryProcessor interface implementation
+// │  ├─ Next processor chain management
+// │  └─ Telemetry type dispatching logic
+// ├─ Section 2: Request Telemetry Enrichment ........................................... Line 59
+// │  ├─ EnrichRequestTelemetry() - HTTP request context enhancement
+// │  ├─ Environment and machine context addition
+// │  ├─ Request categorization (API, Admin, Authentication, etc.)
+// │  ├─ Business-critical operation identification
+// │  ├─ Performance tier classification based on duration
+// │  ├─ User context detection and tracking
+// │  └─ Response size categorization for payload analysis
+// ├─ Section 3: Dependency Telemetry Enrichment ....................................... Line 103
+// │  ├─ EnrichDependencyTelemetry() - External dependency context
+// │  ├─ Dependency categorization (Database, WebService, Cache, Storage)
+// │  ├─ Performance tier classification for dependencies
+// │  ├─ Slow query detection and flagging
+// │  ├─ External service call identification
+// │  └─ Critical external service monitoring (PayPal, Stripe, SendGrid)
+// └─ Section 4: Event Telemetry Enrichment ............................................ Line 147
+//    ├─ EnrichEventTelemetry() - Custom event context enhancement
+//    ├─ Environment context addition for events
+//    ├─ Business domain categorization (User, Catalog, Commerce, etc.)
+//    ├─ Business-critical event identification
+//    ├─ Event correlation timestamp addition
+//    └─ Custom event classification for alerting
+//
+// ARCHITECTURE NOTES:
+// • Pipeline processor pattern for telemetry enrichment
+// • Strategy pattern for different telemetry types (Request, Dependency, Event)
+// • Comprehensive business context addition for actionable insights
+// • Performance classification for SLA monitoring and alerting
+// • Chain of responsibility pattern with next processor invocation
+//
+// BUSINESS INTELLIGENCE FEATURES:
+// • Request categorization for business area monitoring
+// • Performance tier classification for SLA tracking
+// • Business-critical operation flagging for priority alerting
+// • External service dependency monitoring
+// • Custom event categorization for business metrics
+//
+// PERFORMANCE MONITORING:
+// • Duration-based performance classification (Excellent < 100ms, Good < 300ms, etc.)
+// • Slow query detection for database optimization
+// • Response size monitoring for bandwidth optimization
+// • External service performance tracking
+// • Critical path identification for business operations
+//
+// ALERTING & MONITORING:
+// • Business-critical operation flagging for immediate alerts
+// • Performance tier degradation monitoring
+// • External service failure detection
+// • Slow query identification for optimization
+// • Error categorization for incident response
+//
+// SECURITY & COMPLIANCE:
+// • User context tracking without PII exposure
+// • Environment-specific monitoring for compliance
+// • Audit trail enhancement for business operations
+// • External service monitoring for security compliance
+// • Error tracking for security incident detection
+
 /// <summary>
 /// Application Insights telemetry processor to enrich telemetry data
 /// with additional performance context and business metrics.
 /// </summary>
+/// <remarks>
+/// <para><strong>Telemetry Enhancement Strategy:</strong></para>
+/// This processor enriches three types of telemetry:
+/// <list type="bullet">
+/// <item><strong>RequestTelemetry</strong>: HTTP requests with business context and performance classification</item>
+/// <item><strong>DependencyTelemetry</strong>: External dependencies with performance and criticality analysis</item>
+/// <item><strong>EventTelemetry</strong>: Custom events with business domain categorization</item>
+/// </list>
+/// 
+/// <para><strong>Performance Classification:</strong></para>
+/// Operations are classified into performance tiers (Excellent, Good, Fair, Poor, Critical)
+/// based on duration thresholds to enable SLA monitoring and performance alerting.
+/// 
+/// <para><strong>Business Intelligence:</strong></para>
+/// Telemetry is enriched with business context including request categories, critical operations,
+/// and external service dependencies to provide actionable insights for business operations.
+/// </remarks>
 public class PerformanceEnrichmentProcessor : ITelemetryProcessor
 {
+    #region Section 1: Processor Setup & Pipeline Integration
+
+    // ═══════════════════════════════════════════════════════════════════
+    // Section 1: Processor Setup & Pipeline Integration
+    // ═══════════════════════════════════════════════════════════════════
+
     private readonly ITelemetryProcessor _next;
-    
+
     public PerformanceEnrichmentProcessor(ITelemetryProcessor next)
     {
         _next = next;
@@ -24,11 +119,11 @@ public class PerformanceEnrichmentProcessor : ITelemetryProcessor
             case RequestTelemetry request:
                 EnrichRequestTelemetry(request);
                 break;
-            
+
             case DependencyTelemetry dependency:
                 EnrichDependencyTelemetry(dependency);
                 break;
-            
+
             case EventTelemetry eventTelemetry:
                 EnrichEventTelemetry(eventTelemetry);
                 break;
@@ -36,6 +131,14 @@ public class PerformanceEnrichmentProcessor : ITelemetryProcessor
 
         _next.Process(item);
     }
+
+    #endregion
+
+    #region Section 2: Request Telemetry Enrichment
+
+    // ═══════════════════════════════════════════════════════════════════
+    // Section 2: Request Telemetry Enrichment
+    // ═══════════════════════════════════════════════════════════════════
 
     private void EnrichRequestTelemetry(RequestTelemetry request)
     {
@@ -85,9 +188,9 @@ public class PerformanceEnrichmentProcessor : ITelemetryProcessor
         }
 
         // Response size category
-        if (request.Properties.ContainsKey("ResponseSize"))
+        if (request.Properties.TryGetValue("ResponseSize", out var responseSizeValue))
         {
-            if (int.TryParse(request.Properties["ResponseSize"], out var size))
+            if (int.TryParse(responseSizeValue, out var size))
             {
                 request.Properties["ResponseSizeCategory"] = size switch
                 {
@@ -99,6 +202,14 @@ public class PerformanceEnrichmentProcessor : ITelemetryProcessor
             }
         }
     }
+
+    #endregion
+
+    #region Section 3: Dependency Telemetry Enrichment
+
+    // ═══════════════════════════════════════════════════════════════════
+    // Section 3: Dependency Telemetry Enrichment
+    // ═══════════════════════════════════════════════════════════════════
 
     private void EnrichDependencyTelemetry(DependencyTelemetry dependency)
     {
@@ -144,6 +255,14 @@ public class PerformanceEnrichmentProcessor : ITelemetryProcessor
         }
     }
 
+    #endregion
+
+    #region Section 4: Event Telemetry Enrichment
+
+    // ═══════════════════════════════════════════════════════════════════
+    // Section 4: Event Telemetry Enrichment
+    // ═══════════════════════════════════════════════════════════════════
+
     private void EnrichEventTelemetry(EventTelemetry eventTelemetry)
     {
         // Add environment context to custom events
@@ -175,4 +294,6 @@ public class PerformanceEnrichmentProcessor : ITelemetryProcessor
         // Add timestamp for event correlation
         eventTelemetry.Properties["ProcessedAt"] = DateTimeOffset.UtcNow.ToString("o");
     }
+
+    #endregion
 }

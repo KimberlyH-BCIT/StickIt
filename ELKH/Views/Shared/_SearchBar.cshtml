@@ -1,0 +1,49 @@
+@*
+╔══════════════════════════════════════════════════════════════════════════════════╗
+║ Kawaii Search Bar Partial Component                                             ║
+║ Pill-shaped search with soft pastel styling and gentle focus effects           ║
+╚══════════════════════════════════════════════════════════════════════════════════╝
+*@
+
+<div class="header-search py-3 surface-sky">
+    <div class="container-fluid d-flex justify-content-center">
+        <div class="search-kawaii">
+            <form asp-controller="Product" asp-action="Index" method="get" class="d-flex align-items-center" role="search" id="search-form">
+                <label for="productNameInput" class="sr-only">Search for products</label>
+                <div class="search-input-container position-relative flex-grow-1">
+                    <input id="productNameInput"
+                           type="search"
+                           name="search"
+                           class="input-kawaii search-input pe-5"
+                           placeholder="Search for kawaii stickers..."
+                           autocomplete="off"
+                           aria-label="Search for products"
+                           aria-describedby="productNameSuggestions"
+                           aria-expanded="false"
+                           aria-autocomplete="list"
+                           role="combobox" />
+                    <div class="search-icon">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="currentColor" viewBox="0 0 16 16" aria-hidden="true">
+                            <path d="M11.742 10.344a6.5 6.5 0 1 0-1.397 1.398h-.001c.03.04.062.078.098.115l3.85 3.85a1 1 0 0 0 1.415-1.414l-3.85-3.85a1.007 1.007 0 0 0-.115-.1zM12 6.5a5.5 5.5 0 1 1-11 0 5.5 5.5 0 0 1 11 0z"/>
+                        </svg>
+                    </div>
+                </div>
+                <button type="submit" class="btn-kawaii btn-secondary-kawaii ms-3 glow-on-hover" aria-label="Submit search">
+                    <span class="sr-only">Search</span>
+                    <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" fill="currentColor" viewBox="0 0 16 16" aria-hidden="true">
+                        <path d="M11.742 10.344a6.5 6.5 0 1 0-1.397 1.398h-.001c.03.04.062.078.098.115l3.85 3.85a1 1 0 0 0 1.415-1.414l-3.85-3.85a1.007 1.007 0 0 0-.115-.1zM12 6.5a5.5 5.5 0 1 1-11 0 5.5 5.5 0 0 1 11 0z"/>
+                    </svg>
+                </button>
+            </form>
+            
+            <!-- Search suggestions dropdown with kawaii styling -->
+            <div id="productNameSuggestions"
+                 class="search-suggestions position-absolute w-100 mt-1"
+                 style="z-index:1050;display:none;"
+                 role="listbox"
+                 aria-label="Search suggestions">
+                <!-- Suggestions will be populated dynamically -->
+            </div>
+        </div>
+    </div>
+</div>

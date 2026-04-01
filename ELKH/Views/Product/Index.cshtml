@@ -52,33 +52,46 @@
 <!-- ║ Page Header & Search Results Display with Enhanced Accessibility           ║ -->
 <!-- ════════════════════════════════════════════════════════════════════════════════ -->
 
-<header class="product-catalog-header mb-4" role="banner">
+<header class="kawaii-hero" role="banner">
     <!-- Skip Links for Keyboard Navigation -->
     <nav class="skip-links sr-only-focusable" aria-label="Skip navigation">
-        <a href="#product-search-input" class="skip-link btn btn-primary">Skip to search</a>
-        <a href="#productGrid" class="skip-link btn btn-primary">Skip to products</a>
-        <a href="#pagination" class="skip-link btn btn-primary">Skip to pagination</a>
+        <a href="#product-search-input" class="skip-link btn-kawaii btn-secondary-kawaii">Skip to search</a>
+        <a href="#productGrid" class="skip-link btn-kawaii btn-secondary-kawaii">Skip to products</a>
+        <a href="#pagination" class="skip-link btn-kawaii btn-secondary-kawaii">Skip to pagination</a>
     </nav>
 
-    <div class="d-flex justify-content-between align-items-center mb-3">
-        <h1 class="mb-0" id="main-heading">Products</h1>
-        @if (!string.IsNullOrWhiteSpace(search) || categoryId.HasValue)
-        {
-            <div class="badge-group" role="group" aria-label="Active filters">
-                @if (!string.IsNullOrWhiteSpace(search))
-                {
-                    <span class="badge bg-primary" aria-label="Search filter: @search">
-                        <i class="bi bi-search me-1" aria-hidden="true"></i>@search
-                    </span>
-                }
-                @if (categoryId.HasValue && ViewBag.CategoryName != null)
-                {
-                    <span class="badge bg-secondary ms-1" aria-label="Category filter: @ViewBag.CategoryName">
-                        <i class="bi bi-tag-fill me-1" aria-hidden="true"></i>@ViewBag.CategoryName
-                    </span>
-                }
+    <div class="container-kawaii">
+        <div class="text-center">
+            <div class="kawaii-cloud-title display-title sparkle">
+                <i class="bi bi-grid me-3" aria-hidden="true" style="color: var(--butter);"></i>
+                Products
             </div>
-        }
+            <div class="kawaii-subtitle">
+                Browse our amazing collection of stickers!
+            </div>
+
+            @if (!string.IsNullOrWhiteSpace(search) || categoryId.HasValue)
+            {
+                <div class="mt-4">
+                    <div class="kawaii-card surface-sky d-inline-block px-4 py-2">
+                        <div class="badge-group" role="group" aria-label="Active filters">
+                            @if (!string.IsNullOrWhiteSpace(search))
+                            {
+                                <span class="kawaii-badge badge-primary" aria-label="Search filter: @search">
+                                    <i class="bi bi-search me-1" aria-hidden="true"></i>@search
+                                </span>
+                            }
+                            @if (categoryId.HasValue && ViewBag.CategoryName != null)
+                            {
+                                <span class="kawaii-badge badge-secondary ms-1" aria-label="Category filter: @ViewBag.CategoryName">
+                                    <i class="bi bi-tag-fill me-1" aria-hidden="true"></i>@ViewBag.CategoryName
+                                </span>
+                            }
+                        </div>
+                    </div>
+                </div>
+            }
+        </div>
     </div>
 </header>
 
@@ -197,35 +210,50 @@
 @* ── Search and Filter Form ──────────────────────────────────────────── *@
 @await Html.PartialAsync("_ProductSearchFilterPartial", searchFilterVM)
 
-@* ── Sort Controls ─────────────────────────────────────────────────── *@
-@await Html.PartialAsync("_ProductSortingPartial", sortingVM)
-
-@* ── Enhanced Result count with Live Region ─────────────────────────────────── *@
-<div class="results-summary mb-3" role="region" aria-labelledby="results-summary-heading">
-    <h2 id="results-summary-heading" class="sr-only">Search Results Summary</h2>
-    <div role="status" 
-         aria-live="polite" 
-         aria-label="Search results count"
-         id="results-announcement">
-        <p class="text-muted small mb-0" id="results-count">
-            <strong>@products.Count</strong> of <strong>@total</strong> product@(total != 1 ? "s" : "") found
-            @if (!string.IsNullOrWhiteSpace(search)) { 
-                <span> matching <em>&ldquo;@search&rdquo;</em></span> 
-            }
-            @if (categoryId.HasValue && ViewBag.CategoryName != null)
-            {
-                <span> in category <em>@ViewBag.CategoryName</em></span>
-            }
-        </p>
-        @if (products.Count == 0)
-        {
-            <p class="text-muted small mb-0">
-                <i class="bi bi-info-circle me-1" aria-hidden="true"></i>
-                Try adjusting your search terms or browse all products
-            </p>
-        }
+@* ── Sort Controls with kawaii styling ─────────────────────────────────────────────────── *@
+<section class="container-kawaii mb-4">
+    <div class="kawaii-card">
+        <div class="d-flex flex-column flex-md-row align-items-md-center justify-content-between">
+            <div class="mb-2 mb-md-0">
+                <h2 class="font-heading">
+                    <i class="bi bi-collection me-2" style="color: var(--purple);" aria-hidden="true"></i>
+                    Showing @products.Count of @total products
+                </h2>
+            </div>
+            <div>
+                @await Html.PartialAsync("_ProductSortingPartial", sortingVM)
+            </div>
+        </div>
     </div>
-</div>
+</section>
+
+@* ── Enhanced Result count with kawaii styling ─────────────────────────────────── *@
+@if (products.Any())
+{
+    <section class="container-kawaii mb-4">
+        <div class="kawaii-panel surface-mint">
+            <div class="results-summary" role="region" aria-labelledby="results-summary-heading">
+                <h2 id="results-summary-heading" class="sr-only">Search Results Summary</h2>
+                <div role="status" 
+                     aria-live="polite" 
+                     aria-label="Search results count"
+                     id="results-announcement">
+                    <p class="hierarchy-secondary mb-0" id="results-count">
+                        <i class="bi bi-check-circle me-2" style="color: var(--purple);" aria-hidden="true"></i>
+                        <strong>@products.Count</strong> of <strong>@total</strong> product@(total != 1 ? "s" : "") found
+                        @if (!string.IsNullOrWhiteSpace(search)) { 
+                            <span> matching <em>&ldquo;@search&rdquo;</em></span> 
+                        }
+                        @if (categoryId.HasValue && ViewBag.CategoryName != null)
+                        {
+                            <span> in category <em>@ViewBag.CategoryName</em></span>
+                        }
+                    </p>
+                </div>
+            </div>
+        </div>
+    </section>
+}
 
 @* ── Product grid ─────────────────────────────────────────────────────── *@
 @if (!products.Any())
@@ -243,14 +271,14 @@
         ActionText = !string.IsNullOrWhiteSpace(search) || categoryId.HasValue ? "Browse All Products" : null,
         ActionController = !string.IsNullOrWhiteSpace(search) || categoryId.HasValue ? "Product" : null,
         ActionAction = !string.IsNullOrWhiteSpace(search) || categoryId.HasValue ? "Index" : null,
-        ActionButtonClass = "btn btn-primary"
+        ActionButtonClass = "btn-kawaii btn-primary-kawaii"
     };
 
     @await Html.PartialAsync("_EmptyStateCardPartial", productEmptyStateVM)
 }
 else
 {
-    <main role="main" aria-labelledby="products-main-heading">
+    <main role="main" aria-labelledby="products-main-heading" class="container-kawaii">
         <section class="product-results" aria-labelledby="products-heading">
             <h2 id="products-main-heading" class="sr-only">Product Catalog</h2>
             <h3 id="products-heading" class="sr-only">
@@ -259,27 +287,27 @@ else
                 @if (categoryId.HasValue && ViewBag.CategoryName != null) { <text>in @ViewBag.CategoryName</text> }
             </h3>
 
-            <div class="product-grid-container" 
-                 role="region" 
-                 aria-labelledby="products-heading"
-                 aria-describedby="results-count">
-                <div class="row row-cols-1 row-cols-sm-2 row-cols-md-3 row-cols-lg-4 g-3" 
-                     id="productGrid"
-                     role="list"
-                     aria-label="Product grid with @products.Count items displayed">
-                    @foreach (var p in products)
-                    {
-                        <div class="col" role="listitem">
-                            @await Html.PartialAsync("_ProductCardPartial", p)
-                        </div>
-                    }
-                </div>
+            <!-- Product Grid using kawaii styling -->
+            <div id="productGrid" class="row g-4" role="grid" aria-label="Product grid with @products.Count items displayed">
+                @foreach (var p in products)
+                {
+                    <div class="col-lg-3 col-md-4 col-sm-6" role="gridcell">
+                        @await Html.PartialAsync("_ProductCard", p)
+                    </div>
+                }
             </div>
 
-            @* ── Enhanced Pagination with Proper Landmark ───────────────────────────── *@
-            <nav aria-label="Product pagination" id="pagination" class="mt-4">
-                @await Html.PartialAsync("_PaginationPartial", paginationVM)
-            </nav>
+            @* ── Kawaii Pagination ───────────────────────────── *@
+            @if (totalPages > 1)
+            {
+                <section class="container-kawaii mt-5" id="pagination" aria-label="Pagination">
+                    <div class="kawaii-card text-center">
+                        <nav aria-label="Product pagination">
+                            @await Html.PartialAsync("_PaginationPartial", paginationVM)
+                        </nav>
+                    </div>
+                </section>
+            }
         </section>
     </main>
 }

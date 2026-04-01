@@ -152,6 +152,64 @@ Welcome to the comprehensive documentation for the ELKH premium sticker eCommerc
 - **Training Materials** - Structured learning paths for different roles
 - **Troubleshooting Database** - Searchable issue resolution database
 
+## 🔧 Internal Development Documentation
+
+### 📝 [Developer Documentation Guidelines](development/DEVELOPER-DOCUMENTATION-GUIDELINES.md)
+**Purpose**: Practical guide for creating and maintaining professional code documentation  
+**Audience**: Development Team, Code Reviewers, New Team Members  
+**Contents**:
+- Documentation checklist for new code
+- Documentation patterns by code type (Controllers, Services, Configuration)
+- Writing effective documentation and security requirements
+- Code review guidelines and quality tracking
+
+### 📋 [Documentation Style Guide](development/DOCUMENTATION-STYLE-GUIDE.md)
+**Purpose**: Comprehensive technical standards and formatting guidelines  
+**Audience**: All Contributors, Documentation Maintainers  
+**Contents**:
+- XML documentation standards and patterns
+- Table of Contents requirements for large files
+- Enterprise-grade documentation templates
+- Consistency standards and style enforcement
+
+### 📊 [Documentation Overview](development/DOCUMENTATION-README.md)
+**Purpose**: High-level overview of the documentation system and standards  
+**Audience**: Team Leads, Project Managers, New Contributors  
+**Contents**:
+- Documentation philosophy and approach
+- System overview and organization principles
+- Quality metrics and compliance tracking
+- Maintenance procedures and responsibilities
+
+## 🔍 Internal Project Analysis
+
+### 📋 [Documentation Compliance Audit](internal/audits/PROJECT-WIDE-DOCUMENTATION-AUDIT.md)
+**Purpose**: Comprehensive documentation compliance verification and remediation plan  
+**Audience**: Technical Leads, Documentation Champions  
+**Contents**:
+- Current compliance metrics and gap analysis
+- Critical documentation issues requiring immediate attention
+- Systematic remediation plan with priorities
+- Success metrics and tracking methodology
+
+### 🏗️ [Technical Deep Dive Analysis](internal/analysis/PROJECT-DEEP-DIVE-ANALYSIS.md)
+**Purpose**: Comprehensive technical architecture and implementation analysis  
+**Audience**: Senior Developers, Architects, Technical Decision Makers  
+**Contents**:
+- Detailed codebase analysis and architectural patterns
+- Security implementation and compliance assessment
+- Performance characteristics and optimization opportunities
+- Technology stack evaluation and recommendations
+
+### 📈 [Project Cleanup Summary](internal/analysis/PROJECT-CLEANUP-SUMMARY-REPORT.md)
+**Purpose**: Code quality improvements and cleanup achievements documentation  
+**Audience**: Project Managers, Quality Assurance, Stakeholders  
+**Contents**:
+- Code quality improvements and refactoring achievements
+- Technical debt reduction and maintainability gains
+- Documentation standardization impact and metrics
+- Future improvement recommendations and roadmap
+
 ## 📞 Documentation Support
 
 ### Getting Help

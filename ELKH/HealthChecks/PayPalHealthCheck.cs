@@ -56,7 +56,7 @@ public class PayPalHealthCheck : IHealthCheck
             errors.Add($"PayPal Environment '{_payPalOptions.Environment}' is invalid (must be 'sandbox' or 'live')");
         }
 
-        if (errors.Any())
+        if (errors.Count > 0)
         {
             return Task.FromResult(HealthCheckResult.Unhealthy(
                 $"PayPal configuration is invalid: {string.Join(", ", errors)}",

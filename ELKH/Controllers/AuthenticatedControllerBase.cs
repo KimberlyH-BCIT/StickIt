@@ -110,9 +110,9 @@ namespace ELKH.Controllers
         /// </summary>
         protected IActionResult RedirectToRefererOrAction(string actionName, string? controllerName = null)
         {
-            if (Request.Headers.ContainsKey("Referer"))
+            if (Request.Headers.TryGetValue("Referer", out var refererValue))
             {
-                return Redirect(Request.Headers["Referer"].ToString());
+                return Redirect(refererValue.ToString());
             }
 
             return controllerName != null 

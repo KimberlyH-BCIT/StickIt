@@ -1,13 +1,4 @@
-using System;
-using Microsoft.Extensions.Caching.Memory;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
-using ELKH.Data;
-using Microsoft.EntityFrameworkCore;
-
-namespace ELKH.Services
-{
+namespace ELKH.Services;
     /// <summary>
     /// Service for fuzzy product search with multi-tier fallback strategy.
     /// Provides fast autocomplete and search results using precomputed suggestions, FTS, and fuzzy matching.
@@ -173,7 +164,7 @@ namespace ELKH.Services
                 })
                 .ToListAsync();
 
-            if (pre.Any())
+            if (pre.Count > 0)
             {
                 // CreateEntry + manual property assignment is used instead of the IMemoryCache.Set
                 // extension method to avoid a dependency on the Microsoft.Extensions.Caching.Memory
@@ -204,7 +195,7 @@ namespace ELKH.Services
                 })
                 .ToListAsync();
 
-            if (tagMatches.Any())
+            if (tagMatches.Count > 0)
             {
                 using (var entry = _cache.CreateEntry(cacheKey))
                 {
@@ -248,7 +239,7 @@ LIMIT 10;";
                     results.Add(new SearchResultDto { Id = id, Name = name, Price = price, Thumbnail = thumb });
                 }
 
-                if (results.Any())
+                if (results.Count > 0)
                 {
                     using (var entry = _cache.CreateEntry(cacheKey))
                     {
@@ -378,4 +369,3 @@ LIMIT 10;";
 
         #endregion
     }
-}

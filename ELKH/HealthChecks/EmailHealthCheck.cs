@@ -9,25 +9,58 @@ namespace ELKH.HealthChecks;
 /// Verifies that the application can connect to the configured SMTP server.
 /// </summary>
 /// <remarks>
-/// This health check validates email infrastructure without sending actual emails.
-/// It performs:
-/// - TCP connection test to SMTP server
-/// - TLS/SSL capability verification
-/// - Basic SMTP handshake (EHLO command)
+/// TABLE OF CONTENTS
+/// ================================================================================
+/// 1. Dependencies & Constructor ................................. Lines [35-45]
+///    - EmailHealthCheck()            // Service injection and configuration
 /// 
-/// The check does NOT:
-/// - Authenticate with credentials (would require MailKit dependency in health check)
-/// - Send test emails (would spam mailbox)
+/// 2. CheckHealthAsync Method .................................... Lines [47-120]
+///    - Environment awareness         // Development vs production behavior
+///    - TCP connectivity test         // SMTP server reachability
+///    - TLS/SSL verification         // Secure connection capability
+///    - Error handling               // Graceful failure with diagnostics
 /// 
-/// HEALTH STATUS MEANINGS:
-/// - Healthy: SMTP server is reachable and accepting connections
-/// - Unhealthy: Cannot connect to SMTP server (network down, server unreachable, wrong port)
-/// - Degraded: Not used in this implementation
+/// 3. SMTP Connection Logic ..................................... Lines [65-110]
+///    - TcpClient connection         // Low-level socket connectivity
+///    - SSL/TLS handshake           // Secure transport verification
+///    - EHLO command test           // Basic SMTP protocol validation
+/// ================================================================================
 /// 
-/// ENVIRONMENT-AWARE:
-/// - Development: Returns Healthy (email uses FileEmailSender, no SMTP needed)
-/// - Production: Performs actual TCP connectivity test
+/// ARCHITECTURAL CONTEXT:
+/// • ASP.NET Core health check implementation for email infrastructure monitoring
+/// • Environment-aware behavior: development vs production validation
+/// • Lightweight connectivity testing without authentication or email sending
+/// • Part of ELKH's comprehensive application health monitoring system
+/// • Integrates with /health endpoint for container and load balancer probes
 /// 
+/// HEALTH CHECK STRATEGY:
+/// This implementation provides comprehensive email infrastructure validation:
+/// 1. Environment detection - skip SMTP checks in development (uses file email)
+/// 2. TCP connectivity - verifies network reachability to SMTP server
+/// 3. TLS/SSL capability - ensures secure email transmission support
+/// 4. Basic SMTP handshake - validates server protocol compatibility
+/// 5. Graceful failure handling - provides detailed diagnostics on failure
+/// 
+/// MONITORING & DIAGNOSTICS:
+/// • Health status: Healthy (connected), Unhealthy (connection failed)
+/// • Diagnostic data: Connection details, error messages, response times
+/// • Logging: Structured logging for operational monitoring
+/// • Performance: Fast connectivity test without expensive operations
+/// • Security: No credential validation to avoid exposing sensitive data
+/// 
+/// INTEGRATION POINTS:
+/// • Depends on: EmailOptions configuration for SMTP server details
+/// • Depends on: IWebHostEnvironment for environment detection
+/// • Used by: /health endpoint, container health probes, monitoring dashboards
+/// • Integrates with: Application Insights health check telemetry
+/// • Supports: Load balancer health checks and auto-scaling decisions
+/// 
+/// OPERATIONAL CONSIDERATIONS:
+/// • Fast execution for frequent health check polling
+/// • No side effects - purely diagnostic, no email sending
+/// • Environment-specific behavior prevents development environment noise
+/// • Detailed error reporting for troubleshooting connectivity issues
+/// </remarks>
 /// TIMEOUT:
 /// - Default: 10 seconds
 /// - Configurable via HealthCheckOptions

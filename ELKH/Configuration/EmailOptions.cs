@@ -7,7 +7,7 @@ namespace ELKH.Configuration
     public class EmailOptions
     {
         /// <summary>SMTP server hostname (e.g., "smtp.gmail.com")</summary>
-        public string Host { get; set; } = string.Empty;
+        public string Host { get; set; }
 
         /// <summary>
         /// SMTP server port number.

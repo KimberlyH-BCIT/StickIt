@@ -8,6 +8,8 @@ using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.AspNetCore.Identity.UI.Services;
 using Microsoft.AspNetCore.Mvc.Versioning;
+using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Mvc.Filters;
 using Microsoft.AspNetCore.Mvc.ApiExplorer;
 
 // =====================================================================
@@ -39,6 +41,11 @@ using Microsoft.AspNetCore.Mvc.ApiExplorer;
 // =====================================================================
 
 var builder = WebApplication.CreateBuilder(args);
+
+// Configure logging to avoid EventLog disposal issues
+builder.Logging.ClearProviders();
+builder.Logging.AddConsole();
+builder.Logging.AddDebug();
 
 // -- Database and Identity
 // SQLite database with Entity Framework Core. Connection string is required
@@ -93,9 +100,6 @@ builder.Services.AddApplicationInsightsTelemetry(options =>
     options.EnablePerformanceCounterCollectionModule = true;
     options.EnableRequestTrackingTelemetryModule = true;
 });
-
-// Add structured logging service for enhanced observability
-builder.Services.AddSingleton<ELKH.Services.IStructuredLoggingService, ELKH.Services.StructuredLoggingService>();
 
 // Add API versioning
 builder.Services.AddApiVersioning(options =>
@@ -158,6 +162,39 @@ builder.Services.AddResponseCompression(options =>
 // -- Caching
 builder.Services.AddMemoryCache();
 builder.Services.AddOutputCachingPolicies();
+
+// Response caching for API endpoints
+builder.Services.AddResponseCaching(options =>
+{
+    options.MaximumBodySize = 1024 * 1024; // 1 MB
+    options.UseCaseSensitivePaths = false;
+});
+
+// Cache profiles for different types of content
+builder.Services.Configure<MvcOptions>(options =>
+{
+    options.CacheProfiles.Add("ProductCatalog", new CacheProfile
+    {
+        Duration = 300, // 5 minutes
+        Location = ResponseCacheLocation.Any,
+        VaryByHeader = "Accept,Accept-Encoding"
+    });
+
+    options.CacheProfiles.Add("ProductDetails", new CacheProfile
+    {
+        Duration = 600, // 10 minutes
+        Location = ResponseCacheLocation.Any,
+        VaryByHeader = "Accept,Accept-Encoding"
+    });
+
+    options.CacheProfiles.Add("SearchResults", new CacheProfile
+    {
+        Duration = 180, // 3 minutes
+        Location = ResponseCacheLocation.Any,
+        VaryByHeader = "Accept,Accept-Encoding",
+        VaryByQueryKeys = new[] { "q", "limit" }
+    });
+});
 
 // -- Session Support (for guest checkout)
 builder.Services.AddSession(options =>
@@ -328,11 +365,22 @@ await using (var scope = app.Services.CreateAsyncScope())
         var userManager = sp.GetRequiredService<UserManager<IdentityUser>>();
         var roleManager = sp.GetRequiredService<RoleManager<IdentityRole>>();
 
-        await DbSeeder.SeedProductsAsync(db);
-        await DbSeeder.SeedShippingMethodsAsync(db); // Seed shipping options
-        await DbSeeder.SeedUsersAndRolesAsync(userManager, roleManager, app.Configuration);
-        await DbSeeder.SeedCustomersAndOrdersAsync(db, userManager, app.Environment.WebRootPath);
-        await DbSeeder.SeedStoreReviewsAsync(db, userManager); // Seed featured homepage reviews
+        // Temporarily disable foreign key constraints for seeding
+        await db.Database.ExecuteSqlRawAsync("PRAGMA foreign_keys=OFF");
+
+        try
+        {
+            await DbSeeder.SeedProductsAsync(db);
+            await DbSeeder.SeedShippingMethodsAsync(db); // Seed shipping options
+            await DbSeeder.SeedUsersAndRolesAsync(userManager, roleManager, app.Configuration);
+            await DbSeeder.SeedCustomersAndOrdersAsync(db, userManager, app.Environment.WebRootPath);
+            await DbSeeder.SeedStoreReviewsAsync(db, userManager); // Seed featured homepage reviews
+        }
+        finally
+        {
+            // Re-enable foreign key constraints after seeding
+            await db.Database.ExecuteSqlRawAsync("PRAGMA foreign_keys=ON");
+        }
     }
 }
 

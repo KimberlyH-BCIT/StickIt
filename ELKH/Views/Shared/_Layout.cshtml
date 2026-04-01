@@ -1,7 +1,6 @@
-﻿
 @*
 ╔══════════════════════════════════════════════════════════════════════════════════╗
-║ TABLE OF CONTENTS - _Layout.cshtml (645 lines)                                   ║
+║ TABLE OF CONTENTS - _Layout.cshtml (Clean Version)                              ║
 ╠══════════════════════════════════════════════════════════════════════════════════╣
 ║ 1. HTML Document Head ...................................... Lines   34-105    ║
 ║    - Meta tags, CSRF token generation, PWA manifest                             ║
@@ -10,10 +9,8 @@
 ║    - Open Graph and Twitter Card meta tags for social sharing                   ║
 ║                                                                                  ║
 ║ 2. Header Navigation ....................................... Lines  107-325    ║
-║    - Top bar: brand logo and user authentication status                         ║
-║    - Search bar: product search with autocomplete functionality                 ║
-║    - Main navigation: category links and user account access                    ║
-║    - Mobile hamburger menu with responsive design                               ║
+║    - Complete navigation handled by _Navbar partial                             ║
+║    - Includes hamburger menu with kawaii styling                                ║
 ║                                                                                  ║
 ║ 3. Main Content Area ....................................... Lines  327-375    ║
 ║    - Dynamic content container with alert notifications                         ║
@@ -104,15 +101,23 @@
     <meta name="twitter:description" content="Your favorite online sticker store with kawaii and decorative stickers" />
     <meta name="twitter:image" content="~/logo-stickit.png" />
 
-<title>@ViewData["Title"] - ELKH</title>
+    <title>@ViewData["Title"] - ELKH</title>
     <script type="importmap"></script>
 
     @* ═══════════════════════════════════════════════════════════════════════════════ *@
-    @* ║ Google Fonts for Kawaii Theme                                               ║ *@
+    @* ║ Google Fonts for Kawaii Theme - Optimized Loading                          ║ *@
     @* ═══════════════════════════════════════════════════════════════════════════════ *@
+
+    <!-- Preload critical fonts -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Sniglet:wght@400;800&family=Nunito:ital,wght@0,200..1000;1,200..1000&display=swap" rel="stylesheet">
+
+    <!-- 
+    Sniglet: Chunky playful headings (400=regular, 800=black)
+    Nunito: Clean body text with full weight range for flexibility
+    display=swap ensures text shows immediately with fallbacks
+    -->
+    <link href="https://fonts.googleapis.com/css2?family=Sniglet:wght@400;800&family=Nunito:wght@300;400;600;700;800&display=swap" rel="stylesheet" preload>
 
     <link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.min.css" />
     <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
@@ -178,6 +183,32 @@
             .border-secondary {
                 border-color: #999 !important;
             }
+
+            /* Enhance kawaii color contrasts for high contrast mode */
+            .btn-primary-kawaii,
+            .btn-secondary-kawaii,
+            .btn-sky-kawaii {
+                border-width: 3px !important;
+                font-weight: 900 !important;
+            }
+
+            .kawaii-nav-link,
+            .kawaii-dropdown-item {
+                border-width: 2px !important;
+                font-weight: 800 !important;
+            }
+
+            /* Ensure proper contrast for text on colored backgrounds */
+            .pill-mint,
+            .pill-sky,
+            .pill-lavender {
+                color: #333 !important;
+            }
+
+            .pill-pink,
+            .pill-butter {
+                color: #000 !important;
+            }
         }
 
         /* Reduced motion support */
@@ -227,6 +258,11 @@
             }
         }
     </style>
+
+    @* ═══════════════════════════════════════════════════════════════════════════════ *@
+    @* ║ Page-specific styles injection point                                        ║ *@
+    @* ═══════════════════════════════════════════════════════════════════════════════ *@
+    @await RenderSectionAsync("Styles", required: false)
 </head>
 
 <body>
@@ -238,240 +274,18 @@
         <a href="#site-footer">Skip to footer</a>
     </div>
 
-<header class="site-header bg-white box-shadow mb-3" role="banner" id="site-header">
+    <!-- Floating Sparkles Background Effect -->
+    <div class="sparkle-bg" aria-hidden="true"></div>
 
-    @* â‘  Top bar: brand + login greeting *@
-    <div class="header-top border-bottom py-2">
-        <div class="container-fluid d-flex align-items-center justify-content-between flex-wrap gap-2">
-            <a class="navbar-brand mb-0 h1" 
-               asp-area="" asp-controller="Home" asp-action="Index"
-               aria-label="ELKH - Go to homepage">ELKH</a>
-            <div class="d-flex align-items-center flex-wrap gap-2" role="navigation" aria-label="User account and cart actions">
-                <partial name="_LoginPartial" />
-                <partial name="_CartIconPartial" />
-            </div>
-        </div>
-    </div>
+    <!-- Kawaii Navigation - Complete navigation with hamburger menu -->
+    <partial name="_Navbar" />
 
-        @* â‘¡ Search bar centered *@
-        <div class="header-search py-2">
-            <div class="container-fluid d-flex justify-content-center">
-                <div class="header-search-wrap position-relative">
-                     <form asp-controller="Product" asp-action="Index" method="get" class="d-flex" role="search" id="search-form">
-                        <label for="productNameInput" class="sr-only">Search for products</label>
-                        <input id="productNameInput"
-                               type="search"
-                               name="search"
-                               class="form-control"
-                               placeholder="Search products"
-                               autocomplete="off"
-                               aria-label="Search for products"
-                               aria-describedby="productNameSuggestions"
-                               aria-expanded="false"
-                               aria-autocomplete="list"
-                               role="combobox" />
-                        <button type="submit" class="btn btn-outline-secondary ms-2" aria-label="Submit search">
-                            <span class="sr-only">Search</span>
-                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16" aria-hidden="true">
-                                <path d="M11.742 10.344a6.5 6.5 0 1 0-1.397 1.398h-.001c.03.04.062.078.098.115l3.85 3.85a1 1 0 0 0 1.415-1.414l-3.85-3.85a1.007 1.007 0 0 0-.115-.1zM12 6.5a5.5 5.5 0 1 1-11 0 5.5 5.5 0 0 1 11 0z"/>
-                            </svg>
-                        </button>
-                    </form>
-                    <div id="productNameSuggestions"
-                         class="list-group position-absolute w-100 shadow-sm"
-                         style="z-index:1050;display:none;"
-                         role="listbox"
-                         aria-label="Search suggestions"></div>
-                </div>
-            </div>
-        </div>
-
-        @* â‘¢ Nav strip â€” sits at the bottom of the header, separated by border-top *@
-        <nav class="header-nav border-top" role="navigation" aria-label="Main navigation" id="site-navigation">
-            <div class="container-fluid d-flex align-items-center">
-                <button class="nav-hamburger flex-shrink-0 me-2"
-                        type="button"
-                        data-bs-toggle="offcanvas"
-                        data-bs-target="#navOffcanvas"
-                        aria-controls="navOffcanvas"
-                        aria-expanded="false"
-                        aria-label="Open navigation menu">
-                    <span class="sr-only">Menu</span>
-                    <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" fill="currentColor" viewBox="0 0 16 16" aria-hidden="true">
-                        <path fill-rule="evenodd" d="M2.5 12a.5.5 0 0 1 .5-.5h10a.5.5 0 0 1 0 1H3a.5.5 0 0 1-.5-.5zm0-4a.5.5 0 0 1 .5-.5h10a.5.5 0 0 1 0 1H3a.5.5 0 0 1-.5-.5zm0-4a.5.5 0 0 1 .5-.5h10a.5.5 0 0 1 0 1H3a.5.5 0 0 1-.5-.5z"/>
-                    </svg>
-</button>
-@if (User.IsInRole("Admin"))
-{
-    <ul class="navbar-nav flex-row flex-grow-1 justify-content-evenly mb-0">
-        <li class="nav-item">
-            <a class="nav-link text-dark fw-semibold" asp-controller="Admin" asp-action="Index">Home</a>
-        </li>
-        <li class="nav-item">
-            <a class="nav-link text-dark" asp-controller="User" asp-action="Index">View as Customer</a>
-        </li>
-        <li class="nav-item">
-            <a class="nav-link text-dark" asp-controller="Manager" asp-action="Index">View as Manager</a>
-        </li>
-        <li class="nav-item">
-            <a class="nav-link text-dark" asp-controller="Staff" asp-action="Index">View as Staff</a>
-        </li>
-    </ul>
-}
-                else
-                {
-                    <ul class="navbar-nav flex-row flex-grow-1 justify-content-evenly mb-0">
-                        <li class="nav-item">
-                            <a class="nav-link text-dark" asp-area="" asp-controller="Home" asp-action="Index">Home</a>
-                        </li>
-                        <li class="nav-item">
-                            <a class="nav-link text-dark" asp-area="" asp-controller="Product" asp-action="Index">Products</a>
-                        </li>
-                        <li class="nav-item dropdown">
-                            <a class="nav-link dropdown-toggle text-dark" href="#" id="navbarCategoriesDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false" aria-haspopup="true">
-                                Categories
-                            </a>
-                            <ul class="dropdown-menu" aria-labelledby="navbarCategoriesDropdown" role="menu">
-                                <li><a class="dropdown-item" asp-controller="Product" asp-action="Index" asp-route-category="Canadian">Canadian</a></li>
-                                <li><a class="dropdown-item" asp-controller="Product" asp-action="Index" asp-route-category="Christmas">Christmas</a></li>
-                                <li><a class="dropdown-item" asp-controller="Product" asp-action="Index" asp-route-category="Cute Animals">Cute Animals</a></li>
-                                <li><a class="dropdown-item" asp-controller="Product" asp-action="Index" asp-route-category="Easter">Easter</a></li>
-                                <li><a class="dropdown-item" asp-controller="Product" asp-action="Index" asp-route-category="Food">Food</a></li>
-                                <li><a class="dropdown-item" asp-controller="Product" asp-action="Index" asp-route-category="Halloween">Halloween</a></li>
-                                <li><a class="dropdown-item" asp-controller="Product" asp-action="Index" asp-route-category="Lunar New Year">Lunar New Year</a></li>
-                                <li><a class="dropdown-item" asp-controller="Product" asp-action="Index" asp-route-category="Nature & Floral">Nature & Floral</a></li>
-                                <li><a class="dropdown-item" asp-controller="Product" asp-action="Index" asp-route-category="New Years Eve">New Years Eve</a></li>
-                                <li><a class="dropdown-item" asp-controller="Product" asp-action="Index" asp-route-category="Thanksgiving">Thanksgiving</a></li>
-                                <li><hr class="dropdown-divider"></li>
-                                <li><a class="dropdown-item" asp-controller="Product" asp-action="Index" asp-route-category="Miscellaneous">Miscellaneous</a></li>
-                            </ul>
-                        </li>
-                        @if (User.IsInRole("Staff"))
-                        {
-                            <li class="nav-item">
-                                <a class="nav-link text-dark" asp-area="" asp-controller="OrderHistory" asp-action="Index">Order History</a>
-                            </li>
-                            <li class="nav-item">
-                                <a class="nav-link text-dark" asp-area="" asp-controller="Inventory" asp-action="Index">Inventory</a>
-                            </li>
-                        }
-                        @if (SignInManager.IsSignedIn(User))
-                        {
-                            <li class="nav-item">
-                                <a class="nav-link text-dark" asp-area="" asp-controller="Cart" asp-action="Index">My Cart</a>
-                            </li>
-                            <li class="nav-item">
-                                <a class="nav-link text-dark" asp-area="" asp-controller="Wishlist" asp-action="Index">My Wishlist</a>
-                            </li>
-                            <li class="nav-item">
-                                <a class="nav-link text-dark" asp-area="" asp-controller="Order" asp-action="MyHistory">My Orders</a>
-                            </li>
-                            <li class="nav-item">
-                                <a class="nav-link text-dark" asp-area="" asp-controller="User" asp-action="MyRatings">My Ratings</a>
-                            </li>
-                            <li class="nav-item">
-                                <a class="nav-link text-dark" asp-area="" asp-controller="User" asp-action="EditProfile">My Profile</a>
-                            </li>
-                        }
-                    </ul>
-                }
-            </div>
-        </nav>
-
-    </header>
-
-    @* Off-canvas sidebar â€” opened by the hamburger button in the nav strip *@
-    <div class="offcanvas offcanvas-start" tabindex="-1" id="navOffcanvas" aria-labelledby="navOffcanvasTitle">
-        <div class="offcanvas-header border-bottom">
-            <a class="navbar-brand mb-0 h1" asp-area="" asp-controller="Home" asp-action="Index" id="navOffcanvasTitle">ELKH</a>
-            <button type="button" class="btn-close" data-bs-dismiss="offcanvas" aria-label="Close"></button>
-        </div>
-        <div class="offcanvas-body p-0">
-            <ul class="navbar-nav flex-column">
-                @if (User.IsInRole("Admin"))
-                {
-                    <li class="nav-item border-bottom">
-                        <a class="nav-link text-dark px-3 py-2 fw-semibold" asp-controller="Admin" asp-action="Index">Home</a>
-                    </li>
-                    <li class="nav-item border-bottom">
-                        <a class="nav-link text-dark px-3 py-2" asp-controller="Home" asp-action="Index">View as Customer</a>
-                    </li>
-                    <li class="nav-item border-bottom">
-                        <a class="nav-link text-dark px-3 py-2" asp-controller="Manager" asp-action="Index">View as Manager</a>
-                    </li>
-                    <li class="nav-item border-bottom">
-                        <a class="nav-link text-dark px-3 py-2" asp-controller="Home" asp-action="Index">View as Staff</a>
-                    </li>
-                }
-                else
-                {
-                    <li class="nav-item border-bottom">
-                        <a class="nav-link text-dark px-3 py-2" asp-area="" asp-controller="Home" asp-action="Index">Home</a>
-                    </li>
-                    <li class="nav-item border-bottom">
-                        <a class="nav-link text-dark px-3 py-2" asp-area="" asp-controller="Product" asp-action="Index">Products</a>
-                    </li>
-
-                    @* Categories Section *@
-                    <li class="nav-item border-bottom">
-                        <div class="accordion accordion-flush" id="categoriesAccordion">
-                            <div class="accordion-item border-0">
-                                <h2 class="accordion-header" id="categoriesHeading">
-                                    <button class="accordion-button collapsed px-3 py-2 text-dark bg-white" type="button" data-bs-toggle="collapse" data-bs-target="#categoriesCollapse" aria-expanded="false" aria-controls="categoriesCollapse">
-                                        Categories
-                                    </button>
-                                </h2>
-                                <div id="categoriesCollapse" class="accordion-collapse collapse" aria-labelledby="categoriesHeading" data-bs-parent="#categoriesAccordion">
-                                    <div class="accordion-body p-0">
-                                        <ul class="list-unstyled mb-0">
-                                            <li><a class="dropdown-item py-2" asp-controller="Product" asp-action="Index" asp-route-category="Canadian">Canadian</a></li>
-                                            <li><a class="dropdown-item py-2" asp-controller="Product" asp-action="Index" asp-route-category="Christmas">Christmas</a></li>
-                                            <li><a class="dropdown-item py-2" asp-controller="Product" asp-action="Index" asp-route-category="Cute Animals">Cute Animals</a></li>
-                                            <li><a class="dropdown-item py-2" asp-controller="Product" asp-action="Index" asp-route-category="Easter">Easter</a></li>
-                                            <li><a class="dropdown-item py-2" asp-controller="Product" asp-action="Index" asp-route-category="Food">Food</a></li>
-                                            <li><a class="dropdown-item py-2" asp-controller="Product" asp-action="Index" asp-route-category="Halloween">Halloween</a></li>
-                                            <li><a class="dropdown-item py-2" asp-controller="Product" asp-action="Index" asp-route-category="Lunar New Year">Lunar New Year</a></li>
-                                            <li><a class="dropdown-item py-2" asp-controller="Product" asp-action="Index" asp-route-category="Nature & Floral">Nature & Floral</a></li>
-                                            <li><a class="dropdown-item py-2" asp-controller="Product" asp-action="Index" asp-route-category="New Years Eve">New Years Eve</a></li>
-                                            <li><a class="dropdown-item py-2" asp-controller="Product" asp-action="Index" asp-route-category="Thanksgiving">Thanksgiving</a></li>
-                                            <li><hr class="my-1"></li>
-                                            <li><a class="dropdown-item py-2" asp-controller="Product" asp-action="Index" asp-route-category="Miscellaneous">Miscellaneous</a></li>
-                                        </ul>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    </li>
-
-                    <li class="nav-item border-bottom">
-                        <a class="nav-link text-dark px-3 py-2" asp-area="" asp-controller="Home" asp-action="Privacy">Privacy</a>
-                    </li>
-                    @if (SignInManager.IsSignedIn(User))
-                    {
-                        <li class="nav-item border-bottom">
-                            <a class="nav-link text-dark px-3 py-2" asp-area="" asp-controller="Cart" asp-action="Index">My Cart</a>
-                        </li>
-                        <li class="nav-item border-bottom">
-                            <a class="nav-link text-dark px-3 py-2" asp-area="" asp-controller="Wishlist" asp-action="Index">Wishlist</a>
-                        </li>
-                        <li class="nav-item border-bottom">
-                            <a class="nav-link text-dark px-3 py-2" asp-area="" asp-controller="Order" asp-action="MyHistory">My Orders</a>
-                        </li>
-                        <li class="nav-item border-bottom">
-                            <a class="nav-link text-dark px-3 py-2" asp-area="" asp-controller="User" asp-action="MyRatings">My Ratings</a>
-                        </li>
-                        <li class="nav-item border-bottom">
-                            <a class="nav-link text-dark px-3 py-2" asp-area="" asp-controller="User" asp-action="EditProfile">My Profile</a>
-                        </li>
-                    }
-                }
-            </ul>
-        </div>
-    </div>
+    <!-- Main Content Container -->
     <div class="container">
         <div>
             @RenderSection("title",false)
         </div>
+        
         @{
             var raw = TempData["Message"] as string;
             if (!string.IsNullOrEmpty(raw))
@@ -516,13 +330,13 @@
                 }
             }
         }
+        
         <!-- ═══════════════════════════════════════════════════════════════════════════ -->
         <!-- ║ Main Content Area - Dynamic page content injection point              ║ -->
         <!-- ═══════════════════════════════════════════════════════════════════════════ -->
         <main role="main" class="pb-3" id="main-content">
             @RenderBody()
         </main>
-
     </div>
 
     <!-- ════════════════════════════════════════════════════════════════════════════════ -->
@@ -622,6 +436,8 @@
                 </div>
             </div>
         </div>
+    </footer>
+
     <!-- Wishlist sign-in prompt (shared across all pages; shown when a guest clicks any wishlist button) -->
     <div class="modal fade" id="wishlistSignInModal" tabindex="-1"
          aria-labelledby="wishlistSignInModalLabel" aria-hidden="true" role="dialog">
@@ -818,4 +634,3 @@
 
 </body>
 </html>
-

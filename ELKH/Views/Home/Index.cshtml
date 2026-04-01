@@ -190,11 +190,11 @@
     var hasReviews = reviews != null && reviews.Any();
 }
 
-<!-- Skip links for screen readers -->
+<!-- Skip links for screen readers with kawaii styling -->
 <div class="visually-hidden" role="navigation" aria-label="Skip navigation">
-    <a href="#main-content" class="btn btn-primary">Skip to main content</a>
-    <a href="#features-section" class="btn btn-primary">Skip to features</a>
-    <a href="#reviews-section" class="btn btn-primary">Skip to customer reviews</a>
+    <a href="#main-content" class="btn-kawaii btn-secondary-kawaii">Skip to main content</a>
+    <a href="#features-section" class="btn-kawaii btn-secondary-kawaii">Skip to features</a>
+    <a href="#reviews-section" class="btn-kawaii btn-secondary-kawaii">Skip to customer reviews</a>
 </div>
 
 <!-- Page landmark information for screen readers -->
@@ -203,126 +203,147 @@
 </div>
 
 <!-- ════════════════════════════════════════════════════════════════════════════════ -->
-<!-- ║ Hero Section - Primary marketing content and call-to-action                 ║ -->
+<!-- ║ Kawaii Hero Section - Primary marketing content and call-to-action          ║ -->
 <!-- ════════════════════════════════════════════════════════════════════════════════ -->
 <main id="main-content">
-<section class="bg-dark text-white w-100" role="banner" aria-labelledby="hero-heading">
-    <div class="container-fluid px-0">
-        <div class="row align-items-center g-4 mx-0">
-            <div class="col-lg-6">
-                <h1 id="hero-heading" class="display-5 fw-bold lh-1 mb-3">Print Premium Stickers for you</h1>
-                <p class="text-white-50 lead mb-4">
-                    Express delivery, premium materials, and clean cuts.
-                    Get an instant quote and shop our ready-made designs.
-                </p>
+<header class="kawaii-hero" role="banner">
+    <div class="container-kawaii">
+        <div class="text-center">
+            <div class="kawaii-cloud-title display-title sparkle">
+                <i class="bi bi-heart-fill me-3" aria-hidden="true" style="color: var(--pink);"></i>
+                Premium Stickers for You
+            </div>
 
-                <div class="d-flex flex-wrap gap-3">
-                    <a asp-controller="Product" asp-action="Index" 
-                       class="btn btn-warning btn-lg px-4 fw-bold"
-                       aria-label="Browse new arrivals - View the latest sticker products">
-                        New Arrivals
-                    </a>
-                    <a asp-controller="Product" asp-action="Index" 
-                       class="btn btn-outline-light btn-lg px-4"
-                       aria-label="Browse all sticker products in our catalog">
-                        All sticker products <i class="bi bi-arrow-right ms-1" aria-hidden="true"></i>
-                    </a>
-                </div>
+            <div class="kawaii-subtitle mb-4">
+                Express delivery, premium materials, and clean cuts.<br>
+                Get an instant quote and shop our ready-made designs.
+            </div>
 
-                <div class="d-flex flex-wrap gap-4 mt-4 small text-white-50" role="list" aria-label="Product features">
-                    <div role="listitem"><i class="bi bi-truck me-2" aria-hidden="true"></i>Fast delivery</div>
-                    <div role="listitem"><i class="bi bi-stars me-2" aria-hidden="true"></i>Premium finish</div>
-                    <div role="listitem"><i class="bi bi-shield-check me-2" aria-hidden="true"></i>Secure checkout</div>
+            <div class="d-flex flex-wrap justify-content-center gap-3 mb-4">
+                <a asp-controller="Product" asp-action="Index" 
+                   class="btn-kawaii btn-primary-kawaii btn-lg"
+                   aria-label="Browse new arrivals - View the latest sticker products">
+                    ✨ New Arrivals
+                </a>
+                <a asp-controller="Product" asp-action="Index" 
+                   class="btn-kawaii btn-secondary-kawaii btn-lg"
+                   aria-label="Browse all sticker products in our catalog">
+                    All Products <i class="bi bi-arrow-right ms-1" aria-hidden="true"></i>
+                </a>
+            </div>
+
+            <div class="kawaii-card surface-mint d-inline-block px-4 py-3">
+                <div class="d-flex flex-wrap justify-content-center gap-4" role="list" aria-label="Product features">
+                    <div role="listitem" class="hierarchy-secondary">
+                        <i class="bi bi-truck me-2" style="color: var(--purple);" aria-hidden="true"></i>Fast delivery
+                    </div>
+                    <div role="listitem" class="hierarchy-secondary">
+                        <i class="bi bi-stars me-2" style="color: var(--purple);" aria-hidden="true"></i>Premium finish
+                    </div>
+                    <div role="listitem" class="hierarchy-secondary">
+                        <i class="bi bi-shield-check me-2" style="color: var(--purple);" aria-hidden="true"></i>Secure checkout
+                    </div>
                 </div>
             </div>
 
-            <div class="col-lg-6">
-                <div class="d-flex align-items-center justify-content-between mb-3">
-                    <div class="fw-semibold">Trending <span aria-label="Hot" role="img">🔥</span></div>
-                    <span class="badge text-bg-warning">Hot</span>
-                </div>
-
-                <div class="rounded-4 overflow-hidden" style="border: 1px solid rgba(255,255,255,.12);">
-                    <img src="~/Images/StickIt_Logo.jpg"
-                         asp-append-version="true"
-                         alt="StickIt company logo featuring our signature branding - representative of our trending sticker collection"
-                         class="w-100"
-                         style="height:360px; object-fit:cover;" />
-                </div>
-
-                <div class="mt-4 d-flex justify-content-between align-items-center">
-                    <div class="small text-white-50">Browse the full catalog</div>
-                    <a asp-controller="Product" asp-action="Index" 
-                       class="btn btn-sm btn-outline-light"
-                       aria-label="Shop now - Browse all sticker products">Shop now</a>
+            <!-- Trending product showcase -->
+            <div class="mt-5">
+                <div class="kawaii-card surface-butter d-inline-block p-4">
+                    <div class="d-flex align-items-center justify-content-between mb-3">
+                        <span class="font-heading">Trending 🔥</span>
+                        <span class="kawaii-badge badge-warning">Hot</span>
+                    </div>
+                    <div class="rounded-4 overflow-hidden" style="max-width: 300px;">
+                        <img src="~/Images/StickIt_Logo.jpg"
+                             asp-append-version="true"
+                             alt="StickIt company logo featuring our signature branding - representative of our trending sticker collection"
+                             class="w-100"
+                             style="height:200px; object-fit:cover;" />
+                    </div>
+                    <div class="mt-3">
+                        <div class="hierarchy-secondary small">Browse the full catalog</div>
+                        <a asp-controller="Product" asp-action="Index" 
+                           class="btn-kawaii btn-secondary-kawaii mt-2"
+                           aria-label="Shop now - Browse all sticker products">Shop now</a>
+                    </div>
                 </div>
             </div>
         </div>
     </div>
-</section>
+</header>
 
 <!-- ════════════════════════════════════════════════════════════════════════════════ -->
-<!-- ║ Feature Cards Section - Product categories and promotional content         ║ -->
+<!-- ║ Kawaii Feature Cards Section - Product categories and promotional content   ║ -->
 <!-- ════════════════════════════════════════════════════════════════════════════════ -->
-<section id="features-section" class="bg-light" aria-labelledby="features-heading">
-    <div class="container py-4 py-lg-5">
-        <h2 id="features-heading" class="fw-bold mb-2">Premium and create with confidence</h2>
-        <p class="text-muted">High-quality materials, clean cuts, and designs that stand out.</p>
+<section id="features-section" class="container-kawaii py-5" aria-labelledby="features-heading">
+    <div class="text-center mb-5">
+        <h2 id="features-heading" class="font-heading">Premium Quality, Creative Freedom</h2>
+        <p class="hierarchy-secondary">High-quality materials, clean cuts, and designs that stand out.</p>
+    </div>
 
-        <div class="row g-3 mt-2">
-            <div class="col-lg-6">
-                <article class="p-4 rounded-4 text-white" style="background:#111;">
-                    <div class="rounded-4 overflow-hidden" style="height:190px;">
-                        <img src="~/Images/StickIt_Logo.jpg"
-                             asp-append-version="true"
-                             alt="Sample pack preview showing StickIt logo design"
-                             class="w-100 h-100"
-                             style="object-fit:cover;" />
-                    </div>
-                    <h3 class="fw-bold mt-3">Sample Packs</h3>
-                    <p class="text-white-50 small mb-3">Waterproof • durable • scratch-resistant</p>
-                    <a asp-controller="Product" asp-action="Index" 
-                       class="btn btn-outline-light btn-sm"
-                       aria-label="Shop sample pack stickers - Waterproof and durable options">Shop stickers</a>
-                </article>
-            </div>
-
-            <div class="col-lg-6">
-                <article class="p-4 rounded-4 text-white" style="background:#111;">
-                    <div class="rounded-4 overflow-hidden" style="height:190px;">
-                        <img src="~/Images/StickIt_Logo.jpg"
-                             asp-append-version="true"
-                             alt="Die-cut stickers preview showing StickIt logo design"
-                             class="w-100 h-100"
-                             style="object-fit:cover;" />
-                    </div>
-                    <h3 class="fw-bold mt-3">Die-Cut Stickers</h3>
-                    <p class="text-white-50 small mb-3">Any shape • premium finish</p>
-                    <a asp-controller="Product" asp-action="Index" 
-                       class="btn btn-outline-light btn-sm"
-                       aria-label="Shop die-cut stickers - Custom shapes with premium finish">Shop stickers</a>
-                </article>
-            </div>
+    <div class="row g-4">
+        <div class="col-lg-6">
+            <article class="kawaii-card surface-lavender h-100 p-4">
+                <div class="kawaii-image-container rounded-3 overflow-hidden mb-3">
+                    <img src="~/Images/StickIt_Logo.jpg"
+                         asp-append-version="true"
+                         alt="Sample pack preview showing StickIt logo design"
+                         class="w-100"
+                         style="height:190px; object-fit:cover;" />
+                </div>
+                <h3 class="font-heading">Sample Packs</h3>
+                <p class="hierarchy-secondary small mb-3">
+                    <i class="bi bi-droplet me-1" style="color: var(--purple);" aria-hidden="true"></i>Waterproof •
+                    <i class="bi bi-shield me-1" style="color: var(--purple);" aria-hidden="true"></i>Durable •
+                    <i class="bi bi-star me-1" style="color: var(--purple);" aria-hidden="true"></i>Scratch-resistant
+                </p>
+                <a asp-controller="Product" asp-action="Index" 
+                   class="btn-kawaii btn-outline-kawaii"
+                   aria-label="Shop sample pack stickers - Waterproof and durable options">Shop stickers</a>
+            </article>
         </div>
 
-        <div class="row g-3 mt-4">
-            <div class="col-lg-6">
-                <article class="p-4 rounded-4 text-white" style="background:#111;">
-                    <div class="rounded-4 overflow-hidden" style="height:190px;">
-                        <img src="~/Images/StickIt_Logo.jpg"
-                             asp-append-version="true"
-                             alt="Premium quality stickers preview showing StickIt logo design"
-                             class="w-100 h-100"
-                             style="object-fit:cover;" />
-                    </div>
-                    <h3 class="fw-bold mt-3">Premium Quality</h3>
-                    <p class="text-white-50 small mb-3">Waterproof • durable • scratch-resistant</p>
-                    <a asp-controller="Product" asp-action="Index" 
-                       class="btn btn-outline-light btn-sm"
-                       aria-label="Shop premium quality stickers - Waterproof and durable options">Shop stickers</a>
-                </article>
-            </div>
+        <div class="col-lg-6">
+            <article class="kawaii-card surface-mint h-100 p-4">
+                <div class="kawaii-image-container rounded-3 overflow-hidden mb-3">
+                    <img src="~/Images/StickIt_Logo.jpg"
+                         asp-append-version="true"
+                         alt="Die-cut stickers preview showing StickIt logo design"
+                         class="w-100"
+                         style="height:190px; object-fit:cover;" />
+                </div>
+                <h3 class="font-heading">Die-Cut Stickers</h3>
+                <p class="hierarchy-secondary small mb-3">
+                    <i class="bi bi-scissors me-1" style="color: var(--purple);" aria-hidden="true"></i>Any shape •
+                    <i class="bi bi-gem me-1" style="color: var(--purple);" aria-hidden="true"></i>Premium finish
+                </p>
+                <a asp-controller="Product" asp-action="Index" 
+                   class="btn-kawaii btn-outline-kawaii"
+                   aria-label="Shop die-cut stickers - Custom shapes with premium finish">Shop stickers</a>
+            </article>
         </div>
+
+        <div class="col-lg-6">
+            <article class="kawaii-card surface-sky h-100 p-4">
+                <div class="kawaii-image-container rounded-3 overflow-hidden mb-3">
+                    <img src="~/Images/StickIt_Logo.jpg"
+                         asp-append-version="true"
+                         alt="Premium quality stickers preview showing StickIt logo design"
+                         class="w-100"
+                         style="height:190px; object-fit:cover;" />
+                </div>
+                <h3 class="font-heading">Premium Quality</h3>
+                <p class="hierarchy-secondary small mb-3">
+                    <i class="bi bi-droplet me-1" style="color: var(--purple);" aria-hidden="true"></i>Waterproof •
+                    <i class="bi bi-shield me-1" style="color: var(--purple);" aria-hidden="true"></i>Durable •
+                    <i class="bi bi-star me-1" style="color: var(--purple);" aria-hidden="true"></i>Scratch-resistant
+                </p>
+                <a asp-controller="Product" asp-action="Index" 
+                   class="btn-kawaii btn-outline-kawaii"
+                   aria-label="Shop premium quality stickers - Waterproof and durable options">Shop stickers</a>
+            </article>
+        </div>
+    </div>
 
         <!-- ═══════════════════════════════════════════════════════════════════════════ -->
         <!-- ║ FAQ Section - Frequently Asked Questions with Bootstrap Accordion     ║ -->

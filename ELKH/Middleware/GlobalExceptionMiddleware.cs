@@ -83,20 +83,17 @@ public class GlobalExceptionMiddleware
     private readonly RequestDelegate _next;
     private readonly ILogger<GlobalExceptionMiddleware> _logger;
     private readonly TelemetryClient? _telemetryClient;
-    private readonly IStructuredLoggingService _structuredLogging;
     private readonly IWebHostEnvironment _environment;
 
     public GlobalExceptionMiddleware(
         RequestDelegate next,
         ILogger<GlobalExceptionMiddleware> logger,
         TelemetryClient? telemetryClient,
-        IStructuredLoggingService structuredLogging,
         IWebHostEnvironment environment)
     {
         _next = next;
         _logger = logger;
         _telemetryClient = telemetryClient;
-        _structuredLogging = structuredLogging;
         _environment = environment;
     }
 
@@ -114,13 +111,16 @@ public class GlobalExceptionMiddleware
 
     private async Task HandleExceptionAsync(HttpContext context, Exception exception)
     {
+        // Resolve the scoped service per-request
+        var structuredLogging = context.RequestServices.GetRequiredService<IStructuredLoggingService>();
+
         var correlationId = context.TraceIdentifier;
         var userId = context.User?.Identity?.Name ?? "Anonymous";
         var requestPath = context.Request.Path.Value ?? "Unknown";
         var method = context.Request.Method;
 
         // Log the exception with structured logging
-        _structuredLogging.LogSystemEvent(
+        structuredLogging.LogSystemEvent(
             "UnhandledException",
             $"Unhandled exception in {method} {requestPath}",
             new

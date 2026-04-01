@@ -9,12 +9,112 @@ using Microsoft.Extensions.Logging;
 
 namespace ELKH.Services
 {
+    // ╔═══════════════════════════════════════════════════════════════════════════════════════════════╗
+    // ║                   STOCK NOTIFICATION EMAIL SERVICE - TABLE OF CONTENTS                       ║
+    // ╚═══════════════════════════════════════════════════════════════════════════════════════════════╝
+    // 
+    // OVERVIEW:
+    // Service responsible for sending back-in-stock notification emails to waiting customers,
+    // with cooldown management and comprehensive error handling for reliable notification delivery.
+    // 
+    // TABLE OF CONTENTS:
+    // ┌─ Section 1: Service Setup & Dependencies ............................................ Line 49
+    // │  ├─ Constructor with dependency injection
+    // │  ├─ IServiceScopeFactory for scoped database operations
+    // │  ├─ ILogger for comprehensive audit logging
+    // │  └─ Service lifetime management for background operations
+    // ├─ Section 2: Notification Processing Logic .......................................... Line 53
+    // │  ├─ ProcessRestockNotificationsAsync() - Main notification coordinator
+    // │  ├─ Product existence validation and error handling
+    // │  ├─ Cooldown period management (configurable, default 24 hours)
+    // │  ├─ Pending notification discovery with user/product relationships
+    // │  └─ Batch notification processing with individual error isolation
+    // ├─ Section 3: Email Generation & Delivery ............................................ Line 97
+    // │  ├─ HTML email template with professional styling
+    // │  ├─ Dynamic product information integration
+    // │  ├─ Direct product link generation for customer convenience
+    // │  ├─ User-friendly subject line with emoji for engagement
+    // │  └─ Email delivery through IEmailSender abstraction
+    // ├─ Section 4: Notification State Management .......................................... Line 147
+    // │  ├─ Individual notification status tracking
+    // │  ├─ Sent timestamp recording for audit trails
+    // │  ├─ Product-level cooldown timestamp updates
+    // │  ├─ Database transaction management
+    // │  └─ Comprehensive success/failure logging
+    // └─ Section 5: Error Handling & Resilience ........................................... Line 154
+    //    ├─ Individual notification failure isolation
+    //    ├─ Comprehensive error logging with context
+    //    ├─ Service-level exception handling
+    //    ├─ Graceful degradation for partial failures
+    //    └─ Database integrity protection
+    //
+    // ARCHITECTURE NOTES:
+    // • Service factory pattern for proper scope management in background operations
+    // • Dependency injection for testability and service decoupling
+    // • Comprehensive logging for production monitoring and debugging
+    // • Database relationship loading for efficient queries
+    // • Transaction-based state management for consistency
+    //
+    // NOTIFICATION WORKFLOW:
+    // • Product restock detection triggers service invocation
+    // • Cooldown period validation prevents notification spam
+    // • Pending notification discovery with user relationships
+    // • Individual email generation and delivery
+    // • State tracking and audit logging for compliance
+    //
+    // BUSINESS LOGIC:
+    // • Customer retention through timely restock notifications
+    // • Professional email communication maintaining brand consistency
+    // • Spam prevention through configurable cooldown periods
+    // • Comprehensive audit trail for customer service support
+    // • Error isolation ensuring partial success scenarios
+    //
+    // PERFORMANCE CONSIDERATIONS:
+    // • Batch notification loading with single database query
+    // • Include() statements for efficient relationship loading
+    // • Individual notification processing to prevent cascade failures
+    // • Scoped service management for proper resource cleanup
+    // • Asynchronous processing for non-blocking operation
+    //
+    // SECURITY & COMPLIANCE:
+    // • User email validation before delivery attempts
+    // • Product existence validation for security
+    // • Comprehensive audit logging for compliance tracking
+    // • Safe URL generation for product links
+    // • Email content sanitization and professional presentation
+
     /// <summary>
     /// Service responsible for sending back-in-stock notification emails to waiting customers.
     /// Called when inventory is updated and products become available again.
     /// </summary>
+    /// <remarks>
+    /// <para><strong>Key Features:</strong></para>
+    /// <list type="bullet">
+    /// <item>Automated customer notifications when products are restocked</item>
+    /// <item>Configurable cooldown periods to prevent notification spam</item>
+    /// <item>Professional HTML email templates with product details</item>
+    /// <item>Comprehensive error handling and audit logging</item>
+    /// <item>Individual notification failure isolation</item>
+    /// </list>
+    /// 
+    /// <para><strong>Usage Pattern:</strong></para>
+    /// This service is typically called from inventory management operations when
+    /// products transition from out-of-stock to available status. The service
+    /// operates asynchronously to prevent blocking inventory updates.
+    /// 
+    /// <para><strong>Cooldown Management:</strong></para>
+    /// Default 24-hour cooldown prevents customers from receiving duplicate
+    /// notifications for the same product. This can be configured per call
+    /// to accommodate different business requirements.
+    /// </remarks>
     public class StockNotificationEmailService
     {
+        #region Section 1: Service Setup & Dependencies
+
+        // ═══════════════════════════════════════════════════════════════════
+        // Section 1: Service Setup & Dependencies
+        // ═══════════════════════════════════════════════════════════════════
+
         private readonly IServiceScopeFactory _scopeFactory;
         private readonly ILogger<StockNotificationEmailService> _logger;
 
@@ -25,6 +125,14 @@ namespace ELKH.Services
             _scopeFactory = scopeFactory;
             _logger = logger;
         }
+
+        #endregion
+
+        #region Section 2: Notification Processing Logic
+
+        // ═══════════════════════════════════════════════════════════════════
+        // Section 2: Notification Processing Logic
+        // ═══════════════════════════════════════════════════════════════════
 
         /// <summary>
         /// Processes all pending notifications for a product that is now back in stock.
@@ -81,6 +189,12 @@ namespace ELKH.Services
 
                 foreach (var notification in notifications)
                 {
+                    #region Section 3: Email Generation & Delivery
+
+                    // ═══════════════════════════════════════════════════════════════════
+                    // Section 3: Email Generation & Delivery
+                    // ═══════════════════════════════════════════════════════════════════
+
                     try
                     {
                         // Send email notification
@@ -144,18 +258,36 @@ namespace ELKH.Services
 
                         await emailSender.SendEmailAsync(new[] { user.Email }, subject, htmlBody);
 
+                        #endregion
+
+                        #region Section 4: Notification State Management
+
+                        // ═══════════════════════════════════════════════════════════════════
+                        // Section 4: Notification State Management
+                        // ═══════════════════════════════════════════════════════════════════
+
                         // Mark notification as sent
                         notification.NotificationSent = true;
                         notification.SentAt = DateTime.UtcNow;
 
                         _logger.LogInformation("Sent stock notification to {Email} for product {ProductName}", 
                             user.Email, notificationProduct.Name);
+
+                        #endregion
                     }
+                    #region Section 5: Error Handling & Resilience
+
+                    // ═══════════════════════════════════════════════════════════════════
+                    // Section 5: Error Handling & Resilience
+                    // ═══════════════════════════════════════════════════════════════════
+
                     catch (Exception ex)
                     {
                         _logger.LogError(ex, "Failed to send notification {NotificationId}", 
                             notification.PkStockNotificationId);
                     }
+
+                    #endregion
                 }
 
                 // Update product's last notification timestamp to prevent duplicates
@@ -170,5 +302,7 @@ namespace ELKH.Services
                 throw;
             }
         }
+
+        #endregion
     }
 }

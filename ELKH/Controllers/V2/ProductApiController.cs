@@ -2,8 +2,56 @@ using Microsoft.AspNetCore.Mvc;
 using ELKH.Services;
 using ELKH.ViewModels;
 using ELKH.Models.Api;
+using System.Globalization;
 
 namespace ELKH.Controllers.V2;
+
+// ╔═══════════════════════════════════════════════════════════════════════════════════════════════╗
+// ║                        PRODUCT API CONTROLLER V2 - TABLE OF CONTENTS                         ║
+// ╚═══════════════════════════════════════════════════════════════════════════════════════════════╝
+// 
+// OVERVIEW:
+// Enhanced RESTful API controller providing comprehensive product catalog functionality with 
+// improved response structures, enhanced filtering capabilities, and additional V2 features
+// including rating integration and advanced search capabilities.
+// 
+// TABLE OF CONTENTS:
+// ┌─ Section 1: Controller Setup & Dependencies .......................................... Line 35
+// │  ├─ Constructor with dependency injection (IProductService, ISearchService, IRatingService)
+// │  ├─ Service integrations with logging support
+// │  └─ API versioning 2.0 and routing configuration
+// ├─ Section 2: Enhanced Product Catalog Operations ..................................... Line 55
+// │  ├─ GetProducts() - V2 enhanced paginated product list with advanced filtering
+// │  ├─ Improved parameter validation and sanitization
+// │  ├─ Enhanced search integration with fuzzy matching capabilities
+// │  ├─ Advanced category filtering with hierarchical support
+// │  ├─ Multi-field sorting with rating integration
+// │  └─ Enhanced pagination with metadata and performance optimizations
+// ├─ Section 3: Single Product Operations with Ratings .................................. Line 150
+// │  ├─ GetProduct() - V2 enhanced individual product retrieval with ratings
+// │  ├─ Product-to-API model transformation with rating aggregation
+// │  ├─ Enhanced error handling with detailed error codes
+// │  └─ Full product detail serialization including rating statistics
+// ├─ Section 4: Advanced Search & Discovery Services .................................... Line 200
+// │  ├─ GetSearchSuggestions() - Enhanced autocomplete with fuzzy matching
+// │  ├─ Advanced query validation and intelligent limit enforcement
+// │  ├─ Multi-source search integration (names, descriptions, tags)
+// │  └─ Optimized suggestion retrieval with caching support
+// └─ Section 5: Enhanced Inventory & Availability Management ............................ Line 250
+//    ├─ CheckAvailability() - Real-time stock with predictive availability
+//    ├─ Enhanced stock status classification with trend analysis
+//    ├─ Configurable low stock thresholds with category-specific rules
+//    └─ Enhanced availability model with delivery estimates
+//
+// VERSION 2.0 ENHANCEMENTS:
+// • Enhanced response models with standardized metadata
+// • Rating and review integration across all endpoints  
+// • Advanced fuzzy search capabilities with intelligent suggestions
+// • Improved error handling with detailed error codes and context
+// • Performance optimizations with enhanced caching strategies
+// • Better pagination with performance-aware limit management
+// • Category hierarchy support with nested filtering capabilities
+//
 
 /// <summary>
 /// Product API Controller - Version 2.0
@@ -97,7 +145,7 @@ public class ProductApiController : ControllerBase
             }
 
             // Apply sorting
-            filtered = sort.ToLower() switch
+            filtered = sort.ToLower(CultureInfo.InvariantCulture) switch
             {
                 "name_desc" => filtered.OrderByDescending(p => p.ProductName),
                 "price_low" => filtered.OrderBy(p => p.Price),
@@ -146,7 +194,7 @@ public class ProductApiController : ControllerBase
                     },
                     Rating = new ProductRatingSummary
                     {
-                        Average = reviews.Any() ? (decimal)reviews.Average(r => r.Rating) : 0,
+                        Average = reviews.Count > 0 ? (decimal)reviews.Average(r => r.Rating) : 0,
                         Count = reviews.Count,
                         Distribution = reviews.GroupBy(r => r.Rating)
                                            .ToDictionary(g => g.Key, g => g.Count())
@@ -254,7 +302,7 @@ public class ProductApiController : ControllerBase
                 },
                 Rating = new ProductRatingSummary
                 {
-                    Average = reviews.Any() ? (decimal)reviews.Average(r => r.Rating) : 0,
+                    Average = reviews.Count > 0 ? (decimal)reviews.Average(r => r.Rating) : 0,
                     Count = reviews.Count,
                     Distribution = reviews.GroupBy(r => r.Rating)
                                        .ToDictionary(g => g.Key, g => g.Count())
@@ -307,19 +355,19 @@ public class ApiResponseV2<T>
 {
     public T? Data { get; set; }
     public bool Success { get; set; }
-    public string Message { get; set; } = string.Empty;
+    public string Message { get; set; }
     public string Version { get; set; } = "2.0";
     public DateTime Timestamp { get; set; }
-    public string RequestId { get; set; } = string.Empty;
+    public string RequestId { get; set; }
 }
 
 public class ApiErrorResponseV2
 {
-    public bool Success { get; set; } = false;
-    public string Message { get; set; } = string.Empty;
-    public string ErrorCode { get; set; } = string.Empty;
-    public string Details { get; set; } = string.Empty;
+    public bool Success { get; set; }
+    public string Message { get; set; }
+    public string ErrorCode { get; set; }
+    public string Details { get; set; }
     public string Version { get; set; } = "2.0";
     public DateTime Timestamp { get; set; }
-    public string RequestId { get; set; } = string.Empty;
+    public string RequestId { get; set; }
 }

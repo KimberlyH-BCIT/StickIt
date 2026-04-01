@@ -5,174 +5,173 @@
     ViewData["Title"] = "Log in - Access Your Account";
 }
 
-<div class="container my-5">
+<div class="container-kawaii">
     <!-- Skip Links for Keyboard Navigation -->
     <nav class="skip-links sr-only-focusable" aria-label="Skip navigation">
-        <a href="#login-heading" class="skip-link btn btn-primary">Skip to login form</a>
-        <a href="#login-nav-heading" class="skip-link btn btn-primary">Skip to account options</a>
+        <a href="#login-heading" class="skip-link btn-kawaii btn-secondary-kawaii">Skip to login form</a>
+        <a href="#login-nav-heading" class="skip-link btn-kawaii btn-secondary-kawaii">Skip to account options</a>
     </nav>
 
     <div class="row justify-content-center">
         <div class="col-lg-5 col-md-7">
-            <main class="card shadow-sm" role="main">
-                <div class="card-body p-4 p-md-5">
-                    <header class="text-center mb-4">
-                        <h1 class="card-title">Log in</h1>
-                        <p class="text-muted mb-0">Sign in to your account to access your orders, wishlist, and more</p>
-                    </header>
+            <main class="kawaii-card" role="main">
+                <header class="text-center mb-4">
+                    <h1 class="font-heading">Log in</h1>
+                    <p class="hierarchy-secondary">Sign in to your account to access your orders, wishlist, and more</p>
+                </header>
 
-                    <section aria-labelledby="login-heading">
-                        <h2 id="login-heading" class="sr-only">Login Form</h2>
+                <section aria-labelledby="login-heading">
+                    <h2 id="login-heading" class="sr-only">Login Form</h2>
 
-                        <form id="account" method="post" aria-label="User login form" novalidate>
-                            <div id="login-status" aria-live="polite" aria-atomic="true" class="sr-only"></div>
+                    <form id="account" method="post" aria-label="User login form" novalidate>
+                        <div id="login-status" aria-live="polite" aria-atomic="true" class="sr-only"></div>
 
-                            <div asp-validation-summary="ModelOnly" 
-                                 class="alert alert-danger" 
-                                 role="alert" 
-                                 aria-live="assertive"
-                                 aria-labelledby="validation-heading"
-                                 style="display:none;">
-                                <h3 id="validation-heading" class="alert-heading h6 mb-2">
-                                    <i class="bi bi-exclamation-triangle-fill me-1" aria-hidden="true"></i>
-                                    Please fix the following errors:
-                                </h3>
-                            </div>
+                        <div asp-validation-summary="ModelOnly" 
+                             class="kawaii-card surface-mint mb-4" 
+                             role="alert" 
+                             aria-live="assertive"
+                             aria-labelledby="validation-heading"
+                             style="display:none;">
+                            <h3 id="validation-heading" class="font-heading hierarchy-primary mb-2">
+                                <i class="bi bi-exclamation-triangle-fill me-1" aria-hidden="true" style="color: var(--purple);"></i>
+                                Please fix the following errors:
+                            </h3>
+                        </div>
 
-                            <div class="form-floating mb-3">
-                                <input asp-for="Input.Email" 
-                                       class="form-control" 
-                                       autocomplete="username email" 
-                                       aria-required="true" 
-                                       aria-describedby="email-help email-validation"
-                                       placeholder="name@example.com"
-                                       type="email"
-                                       inputmode="email" />
+                        <div class="form-group mb-3">
+                            <label asp-for="Input.Email" class="form-label hierarchy-primary">Email</label>
+                            <input asp-for="Input.Email" 
+                                   class="input-kawaii" 
+                                   autocomplete="username email" 
+                                   aria-required="true" 
+                                   aria-describedby="email-help email-validation"
+                                   placeholder="name@example.com"
+                                   type="email"
+                                   inputmode="email" />
                                 <label asp-for="Input.Email" class="form-label">
                                     <span class="required-indicator" aria-label="Required field">*</span>
                                     Email Address
                                 </label>
-                                <div id="email-help" class="form-text sr-only">
-                                    Enter the email address associated with your account
+                                    <div id="email-help" class="form-text hierarchy-tertiary">
+                                        Enter the email address associated with your account
+                                    </div>
+                                    <span asp-validation-for="Input.Email" 
+                                          id="email-validation"
+                                          class="text-danger small d-block"
+                                          role="alert"
+                                          aria-live="polite"></span>
                                 </div>
-                                <span asp-validation-for="Input.Email" 
-                                      id="email-validation"
-                                      class="text-danger small d-block"
-                                      role="alert"
-                                      aria-live="polite"></span>
-                            </div>
 
-                            <div class="form-floating mb-3 position-relative">
-                                <input asp-for="Input.Password" 
-                                       class="form-control" 
-                                       autocomplete="current-password" 
-                                       aria-required="true" 
-                                       aria-describedby="password-help password-validation"
-                                       placeholder="Password" 
-                                       type="password" />
-                                <label asp-for="Input.Password" class="form-label">
-                                    <span class="required-indicator" aria-label="Required field">*</span>
-                                    Password
-                                </label>
-                                <button type="button" 
-                                        class="btn btn-sm btn-outline-secondary position-absolute top-50 end-0 translate-middle-y me-2" 
-                                        aria-label="Show password" 
-                                        onclick="togglePassword('Input_Password', this)">
-                                    <i class="bi bi-eye" aria-hidden="true"></i>
-                                </button>
-                                <div id="password-help" class="form-text sr-only">
-                                    Enter your account password
+                                <div class="form-group mb-3 position-relative">
+                                    <label asp-for="Input.Password" class="form-label hierarchy-primary">
+                                        <span class="required-indicator accent-pink" aria-label="Required field">*</span>
+                                        Password
+                                    </label>
+                                    <input asp-for="Input.Password" 
+                                           class="input-kawaii" 
+                                           autocomplete="current-password" 
+                                           aria-required="true" 
+                                           aria-describedby="password-help password-validation"
+                                           placeholder="Password" 
+                                           type="password" />
+                                    <button type="button" 
+                                            class="btn-kawaii btn-outline-kawaii btn-sm position-absolute" 
+                                            style="top: 35px; right: 10px;"
+                                            aria-label="Show password" 
+                                            onclick="togglePassword('Input_Password', this)">
+                                        <i class="bi bi-eye" aria-hidden="true"></i>
+                                    </button>
+                                    <div id="password-help" class="form-text hierarchy-tertiary">
+                                        Enter your account password
+                                    </div>
+                                    <span asp-validation-for="Input.Password" 
+                                          id="password-validation"
+                                          class="text-danger small d-block"
+                                          role="alert"
+                                          aria-live="polite"></span>
                                 </div>
-                                <span asp-validation-for="Input.Password" 
-                                      id="password-validation"
-                                      class="text-danger small d-block"
-                                      role="alert"
-                                      aria-live="polite"></span>
-                            </div>
 
-                            <div class="form-check mb-3">
-                                <input class="form-check-input" 
-                                       asp-for="Input.RememberMe" 
-                                       aria-describedby="remember-help" />
-                                <label asp-for="Input.RememberMe" class="form-check-label">
-                                    @Html.DisplayNameFor(m => m.Input.RememberMe)
-                                </label>
-                                <div id="remember-help" class="form-text small text-muted">
-                                    Keep me signed in for 30 days (not recommended on shared computers)
-                                </div>
-                            </div>
-
-                            <div class="mb-4 d-flex justify-content-center">
-                                <div role="group" aria-labelledby="captcha-label">
-                                    <label id="captcha-label" class="form-label sr-only">Security Verification</label>
-                                    <div class="g-recaptcha" 
-                                         data-sitekey="@Model.ReCaptchaSiteKey"
-                                         aria-label="Please complete the security challenge to verify you are human"
-                                         data-callback="onRecaptchaSuccess"
-                                         data-error-callback="onRecaptchaError"></div>
-                                    <span class="text-danger small d-block mt-1" 
-                                          role="alert" 
-                                          aria-live="polite">@Html.ValidationMessage("ReCaptcha")</span>
-                                    <div class="form-text small text-muted mt-1">
-                                        Complete the security verification to continue
+                                <div class="checkbox-kawaii mb-3">
+                                    <input asp-for="Input.RememberMe" 
+                                           aria-describedby="remember-help" />
+                                    <label asp-for="Input.RememberMe">
+                                        @Html.DisplayNameFor(m => m.Input.RememberMe)
+                                    </label>
+                                    <div id="remember-help" class="form-text hierarchy-tertiary mt-1">
+                                        Keep me signed in for 30 days (not recommended on shared computers)
                                     </div>
                                 </div>
-                            </div>
 
-                            <div class="d-grid gap-2 mb-4">
-                                <button id="login-submit" 
-                                        type="submit" 
-                                        class="btn btn-lg btn-primary"
-                                        aria-describedby="login-help">
-                                    <span class="spinner-border spinner-border-sm me-2 d-none" 
-                                          role="status" 
-                                          aria-hidden="true"></span>
-                                    <span class="btn-text">Log in</span>
-                                </button>
-                                <div id="login-help" class="form-text text-center small text-muted">
-                                    By logging in, you agree to our terms of service and privacy policy
+                                <div class="mb-4 d-flex justify-content-center">
+                                    <div role="group" aria-labelledby="captcha-label">
+                                        <label id="captcha-label" class="form-label sr-only">Security Verification</label>
+                                        <div class="g-recaptcha" 
+                                             data-sitekey="@Model.ReCaptchaSiteKey"
+                                             aria-label="Please complete the security challenge to verify you are human"
+                                             data-callback="onRecaptchaSuccess"
+                                             data-error-callback="onRecaptchaError"></div>
+                                        <span class="text-danger small d-block mt-1" 
+                                              role="alert" 
+                                              aria-live="polite">@Html.ValidationMessage("ReCaptcha")</span>
+                                        <div class="form-text hierarchy-tertiary mt-1">
+                                            Complete the security verification to continue
+                                        </div>
+                                    </div>
                                 </div>
-                            </div>
 
-                            <hr class="my-4" role="separator" aria-label="Alternative login options" />
+                                        <div class="d-grid gap-2 mb-4">
+                                            <button id="login-submit" 
+                                                    type="submit" 
+                                                    class="btn-kawaii btn-primary-kawaii btn-lg sparkle"
+                                                    aria-describedby="login-help">
+                                                <span class="spinner-border spinner-border-sm me-2 d-none" 
+                                                      role="status" 
+                                                      aria-hidden="true"></span>
+                                                <span class="btn-text">Log in</span>
+                                            </button>
+                                            <div id="login-help" class="form-text text-center hierarchy-tertiary">
+                                                By logging in, you agree to our terms of service and privacy policy
+                                            </div>
+                                        </div>
 
-                            <nav aria-labelledby="login-nav-heading" class="text-center">
-                                <h3 id="login-nav-heading" class="sr-only">Account Options</h3>
+                                        <hr class="my-4" role="separator" aria-label="Alternative login options" style="border-color: var(--outline-soft);" />
 
-                                <div class="d-flex flex-column gap-2">
-                                    <p class="mb-2">
-                                        <a id="forgot-password" 
-                                           asp-page="./ForgotPassword" 
-                                           class="text-decoration-none btn btn-link p-0"
-                                           aria-label="Reset your password if you've forgotten it">
-                                            <i class="bi bi-key me-1" aria-hidden="true"></i>
-                                            Forgot your password?
-                                        </a>
-                                    </p>
-                                    <p class="mb-2">
-                                        <a asp-page="./Register" 
-                                           asp-route-returnUrl="@Model.ReturnUrl" 
-                                           class="text-decoration-none btn btn-link p-0"
-                                           aria-label="Create a new account if you don't have one">
-                                            <i class="bi bi-person-plus me-1" aria-hidden="true"></i>
-                                            Register as a new user
-                                        </a>
-                                    </p>
-                                    <p class="mb-0">
-                                        <a id="resend-confirmation" 
-                                           asp-page="./ResendEmailConfirmation" 
-                                           class="text-decoration-none small text-muted btn btn-link p-0"
-                                           aria-label="Request a new email confirmation if you haven't received one">
-                                            <i class="bi bi-envelope me-1" aria-hidden="true"></i>
-                                            Resend email confirmation
-                                        </a>
-                                    </p>
-                                </div>
-                            </nav>
-                        </form>
-                    </section>
-                </div>
-            </main>
+                                        <nav aria-labelledby="login-nav-heading" class="text-center">
+                                            <h3 id="login-nav-heading" class="sr-only">Account Options</h3>
+
+                                            <div class="d-flex flex-column gap-2">
+                                                <p class="mb-2">
+                                                    <a id="forgot-password" 
+                                                       asp-page="./ForgotPassword" 
+                                                       class="kawaii-link"
+                                                       aria-label="Reset your password if you've forgotten it">
+                                                        <i class="bi bi-key me-1" aria-hidden="true"></i>
+                                                        Forgot your password?
+                                                    </a>
+                                                </p>
+                                                <p class="mb-2">
+                                                    <a asp-page="./Register" 
+                                                       asp-route-returnUrl="@Model.ReturnUrl" 
+                                                       class="kawaii-link"
+                                                       aria-label="Create a new account if you don't have one">
+                                                        <i class="bi bi-person-plus me-1" aria-hidden="true"></i>
+                                                        Register as a new user
+                                                    </a>
+                                                </p>
+                                                <p class="mb-0">
+                                                    <a id="resend-confirmation" 
+                                                       asp-page="./ResendEmailConfirmation" 
+                                                       class="kawaii-link"
+                                                       aria-label="Request a new email confirmation if you haven't received one">
+                                                        <i class="bi bi-envelope me-1" aria-hidden="true"></i>
+                                                        Resend email confirmation
+                                                    </a>
+                                                </p>
+                                            </div>
+                                        </nav>
+                                    </form>
+                                </section>
+                            </main>
 
             @* External Login Section with Enhanced Accessibility *@
             @if ((Model.ExternalLogins?.Count ?? 0) > 0)

@@ -1,4 +1,4 @@
-﻿using System.Linq;
+using System.Linq;
 using ELKH.Models;
 using ELKH.Repositories;
 using ELKH.ViewModels;
@@ -8,13 +8,103 @@ using Microsoft.EntityFrameworkCore;
 
 namespace ELKH.Controllers
 {
+    // ╔═══════════════════════════════════════════════════════════════════════════════════════════════╗
+    // ║                       INVENTORY CONTROLLER - TABLE OF CONTENTS                               ║
+    // ╚═══════════════════════════════════════════════════════════════════════════════════════════════╝
+    // 
+    // OVERVIEW:
+    // Administrative inventory management controller providing stock level monitoring, quantity 
+    // adjustments, and automated customer notification system for stock replenishment.
+    // 
+    // TABLE OF CONTENTS:
+    // ┌─ Section 1: Controller Setup & Dependencies .......................................... Line 47
+    // │  ├─ Constructor with repository and service injection
+    // │  ├─ IInventoryRepo for database operations
+    // │  ├─ ImageValidationService for product image management
+    // │  ├─ StockNotificationEmailService for customer alerts
+    // │  └─ ApplicationDbContext for direct database access
+    // ├─ Section 2: Inventory Display & Listing ............................................ Line 50
+    // │  ├─ Index() - Product inventory listing with stock levels
+    // │  ├─ InventoryVM transformation for admin display
+    // │  ├─ Product name and quantity display
+    // │  └─ Administrative inventory overview
+    // ├─ Section 3: Stock Quantity Management .............................................. Line 66
+    // │  ├─ EditProductAmount() - Stock level adjustment with validation
+    // │  ├─ Out-of-stock detection and restoration tracking
+    // │  ├─ Pending notification validation before triggering
+    // │  ├─ Asynchronous notification processing (fire-and-forget)
+    // │  ├─ 24-hour notification cooldown management
+    // │  └─ Comprehensive error handling for notification failures
+    // └─ Section 4: Product Image Management ................................................ Line 130
+    //    ├─ Product image upload and validation
+    //    ├─ ImageValidationService integration for security
+    //    ├─ File format and size validation
+    //    └─ Image storage and product association
+    //
+    // ARCHITECTURE NOTES:
+    // • Admin-only access with role-based authorization
+    // • Repository pattern for clean data access abstraction
+    // • Service layer integration for complex business logic
+    // • Fire-and-forget pattern for notification processing
+    // • Comprehensive error handling with user feedback
+    //
+    // BUSINESS LOGIC:
+    // • Stock level monitoring with automated customer notifications
+    // • Out-of-stock to in-stock transition detection
+    // • Pending notification validation before processing
+    // • Cooldown period management to prevent notification spam
+    // • Asynchronous processing to maintain response times
+    //
+    // NOTIFICATION WORKFLOW:
+    // • Detect stock level changes from out-of-stock to available
+    // • Validate pending customer notification requests
+    // • Trigger asynchronous notification processing with cooldown
+    // • Error handling to prevent blocking inventory operations
+    // • Success feedback for administrative confirmation
+    //
+    // PERFORMANCE CONSIDERATIONS:
+    // • Asynchronous notification processing prevents blocking
+    // • Direct database queries for efficient stock checks
+    // • Repository pattern for optimized data access
+    // • Fire-and-forget pattern for background processing
+    // • Minimal UI blocking for better user experience
+    //
+    // SECURITY IMPLEMENTATION:
+    // • Admin role authorization for all inventory operations
+    // • Anti-forgery token validation for stock updates
+    // • Input validation for quantity adjustments
+    // • Image validation for security compliance
+    // • Error logging without sensitive data exposure
+
     /// <summary>
     /// Admin controller for inventory management: listing products, adjusting stock
     /// quantities, and managing product images.
     /// </summary>
+    /// <remarks>
+    /// <para><strong>Administrative Access Only</strong></para>
+    /// This controller requires Admin role authorization for all operations.
+    /// 
+    /// <para><strong>Core Features:</strong></para>
+    /// <list type="bullet">
+    /// <item>Product inventory listing with current stock levels</item>
+    /// <item>Stock quantity adjustments with validation</item>
+    /// <item>Automated customer notification for stock replenishment</item>
+    /// <item>Product image management with security validation</item>
+    /// </list>
+    /// 
+    /// <para><strong>Notification System:</strong></para>
+    /// When products are restocked from out-of-stock status, the system automatically
+    /// processes customer notifications with a 24-hour cooldown period to prevent spam.
+    /// </remarks>
 [Authorize(Roles = "Admin")]
 public class InventoryController : Controller
 {
+    #region Section 1: Controller Setup & Dependencies
+
+    // ═══════════════════════════════════════════════════════════════════
+    // Section 1: Controller Setup & Dependencies
+    // ═══════════════════════════════════════════════════════════════════
+
     private readonly IInventoryRepo _inventoryRepo;
     private readonly ELKH.Services.ImageValidationService _imageValidator;
     private readonly ELKH.Services.StockNotificationEmailService _stockNotificationService;
@@ -32,6 +122,14 @@ public class InventoryController : Controller
             _db = db;
         }
 
+    #endregion
+
+    #region Section 2: Inventory Display & Listing
+
+    // ═══════════════════════════════════════════════════════════════════
+    // Section 2: Inventory Display & Listing
+    // ═══════════════════════════════════════════════════════════════════
+
 
 public async Task<IActionResult> Index()
         {
@@ -46,6 +144,14 @@ public async Task<IActionResult> Index()
 
             return View(inventoryList);
         }
+
+        #endregion
+
+        #region Section 3: Stock Quantity Management
+
+        // ═══════════════════════════════════════════════════════════════════
+        // Section 3: Stock Quantity Management
+        // ═══════════════════════════════════════════════════════════════════
 
 [HttpPost]
         [ValidateAntiForgeryToken]
@@ -112,6 +218,14 @@ public async Task<IActionResult> Index()
 
             return RedirectToAction(nameof(Index));
         }
+
+        #endregion
+
+        #region Section 4: Product Image Management
+
+        // ═══════════════════════════════════════════════════════════════════
+        // Section 4: Product Image Management
+        // ═══════════════════════════════════════════════════════════════════
 
         //Pass
         public async Task<IActionResult> ProductImages(int Id)
@@ -193,6 +307,7 @@ public async Task<IActionResult> AddImage(int productId)
             return View("AddImage");
         }
 
-      
+        #endregion
+
     }
 }

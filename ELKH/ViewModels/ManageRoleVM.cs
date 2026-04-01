@@ -1,7 +1,10 @@
-﻿namespace ELKH.ViewModels
+namespace ELKH.ViewModels;
+
+/// <summary>
+/// View model for role management operations providing role collection management
+/// and administrative interface support for role-based access control.
+/// </summary>
+public class ManageRoleVM
 {
-    public class ManageRoleVM
-    {
-            public List<RoleVM> Roles { get; set; } = new List<RoleVM>();
-    }
+    public List<RoleVM> Roles { get; set; } = [];
 }

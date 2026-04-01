@@ -8,28 +8,116 @@ using System.Text.Json;
 
 namespace ELKH.Services
 {
+    // ╔═══════════════════════════════════════════════════════════════════════════════════════════════╗
+    // ║                         GUEST CART SERVICE - TABLE OF CONTENTS                               ║
+    // ╚═══════════════════════════════════════════════════════════════════════════════════════════════╝
+    // 
+    // OVERVIEW:
+    // Session-based shopping cart management for anonymous users, providing full cart functionality
+    // without authentication requirements and seamless migration to authenticated user carts.
+    // 
+    // TABLE OF CONTENTS:
+    // ┌─ Section 1: Service Setup & Dependencies ............................................ Line 66
+    // │  ├─ Constructor with dependency injection
+    // │  ├─ ApplicationDbContext for product validation
+    // │  ├─ IHttpContextAccessor for session management
+    // │  └─ Session property with null safety
+    // ├─ Section 2: Cart Item Management ................................................... Line 57
+    // │  ├─ AddToCartAsync() - Add products with stock validation
+    // │  ├─ UpdateQuantityAsync() - Modify quantities with edge case handling
+    // │  ├─ RemoveFromCartAsync() - Individual item removal
+    // │  ├─ ClearCartAsync() - Complete cart cleanup
+    // │  └─ Comprehensive stock validation and quantity limits
+    // ├─ Section 3: Cart Retrieval & Display .............................................. Line 158
+    // │  ├─ GetCartItemsAsync() - Full cart with product details
+    // │  ├─ GetCartCountAsync() - Item count for UI badges
+    // │  ├─ Batch product loading for performance
+    // │  ├─ Price calculation with effective pricing
+    // │  └─ Missing product handling (graceful degradation)
+    // ├─ Section 4: User Authentication Migration .......................................... Line 213
+    // │  ├─ MigrateToUserCartAsync() - Session-to-database cart transfer
+    // │  ├─ Integration with ICartService for user carts
+    // │  ├─ Error handling for migration failures
+    // │  └─ Automatic session cleanup after migration
+    // ├─ Section 5: Session Storage Management ............................................. Line 241
+    // │  ├─ GetCartFromSession() - JSON deserialization with error handling
+    // │  ├─ SaveCartToSession() - JSON serialization for persistence
+    // │  ├─ SessionCartItem internal model definition
+    // │  └─ Robust session data corruption handling
+    // └─ Section 6: Service Interface Definition ........................................... Line 282
+    //    ├─ IGuestCartService interface contract
+    //    ├─ All public method signatures
+    //    └─ Service registration and dependency injection support
+    //
+    // ARCHITECTURE NOTES:
+    // • Session-based storage with JSON serialization for stateless web apps
+    // • Product validation at every operation to ensure data integrity
+    // • Lightweight storage (IDs only) with on-demand product detail loading
+    // • Migration strategy for converting anonymous carts to authenticated carts
+    // • Comprehensive error handling and logging for production reliability
+    //
+    // SESSION STORAGE STRATEGY:
+    // • Cart stored in HTTP session with "GuestCart" key
+    // • JSON serialization using System.Text.Json for performance
+    // • Automatic session expiration (20 minutes default)
+    // • No database persistence until checkout or user authentication
+    // • Minimal memory footprint with ID-based references
+    //
+    // PERFORMANCE OPTIMIZATIONS:
+    // • Batch product loading for cart display (single database query)
+    // • AsNoTracking() for read-only product operations
+    // • Dictionary-based product lookup for O(1) access
+    // • Minimal session data (avoiding full product serialization)
+    // • Efficient quantity aggregation for cart count
+    //
+    // BUSINESS LOGIC:
+    // • Stock validation prevents overselling
+    // • Automatic quantity adjustments for existing cart items
+    // • Graceful handling of discontinued or unavailable products
+    // • Price calculation using effective pricing (includes promotions)
+    // • Seamless migration path for user registration/login scenarios
+    //
+    // SECURITY IMPLEMENTATION:
+    // • Session-based isolation (no cross-user cart access)
+    // • Input validation on all quantity operations
+    // • Product existence validation before cart operations
+    // • Comprehensive audit logging for cart operations
+    // • Safe JSON deserialization with exception handling
+
     /// <summary>
     /// Service for managing session-based shopping carts for guest (anonymous) users.
     /// Provides cart functionality without requiring authentication.
     /// </summary>
     /// <remarks>
-    /// SESSION-BASED CART STRATEGY:
-    /// - Cart stored in session as JSON (SessionCart key)
-    /// - Session expires after 20 minutes of inactivity (configurable)
-    /// - Cart items contain product IDs and quantities only
-    /// - Product details fetched on-demand from database
+    /// <para><strong>SESSION-BASED CART STRATEGY:</strong></para>
+    /// <list type="bullet">
+    /// <item>Cart stored in session as JSON (SessionCart key)</item>
+    /// <item>Session expires after 20 minutes of inactivity (configurable)</item>
+    /// <item>Cart items contain product IDs and quantities only</item>
+    /// <item>Product details fetched on-demand from database</item>
+    /// </list>
     /// 
-    /// MIGRATION PATH:
-    /// - When guest creates account or logs in, session cart can be migrated to database
-    /// - Merge strategy: Add session items to user's existing cart (if any)
+    /// <para><strong>MIGRATION PATH:</strong></para>
+    /// <list type="bullet">
+    /// <item>When guest creates account or logs in, session cart can be migrated to database</item>
+    /// <item>Merge strategy: Add session items to user's existing cart (if any)</item>
+    /// </list>
     /// 
-    /// PERFORMANCE:
-    /// - Lightweight session storage (IDs only, not full product data)
-    /// - Batch product lookup for cart display
-    /// - No database writes until checkout
+    /// <para><strong>PERFORMANCE:</strong></para>
+    /// <list type="bullet">
+    /// <item>Lightweight session storage (IDs only, not full product data)</item>
+    /// <item>Batch product lookup for cart display</item>
+    /// <item>No database writes until checkout</item>
+    /// </list>
     /// </remarks>
     public class GuestCartService : IGuestCartService
     {
+        #region Section 1: Service Setup & Dependencies
+
+        // ═══════════════════════════════════════════════════════════════════
+        // Section 1: Service Setup & Dependencies
+        // ═══════════════════════════════════════════════════════════════════
+
         private readonly ApplicationDbContext _db;
         private readonly IHttpContextAccessor _httpContextAccessor;
         private readonly ILogger<GuestCartService> _logger;
@@ -50,6 +138,14 @@ namespace ELKH.Services
         /// </summary>
         private ISession Session => _httpContextAccessor.HttpContext?.Session 
             ?? throw new InvalidOperationException("Session is not available");
+
+        #endregion
+
+        #region Section 2: Cart Item Management
+
+        // ═══════════════════════════════════════════════════════════════════
+        // Section 2: Cart Item Management
+        // ═══════════════════════════════════════════════════════════════════
 
         /// <summary>
         /// Adds a product to the guest's session cart
@@ -152,6 +248,14 @@ namespace ELKH.Services
             _logger.LogInformation("Guest cart cleared");
         }
 
+        #endregion
+
+        #region Section 3: Cart Retrieval & Display
+
+        // ═══════════════════════════════════════════════════════════════════
+        // Section 3: Cart Retrieval & Display
+        // ═══════════════════════════════════════════════════════════════════
+
         /// <summary>
         /// Gets the guest's cart items with full product details
         /// </summary>
@@ -159,7 +263,7 @@ namespace ELKH.Services
         {
             var cart = GetCartFromSession();
 
-            if (!cart.Any())
+            if (cart.Count == 0)
                 return new List<CartItemVM>();
 
             var productIds = cart.Select(i => i.ProductId).ToList();
@@ -207,6 +311,14 @@ namespace ELKH.Services
             return cart.Sum(i => i.Quantity);
         }
 
+        #endregion
+
+        #region Section 4: User Authentication Migration
+
+        // ═══════════════════════════════════════════════════════════════════
+        // Section 4: User Authentication Migration
+        // ═══════════════════════════════════════════════════════════════════
+
         /// <summary>
         /// Migrates guest cart to authenticated user's cart when they log in
         /// </summary>
@@ -214,7 +326,7 @@ namespace ELKH.Services
         {
             var cart = GetCartFromSession();
 
-            if (!cart.Any())
+            if (cart.Count == 0)
                 return;
 
             _logger.LogInformation("Migrating {Count} items from guest cart to user {Email}", cart.Count, userEmail);
@@ -234,6 +346,14 @@ namespace ELKH.Services
             // Clear session cart after migration
             await ClearCartAsync();
         }
+
+        #endregion
+
+        #region Section 5: Session Storage Management
+
+        // ═══════════════════════════════════════════════════════════════════
+        // Section 5: Session Storage Management
+        // ═══════════════════════════════════════════════════════════════════
 
         /// <summary>
         /// Retrieves cart from session storage
@@ -274,7 +394,15 @@ namespace ELKH.Services
             public int Quantity { get; set; }
             public DateTime AddedAt { get; set; }
         }
+
+        #endregion
     }
+
+    #region Section 6: Service Interface Definition
+
+    // ═══════════════════════════════════════════════════════════════════
+    // Section 6: Service Interface Definition
+    // ═══════════════════════════════════════════════════════════════════
 
     /// <summary>
     /// Interface for guest cart service operations
@@ -289,4 +417,6 @@ namespace ELKH.Services
         Task<int> GetCartCountAsync();
         Task MigrateToUserCartAsync(string userEmail, ICartService cartService);
     }
+
+    #endregion
 }

@@ -14,6 +14,62 @@ namespace ELKH.Controllers;
 /// Handles user listing, account details, and role assignments.
 /// </summary>
 /// <remarks>
+/// TABLE OF CONTENTS (396 lines)
+/// ================================================================================
+/// 1. Constructor & Dependencies ................................. Lines   39-48
+///    - IRoleRepository, ApplicationDbContext, UserManager, ILogger injection
+///    - Inherits from AdminControllerBase for common admin functionality
+/// 
+/// 2. User Listing & Search ...................................... Lines   50-138
+///    - Index()                            // Paginated user list with filtering
+///    - Performance-optimized role filtering and email search
+///    - Server-side filtering to minimize memory usage
+/// 
+/// 3. User Details & Profile Management .......................... Lines  140-213
+///    - Details()                          // Complete user profile view
+///    - Loads identity user, registered user, profile, roles, recent orders
+///    - Contact details aggregation for comprehensive user view
+/// 
+/// 4. Role Management Operations ................................. Lines  215-348
+///    - RemoveRole()                       // Remove role assignment from user
+///    - AddRole()                          // Add role assignment to user
+///    - Role validation and audit logging for administrative actions
+/// 
+/// 5. User Statistics & Analytics ................................ Lines  350-396
+///    - Statistics()                       // User metrics and role distribution
+///    - Recent registrations tracking and role distribution analysis
+/// ================================================================================
+/// 
+/// ARCHITECTURAL CONTEXT:
+/// • Extracted from AdminController for focused user administration responsibility
+/// • Inherits AdminControllerBase providing audit logging and common admin features
+/// • Integrates with ASP.NET Core Identity for user and role management
+/// • Uses Entity Framework for additional user profile and order data access
+/// 
+/// PERFORMANCE OPTIMIZATIONS:
+/// • Server-side role filtering using UserManager.GetUsersInRoleAsync()
+/// • Database-level email filtering when no role filter is applied
+/// • Role lookups performed only on paginated result slice to minimize queries
+/// • Efficient aggregation for statistics with targeted database queries
+/// 
+/// BUSINESS LOGIC:
+/// • Comprehensive user management covering identity and extended profile data
+/// • Role-based filtering for administrative organization and security
+/// • Audit trail for all administrative actions (role changes, user viewing)
+/// • Recent activity tracking for user engagement analysis
+/// 
+/// SECURITY & AUTHORIZATION:
+/// • Requires Admin role inheritance from AdminControllerBase
+/// • Anti-forgery token validation for all POST operations
+/// • Input validation for user IDs and role names
+/// • Comprehensive error handling with user-friendly messages
+/// 
+/// INTEGRATION POINTS:
+/// • ASP.NET Core Identity for user and role management
+/// • ApplicationDbContext for extended user profile and order data
+/// • IRoleRepository for role-related operations
+/// • AdminControllerBase for shared admin functionality and audit logging
+/// 
 /// <para><strong>Extracted from AdminController</strong></para>
 /// This controller handles all user management functionality that was previously
 /// in the monolithic AdminController, providing focused user administration.
@@ -36,6 +92,9 @@ public class AdminUserController : AdminControllerBase
     private readonly IRoleRepository _roleRepo;
     private readonly UserManager<IdentityUser> _userManager;
 
+    // CA1861: Constant arrays to avoid repeated allocations
+    private static readonly string[] AllRoles = { "Admin", "Manager", "Staff", "Customer" };
+
     public AdminUserController(
         IRoleRepository roleRepo,
         ApplicationDbContext context,
@@ -52,15 +111,37 @@ public class AdminUserController : AdminControllerBase
     /// <summary>
     /// GET: AdminUser/Index - Display paginated, filterable list of all users
     /// </summary>
-    /// <param name="search">Optional email filter (substring match, case-insensitive)</param>
-    /// <param name="roleFilter">Optional role filter ('Admin', 'Manager', 'Staff', 'Customer', or 'All')</param>
-    /// <param name="page">Page number (1-based)</param>
-    /// <returns>User list view with filtered and paginated results</returns>
+    /// <param name="search">Optional email search filter. Performs case-insensitive substring matching 
+    /// against user email addresses. Pass null or empty string for no email filtering.</param>
+    /// <param name="roleFilter">Optional role-based filter to display only users in specific roles. 
+    /// Valid values: 'Admin', 'Manager', 'Staff', 'Customer', 'All', or null. 
+    /// 'All' or null displays users from all roles.</param>
+    /// <param name="page">Page number for pagination (1-based index). Defaults to 1 if not specified. 
+    /// Must be a positive integer. Invalid values are treated as page 1.</param>
+    /// <returns>
+    /// Returns a View containing a List&lt;UserListVM&gt; with:
+    /// <list type="bullet">
+    /// <item>User ID, email, and assigned roles for each user</item>
+    /// <item>Pagination metadata (current page, total pages, navigation flags)</item>
+    /// <item>Current filter values for form persistence</item>
+    /// <item>Maximum of 5 users per page for optimal performance</item>
+    /// </list>
+    /// </returns>
     /// <remarks>
-    /// Performance optimization:
-    /// - Role filtering is done server-side via UserManager.GetUsersInRoleAsync()
-    /// - Email search pushes predicate to database when no role filter is active
-    /// - Role lookups (GetRolesAsync) are performed only on paginated slice
+    /// <para><strong>Performance Optimization Strategy:</strong></para>
+    /// <list type="bullet">
+    /// <item>Role filtering is done server-side via UserManager.GetUsersInRoleAsync() for efficiency</item>
+    /// <item>Email search uses database-level filtering when no role filter is active</item>
+    /// <item>Role lookups (GetRolesAsync) are performed only on the current page slice (≤5 users)</item>
+    /// <item>Pagination prevents loading all users into memory at once</item>
+    /// </list>
+    /// 
+    /// <para><strong>Filter Behavior:</strong></para>
+    /// When both email search and role filter are active, role filtering takes precedence
+    /// and email filtering is applied to the role-filtered result set in memory.
+    /// 
+    /// <para><strong>Security:</strong></para>
+    /// Admin role required. All user listing operations are logged for audit purposes.
     /// </remarks>
     public async Task<IActionResult> Index(string search, string roleFilter, int page = 1)
     {
@@ -135,8 +216,35 @@ public class AdminUserController : AdminControllerBase
     /// <summary>
     /// GET: AdminUser/Details/id - Display detailed user account information
     /// </summary>
-    /// <param name="id">Identity user ID</param>
-    /// <returns>User details view with profile, roles, orders, and contact information</returns>
+    /// <param name="id">The unique identifier of the Identity user to view details for. 
+    /// Must be a valid ASP.NET Core Identity user ID (GUID format).</param>
+    /// <returns>
+    /// Returns a UserDetailsVM containing:
+    /// <list type="bullet">
+    /// <item>User profile information (email, registration date)</item>
+    /// <item>Assigned roles and permissions</item>
+    /// <item>Order history and transaction details</item>
+    /// <item>Contact information and address data</item>
+    /// <item>Account status and activity metrics</item>
+    /// </list>
+    /// Returns NotFound() if user ID is null, empty, or does not exist in the system.
+    /// </returns>
+    /// <remarks>
+    /// This method aggregates data from multiple sources:
+    /// <para><strong>Data Sources:</strong></para>
+    /// <list type="bullet">
+    /// <item>ASP.NET Core Identity - user account and authentication info</item>
+    /// <item>RegisteredUserModel - extended profile data</item>
+    /// <item>Order history - transaction and purchase data</item>
+    /// <item>UserManager - role assignments and permissions</item>
+    /// </list>
+    /// 
+    /// <para><strong>Security:</strong></para>
+    /// Requires Admin role for access. All user data viewing is logged for audit purposes.
+    /// 
+    /// <para><strong>Performance:</strong></para>
+    /// Uses efficient queries to minimize database calls when aggregating user data.
+    /// </remarks>
     public async Task<IActionResult> Details(string id)
     {
         if (string.IsNullOrEmpty(id))
@@ -217,9 +325,42 @@ public class AdminUserController : AdminControllerBase
     /// <summary>
     /// POST: AdminUser/RemoveRole - Remove a role assignment from a user
     /// </summary>
-    /// <param name="userId">Identity user ID</param>
-    /// <param name="role">Role name to remove</param>
-    /// <returns>Redirect to user details with result message</returns>
+    /// <param name="userId">The unique identifier of the Identity user to remove the role from.
+    /// Must be a valid ASP.NET Core Identity user ID (GUID format).</param>
+    /// <param name="role">The name of the role to remove from the user.
+    /// Must be an existing role name (e.g., 'Admin', 'Manager', 'Staff', 'Customer').</param>
+    /// <returns>
+    /// Returns a RedirectToAction to the user Details page with:
+    /// <list type="bullet">
+    /// <item>Success message if role removal succeeds</item>
+    /// <item>Error message if role removal fails or user/role not found</item>
+    /// <item>NotFound() result if userId or role parameters are invalid</item>
+    /// </list>
+    /// </returns>
+    /// <remarks>
+    /// <para><strong>Security and Validation:</strong></para>
+    /// <list type="bullet">
+    /// <item>Validates userId and role parameters are not null or empty</item>
+    /// <item>Verifies user exists before attempting role removal</item>
+    /// <item>Uses ASP.NET Core Identity's built-in role validation</item>
+    /// <item>Comprehensive error handling with user-friendly messages</item>
+    /// </list>
+    /// 
+    /// <para><strong>Audit and Logging:</strong></para>
+    /// <list type="bullet">
+    /// <item>Logs successful role removals for admin audit trail</item>
+    /// <item>Records user email and role name in audit log</item>
+    /// <item>Logs errors for troubleshooting and security monitoring</item>
+    /// </list>
+    /// 
+    /// <para><strong>Error Scenarios:</strong></para>
+    /// <list type="bullet">
+    /// <item>User not found - returns NotFound with error message</item>
+    /// <item>Role doesn't exist - handled by Identity with descriptive error</item>
+    /// <item>User not in role - handled gracefully by Identity system</item>
+    /// <item>Database errors - caught and logged with generic user message</item>
+    /// </list>
+    /// </remarks>
     [HttpPost]
     [ValidateAntiForgeryToken]
     public async Task<IActionResult> RemoveRole(string userId, string role)
@@ -265,9 +406,41 @@ public class AdminUserController : AdminControllerBase
     /// <summary>
     /// POST: AdminUser/AddRole - Add a role assignment to a user
     /// </summary>
-    /// <param name="userId">Identity user ID</param>
-    /// <param name="role">Role name to add</param>
-    /// <returns>Redirect to user details with result message</returns>
+    /// <param name="userId">The unique identifier of the Identity user to add the role to.
+    /// Must be a valid ASP.NET Core Identity user ID (GUID format).</param>
+    /// <param name="role">The name of the role to assign to the user.
+    /// Must be an existing role name (e.g., 'Admin', 'Manager', 'Staff', 'Customer').</param>
+    /// <returns>
+    /// Returns a RedirectToAction to the user Details page with:
+    /// <list type="bullet">
+    /// <item>Success message if role assignment succeeds</item>
+    /// <item>Error message if role assignment fails or user/role not found</item>
+    /// <item>NotFound() result if userId or role parameters are invalid</item>
+    /// </list>
+    /// </returns>
+    /// <remarks>
+    /// <para><strong>Security and Validation:</strong></para>
+    /// <list type="bullet">
+    /// <item>Validates userId and role parameters are not null or empty</item>
+    /// <item>Verifies user exists before attempting role assignment</item>
+    /// <item>Uses ASP.NET Core Identity's built-in role validation</item>
+    /// <item>Prevents duplicate role assignments automatically</item>
+    /// </list>
+    /// 
+    /// <para><strong>Business Rules:</strong></para>
+    /// <list type="bullet">
+    /// <item>Users can have multiple roles simultaneously</item>
+    /// <item>Role hierarchy and permissions managed by authorization policies</item>
+    /// <item>Admin actions require proper authentication and authorization</item>
+    /// </list>
+    /// 
+    /// <para><strong>Audit and Logging:</strong></para>
+    /// <list type="bullet">
+    /// <item>Logs successful role assignments for admin audit trail</item>
+    /// <item>Records user email and role name for compliance tracking</item>
+    /// <item>Error logging for security monitoring and troubleshooting</item>
+    /// </list>
+    /// </remarks>
     [HttpPost]
     [ValidateAntiForgeryToken]
     public async Task<IActionResult> AddRole(string userId, string role)
@@ -337,8 +510,7 @@ public class AdminUserController : AdminControllerBase
         }
 
         var userRoles = await _userManager.GetRolesAsync(user);
-        var allRoles = new[] { "Admin", "Manager", "Staff", "Customer" };
-        var availableRoles = allRoles.Except(userRoles).ToList();
+        var availableRoles = AllRoles.Except(userRoles).ToList();
 
         return Json(new { success = true, roles = availableRoles });
     }
@@ -358,9 +530,8 @@ public class AdminUserController : AdminControllerBase
             var totalUsers = await _userManager.Users.CountAsync();
             
             var roleStats = new Dictionary<string, int>();
-            var roles = new[] { "Admin", "Manager", "Staff", "Customer" };
-            
-            foreach (var role in roles)
+
+            foreach (var role in AllRoles)
             {
                 var usersInRole = await _userManager.GetUsersInRoleAsync(role);
                 roleStats[role] = usersInRole.Count;

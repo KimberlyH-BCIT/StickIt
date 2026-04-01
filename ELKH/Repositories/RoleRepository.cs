@@ -5,6 +5,10 @@ using ELKH.ViewModels;
 
 namespace ELKH.Repositories
 {
+    /// <summary>
+    /// Repository implementation for role management operations providing concrete data access methods
+    /// for managing user roles, role assignments, and role-related CRUD operations using Entity Framework.
+    /// </summary>
     public class RoleRepository : IRoleRepository
     {
         private readonly ApplicationDbContext _context;

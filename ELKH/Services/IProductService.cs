@@ -66,6 +66,12 @@ namespace ELKH.Services
 
         /// <summary>Returns all categories ordered alphabetically by name, used to populate form dropdowns.</summary>
         Task<IEnumerable<CategoryModel>> GetCategoriesAsync(CancellationToken ct = default);
+
+        /// <summary>
+        /// Returns products that are currently on promotion (have discounts or active coupons).
+        /// Promotional products include those with DiscountPercent > 0 or that have active coupons available.
+        /// </summary>
+        Task<IEnumerable<ProductVM>> GetPromotionalProductsAsync(CancellationToken ct = default);
     }
 }
 

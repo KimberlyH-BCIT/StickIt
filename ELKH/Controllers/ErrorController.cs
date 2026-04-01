@@ -12,18 +12,13 @@ namespace ELKH.Controllers;
 /// The route /Error is registered as the exception handler in the middleware pipeline.
 /// </summary>
 [AllowAnonymous]
-public class ErrorController : Controller
+public class ErrorController(ILogger<ErrorController> logger) : Controller
 {
-    private readonly ILogger<ErrorController> _logger;
-
-    public ErrorController(ILogger<ErrorController> logger)
-    {
-        _logger = logger;
-    }
-
     /// <summary>
     /// GET /Error  — renders the generic error page.
     /// Logs the originating exception (if any) at Error level.
+    /// Never exposes stack traces or internal messages to the client.
+    /// </summary>
     /// Never exposes stack traces or internal messages to the client.
     /// </summary>
     [Route("/Error")]
@@ -33,7 +28,7 @@ public class ErrorController : Controller
         var feature = HttpContext.Features.Get<IExceptionHandlerFeature>();
         if (feature?.Error is not null)
         {
-            _logger.LogError(feature.Error,
+            logger.LogError(feature.Error,
                 "Unhandled exception on {Method} {Path}",
                 HttpContext.Request.Method,
                 HttpContext.Request.Path);
@@ -51,7 +46,7 @@ public class ErrorController : Controller
     [ResponseCache(Duration = 0, Location = ResponseCacheLocation.None, NoStore = true)]
     public new IActionResult StatusCode(int statusCode)
     {
-        _logger.LogWarning("HTTP {StatusCode} on {Path}", statusCode, HttpContext.Request.Path);
+        logger.LogWarning("HTTP {StatusCode} on {Path}", statusCode, HttpContext.Request.Path);
         ViewBag.StatusCode = statusCode;
         ViewBag.RequestId  = Activity.Current?.Id ?? HttpContext.TraceIdentifier;
         return View("Error");

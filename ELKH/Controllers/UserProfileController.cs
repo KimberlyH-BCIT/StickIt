@@ -12,6 +12,71 @@ namespace ELKH.Controllers;
 /// dashboard, profile editing, avatar upload, and user activity sections.
 /// </summary>
 /// <remarks>
+/// TABLE OF CONTENTS (324 lines)
+/// ================================================================================
+/// 1. Constructor & Dependencies ................................. Lines   38-49
+///    - IRegisteredUserProfileRepo for profile data operations
+///    - IRegisteredUserLogRepo for user activity logging
+///    - IUserService and ApplicationDbContext via UserControllerBase
+/// 
+/// 2. Dashboard & Profile Management ............................. Lines   51-155
+///    - Index()                            // GET: Main user dashboard
+///    - Edit()                             // GET: Display profile edit form
+///    - Edit(UserProfilePageVM)            // POST: Update profile information
+///    - Dashboard activity summaries and profile CRUD operations
+/// 
+/// 3. Avatar Management ....................................... Lines  157-220
+///    - UploadAvatar(IFormFile)            // POST: Upload and validate avatar
+///    - RemoveAvatar()                     // POST: Remove user avatar
+///    - File validation, image processing, and storage management
+/// 
+/// 4. Dashboard Sections (AJAX) .............................. Lines  222-295
+///    - WishlistSection()                  // GET: Load wishlist data via AJAX
+///    - ActiveOrdersSection()              // GET: Load active orders via AJAX
+///    - OrderHistorySection()              // GET: Load order history via AJAX
+///    - Pagination and sorting for dashboard sections
+/// 
+/// 5. Activity History ........................................ Lines  297-324
+///    - History()                          // GET: User activity and login history
+///    - Paginated activity logs with filtering and detailed tracking
+/// ================================================================================
+/// 
+/// ARCHITECTURAL CONTEXT:
+/// • Extracted from UserController for focused profile management responsibility
+/// • Inherits UserControllerBase providing user authentication and common operations
+/// • Uses Repository pattern for data access with profile and logging abstractions
+/// • Implements AJAX endpoints for dynamic dashboard section loading
+/// 
+/// BUSINESS LOGIC:
+/// • User dashboard serves as central hub for account activities and summaries
+/// • Profile management includes name, avatar, and basic account information
+/// • Avatar handling with security validation, file size limits, and format restrictions
+/// • Activity tracking for user engagement analysis and audit purposes
+/// 
+/// SECURITY & AUTHORIZATION:
+/// • All actions require user authentication via UserControllerBase
+/// • User data isolation - users can only access their own profile and activity
+/// • Avatar upload validation includes file type, size, and security scanning
+/// • Anti-forgery token protection for all state-changing operations
+/// 
+/// PERFORMANCE CONSIDERATIONS:
+/// • Dashboard sections use AJAX loading to improve initial page load times
+/// • Paginated results for wishlist, orders, and activity history to limit data transfer
+/// • Efficient queries through repository pattern with targeted data loading
+/// • Avatar processing optimized for web delivery with appropriate image formats
+/// 
+/// USER EXPERIENCE FEATURES:
+/// • Dynamic dashboard sections with sorting and pagination controls
+/// • Real-time avatar upload with preview and validation feedback
+/// • Comprehensive activity history for user account transparency
+/// • Mobile-responsive design for profile management across devices
+/// 
+/// INTEGRATION POINTS:
+/// • IRegisteredUserProfileRepo for profile data persistence and retrieval
+/// • IRegisteredUserLogRepo for activity tracking and audit trail generation
+/// • UserControllerBase for authentication, user resolution, and shared operations
+/// • File system integration for avatar storage and management
+/// 
 /// <para><strong>Extracted from UserController</strong></para>
 /// This controller handles all profile-related functionality that was previously
 /// in the monolithic UserController, providing better separation of concerns.
@@ -33,6 +98,9 @@ public class UserProfileController : UserControllerBase
 {
     private readonly IRegisteredUserProfileRepo _profileRepository;
     private readonly IRegisteredUserLogRepo _logRepository;
+
+    // CA1861: Constant arrays to avoid repeated allocations
+    private static readonly string[] AllowedImageTypes = { "image/jpeg", "image/jpg", "image/png", "image/gif", "image/webp" };
     private readonly ILogger<UserProfileController> _logger;
 
     public UserProfileController(
@@ -174,7 +242,6 @@ public class UserProfileController : UserControllerBase
 
         // Validation
         var maxBytes = 10 * 1024 * 1024; // 10 MB
-        var allowedTypes = new[] { "image/jpeg", "image/jpg", "image/png", "image/gif", "image/webp" };
 
         if (file is null || file.Length == 0)
         {
@@ -188,7 +255,7 @@ public class UserProfileController : UserControllerBase
             return RedirectToAction(nameof(Edit));
         }
 
-        if (!allowedTypes.Contains(file.ContentType))
+        if (!AllowedImageTypes.Contains(file.ContentType))
         {
             SetErrorMessage("Only JPEG, PNG, GIF, and WebP images are supported.");
             return RedirectToAction(nameof(Edit));

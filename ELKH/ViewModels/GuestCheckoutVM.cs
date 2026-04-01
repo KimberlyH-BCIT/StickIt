@@ -8,17 +8,71 @@ namespace ELKH.ViewModels
     /// without requiring account creation.
     /// </summary>
     /// <remarks>
-    /// Used when anonymous users checkout without creating an account.
-    /// After successful order, guest can optionally create an account to track order.
+    /// TABLE OF CONTENTS
+    /// ================================================================================
+    /// 1. Contact Information ......................................... Lines [25-49]
+    ///    - Email                         // Order confirmation and tracking
+    ///    - FullName                      // Shipping label name
+    ///    - PhoneNumber                   // Delivery contact
     /// 
-    /// FIELDS COLLECTED:
-    /// - Email (required for order confirmation and tracking)
-    /// - Full name (shipping label)
-    /// - Phone number (delivery contact)
-    /// - Complete shipping address
-    /// - Shipping method selection
-    /// - Optional: Newsletter subscription
-    /// - Optional: Create account after checkout
+    /// 2. Shipping Address ............................................ Lines [51-88]
+    ///    - Street                        // Complete street address
+    ///    - City, Province                // Geographic location
+    ///    - PostalCode                    // Canadian postal validation
+    ///    - Country                       // Default: Canada
+    /// 
+    /// 3. Shipping Method Selection ................................... Lines [90-100]
+    ///    - SelectedShippingMethodId      // Chosen delivery option
+    ///    - AvailableShippingMethods      // List of shipping options
+    /// 
+    /// 4. Optional Features ........................................... Lines [102-128]
+    ///    - SubscribeToNewsletter         // Marketing opt-in
+    ///    - CreateAccount                 // Post-checkout account creation
+    ///    - Password validation           // Account creation security
+    /// 
+    /// 5. Order Summary & Calculation ................................. Lines [130-159]
+    ///    - Items, Subtotal               // Cart contents and pricing
+    ///    - Tax, ShippingCost             // BC tax and delivery fees
+    ///    - Total                         // Final order amount
+    ///    - PayPalClientId                // Payment integration
+    /// ================================================================================
+    /// 
+    /// ARCHITECTURAL CONTEXT:
+    /// • Core ViewModel for ELKH's guest checkout workflow
+    /// • Enables purchase without mandatory account creation
+    /// • Implements comprehensive Canadian address validation
+    /// • Integrates with PayPal payment processing
+    /// • Supports optional account creation post-purchase
+    /// 
+    /// BUSINESS LOGIC & FEATURES:
+    /// • Streamlined guest checkout reducing cart abandonment
+    /// • Canadian shipping focus with postal code validation
+    /// • BC tax calculation (12% composite rate)
+    /// • Free shipping threshold ($50+ orders)
+    /// • Optional newsletter subscription and account creation
+    /// • Order tracking via email without account requirement
+    /// 
+    /// VALIDATION & SECURITY:
+    /// • Comprehensive input validation with error messages
+    /// • Canadian postal code regex validation (A1A 1A1 format)
+    /// • North American phone number validation
+    /// • Email format validation for order communications
+    /// • Password complexity requirements for optional accounts
+    /// • CSRF protection through model binding
+    /// 
+    /// INTEGRATION POINTS:
+    /// • Used by: CheckoutController for guest purchase workflow
+    /// • Integrates with: ShippingMethodModel for delivery options
+    /// • Connects to: CartItemVM for order summary display
+    /// • Payment: PayPal SDK integration via ClientId
+    /// • Post-purchase: Optional account creation and order tracking
+    /// 
+    /// USER EXPERIENCE FEATURES:
+    /// • Single-page checkout form with live validation
+    /// • Real-time order total calculation
+    /// • Progressive disclosure (account fields only if requested)
+    /// • Clear shipping cost communication
+    /// • Newsletter opt-in without aggressive marketing
     /// </remarks>
     public class GuestCheckoutVM
     {

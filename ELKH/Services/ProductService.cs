@@ -1,7 +1,3 @@
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading;
-using System.Threading.Tasks;
 using ELKH.Data;
 using ELKH.ViewModels;
 using ELKH.Models;
@@ -16,31 +12,33 @@ namespace ELKH.Services
     /// <see cref="CompiledQueries"/> for hot-path single-product lookups.
     /// </summary>
     /// <remarks>
-    /// TABLE OF CONTENTS (191 lines)
+    /// TABLE OF CONTENTS
     /// ================================================================================
-    /// 1. Constructor & Dependencies ................................... Lines   39-50
-    ///    - ApplicationDbContext, ISearchService, ILogger injection
+    /// 1. Constructor & Dependencies
+    ///    - ApplicationDbContext, ISearchService, IProductMapper, ILogger injection
     /// 
-    /// 2. Product Retrieval Operations ................................. Lines   52-120
+    /// 2. Product Retrieval Operations
     ///    - GetAllAsync()                         // Fetch all products with category eagerly loaded
-    ///    - GetByIdAsync()                        // Single product lookup with compiled query
+    ///    - GetByIdAsync()                        // Single product lookup with compiled query (includes category)
     ///    - GetByIdsAsync()                       // Batch fetch for cart/order enrichment
-    ///    - GetWithCategoryAsync()                // Product with category relationship
     /// 
-    /// 3. Product Search Integration ................................... Lines  122-135
+    /// 3. Product Search Integration
     ///    - SearchNames()                         // Fuzzy name search delegation to ISearchService
-    ///    - Search result caching and performance optimization
     /// 
-    /// 4. Product CRUD Operations ...................................... Lines  137-170
+    /// 4. Product CRUD Operations
     ///    - CreateAsync()                         // Add new product with name normalization
     ///    - UpdateAsync()                         // Update existing product with validation
-    ///    - DeleteAsync()                         // Soft delete with dependency checks
+    ///    - DeleteAsync()                         // Hard delete (not soft delete)
     /// 
-    /// 5. Search Index Management ...................................... Lines  172-185
+    /// 5. Category & Promotional Operations
+    ///    - GetCategoriesAsync()                  // Retrieve all categories for dropdowns
+    ///    - GetPromotionalProductsAsync()         // Products with discounts or active coupons
+    /// 
+    /// 6. Search Index Management
     ///    - ReindexFTSAsync()                     // Rebuild full-text search index coordination
     ///    - FTS table maintenance and optimization
     /// 
-    /// 6. Private Helper Methods ....................................... Lines  187-191
+    /// 7. Private Helper Methods
     ///    - NormalizeName()                       // String normalization for consistent storage
     /// ================================================================================
     /// 
@@ -65,45 +63,32 @@ namespace ELKH.Services
     /// BUSINESS LOGIC:
     /// • Product name normalization for consistent searching
     /// • Category relationship management and validation
-    /// • Soft delete implementation for data preservation
-    /// • Audit trail support for product lifecycle tracking
+    /// • Hard delete implementation (no soft delete)
+    /// • Audit trail support for FTS reindexing operations
     /// </remarks>
-    public class ProductService : IProductService
+    public class ProductService(ApplicationDbContext db, ISearchService searchService, IProductMapper mapper, ILogger<ProductService> logger) : IProductService
     {
-        private readonly ApplicationDbContext _db;
-        private readonly ISearchService _searchService;
-        private readonly IProductMapper _mapper;
-        private readonly ILogger<ProductService> _logger;
-
-        public ProductService(ApplicationDbContext db, ISearchService searchService, IProductMapper mapper, ILogger<ProductService> logger)
-        {
-            _db = db;
-            _searchService = searchService;
-            _mapper        = mapper;
-            _logger        = logger;
-        }
-
         /// <inheritdoc/>
         public async Task<IEnumerable<ProductVM>> GetAllAsync(CancellationToken ct = default)
         {
             // Include Category so the mapper can populate CategoryName without a second query.
-            var products = await _db.Products.Include(p => p.Category).ToListAsync(ct);
-            return _mapper.ToViewModels(products);
+            var products = await db.Products.Include(p => p.Category).ToListAsync(ct);
+            return mapper.ToViewModels(products);
         }
 
         /// <inheritdoc/>
         public async Task<IEnumerable<SearchResultDto>> SearchNames(string q, CancellationToken ct = default)
         {
-            return await _searchService.SearchNames(q);
+            return await searchService.SearchNames(q);
         }
 
         /// <inheritdoc/>
         public async Task<ProductVM?> GetByIdAsync(int id, CancellationToken ct = default)
         {
             // CompiledQueries.GetProductById avoids repeated EF query translation on this hot path.
-            var p = await CompiledQueries.GetProductById(_db, id, ct);
+            var p = await CompiledQueries.GetProductById(db, id, ct);
             if (p == null) return null;
-            return _mapper.ToViewModel(p);
+            return mapper.ToViewModel(p);
         }
 
         /// <inheritdoc/>
@@ -115,30 +100,30 @@ namespace ELKH.Services
 
             // Fetch all matching products in one query; build a dictionary keyed by ProductId
             // so callers can do O(1) lookups when enriching cart or order line items.
-            var products = await _db.Products
+            var products = await db.Products
                 .AsNoTracking()
                 .Include(p => p.Category)
                 .Where(p => idList.Contains(p.PkProductId))
                 .ToListAsync(ct);
 
-            var viewModels = _mapper.ToViewModels(products);
+            var viewModels = mapper.ToViewModels(products);
             return viewModels.ToDictionary(vm => vm.ProductId);
         }
 
         /// <inheritdoc/>
         public async Task CreateAsync(ProductVM vm, CancellationToken ct = default)
         {
-            var entity = _mapper.ToModel(vm);
+            var entity = mapper.ToModel(vm);
             // Normalize the name immediately so the entity is search-ready before it is persisted.
             entity.NameNormalized = NormalizeName(entity.Name);
-            _db.Products.Add(entity);
-            await _db.SaveChangesAsync(ct);
+            db.Products.Add(entity);
+            await db.SaveChangesAsync(ct);
         }
 
         /// <inheritdoc/>
         public async Task UpdateAsync(ProductVM vm, CancellationToken ct = default)
         {
-            var entity = await _db.Products.FindAsync(new object[] { vm.ProductId }, ct);
+            var entity = await db.Products.FindAsync(new object[] { vm.ProductId }, ct);
             if (entity == null) return;
 
             // Manual mapping of changed fields onto the tracked entity
@@ -152,17 +137,17 @@ namespace ELKH.Services
 
             // Re-normalize after mapping in case the product name changed.
             entity.NameNormalized = NormalizeName(entity.Name);
-            await _db.SaveChangesAsync(ct);
+            await db.SaveChangesAsync(ct);
         }
 
         /// <inheritdoc/>
         public async Task DeleteAsync(int id, CancellationToken ct = default)
         {
-            var entity = await _db.Products.FindAsync(new object[] { id }, ct);
+            var entity = await db.Products.FindAsync(new object[] { id }, ct);
             if (entity != null)
             {
-                _db.Products.Remove(entity);
-                await _db.SaveChangesAsync(ct);
+                db.Products.Remove(entity);
+                await db.SaveChangesAsync(ct);
             }
         }
 
@@ -175,26 +160,48 @@ namespace ELKH.Services
 SELECT PkProductId, Name, PkProductId FROM Products
 WHERE PkProductId NOT IN (SELECT rowid FROM ProductFTS);
 ";
-            await _db.Database.ExecuteSqlRawAsync(sql, ct);
+            await db.Database.ExecuteSqlRawAsync(sql, ct);
 
             try
             {
                 // Write an audit entry so admins can track when and why reindexes occurred.
                 // Wrapped in try/catch so an audit write failure never blocks the reindex itself.
-                _db.Add(new ELKH.Models.AuditEntryModel { Action = "ReindexFTS", Actor = "system", Timestamp = System.DateTime.UtcNow, AffectedKeysCount = 0, Details = "Reindexed ProductFTS table", Reason = reason });
-                await _db.SaveChangesAsync(ct);
+                db.Add(new ELKH.Models.AuditEntryModel { Action = "ReindexFTS", Actor = "system", Timestamp = System.DateTime.UtcNow, AffectedKeysCount = 0, Details = "Reindexed ProductFTS table", Reason = reason });
+                await db.SaveChangesAsync(ct);
             }
             catch (Exception ex)
             {
                 // Audit write failure must never block the reindex — log and continue.
-                _logger.LogWarning(ex, "Failed to persist ReindexFTS audit entry");
+                logger.LogWarning(ex, "Failed to persist ReindexFTS audit entry");
             }
         }
 
         /// <inheritdoc/>
         public async Task<IEnumerable<CategoryModel>> GetCategoriesAsync(CancellationToken ct = default)
         {
-            return await _db.Categories.OrderBy(c => c.CategoryName).ToListAsync(ct);
+            return await db.Categories.OrderBy(c => c.CategoryName).ToListAsync(ct);
+        }
+
+        /// <inheritdoc/>
+        public async Task<IEnumerable<ProductVM>> GetPromotionalProductsAsync(CancellationToken ct = default)
+        {
+            // Check if there are any active coupons first to optimize the query
+            var hasActiveCoupons = await db.Coupons
+                .AnyAsync(c => c.IsActive && 
+                    c.ValidFrom <= DateTime.UtcNow && 
+                    c.ValidUntil >= DateTime.UtcNow, ct);
+
+            // Get products with direct discounts or all products if there are active coupons
+            var promotionalProducts = await db.Products
+                .Where(p => p.IsActive && (
+                    p.DiscountPercent > 0 || // Products with direct discounts
+                    hasActiveCoupons         // All products are eligible if there are active coupons
+                ))
+                .Include(p => p.Category)
+                .OrderBy(p => p.Name)
+                .ToListAsync(ct);
+
+            return mapper.ToViewModels(promotionalProducts);
         }
 
         /// <summary>
