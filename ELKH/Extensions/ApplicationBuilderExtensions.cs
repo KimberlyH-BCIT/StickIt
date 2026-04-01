@@ -184,12 +184,13 @@ namespace ELKH.Extensions
                 // checkout page (www.paypal.com) and the sandbox/live API (api-m.*.paypal.com).
                 // Google reCAPTCHA requires scripts from google.com and gstatic.com, frames from google.com,
                 // and 'unsafe-eval' for its internal script execution (required by reCAPTCHA v2).
-                // Google Fonts requires fonts.googleapis.com and fonts.gstatic.com for stylesheets and fonts.
+                // Google Fonts requires fonts.googleapis.com for CSS fetching (connect-src), 
+                // stylesheets (style-src), and fonts.gstatic.com for font files (font-src).
                 // 'unsafe-inline' for style-src is required by Bootstrap/inline styles and inline scripts.
                 // In development, allow localhost connections for Browser Link and hot reload tools.
                 var connectSrc = env.IsDevelopment() 
-                    ? "'self' ws://localhost:* http://localhost:* https://api-m.paypal.com https://api-m.sandbox.paypal.com https://www.google.com"
-                    : "'self' https://api-m.paypal.com https://api-m.sandbox.paypal.com https://www.google.com";
+                    ? "'self' ws://localhost:* http://localhost:* https://api-m.paypal.com https://api-m.sandbox.paypal.com https://www.google.com https://fonts.googleapis.com"
+                    : "'self' https://api-m.paypal.com https://api-m.sandbox.paypal.com https://www.google.com https://fonts.googleapis.com";
 
                 context.Response.Headers["Content-Security-Policy"] =
                     "default-src 'self'; " +
