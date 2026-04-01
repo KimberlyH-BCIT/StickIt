@@ -101,6 +101,7 @@ namespace ELKH.Repositories
             }
         }
 
+
         /// <summary>Update and immediately persist an entity.</summary>
         public virtual async Task<bool> UpdateAndSaveAsync(TEntity entity)
         {
@@ -129,14 +130,37 @@ namespace ELKH.Repositories
                     Logger.LogWarning("Cannot delete {EntityType} with ID {Id} — not found", typeof(TEntity).Name, id);
                     return false;
                 }
+
                 Context.Set<TEntity>().Remove(entity);
                 await Context.SaveChangesAsync();
+
                 Logger.LogInformation("Deleted {EntityType} with ID {Id}", typeof(TEntity).Name, id);
                 return true;
             }
             catch (Exception ex)
             {
                 Logger.LogError(ex, "Error deleting {EntityType} with ID {Id}", typeof(TEntity).Name, id);
+                return false;
+            }
+        }
+
+        /// <summary>
+        /// Delete an entity and save changes immediately.
+        /// Returns true if successful, false otherwise.
+        /// </summary>
+        public virtual bool DeleteAndSave(TEntity entity)
+        {
+            try
+            {
+                Context.Set<TEntity>().Remove(entity);
+                Context.SaveChanges();
+
+                Logger.LogInformation("Deleted {EntityType}", typeof(TEntity).Name);
+                return true;
+            }
+            catch (Exception ex)
+            {
+                Logger.LogError(ex, "Error deleting {EntityType}", typeof(TEntity).Name);
                 return false;
             }
         }

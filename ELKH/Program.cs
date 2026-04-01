@@ -5,7 +5,9 @@ using ELKH.Models;
 using ELKH.Repositories;
 using ELKH.Services;
 using Microsoft.AspNetCore.Identity;
+using Microsoft.AspNetCore.Localization;
 using Microsoft.EntityFrameworkCore;
+using System.Globalization;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -22,16 +24,12 @@ builder.Services.AddDbContext<ImageStoreContext>(options =>
     options.UseSqlite(imageStoreConnection));
 builder.Services.AddDatabaseDeveloperPageExceptionFilter();
 
-// ASP.NET Core Identity with email confirmation requirement.
-// Users must confirm their email before they can sign in.
-// AddRoles<IdentityRole>() is required for [Authorize(Roles = "...")] to function —
-// without it, role claims are never populated and role-based access always fails.
+// -- Identity
 builder.Services.AddDefaultIdentity<IdentityUser>(options => options.SignIn.RequireConfirmedAccount = true)
     .AddRoles<IdentityRole>()
     .AddEntityFrameworkStores<ApplicationDbContext>();
 
-// -- Health Checks (for monitoring and deployment readiness)
-// Exposes /health endpoint for load balancers, monitoring tools, and container orchestrators
+// -- Health Checks
 builder.Services.AddHealthChecks();
 
 // -- MVC / Razor
@@ -87,8 +85,17 @@ builder.Services.AddApplicationServices(); // UserService, SearchService, Rating
 builder.Services.AddEmailServices();       // SmtpEmailSender, EmailSenderAdapter, IEmailSender
 builder.Services.AddRepositories();        // All repository implementations with base class inheritance
 
-// -- Mapping
-// AutoMapper for DTO/ViewModel conversions. Profile defined in Mapping/AutoMapperProfile.cs
+// -- Repositories
+builder.Services.AddScoped<IRoleRepository, RoleRepository>();
+builder.Services.AddScoped<OrderHistoryManagementRepo>();
+builder.Services.AddScoped<InventoryRepo>();
+builder.Services.AddScoped<RegisteredUserLogRepo>();
+builder.Services.AddScoped<RegisteredUserProfileRepo>();
+builder.Services.AddScoped<ContactDetailRepo>();
+builder.Services.AddScoped<TransactionRepo>();
+builder.Services.AddScoped<OrderHistoryStaffRepo>();
+
+// -- AutoMapper
 builder.Services.AddAutoMapper(typeof(ELKH.Mapping.AutoMapperProfile));
 
 // =====================================================================
@@ -112,12 +119,6 @@ if (!app.Environment.IsDevelopment())
 
 // =====================================================================
 // HTTP request pipeline
-// ---------------------------------------------------------------------
-// Middleware order is critical in ASP.NET Core. This pipeline is carefully
-// ordered for optimal security, performance, and functionality.
-// 
-// Order: Exception Handling → HTTPS → Compression → Caching → Routing 
-//        → Authentication → Authorization → Endpoints
 // =====================================================================
 if (app.Environment.IsDevelopment())
 {
@@ -151,27 +152,55 @@ app.UseApplicationEndpoints();
 //
 // Seeding: fully idempotent — each seeder checks for existing data and
 // returns immediately when the database is already populated.
-await using (var scope = app.Services.CreateAsyncScope())
+// ... after app.Build() and middleware ...
+
+// 1. Run Migrations first and dispose of that scope immediately
+await using (var migrationScope = app.Services.CreateAsyncScope())
 {
-    var sp = scope.ServiceProvider;
-    var db = sp.GetRequiredService<ApplicationDbContext>();
-
-    var applyMigrations     = app.Configuration.GetValue<bool?>("Database:ApplyMigrationsOnStartup")
-                                  ?? app.Environment.IsDevelopment();
-    var allowInProduction   = app.Configuration.GetValue<bool>("Database:AllowMigrationInProduction");
-
-    if (applyMigrations && (app.Environment.IsDevelopment() || allowInProduction))
+    var sp = migrationScope.ServiceProvider;
+    try
     {
+        var db = sp.GetRequiredService<ApplicationDbContext>();
+        var imageDb = sp.GetRequiredService<ImageStoreContext>();
+
+        
         await db.Database.MigrateAsync();
-        await sp.GetRequiredService<ImageStoreContext>().Database.MigrateAsync();
+        await imageDb.Database.MigrateAsync();
+        app.Logger.LogInformation("Migrations applied successfully.");
     }
+    catch (Exception ex)
+    {
+        app.Logger.LogError(ex, "Migration failed.");
+        throw; // Don't try to seed if migrations failed
+    }
+}
 
-    var userManager = sp.GetRequiredService<UserManager<IdentityUser>>();
-    var roleManager = sp.GetRequiredService<RoleManager<IdentityRole>>();
+// 2. Run Seeding in its own fresh scope
+await using (var seedScope = app.Services.CreateAsyncScope())
+{
+    var sp = seedScope.ServiceProvider;
+    try
+    {
+        var db = sp.GetRequiredService<ApplicationDbContext>();
+        var userManager = sp.GetRequiredService<UserManager<IdentityUser>>();
+        var roleManager = sp.GetRequiredService<RoleManager<IdentityRole>>();
 
-    await DbSeeder.SeedProductsAsync(db);
-    await DbSeeder.SeedAdminAsync(userManager, roleManager, app.Configuration);
-    await DbSeeder.SeedCustomersAsync(db, userManager, app.Environment.WebRootPath);
+        app.Logger.LogInformation("Starting Seeding...");
+
+        await DbSeeder.SeedProductsAsync(db);
+        await DbSeeder.SeedAdminAsync(userManager, roleManager, app.Configuration);
+
+        // This is the heavy one. If it still hangs, check the file path!
+        await DbSeeder.SeedCustomersAsync(db, userManager, app.Environment.WebRootPath);
+
+        await DbSeeder.SeedTestTransactionsAsync(db);
+
+        app.Logger.LogInformation("Seeding completed successfully.");
+    }
+    catch (Exception ex)
+    {
+        app.Logger.LogError(ex, "Seeding failed.");
+    }
 }
 
 app.Run();

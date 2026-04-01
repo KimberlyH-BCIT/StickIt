@@ -1,0 +1,120 @@
+@model ELKH.ViewModels.ProductVM
+
+@{
+    ViewData["Title"] = "Edit Product";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+
+<div class="container mt-4 pb-5" style="max-width:900px;">
+
+    @if (TempData["Success"] != null)
+    {
+        <div class="alert alert-success">@TempData["Success"]</div>
+    }
+
+    <div class="d-flex justify-content-between mb-4">
+        <h2 class="fw-bold text-primary">Edit Product</h2>
+        <a asp-action="Index" class="btn btn-outline-secondary">Back to Inventory</a>
+    </div>
+
+    @* --- FORM 1: Update Product Details & Upload New Images --- *@
+    <div class="card border-0 shadow-sm rounded-4 mb-4">
+        <div class="card-body p-4">
+            <form asp-action="EditProduct" method="post" enctype="multipart/form-data">
+                @Html.AntiForgeryToken()
+                <input type="hidden" asp-for="ProductId" />
+
+                <div class="mb-3">
+                    <label asp-for="ProductName" class="fw-bold"></label>
+                    <input asp-for="ProductName" class="form-control" />
+                    <span asp-validation-for="ProductName" class="text-danger"></span>
+                </div>
+
+                <div class="mb-3">
+                    <label asp-for="Description" class="fw-bold"></label>
+                    <textarea asp-for="Description" class="form-control" rows="3"></textarea>
+                </div>
+
+                <div class="row mb-3">
+                    <div class="col-md-4">
+                        <label asp-for="Price" class="fw-bold"></label>
+                        <input asp-for="Price" type="number" step="0.01" class="form-control" />
+                    </div>
+                    <div class="col-md-4">
+                        <label asp-for="DiscountPercent" class="fw-bold"></label>
+                        <input asp-for="DiscountPercent" type="number" class="form-control" />
+                    </div>
+                    <div class="col-md-4">
+                        <label asp-for="StockQuantity" class="fw-bold"></label>
+                        <input asp-for="StockQuantity" type="number" class="form-control" />
+                    </div>
+                </div>
+
+                <div class="mb-3">
+                    <label asp-for="CategoryId" class="fw-bold"></label>
+                    <select asp-for="CategoryId" asp-items="@ViewBag.Categories" class="form-select"></select>
+                </div>
+
+                <div class="mb-4">
+                    <div class="form-check">
+                        <input asp-for="IsActive" class="form-check-input" />
+                        <label asp-for="IsActive" class="form-check-label fw-bold">Active</label>
+                    </div>
+                </div>
+
+                <hr />
+
+                <h5 class="fw-bold mb-3">➕ Add More Images</h5>
+                <input type="file" name="NewImages" multiple class="form-control mb-4" accept="image/*" />
+
+                <div class="d-flex justify-content-between">
+                    <a asp-action="Index" class="btn btn-secondary px-4">Cancel</a>
+                    <button type="submit" class="btn btn-success px-4">Update Product Details</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    @* --- SECTION 2: Manage Current Images (Separate Div) --- *@
+    <div class="card border-0 shadow-sm rounded-4">
+        <div class="card-body p-4">
+            <h5 class="fw-bold mb-4">📷 Current Product Images</h5>
+
+            @if (Model.ExistingImages != null && Model.ExistingImages.Any())
+            {
+                <div class="row g-3">
+                    @foreach (var img in Model.ExistingImages)
+                    {
+                        <div class="col-6 col-md-3">
+                            <div class="card h-100 border p-2">
+                                <img src="data:image/jpeg;base64,@Convert.ToBase64String(img.ImageData)"
+                                     class="img-fluid rounded mb-2"
+                                     style="height:140px; object-fit:cover;" />
+                                
+                                @* Separate Form for Delete so it doesn't conflict with Update *@
+                                <form asp-action="DeleteImage" method="post" onsubmit="return confirm('Delete this image?');">
+                                    @Html.AntiForgeryToken()
+                                    <input type="hidden" name="productId" value="@Model.ProductId" />
+                                    <input type="hidden" name="imageId" value="@img.ImageId" />
+                                    <button type="submit" class="btn btn-outline-danger btn-sm w-100">Delete</button>
+                                </form>
+                            </div>
+                        </div>
+                    }
+                </div>
+            }
+            else
+            {
+                <div class="text-center py-4">
+                    <p class="text-muted mb-0">No images found for this product.</p>
+                </div>
+            }
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    @{
+        await Html.RenderPartialAsync("_ValidationScriptsPartial");
+    }
+}

@@ -4,190 +4,184 @@
     ViewData["Title"] = "All Users";
     Layout = "~/Views/Shared/_Layout.cshtml";
 
-    var filterRoles = new[] { "All", "Admin", "Manager", "Staff", "Customer" };
+    var filterRoles = ViewBag.Roles as List<string>;
 }
-
-<div class="container mt-4 pb-5">
-
+<!-- TITLE + BACK -->
+<div class="container mt-4" style="max-width:1000px;">
     <div class="d-flex justify-content-between align-items-center mb-4">
-        <h2 class="fw-bold text-primary">All Users</h2>
+        <h3 class="fw-bold text-primary mb-0">All Users</h3>
 
-        <a asp-action="Index" class="btn btn-outline-primary rounded-pill px-4">
-            ← Back to Dashboard
+        <a asp-action="Index" class="btn btn-outline-secondary btn-sm rounded-pill px-4">
+            ← Back To Dashboard
         </a>
     </div>
 
-    <div class="card shadow-sm border-0 mb-4 rounded-4">
-        <div class="card-body p-4">
 
-            <form method="get" class="mb-4">
-                <input type="hidden" name="roleFilter" value="@ViewBag.RoleFilter" />
+<div class="container mt-4" style="max-width:1000px;">
 
-                <div class="d-flex justify-content-center">
-                    <div class="input-group" style="max-width:500px;">
+    <!-- KPI CARDS -->
+    <div class="row g-2 mb-3 text-center">
 
-                        <input type="text"
-                               name="search"
-                               value="@ViewBag.Search"
-                               class="form-control rounded-start-pill"
-                               placeholder="Search by email or role…" />
+        <!-- TOTAL USERS -->
+        <div class="col-6 col-md-2">
+            <div class="card border-0 shadow-sm rounded-3 small-kpi-clean">
+                <div class="card-body p-2">
+                    <h6 class="fw-bold mb-0">@ViewBag.TotalUsers</h6>
+                    <small class="text-muted">All Users</small>
+                </div>
+            </div>
+        </div>
 
-                        <button type="submit" class="btn btn-primary rounded-end-pill px-4">
-                            Search
-                        </button>
-
+        <!-- DYNAMIC ROLES -->
+        @foreach (var role in ViewBag.RoleCounts as Dictionary<string, int>)
+        {
+            <div class="col-6 col-md-2">
+                <div class="card border-0 shadow-sm rounded-3 small-kpi-clean">
+                    <div class="card-body p-2">
+                        <h6 class="fw-bold mb-0">@role.Value</h6>
+                        <small class="text-muted">@role.Key</small>
                     </div>
                 </div>
+            </div>
+        }
 
-            </form>
+    </div>
+    <!-- SEARCH CARD -->
+    <div class="card border-0 shadow-sm rounded-4 mb-4">
+        <div class="card-body p-4">
+                <form method="get">
+                    <input type="hidden" name="roleFilter" value="@ViewBag.RoleFilter" />
 
+                    <div class="d-flex justify-content-center">
+                        <div class="d-flex align-items-center gap-2" style="max-width:500px; width:100%;">
 
-            <div class="d-flex justify-content-center flex-wrap gap-2">
+                            <input type="text"
+                                   name="search"
+                                   value="@ViewBag.Search"
+                                   class="form-control form-control-sm rounded-pill px-3"
+                                   placeholder="Search users..." />
 
-                @foreach (var role in filterRoles)
+                            <button type="submit"
+                                    class="btn btn-primary btn-sm rounded-pill px-4">
+                                Search
+                            </button>
+
+                            @if (!string.IsNullOrEmpty(ViewBag.Search as string))
+                            {
+                                <a asp-action="ListUsers"
+                                       class="btn btn-outline-secondary btn-sm rounded-pill px-3">
+                                    ✕
+                                </a>
+                            }
+
+                        </div>
+                    </div>
+                </form>
+
+            <!-- ROLE FILTER -->
+            <div class="d-flex justify-content-center flex-wrap gap-2 mt-3">
+                @foreach (var role in filterRoles.Where(r => !string.IsNullOrEmpty(r)))
                 {
                     bool active = (ViewBag.RoleFilter == role) || (role == "All" && string.IsNullOrEmpty(ViewBag.RoleFilter));
 
-                    string roleClass = role switch
-                    {
-                        "Admin" => "role-admin",
-                        "Manager" => "role-manager",
-                        "Staff" => "role-staff",
-                        "Customer" => "role-customer",
-                        _ => "role-none"
-                    };
-
                     <a asp-action="ListUsers"
-                       asp-route-roleFilter="@(role == "All" ? "" : role)"
-                       asp-route-search="@ViewBag.Search"
-                       asp-route-page="1"
-                       class="role-badge @roleClass @(active ? "active-role" : "")">
+                           asp-route-roleFilter="@(role == "All" ? "" : role)"
+                           asp-route-search="@ViewBag.Search"
+                           asp-route-page="1"
+                           class="role-badge @(active ? "active-role" : "")">
                         @role
                     </a>
                 }
-
             </div>
 
         </div>
     </div>
 
 
-
     <div class="d-flex justify-content-center">
-
-        <div class="card shadow-sm border-0 rounded-4" style="max-width:900px;width:100%;">
-
+        <div class="card shadow-sm border-0 rounded-4" style="max-width:1100px;width:100%;">
             <div class="card-body p-0">
-
                 <div class="table-responsive">
-
                     <table class="table table-hover table-sm align-middle mb-0 text-center">
-
                         <thead class="table-light">
                             <tr>
-
-                                <th style="width:80px;" class="ps-3">ID</th>
-
-                                <th class="text-start">Email</th>
-
+                                <th style="width:180px;" class="ps-3">ID</th>
+                                <th class="text-start" style="width:450px;">Email</th>
                                 <th style="width:200px;">Roles</th>
-
-                                <th style="width:120px;">Action</th>
-
+                                <th style="width:140px;"></th>
                             </tr>
                         </thead>
-
                         <tbody>
-
                             @if (Model.Any())
                             {
                                 foreach (var user in Model)
                                 {
-
                                     <tr>
-
-                                        <td class="ps-3">
+                                        <td class="ps-4">
                                             <span class="text-muted small font-monospace"
                                                   title="@user.Id"
                                                   data-bs-toggle="tooltip"
-                                                  style="cursor:default;">
-                                                @user.Id.Substring(0, Math.Min(6, user.Id.Length))…
+                                                  style="display:inline-block;width:120px;text-align:left;">
+                                                @user.Id.Substring(0, 8)...
                                             </span>
                                         </td>
 
-
-                                        <td class="text-start">@user.Email</td>
-
+                                        <td class="text-start" style="max-width:450px;">
+                                            @user.Email
+                                        </td>
 
                                         <td>
-
                                             @{
-
                                                 var rolePriority = new List<string> { "Admin", "Manager", "Staff", "Customer" };
-
-                                                var sortedRoles = user.Roles
-                                                .OrderBy(r => rolePriority.IndexOf(r))
-                                                .ToList();
-
-                                                string? filterRole = ViewBag.RoleFilter as string;
-
-                                                                string? displayRole;
+                                                var sortedRoles  = user.Roles.OrderBy(r => rolePriority.IndexOf(r)).ToList();
+                                                string filterRole = ViewBag.RoleFilter as string;
+                                                string displayRole;
 
                                                 if (!string.IsNullOrEmpty(filterRole) && sortedRoles.Contains(filterRole))
-                                                {
                                                     displayRole = filterRole;
-                                                }
                                                 else
-                                                {
                                                     displayRole = sortedRoles.FirstOrDefault();
-                                                }
 
                                                 int extraCount = sortedRoles.Count - 1;
 
-                                                string roleClass = displayRole switch
+                                                string roleClass2 = displayRole switch
                                                 {
-                                                    "Admin" => "role-admin",
+                                                    "Admin"   => "role-admin",
                                                     "Manager" => "role-manager",
-                                                    "Staff" => "role-staff",
-                                                    _ => "role-customer"
+                                                    "Staff"   => "role-staff",
+                                                    _         => "role-customer"
                                                 };
-
                                             }
 
                                             @if (displayRole != null)
                                             {
-
-                                                <span class="role-badge @roleClass">
+                                                <span class="role-badge @roleClass2"
+                                                      style="min-width:90px;display:inline-flex;justify-content:center;">
                                                     @displayRole
                                                 </span>
-
                                                 @if (extraCount > 0)
                                                 {
                                                     <span class="text-muted small ms-1">+@extraCount</span>
                                                 }
-
                                             }
                                             else
                                             {
-                                                <span class="role-badge role-none">No Role</span>
+                                                <span class="role-badge role-none"
+                                                      style="min-width:90px;display:inline-flex;justify-content:center;">
+                                                    No Role
+                                                </span>
                                             }
-
                                         </td>
 
-
                                         <td>
-
                                             <a asp-controller="Admin"
                                                asp-action="AccountDetails"
                                                asp-route-id="@user.Id"
                                                class="btn btn-sm btn-outline-primary rounded-pill px-3">
                                                 Details
                                             </a>
-
                                         </td>
-
                                     </tr>
-
                                 }
                             }
                             else
@@ -199,29 +193,20 @@
                                     </td>
                                 </tr>
                             }
-
                         </tbody>
-
                     </table>
-
                 </div>
             </div>
         </div>
     </div>
 
-
-
     @if (ViewBag.TotalPages > 1)
     {
         <nav class="mt-4">
-
             <ul class="pagination justify-content-center flex-wrap">
-
                 @for (int i = 1; i <= ViewBag.TotalPages; i++)
                 {
-
                     <li class="page-item @(ViewBag.CurrentPage == i ? "active" : "")">
-
                         <a class="page-link rounded-pill mx-1"
                            asp-action="ListUsers"
                            asp-route-page="@i"
@@ -229,28 +214,18 @@
                            asp-route-roleFilter="@ViewBag.RoleFilter">
                             @i
                         </a>
-
                     </li>
-
                 }
-
             </ul>
-
         </nav>
     }
 
 </div>
 
-
-
 @section Scripts {
-
-    <script>
-
-        document.querySelectorAll('[data-bs-toggle="tooltip"]').forEach(el=>{
+<script>
+    document.querySelectorAll('[data-bs-toggle="tooltip"]').forEach(el => {
         new bootstrap.Tooltip(el);
-        });
-
-    </script>
-
+    });
+</script>
 }

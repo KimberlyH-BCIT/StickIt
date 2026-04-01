@@ -18,6 +18,7 @@ namespace ELKH.Controllers
             : base(db)
         {
             UserService = userService;
+            db = db;
         }
 
         /// <summary>

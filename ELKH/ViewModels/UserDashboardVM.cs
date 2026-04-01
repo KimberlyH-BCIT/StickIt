@@ -7,7 +7,7 @@ namespace ELKH.ViewModels
         public UserProfileVM? Profile { get; set; }
 
         /// <summary>Total wishlist items (always unfiltered) — used for the header badge.</summary>
-        public int WishListCount { get; set; }
+        public int WishlistCount { get; set; }
 
         /// <summary>Paginated active orders section (initial page 1 load).</summary>
         public OrderSectionVM ActiveOrdersSection { get; set; } = new();

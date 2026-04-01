@@ -2,6 +2,7 @@
 {
     public class ProductImageVM
     {
+        public int ImageId { get; set; }
         public string FileName { get; set; } = null!;
         public string Description { get; set; } = null!;
         public byte[] ImageData { get; set; } = null!;

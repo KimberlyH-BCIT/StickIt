@@ -1,0 +1,8 @@
+warning: in the working copy of 'ELKH/ELKH.csproj', LF will be replaced by CRLF the next time Git touches it
+ELKH/ELKH.csproj
+ELKH/Extensions/ApplicationBuilderExtensions.cs
+ELKH/Program.cs
+ELKH/Views/Admin/Index.cshtml
+ELKH/Views/Admin/ListUsers.cshtml
+ELKH/app.db-shm
+ELKH/app.db-wal

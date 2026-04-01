@@ -127,7 +127,7 @@ WHERE PkProductId NOT IN (SELECT rowid FROM ProductFTS);
             // search requests never observe an empty suggestion table between the two steps.
             try
             {
-                var suggestions = await db.Products
+                var suggestions = await db.Product
                     .Select(p => new ELKH.Models.FuzzySuggestionModel
                     {
                         PkProductId    = p.PkProductId,

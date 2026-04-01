@@ -133,13 +133,13 @@ namespace ELKH.Extensions
             // Default MVC route
             app.MapControllerRoute(
                 name: "default",
-                pattern: "{controller=Home}/{action=Index}/{id?}")
-                .WithStaticAssets();
+                pattern: "{controller=Home}/{action=Index}/{id?}");
 
             // Convention-based Razor Pages routing
             app.MapRazorPages();
+            app.MapRazorPages()
+               .WithStaticAssets();
 
-            // Unauthenticated health check for uptime monitoring and container readiness probes
             app.MapHealthChecks("/health");
 
             return app;

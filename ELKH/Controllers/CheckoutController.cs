@@ -213,22 +213,30 @@ public class CheckoutController : Controller
 
         // ── 2. Determine contact ID: use selected address from VM or default address
         int contactId;
-        if (vm.SelectedContactId.HasValue)
+        try
         {
-            contactId = vm.SelectedContactId.Value;
+            if (vm.SelectedContactId.HasValue)
+            {
+                contactId = vm.SelectedContactId.Value;
+            }
+            else
+            {
+                var contact = await _db.ContactDetails
+                    .FirstOrDefaultAsync(c => c.FkRegisteredUserId == regUser.PkRegisteredUserId && c.IsDefault);
+
+                contactId = contact?.PkContactId ?? 0;
+            }
         }
         catch (Exception ex)
         {
-            var contact = await _db.ContactDetails
-                .FirstOrDefaultAsync(c => c.FkRegisteredUserId == regUser.PkRegisteredUserId && c.IsDefault);
-            contactId = contact?.PkContactId ?? 0;
+            return View("Error", ex);
         }
 
         // ── 3. Record the order — payment is already captured so we must not
         //       lose the order. On failure we log the PayPal reference and tell
         //       the customer to contact support with it.
         var productIds = cartItems.Select(c => c.FkProductID).ToList();
-        var products   = await _db.Products
+        var products   = await _db.Product
             .Where(p => productIds.Contains(p.PkProductId))
             .ToDictionaryAsync(p => p.PkProductId);
 
@@ -238,12 +246,12 @@ public class CheckoutController : Controller
         {
             var order = new OrderModel
             {
-                OrderStatus        = "Placed",
-                TotalAmount        = total,
-                CreatedAt          = DateTime.UtcNow,
-                DeliveryStatus     = "Pending",
+                OrderStatus = OrderStatus.Pending,
+                TotalAmount = total,
+                CreatedAt = DateTime.UtcNow,
+                DeliveryStatus = DeliveryStatus.Pending,
                 FkRegisteredUserId = regUser.PkRegisteredUserId,
-                FkContactId        = contactId
+                FkContactId = contactId
             };
             _db.Orders.Add(order);
             await _db.SaveChangesAsync();
@@ -361,7 +369,7 @@ public class CheckoutController : Controller
 
         // Create order in database (payment already captured)
         var productIds = cartItems.Select(c => c.FkProductID).ToList();
-        var products   = await _db.Products
+        var products   = await _db.Product
             .Where(p => productIds.Contains(p.PkProductId))
             .ToDictionaryAsync(p => p.PkProductId);
 
@@ -371,10 +379,10 @@ public class CheckoutController : Controller
         {
             var order = new OrderModel
             {
-                OrderStatus        = "Placed",
+                OrderStatus = OrderStatus.Pending,
                 TotalAmount        = total,
                 CreatedAt          = DateTime.UtcNow,
-                DeliveryStatus     = "Pending",
+                DeliveryStatus = DeliveryStatus.Pending,
                 FkRegisteredUserId = regUser.PkRegisteredUserId,
                 FkContactId        = contactId
             };

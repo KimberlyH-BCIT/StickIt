@@ -5,6 +5,9 @@
     Layout = "~/Views/Shared/_Layout.cshtml";
     var topProducts = ViewBag.TopProducts as List<ELKH.ViewModels.TopProductVM>
                       ?? new List<ELKH.ViewModels.TopProductVM>();
+
+    // Read which view the admin is currently "pretending" to be
+    string viewAs = ViewBag.ViewAs as string ?? "Admin";
 }
 
 <div class="container-fluid px-4 mt-4 pb-5">
@@ -15,19 +18,29 @@
             <h2 class="fw-bold mb-0">Admin Dashboard</h2>
             <p class="text-muted mb-0 small">Full system access · @DateTime.Now.ToString("dddd, MMMM d yyyy")</p>
         </div>
-        <!-- View-as shortcuts -->
-        <div class="d-flex gap-2 flex-wrap">
+
+        <!-- ── Persistent View-As Tab Strip ── -->
+        <div class="d-flex gap-2 flex-wrap align-items-center">
+            <span class="text-muted small me-1">View as:</span>
+
+            <a asp-controller="Admin" asp-action="Index"
+               class="btn btn-sm rounded-pill px-3 view-as-btn @(viewAs == "Admin" ? "btn-primary" : "btn-outline-secondary")">
+                🛡️ Admin
+            </a>
+
             <a asp-controller="Manager" asp-action="Index"
-               class="btn btn-sm btn-outline-secondary rounded-pill px-3">
-                👔 View as Manager
+               class="btn btn-sm rounded-pill px-3 view-as-btn @(viewAs == "Manager" ? "btn-warning text-dark" : "btn-outline-secondary")">
+                👔 Manager
             </a>
+
             <a asp-controller="Staff" asp-action="Index"
-               class="btn btn-sm btn-outline-secondary rounded-pill px-3">
-                🧑‍💼 View as Staff
+               class="btn btn-sm rounded-pill px-3 view-as-btn @(viewAs == "Staff" ? "btn-info text-dark" : "btn-outline-secondary")">
+                🧑‍💼 Staff
             </a>
+
             <a asp-controller="Home" asp-action="Index"
-               class="btn btn-sm btn-outline-secondary rounded-pill px-3">
-                🛒 View as Customer
+               class="btn btn-sm rounded-pill px-3 view-as-btn @(viewAs == "Customer" ? "btn-success" : "btn-outline-secondary")">
+                🛒 Customer
             </a>
         </div>
     </div>
@@ -70,7 +83,7 @@
                             <h5 class="fw-bold mb-1 text-dark">Manage Accounts</h5>
                             <p class="text-muted small mb-2">View, edit, and manage all users</p>
                             <span class="badge bg-success bg-opacity-10 text-success px-3 py-1 rounded-pill small">
-                                User Management
+                                User Account Management
                             </span>
                         </div>
                     </div>
@@ -111,7 +124,7 @@
         <div class="card-body p-4">
             <h5 class="fw-bold mb-4">🏆 Top 5 Products by Units Sold</h5>
 
-            @if (topProducts.Any())
+            @if (topProducts != null && topProducts.Any())
             {
                 <div class="table-responsive">
                     <table class="table table-hover align-middle mb-0 text-center">
@@ -239,11 +252,33 @@
         align-items: center;
         justify-content: center;
     }
+    /* View-as buttons: keep a subtle active ring */
+    .view-as-btn {
+        font-weight: 500;
+        transition: all .15s ease;
+    }
+    .view-as-btn:not(.btn-outline-secondary) {
+        box-shadow: 0 0 0 3px rgba(0,0,0,.1);
+    }
 </style>
 
 @section Scripts {
 <script>
     const token = document.querySelector('input[name="__RequestVerificationToken"]')?.value ?? '';
+
+    // ── Persist the "view-as" tab across navigation ──────────────
+    // When an admin clicks a view-as button, save the label in sessionStorage
+    // so the correct tab stays highlighted when they come back.
+    document.querySelectorAll('.view-as-btn').forEach(btn => {
+        btn.addEventListener('click', function () {
+            const href = this.getAttribute('href') ?? '';
+            let key = 'Admin';
+            if (href.includes('/Manager')) key = 'Manager';
+            else if (href.includes('/Staff'))   key = 'Staff';
+            else if (href.includes('/Home'))    key = 'Customer';
+            sessionStorage.setItem('adminViewAs', key);
+        });
+    });
 
     async function refreshStats() {
         try {
@@ -303,7 +338,6 @@
         setTimeout(() => el.classList.add('d-none'), 5000);
     }
 
-    // Load stats on page load
     refreshStats();
 </script>
 }

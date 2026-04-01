@@ -34,7 +34,7 @@ namespace ELKH.Services
         public async Task<IEnumerable<ProductVM>> GetAllAsync(CancellationToken ct = default)
         {
             // Include Category so the mapper can populate CategoryName without a second query.
-            var products = await _db.Products.Include(p => p.Category).ToListAsync(ct);
+            var products = await _db.Product.Include(p => p.Category).ToListAsync(ct);
             return _mapper.Map<List<ProductVM>>(products);
         }
 
@@ -62,7 +62,7 @@ namespace ELKH.Services
 
             // Fetch all matching products in one query; build a dictionary keyed by ProductId
             // so callers can do O(1) lookups when enriching cart or order line items.
-            var products = await _db.Products
+            var products = await _db.Product
                 .AsNoTracking()
                 .Include(p => p.Category)
                 .Where(p => idList.Contains(p.PkProductId))
@@ -78,14 +78,14 @@ namespace ELKH.Services
             var entity = _mapper.Map<ProductModel>(vm);
             // Normalize the name immediately so the entity is search-ready before it is persisted.
             entity.NameNormalized = NormalizeName(entity.Name);
-            _db.Products.Add(entity);
+            _db.Product.Add(entity);
             await _db.SaveChangesAsync(ct);
         }
 
         /// <inheritdoc/>
         public async Task UpdateAsync(ProductVM vm, CancellationToken ct = default)
         {
-            var entity = await _db.Products.FindAsync(new object[] { vm.ProductId }, ct);
+            var entity = await _db.Product.FindAsync(new object[] { vm.ProductId }, ct);
             if (entity == null) return;
             // Map changed fields onto the tracked entity (AutoMapper will skip navigation props).
             _mapper.Map(vm, entity);
@@ -97,10 +97,10 @@ namespace ELKH.Services
         /// <inheritdoc/>
         public async Task DeleteAsync(int id, CancellationToken ct = default)
         {
-            var entity = await _db.Products.FindAsync(new object[] { id }, ct);
+            var entity = await _db.Product.FindAsync(new object[] { id }, ct);
             if (entity != null)
             {
-                _db.Products.Remove(entity);
+                _db.Product.Remove(entity);
                 await _db.SaveChangesAsync(ct);
             }
         }

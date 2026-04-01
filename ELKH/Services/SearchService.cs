@@ -103,7 +103,7 @@ namespace ELKH.Services
 
             // --- Tier 2.5: Tag search (if no suggestions found) ---
             // Search for products by tags if the query didn't match product names
-            var tagMatches = await _db.Products
+            var tagMatches = await _db.Product
                 .Where(p => p.Tags.Contains(normQ) && p.IsActive)
                 .OrderBy(p => p.Name)
                 .Take(_searchOptions?.Value?.Fuzzy?.TopResults ?? 10)
@@ -170,7 +170,7 @@ LIMIT 10;";
             // capping the scan at CandidateLimit (default 200) to bound worst-case latency.
             var normQuery = normQ;
             var prefix = normQuery.Length >= 3 ? normQuery.Substring(0, 3) : normQuery;
-            var candidates = await _db.Products
+            var candidates = await _db.Product
                 .Select(p => new { p.PkProductId, p.Name, p.Price, p.NameNormalized, p.Tags, Thumbnail = p.ProductImage!.Select(pi => pi.ProductImageURL).FirstOrDefault() })
                 .Where(p => p.NameNormalized.Contains(prefix) || p.NameNormalized.StartsWith(normQuery) || p.Tags.Contains(normQuery))
                 .Take(_searchOptions?.Value?.Fuzzy?.CandidateLimit ?? 200)

@@ -22,39 +22,26 @@
             <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
         </div>
     }
-    <div class="d-flex justify-content-between align-items-center mb-4">
-        <h2 class="fw-bold text-primary">Manage Roles</h2>
+    <h2 class="fw-bold text-primary text-center mb-4">Manage Roles</h2>
+
+    <div class="d-flex justify-content-center gap-3 mb-4">
+
+        <a asp-controller="AdminRole"
+               asp-action="CreateRole"
+               class="btn btn-primary px-4">
+            + Create New Role
+        </a>
 
         <a asp-controller="Admin"
-           asp-action="Index"
-           class="btn btn-outline-secondary rounded-pill px-4">
+               asp-action="Index"
+               class="btn btn-outline-secondary px-4">
             ← Back to Dashboard
         </a>
-    </div>
- 
-    <div class="d-flex justify-content-center mb-4">
-        <div style="width:700px;">
-            <div class="d-flex justify-content-center gap-3">
 
-                @*
-                    "Assign User To Role" from the top — no specific user or role yet.
-                    userId is intentionally omitted; the admin will type the email on the form.
-                *@
-                <a asp-controller="AdminRole"
-                   asp-action="AssignRoles"
-                   class="btn btn-primary px-5">
-                    Assign User To Role
+    </div>
+
                 </a>
 
-                <a asp-controller="AdminRole"
-                   asp-action="CreateRole"
-                   class="btn btn-primary px-5">
-                    + Create New Role
-                </a>
-
-            </div>
-        </div>
-    </div>
 
     <div class="d-flex justify-content-center">
         <div class="card shadow-sm" style="width:700px;">

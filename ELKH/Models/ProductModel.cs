@@ -89,7 +89,7 @@ public int? StockQuantity { get; set; } = 0;
         /// Used for category filtering and display.
         /// </summary>
         public CategoryModel? Category { get; set; }
-
+        public bool IsDeleted { get; set; } = false;
         /// <summary>
         /// Collection of images associated with this product.
         /// Used for product galleries and thumbnails.

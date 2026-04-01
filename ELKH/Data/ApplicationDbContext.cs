@@ -21,8 +21,9 @@ namespace ELKH.Data
         {
         }
 
-        public DbSet<ProductModel> Products { get; set; }
+        public DbSet<ProductModel> Product { get; set; }
         public DbSet<CategoryModel> Categories { get; set; }
+        public DbSet<ImageModel> ProductImages { get; set; }
         public DbSet<ProductImageModel> ProductImage { get; set; }
         public DbSet<RegisteredUserModel> RegisteredUsers { get; set; }
         public DbSet<CartModel> Carts { get; set; }
@@ -38,6 +39,8 @@ namespace ELKH.Data
         public DbSet<FuzzySuggestionModel> FuzzySuggestions { get; set; }
         public DbSet<AuditEntryModel> AuditEntries { get; set; }
         public DbSet<CachedFuzzyKeyModel> CachedFuzzyKeys { get; set; }
+        public DbSet<StaffMessageModel> StaffMessages { get; set; }
+        public DbSet<MessageReplyModel> MessageReplies { get; set; }
 
         /// <summary>
         /// Configures entity relationships, indexes, and table mappings for the application.

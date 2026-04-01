@@ -5,11 +5,6 @@ using Microsoft.EntityFrameworkCore;
 
 namespace ELKH.Repositories
 {
-    /// <summary>
-    /// Data access layer for the order history staff/admin views.
-    /// Provides queries that eager-load only the navigation properties
-    /// required by each view, avoiding unnecessary over-fetching.
-    /// </summary>
     public class OrderHistoryManagementRepo : IOrderHistoryManagementRepo
     {
         private ApplicationDbContext _context;
@@ -19,11 +14,6 @@ namespace ELKH.Repositories
             _context = context;
         }
 
-        /// <summary>
-        /// Returns all orders with their associated registered user.
-        /// Used by the admin summary listing — only <see cref="OrderModel.RegisteredUser"/>
-        /// is included because the listing view needs email and delivery status only.
-        /// </summary>
         public async Task<IEnumerable<OrderModel>> GetAllOrders()
         {
             return await _context.Orders
@@ -31,14 +21,6 @@ namespace ELKH.Repositories
                 .ToListAsync();
         }
 
-        /// <summary>
-        /// Returns a single order with full detail for the given user and order ID.
-        /// Eager-loads <see cref="OrderModel.Transaction"/>, order items, and each
-        /// item's product so the detail view can render line items without extra queries.
-        /// Returns <c>null</c> when no matching order exists for the supplied credentials.
-        /// </summary>
-        /// <param name="email">Email of the signed-in user; used to scope the query to their orders.</param>
-        /// <param name="orderId">Primary key of the order to retrieve.</param>
         public async Task<OrderModel?> OrderDetails(string email, int orderId)
         {
             return await _context.Orders
@@ -49,13 +31,6 @@ namespace ELKH.Repositories
                 .FirstOrDefaultAsync();
         }
 
-        /// <summary>
-        /// Returns a single order by primary key for admin viewing, with full detail:
-        /// transaction, order items, each item's product, and the registered user.
-        /// No email scoping is applied — this is intentionally an admin-only query.
-        /// Returns <c>null</c> when no order with <paramref name="orderId"/> exists.
-        /// </summary>
-        /// <param name="orderId">Primary key of the order to retrieve.</param>
         public async Task<OrderModel?> GetByIdAsync(int orderId)
         {
             return await _context.Orders
@@ -68,14 +43,9 @@ namespace ELKH.Repositories
         }
 
         /// <summary>
-        /// Updates the delivery status of an order and returns the full order (with
-        /// <see cref="OrderModel.RegisteredUser"/> included) so the caller can send a
-        /// status-change notification email without issuing a second query.
-        /// Returns <c>null</c> when no order with <paramref name="orderId"/> exists.
+        /// UPDATED: Parameter 'deliveryStatus' changed from string to DeliveryStatus Enum.
         /// </summary>
-        /// <param name="orderId">Primary key of the order to update.</param>
-        /// <param name="deliveryStatus">The new delivery status value (e.g. "Shipped", "Delivered").</param>
-        public async Task<OrderModel?> UpdateDeliveryStatusAsync(int orderId, string deliveryStatus)
+        public async Task<OrderModel?> UpdateDeliveryStatusAsync(int orderId, DeliveryStatus deliveryStatus)
         {
             var order = await _context.Orders
                 .Include(o => o.RegisteredUser)
@@ -83,16 +53,16 @@ namespace ELKH.Repositories
 
             if (order is null) return null;
 
+            // FIXED: Assigning Enum directly
             order.DeliveryStatus = deliveryStatus;
 
-            // Mirror a human-readable OrderStatus so the customer-facing history badge stays
-            // in sync with the delivery state set by staff. Only update for customer-visible
-            // milestones (Shipped / Delivered); all other transitions leave OrderStatus unchanged.
+            // FIXED: Switch now evaluates Enum values instead of strings
             order.OrderStatus = deliveryStatus switch
             {
-                "Shipped"   => "Shipped",
-                "Delivered" => "Delivered",
-                _           => order.OrderStatus
+                DeliveryStatus.Shipped => OrderStatus.Shipped,
+                // Note: If you removed 'Delivered' from your Enum earlier, 
+                // this line can be removed or mapped to Shipped as well.
+                _ => order.OrderStatus
             };
 
             await _context.SaveChangesAsync();
@@ -100,4 +70,3 @@ namespace ELKH.Repositories
         }
     }
 }
-

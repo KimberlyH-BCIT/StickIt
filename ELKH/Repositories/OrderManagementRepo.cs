@@ -12,7 +12,7 @@ namespace ELKH.Repositories
     /// </summary>
     public class OrderManagementRepo : RepositoryBase<OrderModel, int>, IOrderManagementRepo
     {
-        public OrderManagementRepo(ApplicationDbContext context, ILogger<OrderManagementRepo> logger) 
+        public OrderManagementRepo(ApplicationDbContext context, ILogger<OrderManagementRepo> logger)
             : base(context, logger)
         {
         }
@@ -28,7 +28,8 @@ namespace ELKH.Repositories
                 {
                     OrderId = o.PkOrderId,
                     UserEmail = o.RegisteredUser!.Email,
-                    DeliveryStatus = o.DeliveryStatus
+                    // FIXED: Convert Enum to string for the ViewModel
+                    DeliveryStatus = o.DeliveryStatus.ToString()
                 })
                 .ToListAsync();
         }
@@ -45,7 +46,8 @@ namespace ELKH.Repositories
                 {
                     OrderId = o.PkOrderId,
                     UserEmail = o.RegisteredUser!.Email,
-                    DeliveryStatus = o.DeliveryStatus
+                    // FIXED: Convert Enum to string for the ViewModel
+                    DeliveryStatus = o.DeliveryStatus.ToString()
                 })
                 .ToListAsync();
         }

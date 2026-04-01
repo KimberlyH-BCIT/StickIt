@@ -8,5 +8,7 @@ public interface IOrderRepo
     Task<OrderModel?> GetByIdWithItemsAsync(int id);
     Task<IEnumerable<OrderModel>> GetByUserIdAsync(int registeredUserId);
     Task<OrderModel> CreateAsync(OrderModel order);
-    Task<bool> UpdateStatusAsync(int orderId, string status);
+
+    // FIXED: Changed 'string status' to 'OrderStatus status' to match the Repo implementation
+    Task<bool> UpdateStatusAsync(int orderId, OrderStatus status);
 }

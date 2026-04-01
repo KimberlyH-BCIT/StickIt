@@ -40,8 +40,10 @@ namespace ELKH.Services
                 return;
             }
 
+            var port = _options.Port;
+            var user = _options.User;
+            var pass = _options.Pass;
             var fromAddr = from ?? _options.From;
-
             var message = new MimeMessage();
             message.From.Add(MailboxAddress.Parse(fromAddr));
             foreach (var address in to)

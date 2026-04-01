@@ -1,0 +1,76 @@
+﻿@model List<ELKH.ViewModels.ProductVM>
+
+@{
+    ViewData["Title"] = "Deleted Products";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+
+<div class="container mt-4" style="max-width:800px;">
+
+    <!-- Header -->
+    <div class="d-flex justify-content-between align-items-center mb-3">
+        <h3 class="text-danger mb-0">🗑️ Deleted Products</h3>
+        <a asp-action="ListOfProducts" class="btn btn-outline-secondary btn-sm rounded-pill px-3">
+            ← Back To Dashboard
+        </a>
+    </div>
+
+    <!-- Success Message -->
+    @if (TempData["Restored"] != null)
+    {
+        <div class="alert alert-success text-center">
+            @TempData["Restored"]
+        </div>
+    }
+
+    <!-- Table -->
+    <div class="card border-0 shadow-sm rounded-4">
+        <div class="table-responsive">
+            <table class="table mb-0">
+                <thead class="table-light">
+                    <tr>
+                        <th>#</th>
+                        <th>Name</th>
+                        <th class="text-end">Price</th>
+                        <th class="text-center">Restore</th>
+                    </tr>
+                </thead>
+
+                <tbody>
+                    @if (Model.Any())
+                    {
+                        @foreach (var p in Model)
+                        {
+                            <tr class="table-secondary">
+                                <td>@p.ProductId</td>
+                                <td class="text-decoration-line-through">
+                                    @p.ProductName
+                                </td>
+                                <td class="text-end">$@p.Price.ToString("N2")</td>
+                                <td class="text-center">
+                                    <form asp-action="RestoreProduct" method="post">
+                                        @Html.AntiForgeryToken()
+                                        <input type="hidden" name="id" value="@p.ProductId" />
+                                        <button class="btn btn-sm btn-outline-success rounded-pill">
+                                            ♻ Restore
+                                        </button>
+                                    </form>
+                                </td>
+                            </tr>
+                        }
+                    }
+                    else
+                    {
+                        <tr>
+                            <td colspan="4" class="text-center py-4 text-muted">
+                                No deleted products
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+
+            </table>
+        </div>
+    </div>
+
+</div>

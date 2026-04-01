@@ -47,32 +47,44 @@ else
         <tbody>
                         @foreach (var order in Model.Orders)
                         {
+                            @* Determine badge color based ONLY on your existing OrderStatus Enum *@
                             var statusBadge = order.OrderStatus switch
-            {
-                                "Paid" => "bg-success",
-                                "Processing" => "bg-info text-dark",
-                                "Shipped" => "bg-primary",
-                                "Delivered" => "bg-success",
-                                "Cancelled" => "bg-danger",
+                            {
+                                ELKH.Models.OrderStatus.Shipped => "bg-primary",
+                                ELKH.Models.OrderStatus.Pending => "bg-warning text-dark",
+                                ELKH.Models.OrderStatus.Cancelled => "bg-danger",
+                                // Add Paid here if it exists in your OrderStatus enum, otherwise it hits default
                                 _ => "bg-secondary"
                             };
+
                             <tr class="align-middle">
                                 <td>#@order.PkOrderId</td>
                                 <td>@order.CreatedAt.ToString("MMM d, yyyy")</td>
                                 <td>@order.OrderItems.Count item@(order.OrderItems.Count != 1 ? "s" : "")</td>
                                 <td>$@order.TotalAmount.ToString("F2")</td>
-                                <td><span class="badge @statusBadge">@order.OrderStatus</span></td>
-                                <td><span class="text-muted small">@order.DeliveryStatus</span></td>
+
+                                <td>
+                                    <span class="badge @statusBadge">
+                                        @order.OrderStatus.ToString()
+                                    </span>
+                                </td>
+                                <td>
+                                    <span class="text-muted small">
+                                        @order.DeliveryStatus.ToString()
+                                    </span>
+                                </td>
+
                                 <td class="d-flex gap-1 flex-wrap">
                                     <a asp-controller="Order" asp-action="Details" asp-route-id="@order.PkOrderId"
                                        class="btn btn-sm btn-outline-dark">View</a>
+            
                                     @foreach (var item in order.OrderItems)
                                     {
                                         if (item.Product is not null)
                                         {
                                             <form asp-controller="Cart" asp-action="AddToCart" method="post">
                                                 @Html.AntiForgeryToken()
-                                                <input type="hidden" name="itemId"   value="@item.FkProductId" />
+                                                <input type="hidden" name="itemId" value="@item.FkProductId" />
                                                 <input type="hidden" name="quantity" value="1" />
                                                 <button type="submit" class="btn btn-sm btn-outline-secondary"
                                                         title="Buy @item.Product.Name again">
@@ -82,8 +94,8 @@ else
                                         }
                                     }
                                 </td>
-                </tr>
-            }
+                            </tr>
+                        }
         </tbody>
     </table>
             </div>

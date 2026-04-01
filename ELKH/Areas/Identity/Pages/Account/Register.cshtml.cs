@@ -234,7 +234,9 @@ namespace ELKH.Areas.Identity.Pages.Account
                     // Assign the Customer role to every new registrant.
                     const string customerRole = "Customer";
                     if (!await _roleManager.RoleExistsAsync(customerRole))
+                    {
                         await _roleManager.CreateAsync(new IdentityRole(customerRole));
+                    }
                     await _userManager.AddToRoleAsync(user, customerRole);
 
                     _logger.LogInformation("User created a new account with password.");

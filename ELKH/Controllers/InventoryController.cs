@@ -4,130 +4,259 @@ using ELKH.Repositories;
 using ELKH.ViewModels;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Mvc.Rendering;
 
 namespace ELKH.Controllers
 {
-    /// <summary>
-    /// Admin controller for inventory management: listing products, adjusting stock
-    /// quantities, and managing product images.
-    /// </summary>
-[Authorize(Roles = "Admin")]
-public class InventoryController : Controller
-{
-    private readonly IInventoryRepo _inventoryRepo;
+    [Authorize(Roles = "Admin, Staff")]
+    public class InventoryController : Controller
+    {
+        private readonly InventoryRepo _inventoryRepo;
 
-        public InventoryController(IInventoryRepo inventoryRepo)
+        public InventoryController(InventoryRepo inventoryRepo)
         {
             _inventoryRepo = inventoryRepo;
         }
 
-
-public async Task<IActionResult> Index()
+        // ─────────────────────────────────────────────────────────────
+        // helper: safely fetch images — returns empty list if the image
+        // database table doesn't exist yet (SQLite migration not run).
+        // ─────────────────────────────────────────────────────────────
+        private async Task<List<ProductImageVM>> SafeGetImages(int productId)
         {
-            var products = await _inventoryRepo.GetAllProduct();
-
-            var inventoryList = products.Select(p => new InventoryVM
+            try
             {
-                PkProductId = p.PkProductId,
-                ProductName = p.Name,
-                Quantity = p.StockQuantity,
-            }).ToList();
+                var rows = await _inventoryRepo.GetProductImages(productId);
+                if (rows == null) return new List<ProductImageVM>();
 
-            return View(inventoryList);
-        }
-
-[HttpPost]
-        [ValidateAntiForgeryToken]
-        public async Task<IActionResult> EditProductAmount(int productId, int quantityId)
-        {
-            await _inventoryRepo.EditProductQuantity(productId, quantityId);
-
-            return RedirectToAction(nameof(Index));
-        }
-
-        //Pass
-        public async Task<IActionResult> ProductImages(int Id)
-        {
-
-            ViewBag.ProductId = Id;
-            // GetProductImages likely returns List<ImageModel>
-            var productImages = await _inventoryRepo.GetProductImages(Id);
-
-            if (productImages == null)
-            {
-                return NotFound();
+                return rows.Select(pi => new ProductImageVM
+                {
+                    ImageId = pi.ImageId,
+                    ImageData = pi.ImageData,
+                    FkProductId = productId,
+                    FileName = pi.FileName ?? string.Empty,
+                    Description = pi.Description ?? string.Empty
+                }).ToList();
             }
-
-var vmList = productImages.Select(pi => new ProductImageVM
-{
-    FileName = pi.FileName,
-    Description = pi.Description,
-    ImageData = pi.ImageData
-}).ToList();
-
-            return View(vmList);
+            catch
+            {
+                // Image table doesn't exist / migration not applied yet.
+                // Show "no images" rather than crashing the whole page.
+                TempData["ImageDbError"] =
+                    "⚠️ Image database is not set up yet. " +
+                    "Run 'dotnet ef database update' for the ImageStoreContext.";
+                return new List<ProductImageVM>();
+            }
         }
+        // ================= INDEX =================
+        public async Task<IActionResult> Index(string? searchString, string? sortOrder, string? stockFilter, int page = 1)
+        {
+            int pageSize = 10;
 
-public async Task<IActionResult> AddImage(int productId)
-{
-    var vm = new ImageModel();
-    ViewBag.ProductId = productId;
+            var products = await _inventoryRepo.GetAllProduct(searchString, sortOrder, stockFilter, page, pageSize);
+
+            ViewBag.CurrentFilter = searchString;
+            ViewBag.CurrentSort = sortOrder;
+            ViewBag.StockFilter = stockFilter;
+
+            return View(products);
+        }
+        // ================= DETAIL (read-only) =================
+        public async Task<IActionResult> Detail(int Id)
+        {
+            var product = await _inventoryRepo.GetProductById(Id);
+            if (product == null) return NotFound();
+
+            var vm = new ProductVM
+            {
+                ProductId = Id,
+                ProductName = product.Name,
+                Description = product.Description,
+                Price = product.Price,
+                DiscountPercent = product.DiscountPercent,
+                StockQuantity = product.StockQuantity,
+                IsActive = product.IsActive,
+                CategoryId = product.FkCategoryId,
+                CategoryName = product.Category?.CategoryName ?? string.Empty,
+                ExistingImages = await SafeGetImages(Id)
+            };
 
             return View(vm);
         }
 
+        // ================= EDIT PRODUCT — GET =================
+        public async Task<IActionResult> EditProduct(int Id)
+        {
+            var product = await _inventoryRepo.GetProductById(Id);
+            if (product == null) return NotFound();
 
-        //Pass
+            var categories = await _inventoryRepo.GetAllCategories();
+            ViewBag.Categories = new SelectList(categories, "PkCategoryId", "CategoryName");
+
+            var vm = new ProductVM
+            {
+                ProductId = Id,
+                ProductName = product.Name,
+                Description = product.Description,
+                Price = product.Price,
+                DiscountPercent = product.DiscountPercent,
+                StockQuantity = product.StockQuantity,
+                IsActive = product.IsActive,
+                CategoryId = product.FkCategoryId,
+                ExistingImages = await SafeGetImages(Id),
+                ProductReviews = product.ProductRatings?.Select(pr => new ReviewDisplayVM
+                {
+                    RatingId = pr.PkRatingId,
+                    Rating = pr.Rating,
+                    Description = pr.Description,
+                    CreatedAt = pr.RatedTime,
+                    LastEditedAt = pr.LastEditedAt,
+                    ReviewerFirstName = pr.RegisteredUser.Email
+                }).ToList()
+            };
+
+            return View(vm);
+        }
+
+        // ================= EDIT PRODUCT — POST =================
         [HttpPost]
         [ValidateAntiForgeryToken]
-        [RequestSizeLimit(5 * 1024 * 1024)]
-        [RequestFormLimits(MultipartBodyLengthLimit = 5 * 1024 * 1024)]
-        public async Task<IActionResult> AddImage(int productId, IFormFile file)
+        public async Task<IActionResult> EditProduct(ProductVM vm)
         {
             if (!ModelState.IsValid)
             {
-                ViewBag.ProductId = productId;
-                return View("AddImage");
+                var categories = await _inventoryRepo.GetAllCategories();
+                ViewBag.Categories = new SelectList(categories, "PkCategoryId", "CategoryName");
+                vm.ExistingImages = await SafeGetImages(vm.ProductId);
+                return View(vm);
             }
 
+            await _inventoryRepo.EditProduct(vm);
+
+            // Upload any new images submitted with the form
+            if (vm.NewImages != null && vm.NewImages.Count > 0)
+            {
+                var allowed = new HashSet<string>(StringComparer.OrdinalIgnoreCase)
+                    { ".jpg", ".jpeg", ".png", ".gif", ".webp", ".bmp" };
+
+                foreach (var file in vm.NewImages)
+                {
+                    if (file == null || file.Length == 0) continue;
+                    if (!allowed.Contains(Path.GetExtension(file.FileName))) continue;
+                    await _inventoryRepo.UploadImage(vm.ProductId, file);
+                }
+            }
+
+            TempData["Success"] = "Product updated successfully.";
+            return RedirectToAction("EditProduct", new { Id = vm.ProductId });
+        }
+
+        // ================= DELETE REVIEW =================
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> DeleteProductReview(int reviewId, int productId)
+        {
+            await _inventoryRepo.DeleteProductReview(reviewId);
+            return RedirectToAction("EditProduct", new { Id = productId });
+        }
+
+        // ================= ADD PRODUCT — GET =================
+        public async Task<IActionResult> AddProduct()
+        {
+            var categories = await _inventoryRepo.GetAllCategories();
+            ViewBag.Categories = new SelectList(categories, "PkCategoryId", "CategoryName");
+            return View(new ProductVM());
+        }
+
+        // ================= ADD PRODUCT — POST =================
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> AddProduct(ProductVM vm)
+        {
+            if (!ModelState.IsValid)
+            {
+                var categories = await _inventoryRepo.GetAllCategories();
+                ViewBag.Categories = new SelectList(categories, "PkCategoryId", "CategoryName");
+                return View(vm);
+            }
+
+            var savedId = await _inventoryRepo.AddProduct(vm);
+
+            // Upload images submitted alongside the add form
+            if (vm.NewImages != null && vm.NewImages.Count > 0)
+            {
+                var allowed = new HashSet<string>(StringComparer.OrdinalIgnoreCase)
+                    { ".jpg", ".jpeg", ".png", ".gif", ".webp", ".bmp" };
+
+                foreach (var file in vm.NewImages)
+                {
+                    if (file == null || file.Length == 0) continue;
+                    if (!allowed.Contains(Path.GetExtension(file.FileName))) continue;
+                    await _inventoryRepo.UploadImage(savedId, file);
+                }
+            }
+
+            TempData["Success"] = "Product added successfully.";
+            return RedirectToAction("Detail", new { Id = savedId });
+        }
+
+        // ================= EDIT STOCK QUANTITY =================
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> EditProductAmount(int productId, int quantityId)
+        {
+            await _inventoryRepo.EditProductQuantity(productId, quantityId);
+            return RedirectToAction(nameof(Index));
+        }
+
+        // ================= DELETE IMAGE =================
+        // Redirects back to EditProduct, not the old ProductImages page.
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> DeleteImage(int productId, int imageId)
+        {
+            await _inventoryRepo.DeleteImage(imageId);
+            return RedirectToAction("EditProduct", new { Id = productId });
+        }
+
+        // ================= PRODUCT IMAGES (legacy route kept) =================
+        public async Task<IActionResult> ProductImages(int Id)
+        {
+            ViewBag.ProductId = Id;
+            var images = await SafeGetImages(Id);
+            return View(images);
+        }
+
+        // ================= ADD IMAGE (legacy route kept) =================
+        public IActionResult AddImage(int productId)
+        {
+            ViewBag.ProductId = productId;
+            return View();
+        }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> AddImage(int productId, IFormFile file)
+        {
             if (file == null || file.Length == 0)
             {
                 ModelState.AddModelError("", "Please select a file.");
                 ViewBag.ProductId = productId;
-                return View("AddImage");
+                return View();
             }
 
-            var allowedExtensions = new HashSet<string>(StringComparer.OrdinalIgnoreCase)
+            var allowed = new HashSet<string>(StringComparer.OrdinalIgnoreCase)
                 { ".jpg", ".jpeg", ".png", ".gif", ".webp", ".bmp" };
-            var ext = Path.GetExtension(file.FileName);
-            if (!allowedExtensions.Contains(ext))
+
+            if (!allowed.Contains(Path.GetExtension(file.FileName)))
             {
-                ModelState.AddModelError("", "Only image files are allowed (jpg, jpeg, png, gif, webp, bmp).");
+                ModelState.AddModelError("", "Only image files are allowed.");
                 ViewBag.ProductId = productId;
-                return View("AddImage");
+                return View();
             }
 
-            var allowedMimeTypes = new HashSet<string>(StringComparer.OrdinalIgnoreCase)
-                { "image/jpeg", "image/png", "image/gif", "image/webp", "image/bmp" };
-            if (!allowedMimeTypes.Contains(file.ContentType))
-            {
-                ModelState.AddModelError("", "The uploaded file has an invalid content type.");
-                ViewBag.ProductId = productId;
-                return View("AddImage");
-            }
-
-            var addImageRepo = await _inventoryRepo.UploadImage(productId, file);
-
-            if (addImageRepo)
-            {
-                return RedirectToAction("ProductImages", new { id = productId });
-            }
-
-            ModelState.AddModelError("", "The file could not be saved. Ensure it is a valid image under 5 MB.");
-            ViewBag.ProductId = productId;
-            return View("AddImage");
+            await _inventoryRepo.UploadImage(productId, file);
+            return RedirectToAction("EditProduct", new { Id = productId });
         }
-
-      
     }
 }
