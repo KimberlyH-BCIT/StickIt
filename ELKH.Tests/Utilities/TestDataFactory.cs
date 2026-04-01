@@ -51,7 +51,7 @@ public static class TestDataFactory
             PkProductId = id ?? _faker.Random.Int(1, 10000),
             Name = _faker.Commerce.ProductName(),
             Description = _faker.Commerce.ProductDescription(),
-            Price = price ?? decimal.Parse(_faker.Commerce.Price(5, 100)),
+            Price = price ?? _faker.Random.Decimal(5, 100),
             FkCategoryId = categoryId ?? _faker.Random.Int(1, 10),
             StockQuantity = stockQuantity ?? _faker.Random.Int(0, 1000),
             IsActive = isActive
