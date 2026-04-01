@@ -1,10 +1,7 @@
-﻿namespace ELKH.ViewModels
-{
-    public class OrderItemVM
-    {
-        public int ProductId { get; set; }
-        public int Quantity { get; set; }
-        public string ProductName { get; set; } = string.Empty;
-        public decimal ProductPrice { get; set; }
-    }
-}
+namespace ELKH.ViewModels;
+
+/// <summary>
+/// View model representing an individual order item with product details,
+/// quantities, pricing, and line-total calculations for order display.
+/// </summary>
+public record OrderItemVM(int ProductId = 0, int Quantity = 0, string ProductName = "", decimal ProductPrice = 0M);

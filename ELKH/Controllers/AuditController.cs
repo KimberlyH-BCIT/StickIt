@@ -14,36 +14,48 @@ namespace ELKH.Controllers
     /// <remarks>
     /// TABLE OF CONTENTS
     /// ================================================================================
-    /// 1. Constructor & Dependencies
-    /// 2. Audit Log Viewing
+    /// 1. Constructor & Dependencies                                   (lines 44-52)
+    /// 2. Audit Log Viewing                                            (lines 54-171)
     ///    - Index()                               // GET: List audit entries with filters
     ///    - Details(id)                           // GET: View single audit entry
     /// ================================================================================
     /// 
-    /// Features:
-    /// - Date range filtering (from/to)
-    /// - Actor filtering (username search)
-    /// - Action filtering (action type search)
+    /// FEATURES:
+    /// - Date range filtering (from/to dates)
+    /// - Actor filtering (username substring search)
+    /// - Action filtering (action type substring search)
     /// - CSV export for compliance reporting
-    /// - Pagination (50 entries per page)
+    /// - Pagination (50 entries per page, configurable)
     /// 
-    /// Routes: /Admin/Audit/{action}
-    /// Authorization: Admin role required
+    /// ROUTES:
+    /// - GET /Admin/Audit - List view with filters and pagination
+    /// - GET /Admin/Audit?export=csv - CSV export of filtered results
+    /// - GET /Admin/Audit/Details/{id} - Single entry details
+    ///
+    /// AUTHORIZATION:
+    /// - Admin role required for all endpoints
+    /// - Audit trail immutable (no create/update/delete operations)
     /// </remarks>
     [Area("Admin")]
     [Authorize(Roles = "Admin")]
     public class AuditController : Controller
     {
+        #region Constructor & Dependencies
+
         private readonly ApplicationDbContext _db;
 
         /// <summary>
         /// Initializes a new instance of <see cref="AuditController"/> with the required database context.
         /// </summary>
         /// <param name="db">The EF Core database context used to query <see cref="AuditEntryModel"/> records.</param>
-        public AuditController(ApplicationDbContext db) 
-        { 
-            _db = db; 
+        public AuditController(ApplicationDbContext db)
+        {
+            _db = db;
         }
+
+        #endregion
+
+        #region Audit Log Viewing
 
         /// <summary>
         /// Displays a paginated, filterable list of audit log entries.
@@ -81,30 +93,30 @@ namespace ELKH.Controllers
 
             // --- Date range filters (both boundaries are inclusive) ---
             // TryParse guards against malformed date strings without throwing exceptions.
-            if (req.ContainsKey("from"))
+            if (req.TryGetValue("from", out var fromValue))
             {
-                if (DateTime.TryParse(req["from"], out var from))
+                if (DateTime.TryParse(fromValue, out var from))
                     q = q.Where(a => a.Timestamp >= from);
             }
-            if (req.ContainsKey("to"))
+            if (req.TryGetValue("to", out var toValue))
             {
-                if (DateTime.TryParse(req["to"], out var to))
+                if (DateTime.TryParse(toValue, out var to))
                     q = q.Where(a => a.Timestamp <= to);
             }
             
             // --- Actor filter: substring match on the username who performed the action ---
             // Empty/whitespace values are ignored to avoid unintentionally filtering everything.
-            if (req.ContainsKey("actor"))
+            if (req.TryGetValue("actor", out var actorValue))
             {
-                var actor = req["actor"].ToString();
+                var actor = actorValue.ToString();
                 if (!string.IsNullOrEmpty(actor))
                     q = q.Where(a => a.Actor.Contains(actor));
             }
 
             // --- Action filter: substring match on the action type (e.g. "Delete", "Login") ---
-            if (req.ContainsKey("action"))
+            if (req.TryGetValue("action", out var actionValue))
             {
-                var action = req["action"].ToString();
+                var action = actionValue.ToString();
                 if (!string.IsNullOrEmpty(action))
                     q = q.Where(a => a.Action.Contains(action));
             }
@@ -113,7 +125,7 @@ namespace ELKH.Controllers
             // Checked before pagination so the export always contains every matching record,
             // not just the current page. StringBuilder is used for efficient string concatenation
             // when iterating over potentially thousands of rows.
-            if (req.ContainsKey("export") && req["export"].ToString() == "csv")
+            if (req.TryGetValue("export", out var exportValue) && exportValue.ToString() == "csv")
             {
                 var all = await q.OrderByDescending(a => a.Timestamp).ToListAsync();
                 var csv = new StringBuilder();
@@ -168,5 +180,7 @@ namespace ELKH.Controllers
             if (entry is null) return NotFound();
             return View(entry);
         }
+
+        #endregion
     }
 }

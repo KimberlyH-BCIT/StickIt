@@ -1,0 +1,201 @@
+@*
+╔══════════════════════════════════════════════════════════════════════════════════╗
+║ Kawaii Product Card Partial Component                                           ║
+║ Rounded card surfaces, cute accent badges, gentle shadows                       ║
+╚══════════════════════════════════════════════════════════════════════════════════╝
+*@
+
+@model ELKH.ViewModels.ProductVM
+
+@{
+    var hasDiscount = Model.DiscountPercent > 0;
+    var isNew = Model.IsNewArrival; // Use the built-in property
+    var originalPrice = Model.Price;
+    var discountedPrice = hasDiscount ? Model.Price * (1 - Model.DiscountPercent / 100) : Model.Price;
+}
+
+<div class="product-card-kawaii kawaii-card glow-on-hover" data-product-id="@Model.ProductId">
+
+    <!-- Product badges -->
+    @if (hasDiscount || isNew || Model.IsBestSeller || Model.IsTrending)
+    {
+        <div class="product-badges">
+            @if (isNew)
+            {
+                <partial name="_Badge" model="@(new ELKH.ViewModels.BadgeVM { Text = "New", Type = "new" })" />
+            }
+            @if (hasDiscount)
+            {
+                <partial name="_Badge" model="@(new ELKH.ViewModels.BadgeVM { Text = $"{Model.DiscountPercent}% Off", Type = "sale" })" />
+            }
+            @if (Model.IsBestSeller)
+            {
+                <partial name="_Badge" model="@(new ELKH.ViewModels.BadgeVM { Text = "Best Seller", Type = "best" })" />
+            }
+            @if (Model.IsTrending)
+            {
+                <partial name="_Badge" model="@(new ELKH.ViewModels.BadgeVM { Text = "Trending", Type = "hot" })" />
+            }
+        </div>
+    }
+
+    <!-- Product image -->
+    <div class="product-media">
+        @if (!string.IsNullOrEmpty(Model.Thumbnail))
+        {
+            <img src="@Model.Thumbnail" 
+                 alt="@Model.ProductName" 
+                 class="product-image"
+                 loading="lazy"
+                 onerror="this.src='/images/placeholder-sticker.png'" />
+        }
+        else
+        {
+            <div class="product-placeholder">
+                <i class="bi bi-image" style="font-size: 3rem; color: var(--purple-light);" aria-hidden="true"></i>
+                <p class="text-muted mt-2 mb-0">No Image</p>
+            </div>
+        }
+
+        <!-- Wishlist button overlay -->
+        @if (User.Identity?.IsAuthenticated == true)
+        {
+            <button class="wishlist-btn btn-kawaii btn-outline-kawaii" 
+                    data-product-id="@Model.ProductId"
+                    aria-label="Add to wishlist">
+                <i class="bi bi-heart" aria-hidden="true"></i>
+            </button>
+        }
+        else
+        {
+            <button class="wishlist-btn btn-kawaii btn-outline-kawaii" 
+                    data-bs-toggle="modal" 
+                    data-bs-target="#wishlistSignInModal"
+                    aria-label="Sign in to add to wishlist">
+                <i class="bi bi-heart" aria-hidden="true"></i>
+            </button>
+        }
+    </div>
+
+    <!-- Product info -->
+    <div class="product-info">
+
+        <!-- Product name -->
+        <h3 class="product-title font-heading">
+            <a asp-controller="Product" asp-action="Details" asp-route-id="@Model.ProductId" 
+               class="text-decoration-none text-purple">
+                @Model.ProductName
+            </a>
+        </h3>
+
+        <!-- Category -->
+        @if (!string.IsNullOrEmpty(Model.CategoryName))
+        {
+            <div class="product-category mb-2">
+                <a asp-controller="Category" asp-action="ByCategory" asp-route-id="@Model.CategoryId" 
+                   class="text-decoration-none">
+                    <partial name="_Badge" model="@(new ELKH.ViewModels.BadgeVM { Text = Model.CategoryName, Type = "category" })" />
+                </a>
+            </div>
+        }
+
+        <!-- Description -->
+        @if (!string.IsNullOrEmpty(Model.Description))
+        {
+            <p class="product-description text-muted">
+                @(Model.Description.Length > 100 ? Model.Description.Substring(0, 100) + "..." : Model.Description)
+            </p>
+        }
+
+        <!-- Rating -->
+        @if (Model.AverageRating > 0)
+        {
+            <div class="product-rating mb-3">
+                @for (int i = 1; i <= 5; i++)
+                {
+                    if (i <= Model.AverageRating)
+                    {
+                        <i class="bi bi-star-fill text-warning" aria-hidden="true"></i>
+                    }
+                    else if (i - 0.5 <= Model.AverageRating)
+                    {
+                        <i class="bi bi-star-half text-warning" aria-hidden="true"></i>
+                    }
+                    else
+                    {
+                        <i class="bi bi-star text-warning" aria-hidden="true"></i>
+                    }
+                }
+                <span class="rating-text text-muted ms-2">(@Model.AverageRating.ToString("0.0"))</span>
+            </div>
+        }
+
+        <!-- Price -->
+        <div class="product-price mb-3">
+            @if (hasDiscount)
+            {
+                <div class="price-container">
+                    <span class="discounted-price font-heading">$@discountedPrice.ToString("F2")</span>
+                    <span class="original-price text-muted">$@originalPrice.ToString("F2")</span>
+                    <span class="savings text-success font-weight-bold">
+                        Save $@((originalPrice - discountedPrice).ToString("F2"))
+                    </span>
+                </div>
+            }
+            else
+            {
+                <span class="current-price font-heading">$@Model.Price.ToString("F2")</span>
+            }
+        </div>
+
+        <!-- Stock status -->
+        @if (Model.IsLowStock)
+        {
+            <div class="stock-info surface-butter p-2 rounded mb-3">
+                <small class="text-purple">
+                    <i class="bi bi-exclamation-triangle me-1" aria-hidden="true"></i>
+                    Low stock: <strong>@(Model.StockQuantity ?? 0) left</strong>
+                </small>
+            </div>
+        }
+        else if (!Model.IsInStock)
+        {
+            <div class="stock-info bg-light p-2 rounded mb-3">
+                <small class="text-danger">
+                    <i class="bi bi-x-circle me-1" aria-hidden="true"></i>
+                    <strong>Out of Stock</strong>
+                </small>
+            </div>
+        }
+    </div>
+
+    <!-- Product actions -->
+    <div class="product-actions">
+        @if (Model.IsInStock)
+        {
+            <button class="btn-kawaii btn-primary-kawaii w-100 add-to-cart-btn sparkle" 
+                    data-product-id="@Model.ProductId"
+                    aria-label="Add @Model.ProductName to cart">
+                <i class="bi bi-cart-plus me-2" aria-hidden="true"></i>
+                Add to Cart
+            </button>
+        }
+        else
+        {
+            <button class="btn-kawaii btn-outline-kawaii w-100" disabled>
+                <i class="bi bi-cart-x me-2" aria-hidden="true"></i>
+                Out of Stock
+            </button>
+        }
+
+        <!-- Quick view button -->
+        <button class="btn-kawaii btn-secondary-kawaii w-100 mt-2" 
+                data-bs-toggle="modal" 
+                data-bs-target="#quickViewModal"
+                data-product-id="@Model.ProductId"
+                aria-label="Quick view @Model.ProductName">
+            <i class="bi bi-eye me-2" aria-hidden="true"></i>
+            Quick View
+        </button>
+    </div>
+</div>

@@ -10,6 +10,8 @@ namespace ELKH.Services
     /// </summary>
     public interface ICartService
     {
+        Task UpdateQuantityAsync(string userEmail, int cartId, int quantity);
+        Task ClearCartAsync(string email);
         /// <summary>
         /// Adds a product to the user's shopping cart with the specified quantity.
         /// </summary>
@@ -29,18 +31,20 @@ namespace ELKH.Services
         /// <param name="userEmail">Email of the authenticated user</param>
         /// <param name="itemId">Product ID to purchase</param>
         /// <param name="quantity">Quantity to purchase</param>
+        /// <param name="shippingMethodId">ID of the selected shipping method</param>
         /// <returns>
         /// Positive order ID on success.
         /// 0 if the user or product was not found.
         /// -1 if the item has insufficient stock.
         /// -2 if the user has no delivery address on file.
+        /// -3 if the shipping method is invalid or inactive.
         /// </returns>
         /// <remarks>
         /// This is an isolated single-item purchase that does NOT increment or modify
         /// the user's existing cart. Stock is validated and decremented atomically
         /// inside a transaction. All validation rules from PlaceOrderAsync apply.
         /// </remarks>
-        Task<int> BuyNowAsync(string userEmail, int itemId, int quantity);
+        Task<int> BuyNowAsync(string userEmail, int itemId, int quantity, int shippingMethodId);
 
         /// <summary>
         /// Removes a specific item from the user's shopping cart.
@@ -58,24 +62,28 @@ namespace ELKH.Services
         /// Processes the user's current cart into an order with atomic transaction semantics.
         /// </summary>
         /// <param name="userEmail">Email of the authenticated user</param>
+        /// <param name="shippingMethodId">ID of the selected shipping method</param>
         /// <returns>
         /// Positive order ID on success.
         /// 0 if the user was not found or the cart is empty.
         /// -1 if one or more cart items have insufficient stock.
         /// -2 if the user has no delivery address on file.
+        /// -3 if the shipping method is invalid or inactive.
         /// </returns>
         /// <remarks>
         /// Transaction workflow:
         /// 1. Validates user exists and cart has items
-        /// 2. Creates OrderModel with calculated total
-        /// 3. Creates OrderItemModel for each cart item
-        /// 4. Clears user's cart
-        /// 5. Commits transaction (all-or-nothing)
+        /// 2. Validates shipping method and calculates shipping cost
+        /// 3. Creates OrderModel with calculated total including shipping
+        /// 4. Creates OrderItemModel for each cart item
+        /// 5. Clears user's cart
+        /// 6. Commits transaction (all-or-nothing)
         /// 
         /// Returns 0 if user not found or cart is empty.
+        /// Returns -3 if shipping method is invalid.
         /// Database errors trigger automatic transaction rollback.
         /// </remarks>
-        Task<int> PlaceOrderAsync(string userEmail);
+        Task<int> PlaceOrderAsync(string userEmail, int shippingMethodId);
 
         /// <summary>
         /// Retrieves all cart items for the user with eager-loaded product details.
@@ -88,4 +96,5 @@ namespace ELKH.Services
         /// </remarks>
         Task<List<CartModel>> GetCartItemsAsync(string userEmail);
     }
+    
 }

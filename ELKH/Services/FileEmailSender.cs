@@ -1,4 +1,5 @@
 using System;
+using System.Globalization;
 using System.IO;
 using System.Text;
 using System.Threading.Tasks;
@@ -59,10 +60,10 @@ namespace ELKH.Services
         {
             var fileName = Path.Combine(_directory, $"email_{DateTime.UtcNow:yyyyMMdd_HHmmss_fff}_{Guid.NewGuid()}.eml.txt");
             var sb = new StringBuilder();
-            sb.AppendLine($"From: {from ?? "no-reply@example.com"}");
-            sb.AppendLine($"To: {string.Join(", ", to)}");
-            sb.AppendLine($"Subject: {subject}");
-            sb.AppendLine($"Date: {DateTime.UtcNow:O}");
+            sb.AppendLine(CultureInfo.InvariantCulture, $"From: {from ?? "no-reply@example.com"}");
+            sb.AppendLine(CultureInfo.InvariantCulture, $"To: {string.Join(", ", to)}");
+            sb.AppendLine(CultureInfo.InvariantCulture, $"Subject: {subject}");
+            sb.AppendLine(CultureInfo.InvariantCulture, $"Date: {DateTime.UtcNow:O}");
             sb.AppendLine();
             sb.AppendLine(body ?? string.Empty);
 

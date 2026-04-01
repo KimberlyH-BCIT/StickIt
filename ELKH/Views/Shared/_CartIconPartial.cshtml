@@ -24,8 +24,13 @@
         </svg>
         @if (_cartCount > 0)
         {
-            <span class="cart-badge" aria-hidden="true">@_cartLabel</span>
-            <span class="visually-hidden">@_cartCount item@(_cartCount == 1 ? "" : "s") in cart</span>
+            <span id="cart-badge" class="cart-badge" aria-hidden="true">@_cartLabel</span>
+            <span id="cart-badge-sr" class="visually-hidden">@_cartCount item@(_cartCount == 1 ? "" : "s") in cart</span>
+        }
+        else
+        {
+            <span id="cart-badge" class="cart-badge" style="display: none;" aria-hidden="true">0</span>
+            <span id="cart-badge-sr" class="visually-hidden">0 items in cart</span>
         }
     </a>
 }

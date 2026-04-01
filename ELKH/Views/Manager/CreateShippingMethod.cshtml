@@ -1,0 +1,374 @@
+@model ELKH.ViewModels.ShippingMethodVM
+
+@{
+    ViewData["Title"] = "Create Shipping Method - New Delivery Option";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+
+<!-- Skip Links for Keyboard Navigation -->
+<nav class="skip-links sr-only-focusable mb-2" aria-label="Skip navigation">
+    <a href="#main-heading" class="skip-link btn btn-primary">Skip to form</a>
+    <a href="#shipping-form" class="skip-link btn btn-primary">Skip to shipping form</a>
+</nav>
+
+<main role="main" aria-labelledby="main-heading">
+    <div class="container-fluid mt-4 px-4 pb-5">
+
+        <!-- Enhanced Header with Accessibility -->
+        <header class="create-shipping-header mb-4">
+            <div class="d-flex justify-content-between align-items-center flex-wrap gap-2">
+                <div>
+                    <h1 id="main-heading" class="fw-bold text-primary mb-0">Create Shipping Method</h1>
+                    <p class="text-muted mb-0 small" aria-label="Add new delivery option for customers">Add New Delivery Option</p>
+                </div>
+                <nav aria-label="Return to shipping methods">
+                    <a asp-action="ShippingMethods" class="btn btn-outline-primary rounded-pill px-4">← Back to Methods</a>
+                </nav>
+            </div>
+        </header>
+
+        <!-- Validation Summary -->
+        <div asp-validation-summary="ModelOnly" class="alert alert-danger" role="alert" aria-live="polite"></div>
+
+        <!-- Create Form -->
+        <div class="row justify-content-center">
+            <div class="col-12 col-lg-8">
+                <form asp-action="CreateShippingMethod" method="post" id="shipping-form" class="card shadow-sm" novalidate>
+                    <div class="card-header bg-primary text-white">
+                        <h2 class="h5 mb-0">
+                            <i class="bi bi-truck me-2" aria-hidden="true"></i>
+                            Shipping Method Details
+                        </h2>
+                    </div>
+                    
+                    <div class="card-body">
+                        <!-- Basic Information Section -->
+                        <fieldset class="mb-4">
+                            <legend class="h6 text-secondary border-bottom pb-2 mb-3">Basic Information</legend>
+                            
+                            <div class="row">
+                                <div class="col-12 col-md-8">
+                                    <div class="mb-3">
+                                        <label asp-for="Name" class="form-label fw-semibold">
+                                            <i class="bi bi-tag me-1 text-muted" aria-hidden="true"></i>
+                                            Method Name *
+                                        </label>
+                                        <input asp-for="Name" 
+                                               class="form-control" 
+                                               placeholder="e.g., Standard Shipping, Express Delivery"
+                                               aria-describedby="name-help name-error"
+                                               required />
+                                        <div id="name-help" class="form-text">
+                                            Customer-facing name displayed during checkout
+                                        </div>
+                                        <span asp-validation-for="Name" class="text-danger small" id="name-error" role="alert"></span>
+                                    </div>
+                                </div>
+                                
+                                <div class="col-12 col-md-4">
+                                    <div class="mb-3">
+                                        <label asp-for="DisplayOrder" class="form-label fw-semibold">
+                                            <i class="bi bi-sort-numeric-up me-1 text-muted" aria-hidden="true"></i>
+                                            Display Order *
+                                        </label>
+                                        <input asp-for="DisplayOrder" 
+                                               type="number" 
+                                               class="form-control" 
+                                               min="1" 
+                                               max="999"
+                                               aria-describedby="order-help order-error" 
+                                               required />
+                                        <div id="order-help" class="form-text">
+                                            Lower numbers appear first
+                                        </div>
+                                        <span asp-validation-for="DisplayOrder" class="text-danger small" id="order-error" role="alert"></span>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="mb-3">
+                                <label asp-for="Description" class="form-label fw-semibold">
+                                    <i class="bi bi-card-text me-1 text-muted" aria-hidden="true"></i>
+                                    Description
+                                </label>
+                                <textarea asp-for="Description" 
+                                          class="form-control" 
+                                          rows="3"
+                                          placeholder="Optional description to help customers choose the right shipping option"
+                                          aria-describedby="description-help description-error"></textarea>
+                                <div id="description-help" class="form-text">
+                                    Additional details displayed to customers (optional, max 500 characters)
+                                </div>
+                                <span asp-validation-for="Description" class="text-danger small" id="description-error" role="alert"></span>
+                            </div>
+                        </fieldset>
+
+                        <!-- Pricing Section -->
+                        <fieldset class="mb-4">
+                            <legend class="h6 text-secondary border-bottom pb-2 mb-3">Pricing & Delivery</legend>
+                            
+                            <div class="row">
+                                <div class="col-12 col-md-4">
+                                    <div class="mb-3">
+                                        <label asp-for="BasePrice" class="form-label fw-semibold">
+                                            <i class="bi bi-currency-dollar me-1 text-muted" aria-hidden="true"></i>
+                                            Base Price *
+                                        </label>
+                                        <div class="input-group">
+                                            <span class="input-group-text">$</span>
+                                            <input asp-for="BasePrice" 
+                                                   type="number" 
+                                                   class="form-control" 
+                                                   step="0.01" 
+                                                   min="0" 
+                                                   max="999.99"
+                                                   placeholder="0.00"
+                                                   aria-describedby="price-help price-error" 
+                                                   required />
+                                        </div>
+                                        <div id="price-help" class="form-text">
+                                            Standard shipping cost before discounts
+                                        </div>
+                                        <span asp-validation-for="BasePrice" class="text-danger small" id="price-error" role="alert"></span>
+                                    </div>
+                                </div>
+                                
+                                <div class="col-12 col-md-4">
+                                    <div class="mb-3">
+                                        <label asp-for="DeliveryDaysMin" class="form-label fw-semibold">
+                                            <i class="bi bi-clock me-1 text-muted" aria-hidden="true"></i>
+                                            Min Delivery Days *
+                                        </label>
+                                        <input asp-for="DeliveryDaysMin" 
+                                               type="number" 
+                                               class="form-control" 
+                                               min="1" 
+                                               max="30"
+                                               aria-describedby="min-days-help min-days-error" 
+                                               required />
+                                        <div id="min-days-help" class="form-text">
+                                            Best-case delivery timeframe
+                                        </div>
+                                        <span asp-validation-for="DeliveryDaysMin" class="text-danger small" id="min-days-error" role="alert"></span>
+                                    </div>
+                                </div>
+                                
+                                <div class="col-12 col-md-4">
+                                    <div class="mb-3">
+                                        <label asp-for="DeliveryDaysMax" class="form-label fw-semibold">
+                                            <i class="bi bi-clock-history me-1 text-muted" aria-hidden="true"></i>
+                                            Max Delivery Days *
+                                        </label>
+                                        <input asp-for="DeliveryDaysMax" 
+                                               type="number" 
+                                               class="form-control" 
+                                               min="1" 
+                                               max="30"
+                                               aria-describedby="max-days-help max-days-error" 
+                                               required />
+                                        <div id="max-days-help" class="form-text">
+                                            Worst-case delivery timeframe
+                                        </div>
+                                        <span asp-validation-for="DeliveryDaysMax" class="text-danger small" id="max-days-error" role="alert"></span>
+                                    </div>
+                                </div>
+                            </div>
+                        </fieldset>
+
+                        <!-- Status Section -->
+                        <fieldset class="mb-4">
+                            <legend class="h6 text-secondary border-bottom pb-2 mb-3">Availability</legend>
+                            
+                            <div class="form-check">
+                                <input asp-for="IsActive" class="form-check-input" type="checkbox" id="active-check">
+                                <label class="form-check-label fw-semibold" for="active-check">
+                                    <i class="bi bi-toggle-on me-1 text-success" aria-hidden="true"></i>
+                                    Active (Available to Customers)
+                                </label>
+                                <div class="form-text">
+                                    Inactive methods are hidden from checkout but preserved for existing orders
+                                </div>
+                            </div>
+                        </fieldset>
+
+                        <!-- Preview Section -->
+                        <fieldset class="mb-4">
+                            <legend class="h6 text-secondary border-bottom pb-2 mb-3">Preview</legend>
+                            
+                            <div class="card bg-light">
+                                <div class="card-body">
+                                    <h6 class="card-title">How this will appear to customers:</h6>
+                                    <div class="form-check">
+                                        <input class="form-check-input" type="radio" disabled>
+                                        <label class="form-check-label">
+                                            <span class="fw-semibold" id="preview-name">Standard Shipping</span>
+                                            <span class="text-success fw-semibold float-end" id="preview-price">$5.99</span>
+                                        </label>
+                                        <div class="small text-muted" id="preview-details">
+                                            <span id="preview-description">Reliable delivery to your doorstep</span>
+                                            <span class="mx-2">•</span>
+                                            <span id="preview-delivery">5-7 business days</span>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </fieldset>
+                    </div>
+                    
+                    <div class="card-footer bg-light">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <div class="text-muted small">
+                                <i class="bi bi-info-circle me-1" aria-hidden="true"></i>
+                                Fields marked with * are required
+                            </div>
+                            
+                            <div class="d-flex gap-2">
+                                <a asp-action="ShippingMethods" 
+                                   class="btn btn-outline-secondary"
+                                   aria-label="Cancel and return to shipping methods list">
+                                    Cancel
+                                </a>
+                                <button type="submit" 
+                                        class="btn btn-success"
+                                        aria-label="Create new shipping method">
+                                    <i class="bi bi-check-circle me-1" aria-hidden="true"></i>
+                                    Create Method
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+
+                    @Html.AntiForgeryToken()
+                </form>
+            </div>
+        </div>
+    </div>
+</main>
+
+<!-- JavaScript for Form Enhancement -->
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    
+    // Form elements
+    const nameInput = document.getElementById('Name');
+    const priceInput = document.getElementById('BasePrice');
+    const minDaysInput = document.getElementById('DeliveryDaysMin');
+    const maxDaysInput = document.getElementById('DeliveryDaysMax');
+    const descriptionInput = document.getElementById('Description');
+    
+    // Preview elements
+    const previewName = document.getElementById('preview-name');
+    const previewPrice = document.getElementById('preview-price');
+    const previewDescription = document.getElementById('preview-description');
+    const previewDelivery = document.getElementById('preview-delivery');
+    
+    // Update preview function
+    function updatePreview() {
+        // Update name
+        const name = nameInput.value.trim() || 'Standard Shipping';
+        previewName.textContent = name;
+        
+        // Update price
+        const price = parseFloat(priceInput.value) || 0;
+        previewPrice.textContent = '$' + price.toFixed(2);
+        
+        // Update description
+        const description = descriptionInput.value.trim() || 'Reliable delivery to your doorstep';
+        previewDescription.textContent = description;
+        
+        // Update delivery timeframe
+        const minDays = parseInt(minDaysInput.value) || 5;
+        const maxDays = parseInt(maxDaysInput.value) || 7;
+        
+        if (minDays === maxDays) {
+            previewDelivery.textContent = minDays === 1 ? '1 business day' : minDays + ' business days';
+        } else {
+            previewDelivery.textContent = minDays + '-' + maxDays + ' business days';
+        }
+    }
+    
+    // Add event listeners for real-time preview updates
+    [nameInput, priceInput, minDaysInput, maxDaysInput, descriptionInput].forEach(input => {
+        input.addEventListener('input', updatePreview);
+        input.addEventListener('change', updatePreview);
+    });
+    
+    // Delivery days validation
+    function validateDeliveryDays() {
+        const minDays = parseInt(minDaysInput.value);
+        const maxDays = parseInt(maxDaysInput.value);
+        
+        if (minDays && maxDays && minDays > maxDays) {
+            maxDaysInput.setCustomValidity('Maximum days must be greater than or equal to minimum days');
+        } else {
+            maxDaysInput.setCustomValidity('');
+        }
+    }
+    
+    minDaysInput.addEventListener('change', validateDeliveryDays);
+    maxDaysInput.addEventListener('change', validateDeliveryDays);
+    
+    // Form submission validation
+    document.getElementById('shipping-form').addEventListener('submit', function(e) {
+        validateDeliveryDays();
+        
+        if (!this.checkValidity()) {
+            e.preventDefault();
+            e.stopPropagation();
+            
+            // Focus on first invalid field
+            const firstInvalid = this.querySelector(':invalid');
+            if (firstInvalid) {
+                firstInvalid.focus();
+                firstInvalid.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            }
+        }
+        
+        this.classList.add('was-validated');
+    });
+    
+    // Initialize preview
+    updatePreview();
+    
+    // Character counter for description
+    if (descriptionInput) {
+        const maxLength = 500;
+        const counter = document.createElement('div');
+        counter.className = 'form-text text-end';
+        counter.id = 'description-counter';
+        descriptionInput.parentNode.insertBefore(counter, descriptionInput.nextSibling.nextSibling);
+        
+        function updateCounter() {
+            const remaining = maxLength - descriptionInput.value.length;
+            counter.textContent = remaining + ' characters remaining';
+            counter.className = 'form-text text-end ' + (remaining < 50 ? 'text-warning' : '');
+        }
+        
+        descriptionInput.addEventListener('input', updateCounter);
+        updateCounter();
+    }
+});
+</script>
+
+<style>
+.form-control:focus {
+    box-shadow: 0 0 0 0.2rem rgba(13, 110, 253, 0.25);
+}
+
+.preview-section {
+    background-color: #f8f9fa;
+    border-left: 4px solid #007bff;
+}
+
+.card-footer {
+    background-color: rgba(0, 123, 255, 0.03) !important;
+}
+
+.was-validated .form-control:invalid {
+    border-color: #dc3545;
+    background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 12 12' width='12' height='12' fill='none' stroke='%23dc3545'%3e%3ccircle cx='6' cy='6' r='4.5'/%3e%3cpath d='m5.8 3.6h.4L6 6.5z'/%3e%3ccircle cx='6' cy='8.2' r='.6' fill='%23dc3545' stroke='none'/%3e%3c/svg%3e");
+    background-repeat: no-repeat;
+    background-position: right calc(0.375em + 0.1875rem) center;
+    background-size: calc(0.75em + 0.375rem) calc(0.75em + 0.375rem);
+}
+</style>

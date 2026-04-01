@@ -1,0 +1,192 @@
+@*
+╔══════════════════════════════════════════════════════════════════════════════════╗
+║ Kawaii Category Tabs Partial Component                                          ║
+║ Pill-shaped tabs with soft pastel colors and responsive design                 ║
+╚══════════════════════════════════════════════════════════════════════════════════╝
+*@
+
+@model ELKH.ViewModels.CategoryTabsVM
+
+@{
+    var currentCategory = ViewBag.CurrentCategory as string ?? "";
+    var currentController = ViewContext.RouteData.Values["controller"]?.ToString()?.ToLower() ?? "";
+    var currentAction = ViewContext.RouteData.Values["action"]?.ToString()?.ToLower() ?? "";
+}
+
+<section class="category-tabs-section" aria-label="Category navigation">
+    <div class="container-fluid">
+
+        @if (!string.IsNullOrEmpty(Model.Title))
+        {
+            <h2 class="category-tabs-title text-center mb-4 font-heading">@Model.Title</h2>
+        }
+
+        <div class="category-tabs-container">
+            <div class="tab-row">
+
+                <!-- All Products Tab -->
+                <a asp-controller="Product" asp-action="Index" 
+                   class="tab-kawaii category-tab @(currentController == "product" && currentAction == "index" && string.IsNullOrEmpty(currentCategory) ? "active" : "") glow-on-hover"
+                   aria-current="@(currentController == "product" && currentAction == "index" && string.IsNullOrEmpty(currentCategory) ? "page" : "false")">
+                    <i class="bi bi-grid me-2" aria-hidden="true"></i>
+                    <span class="sparkle">All Products</span>
+                </a>
+
+                <!-- Promotions Tab -->
+                <a asp-controller="Promotions" asp-action="Index" 
+                   class="tab-kawaii category-tab kawaii-promo-link @(currentController == "promotions" ? "active" : "") sparkle"
+                   aria-current="@(currentController == "promotions" ? "page" : "false")">
+                    <i class="bi bi-percent me-2" aria-hidden="true"></i>
+                    Promotions
+                </a>
+
+                <!-- Category Tabs -->
+                @if (Model.Categories?.Any() == true)
+                {
+                    @foreach (var category in Model.Categories)
+                    {
+                        var isActive = currentCategory == category.Name || 
+                                      (currentController == "category" && 
+                                       ViewContext.RouteData.Values["id"]?.ToString() == category.Id.ToString());
+
+                        <a asp-controller="Category" asp-action="ByCategory" asp-route-id="@category.Id" 
+                           class="tab-kawaii category-tab @(isActive ? "active" : "")"
+                           aria-current="@(isActive ? "page" : "false")"
+                           title="View @category.Name stickers">
+
+                            @if (!string.IsNullOrEmpty(category.IconClass))
+                            {
+                                <i class="@category.IconClass me-2" aria-hidden="true"></i>
+                            }
+
+                            @category.Name
+
+                            @if (category.ProductCount > 0 && Model.ShowProductCounts)
+                            {
+                                <partial name="_Badge" model="@(new ELKH.ViewModels.BadgeVM { 
+                                    Text = category.ProductCount.ToString(), 
+                                    Type = "default",
+                                    Size = "sm",
+                                    ShowIcon = false,
+                                    CustomClass = "ms-2"
+                                })" />
+                            }
+                        </a>
+                    }
+                }
+
+                <!-- View All Categories -->
+                @if (Model.ShowViewAllTab)
+                {
+                    <a asp-controller="Category" asp-action="Index" 
+                       class="tab-kawaii category-tab view-all-tab @(currentController == "category" && currentAction == "index" ? "active" : "")"
+                       aria-current="@(currentController == "category" && currentAction == "index" ? "page" : "false")">
+                        <i class="bi bi-collection me-2" aria-hidden="true"></i>
+                        View All Categories
+                    </a>
+                }
+            </div>
+        </div>
+
+        <!-- Mobile category dropdown for better UX -->
+        <div class="mobile-category-dropdown d-md-none">
+            <div class="dropdown">
+                <button class="btn-kawaii btn-outline-kawaii dropdown-toggle w-100" 
+                        type="button" 
+                        id="mobileCategoryDropdown" 
+                        data-bs-toggle="dropdown" 
+                        aria-expanded="false"
+                        aria-label="Select category">
+                    <i class="bi bi-list me-2" aria-hidden="true"></i>
+                    @if (!string.IsNullOrEmpty(currentCategory))
+                    {
+                        <span>@currentCategory</span>
+                    }
+                    else if (currentController == "promotions")
+                    {
+                        <span>Promotions</span>
+                    }
+                    else
+                    {
+                        <span>All Products</span>
+                    }
+                </button>
+                <ul class="dropdown-menu kawaii-dropdown-menu w-100" aria-labelledby="mobileCategoryDropdown">
+                    @if (Model.ShowAllProductsTab)
+                    {
+                        <li>
+                            <a class="dropdown-item kawaii-dropdown-item" asp-controller="Product" asp-action="Index">
+                                <i class="bi bi-grid me-2" aria-hidden="true"></i>All Products
+                            </a>
+                        </li>
+                    }
+                    @if (Model.ShowPromotionsTab)
+                    {
+                        <li>
+                            <a class="dropdown-item kawaii-dropdown-item" asp-controller="Promotions" asp-action="Index">
+                                <i class="bi bi-percent me-2" aria-hidden="true"></i>Promotions
+                            </a>
+                        </li>
+                    }
+                    @if (Model.Categories?.Any() == true)
+                    {
+                        <li><hr class="dropdown-divider soft-divider"></li>
+                        @foreach (var category in Model.Categories)
+                        {
+                            <li>
+                                <a class="dropdown-item kawaii-dropdown-item" asp-controller="Category" asp-action="ByCategory" asp-route-id="@category.Id">
+                                    @if (!string.IsNullOrEmpty(category.IconClass))
+                                    {
+                                        <i class="@category.IconClass me-2" aria-hidden="true"></i>
+                                    }
+                                    @category.Name
+                                    @if (category.ProductCount > 0 && Model.ShowProductCounts)
+                                    {
+                                        <span class="text-muted ms-auto">(@category.ProductCount)</span>
+                                    }
+                                </a>
+                            </li>
+                        }
+                    }
+                    @if (Model.ShowViewAllTab)
+                    {
+                        <li><hr class="dropdown-divider soft-divider"></li>
+                        <li>
+                            <a class="dropdown-item kawaii-dropdown-item" asp-controller="Category" asp-action="Index">
+                                <i class="bi bi-collection me-2" aria-hidden="true"></i>View All Categories
+                            </a>
+                        </li>
+                    }
+                </ul>
+            </div>
+        </div>
+
+        <!-- Category description (if provided) -->
+        @if (!string.IsNullOrEmpty(Model.Description))
+        {
+            <div class="category-description text-center mt-3">
+                <p class="text-muted">@Model.Description</p>
+            </div>
+        }
+
+        <!-- Active filters indicator -->
+        @if (Model.ShowActiveFilters && !string.IsNullOrEmpty(currentCategory))
+        {
+            <div class="active-filters mt-3 d-flex align-items-center justify-content-center gap-2">
+                <span class="text-muted small">Active filter:</span>
+                <partial name="_Badge" model="@(new ELKH.ViewModels.BadgeVM { 
+                    Text = currentCategory, 
+                    Type = "category",
+                    IsClickable = true
+                })" />
+                <a asp-controller="Product" asp-action="Index" 
+                   class="btn-kawaii btn-outline-kawaii btn-sm ms-2"
+                   title="Clear filters"
+                   aria-label="Clear category filter">
+                    <i class="bi bi-x-lg" aria-hidden="true"></i>
+                    Clear
+                </a>
+            </div>
+        }
+    </div>
+</section>

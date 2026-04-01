@@ -1,0 +1,123 @@
+# ELKH Prometheus Configuration
+# Comprehensive metrics collection for application monitoring
+
+global:
+  scrape_interval: 15s
+  evaluation_interval: 15s
+  external_labels:
+    monitor: 'elkh-monitor'
+    environment: 'production'
+
+# ====================================
+# Recording Rules Configuration
+# ====================================
+rule_files:
+  - "alert.rules.yml"
+  - "recording.rules.yml"
+
+# Alertmanager configuration
+alerting:
+  alertmanagers:
+    - static_configs:
+        - targets:
+            - alertmanager:9093
+
+# Scrape configurations
+scrape_configs:
+  # ====================================
+  # Prometheus Self-Monitoring
+  # ====================================
+  - job_name: 'prometheus'
+    static_configs:
+      - targets: ['localhost:9090']
+    metrics_path: /metrics
+    scrape_interval: 30s
+
+  # ====================================
+  # ELKH Application Metrics
+  # ====================================
+  - job_name: 'elkh-app'
+    static_configs:
+      - targets: ['elkh-app:80']
+    metrics_path: /metrics
+    scrape_interval: 15s
+    scrape_timeout: 10s
+    honor_timestamps: true
+    scheme: http
+    relabel_configs:
+      - source_labels: [__address__]
+        target_label: instance
+        replacement: 'elkh-stickers-app'
+
+  # ====================================
+  # System Metrics (Node Exporter)
+  # ====================================
+  - job_name: 'node-exporter'
+    static_configs:
+      - targets: ['node-exporter:9100']
+    metrics_path: /metrics
+    scrape_interval: 30s
+
+  # ====================================
+  # Container Metrics (cAdvisor)
+  # ====================================
+  - job_name: 'cadvisor'
+    static_configs:
+      - targets: ['cadvisor:8080']
+    metrics_path: /metrics
+    scrape_interval: 30s
+
+  # ====================================
+  # Database Metrics (PostgreSQL)
+  # ====================================
+  - job_name: 'postgres'
+    static_configs:
+      - targets: ['postgres-exporter:9187']
+    metrics_path: /metrics
+    scrape_interval: 30s
+
+  # ====================================
+  # Redis Metrics
+  # ====================================
+  - job_name: 'redis'
+    static_configs:
+      - targets: ['redis-exporter:9121']
+    metrics_path: /metrics
+    scrape_interval: 30s
+
+  # ====================================
+  # Nginx Metrics
+  # ====================================
+  - job_name: 'nginx'
+    static_configs:
+      - targets: ['nginx:9113']
+    metrics_path: /metrics
+    scrape_interval: 30s
+
+  # ====================================
+  # Application Health Checks
+  # ====================================
+  - job_name: 'elkh-health'
+    static_configs:
+      - targets: ['elkh-app:80']
+    metrics_path: /health
+    scrape_interval: 30s
+    scrape_timeout: 10s
+
+# ====================================
+# Storage Configuration
+# ====================================
+# Note: Recording rules moved to separate recording.rules.yml file
+# remote_write:
+#   - url: "https://prometheus-us-central1.grafana.net/api/prom/push"
+#     basic_auth:
+#       username: "your-username"
+#       password: "your-api-key"
+
+# ====================================
+# Storage Configuration  
+# ====================================
+# storage:
+#   tsdb:
+#     retention.time: 30d
+#     retention.size: 10GB

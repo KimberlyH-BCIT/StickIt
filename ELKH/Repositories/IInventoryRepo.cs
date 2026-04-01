@@ -8,6 +8,7 @@ namespace ELKH.Repositories
     {
 
         Task<PagedResult<InventoryVM>> GetAllProduct(string? searchString, string? sortOrder, string? stockFilter, int page = 1, int pageSize = 10);
+        Task<PagedResult<InventoryVM>> GetAllProduct(string? searchString, int page = 1, int pageSize = 10);
 
         Task<List<ImageModel>> GetProductImages(int id);
         Task<ProductVM> EditProductQuantity(int productId, int quantityAmount);

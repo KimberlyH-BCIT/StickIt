@@ -1,4 +1,4 @@
-﻿using ELKH.Data;
+using ELKH.Data;
 using ELKH.Models;
 using ELKH.ViewModels;
 using Microsoft.AspNetCore.Identity;
@@ -19,7 +19,7 @@ namespace ELKH.Repositories
             _roleManager = roleManager;
         }
 
-        // ─── GetAllProduct (with sort) ────────────────────────────────────────
+        // --- GetAllProduct (with sort) ----------------------------------------
         public async Task<PagedResult<InventoryVM>> GetAllProduct(
             string? searchString,
             string? sortOrder,
@@ -27,7 +27,7 @@ namespace ELKH.Repositories
             int page = 1,
             int pageSize = 10)
         {
-            var query = _context.Product.AsQueryable();
+            var query = _context.Products.AsQueryable();
 
             // 1. Filter by Search
             if (!string.IsNullOrEmpty(searchString))
@@ -81,13 +81,13 @@ namespace ELKH.Repositories
             };
         }
 
-        // ─── GetAllProduct (search-only overload, kept for any other callers) ─
+        // --- GetAllProduct (search-only overload, kept for any other callers) -
         public async Task<PagedResult<InventoryVM>> GetAllProduct(
             string? searchString,
             int page = 1,
             int pageSize = 10)
         {
-            var query = _context.Product.AsQueryable();
+            var query = _context.Products.AsQueryable();
 
             if (!string.IsNullOrEmpty(searchString))
             {
@@ -122,17 +122,17 @@ namespace ELKH.Repositories
             };
         }
 
-        // ─── GetProductById ───────────────────────────────────────────────────
+        // --- GetProductById ---------------------------------------------------
         public async Task<ProductModel> GetProductById(int Id)
         {
-            return await _context.Product
+            return await _context.Products
                 .Include(p => p.Category)
                 .Include(p => p.ProductRatings!)
                     .ThenInclude(pr => pr.RegisteredUser)
                 .FirstOrDefaultAsync(p => p.PkProductId == Id) ?? null!;
         }
 
-        // ─── EditProduct ──────────────────────────────────────────────────────
+        // --- EditProduct ------------------------------------------------------
         public async Task<bool> EditProduct(ProductVM vm)
         {
             var product = await GetProductById(vm.ProductId);
@@ -150,7 +150,7 @@ namespace ELKH.Repositories
             return true;
         }
 
-        // ─── AddProduct ───────────────────────────────────────────────────────
+        // --- AddProduct -------------------------------------------------------
         public async Task<int> AddProduct(ProductVM vm)
         {
             var product = new ProductModel
@@ -165,15 +165,15 @@ namespace ELKH.Repositories
                 Description = vm.Description
             };
 
-            await _context.Product.AddAsync(product);
+            await _context.Products.AddAsync(product);
             await _context.SaveChangesAsync();
             return product.PkProductId;
         }
 
-        // ─── EditProductQuantity ──────────────────────────────────────────────
+        // --- EditProductQuantity ----------------------------------------------
         public async Task<ProductVM> EditProductQuantity(int productId, int quantityAmount)
         {
-            var product = await _context.Product
+            var product = await _context.Products
                 .Where(p => p.PkProductId == productId)
                 .FirstOrDefaultAsync()
                 ?? throw new KeyNotFoundException($"Product {productId} not found.");
@@ -192,7 +192,7 @@ namespace ELKH.Repositories
             };
         }
 
-        // ─── DeleteProductReview ──────────────────────────────────────────────
+        // --- DeleteProductReview ----------------------------------------------
         public async Task<bool> DeleteProductReview(int reviewId)
         {
             var review = await _context.ProductRatings
@@ -204,13 +204,13 @@ namespace ELKH.Repositories
             return true;
         }
 
-        // ─── GetAllCategories ─────────────────────────────────────────────────
+        // --- GetAllCategories -------------------------------------------------
         public async Task<List<CategoryModel>> GetAllCategories()
         {
             return await _context.Categories.ToListAsync();
         }
 
-        // ─── GetProductImages ─────────────────────────────────────────────────
+        // --- GetProductImages -------------------------------------------------
         public async Task<List<ImageModel>> GetProductImages(int id)
         {
             return await _imageDb.Images
@@ -218,7 +218,7 @@ namespace ELKH.Repositories
                 .ToListAsync();
         }
 
-        // ─── UploadImage ──────────────────────────────────────────────────────
+        // --- UploadImage ------------------------------------------------------
         private const long MaxFileSizeBytes = 5 * 1024 * 1024; // 5 MB
 
         public async Task<bool> UploadImage(int productId, IFormFile file)
@@ -243,7 +243,7 @@ namespace ELKH.Repositories
             return _imageDb.SaveChanges() > 0;
         }
 
-        // ─── DeleteImage ──────────────────────────────────────────────────────
+        // --- DeleteImage ------------------------------------------------------
         public async Task<bool> DeleteImage(int imageId)
         {
             var image = await _imageDb.Images

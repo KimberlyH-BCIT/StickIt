@@ -1,16 +1,15 @@
-﻿namespace ELKH.ViewModels
-{
-    /// <summary>
-    /// Lightweight projection used for the Inventory index table.
-    /// </summary>
-    public class InventoryVM
-    {
-        public int PkProductId { get; set; }
-        public string ProductName { get; set; } = string.Empty;
-        public int Quantity { get; set; }
-        public bool IsActive { get; set; }
+namespace ELKH.ViewModels;
 
-        // Added so the Index table can show the product price.
-        public decimal Price { get; set; }
-    }
+/// <summary>
+/// View model for inventory management providing product stock information,
+/// availability status, and inventory tracking for administrative operations.
+/// </summary>
+public class InventoryVM
+{
+    public int PkProductId { get; set; }
+    public string ProductName { get; set; } = string.Empty;
+    public int? Quantity { get; set; }
+    public bool IsActive { get; set; }
+    public decimal Price { get; set; }
+    public List<string>? ProductImage { get; set; } = [];
 }

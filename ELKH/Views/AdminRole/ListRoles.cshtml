@@ -1,115 +1,320 @@
 @model IEnumerable<ELKH.ViewModels.RoleVM>
 
 @{
-    ViewData["Title"] = "Manage Roles";
+    ViewData["Title"] = "Role Management - Manage User Roles & Permissions | Admin Panel";
     Layout = "~/Views/Shared/_Layout.cshtml";
+    var roleCount = Model?.Count() ?? 0;
 }
 
-<div class="container mt-5">
+@section title {
+    <header class="mb-4">
+        <nav aria-label="breadcrumb">
+            <ol class="breadcrumb">
+                <li class="breadcrumb-item">
+                    <a asp-controller="Admin" asp-action="Index" aria-label="Return to admin dashboard">Admin Dashboard</a>
+                </li>
+                <li class="breadcrumb-item active" aria-current="page">Role Management</li>
+            </ol>
+        </nav>
+        <h1 class="fw-bold d-flex align-items-center">
+            <i class="bi bi-shield-check me-2" aria-hidden="true"></i>
+            Role & Permission Management
+        </h1>
+        <p class="text-muted mb-0" role="status" aria-live="polite">
+            @if (roleCount > 0) {
+                <text>Managing @roleCount role@(roleCount != 1 ? "s" : "") and user assignments</text>
+            } else {
+                <text>No roles configured in the system</text>
+            }
+        </p>
+    </header>
+}
 
+<main class="container py-4" role="main">
+
+    <!-- Status Messages -->
     @if (TempData["Success"] != null)
     {
-        <div class="alert alert-success alert-dismissible fade show text-center" role="alert">
+        <div class="alert alert-success alert-dismissible fade show" 
+             role="alert"
+             aria-live="polite">
+            <i class="bi bi-check-circle me-2" aria-hidden="true"></i>
             @TempData["Success"]
-            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+            <button type="button" 
+                    class="btn-close" 
+                    data-bs-dismiss="alert" 
+                    aria-label="Close success message"></button>
         </div>
     }
 
     @if (TempData["Error"] != null)
     {
-        <div class="alert alert-danger alert-dismissible fade show text-center" role="alert">
+        <div class="alert alert-danger alert-dismissible fade show" 
+             role="alert"
+             aria-live="assertive">
+            <i class="bi bi-exclamation-triangle me-2" aria-hidden="true"></i>
             @TempData["Error"]
-            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+            <button type="button" 
+                    class="btn-close" 
+                    data-bs-dismiss="alert" 
+                    aria-label="Close error message"></button>
         </div>
     }
-    <h2 class="fw-bold text-primary text-center mb-4">Manage Roles</h2>
 
-    <div class="d-flex justify-content-center gap-3 mb-4">
+    <!-- Role Management Actions -->
+    <section aria-labelledby="role-actions-heading" class="mb-4">
+        <h2 id="role-actions-heading" class="sr-only">Role management actions</h2>
+        <div class="d-flex justify-content-center">
+            <div class="d-flex flex-wrap justify-content-center gap-3">
 
-        <a asp-controller="AdminRole"
-               asp-action="CreateRole"
-               class="btn btn-primary px-4">
-            + Create New Role
-        </a>
-
-        <a asp-controller="Admin"
-               asp-action="Index"
-               class="btn btn-outline-secondary px-4">
-            ← Back to Dashboard
-        </a>
-
-    </div>
-
+                <a asp-controller="AdminRole"
+                   asp-action="AssignRoles"
+                   class="btn btn-primary rounded-pill px-4"
+                   aria-label="Assign users to roles - manage role assignments">
+                    <i class="bi bi-person-plus me-2" aria-hidden="true"></i>Assign User To Role
                 </a>
 
-
-    <div class="d-flex justify-content-center">
-        <div class="card shadow-sm" style="width:700px;">
-            <div class="card-body p-0">
-
-                <table class="table table-hover align-middle mb-0 text-center">
-                    <thead class="table-primary">
-                        <tr>
-                            <th class="text-start ps-4">Role Name</th>
-                            <th style="width:350px;">Actions</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        @if (Model != null && Model.Any())
-                        {
-                            foreach (var item in Model)
-                            {
-                                <tr>
-                                    <td class="text-start ps-4 fw-semibold">@item.RoleName</td>
-                                    <td>
-                                        <div class="d-flex justify-content-center flex-wrap gap-2">
-
-                                            <a asp-action="RoleUsers"
-                                               asp-route-roleId="@item.RoleId"
-                                               class="btn btn-sm btn-outline-info">
-                                                Details
-                                            </a>
-
-                                            <a asp-action="EditRole"
-                                               asp-route-roleId="@item.RoleId"
-                                               class="btn btn-sm btn-outline-primary">
-                                                Edit
-                                            </a>
-
-                                            @*
-                                                "Assign User" per row — role is known but not the user.
-                                                Pass roleId + returnTo=RoleDetails so the form locks the role
-                                                and redirects back to this role's user list after assigning.
-                                            *@
-                                            <a asp-action="AssignRoles"
-                                               asp-route-roleId="@item.RoleId"
-                                               asp-route-returnTo="RoleDetails"
-                                               class="btn btn-sm btn-outline-primary">
-                                                Assign User
-                                            </a>
-
-                                            <a asp-action="DeleteRole"
-                                               asp-route-roleId="@item.RoleId"
-                                               class="btn btn-sm btn-outline-danger">
-                                                Delete
-                                            </a>
-
-                                        </div>
-                                    </td>
-                                </tr>
-                            }
-                        }
-                        else
-                        {
-                            <tr>
-                                <td colspan="2" class="text-center p-4 text-muted">No roles found.</td>
-                            </tr>
-                        }
-                    </tbody>
-                </table>
+                <a asp-controller="AdminRole"
+                   asp-action="CreateRole"
+                   class="btn btn-success rounded-pill px-4"
+                   aria-label="Create a new user role with permissions">
+                    <i class="bi bi-plus-circle me-2" aria-hidden="true"></i>Create New Role
+                </a>
 
             </div>
         </div>
-    </div>
+    </section>
 
-</div>
+    <!-- Roles Management Table -->
+    <section aria-labelledby="roles-table-heading">
+        <div class="d-flex justify-content-center">
+            <div class="card shadow-sm border-0" style="max-width:800px;width:100%;">
+                <div class="card-header bg-white py-3">
+                    <h2 id="roles-table-heading" class="fw-bold mb-0 h5">
+                        <i class="bi bi-list-ul me-2" aria-hidden="true"></i>System Roles Overview
+                    </h2>
+                </div>
+
+                <div class="card-body p-0">
+                    @if (Model?.Any() == true)
+                    {
+                        <div class="table-responsive">
+                            <table class="table table-hover align-middle mb-0"
+                                   role="table"
+                                   aria-label="System roles management table with role names and actions"
+                                   aria-describedby="roles-table-desc">
+                                <caption id="roles-table-desc" class="sr-only">
+                                    Table showing system roles and available management actions including edit, assign users, and delete
+                                </caption>
+
+                                <thead class="table-primary">
+                                    <tr role="row">
+                                        <th scope="col" class="text-start ps-4 fw-semibold">
+                                            <i class="bi bi-shield me-1" aria-hidden="true"></i>Role Name
+                                        </th>
+                                        <th scope="col" class="text-center fw-semibold" style="width:400px;">
+                                            <i class="bi bi-gear me-1" aria-hidden="true"></i>Management Actions
+                                        </th>
+                                    </tr>
+                                </thead>
+
+                                <tbody>
+                                    @foreach (var role in Model)
+                                    {
+                                        <tr role="row">
+                                            <td role="gridcell" 
+                                                class="text-start ps-4 fw-semibold"
+                                                aria-label="Role name @role.RoleName">
+                                                @role.RoleName
+                                            </td>
+
+                                            <td role="gridcell" class="text-center">
+                                                <div class="d-flex justify-content-center flex-wrap gap-2">
+
+                                                    <a asp-action="RoleUsers"
+                                                       asp-route-roleId="@role.RoleId"
+                                                       class="btn btn-sm btn-outline-info rounded-pill"
+                                                       aria-label="View users assigned to @role.RoleName role">
+                                                        <i class="bi bi-eye me-1" aria-hidden="true"></i>View Users
+                                                    </a>
+
+                                                    <a asp-action="EditRole"
+                                                       asp-route-roleId="@role.RoleId"
+                                                       class="btn btn-sm btn-outline-primary rounded-pill"
+                                                       aria-label="Edit @role.RoleName role settings">
+                                                        <i class="bi bi-pencil me-1" aria-hidden="true"></i>Edit
+                                                    </a>
+
+                                                    <a asp-action="AssignRoles"
+                                                       asp-route-roleId="@role.RoleId"
+                                                       asp-route-returnTo="RoleDetails"
+                                                       class="btn btn-sm btn-outline-success rounded-pill"
+                                                       aria-label="Assign users to @role.RoleName role">
+                                                        <i class="bi bi-person-plus me-1" aria-hidden="true"></i>Assign User
+                                                    </a>
+
+                                                    <a asp-action="DeleteRole"
+                                                       asp-route-roleId="@role.RoleId"
+                                                       class="btn btn-sm btn-outline-danger rounded-pill"
+                                                       aria-label="Delete @role.RoleName role - Warning: this action cannot be undone"
+                                                       onclick="return confirm('Are you sure you want to delete the role \'@role.RoleName\'? This action cannot be undone.');">
+                                                        <i class="bi bi-trash me-1" aria-hidden="true"></i>Delete
+                                                    </a>
+
+                                                </div>
+                                            </td>
+                                        </tr>
+                                    }
+                                </tbody>
+                            </table>
+                        </div>
+                    }
+                    else
+                    {
+                        <div class="text-center py-5">
+                            <div role="status" aria-live="polite">
+                                <i class="bi bi-shield-x display-1 text-muted mb-3" aria-hidden="true"></i>
+                                <h3 class="h5 text-muted">No Roles Configured</h3>
+                                <p class="text-muted">There are currently no roles in the system.</p>
+                                <a asp-action="CreateRole" 
+                                   class="btn btn-primary rounded-pill"
+                                   aria-label="Create the first system role">
+                                    <i class="bi bi-plus-circle me-1" aria-hidden="true"></i>Create First Role
+                                </a>
+                            </div>
+                        </div>
+                    }
+                </div>
+            </div>
+        </div>
+    </section>
+
+</main>
+
+@section Scripts {
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Enhanced confirmation dialogs with accessibility
+        const deleteButtons = document.querySelectorAll('a[onclick*="confirm"]');
+
+        deleteButtons.forEach(button => {
+            button.addEventListener('click', function(e) {
+                e.preventDefault();
+                const roleName = this.getAttribute('aria-label').match(/Delete (.+) role/)[1];
+
+                if (confirm(`Are you sure you want to delete the role '${roleName}'?\n\nThis action cannot be undone and will remove this role from all assigned users.`)) {
+                    window.location.href = this.href;
+                }
+            });
+        });
+
+        // Enhanced table row accessibility
+        const tableRows = document.querySelectorAll('tbody tr[role="row"]');
+        tableRows.forEach(row => {
+            row.addEventListener('focus', function() {
+                this.classList.add('table-row-focused');
+            });
+
+            row.addEventListener('blur', function() {
+                this.classList.remove('table-row-focused');
+            });
+        });
+
+        // Enhanced button accessibility
+        const actionButtons = document.querySelectorAll('.btn');
+        actionButtons.forEach(button => {
+            button.addEventListener('focus', function() {
+                // Announce button purpose to screen reader if needed
+                const ariaLabel = this.getAttribute('aria-label');
+                if (ariaLabel && ariaLabel.includes('Delete')) {
+                    // Additional focus indication for destructive actions
+                    this.classList.add('btn-focus-danger');
+                }
+            });
+
+            button.addEventListener('blur', function() {
+                this.classList.remove('btn-focus-danger');
+            });
+        });
+    });
+</script>
+}
+
+<style>
+    /* Enhanced table accessibility */
+    .table-hover tbody tr:hover {
+        background-color: rgba(0, 123, 255, 0.075);
+    }
+
+    .table-hover tbody tr:focus-within {
+        background-color: rgba(0, 123, 255, 0.1);
+        outline: 2px solid #0d6efd;
+        outline-offset: -2px;
+    }
+
+    .table-row-focused {
+        background-color: rgba(0, 123, 255, 0.1) !important;
+    }
+
+    /* Enhanced button accessibility */
+    .btn:focus {
+        box-shadow: 0 0 0 0.25rem rgba(13, 110, 253, 0.25);
+    }
+
+    .btn-outline-danger:focus,
+    .btn-focus-danger {
+        box-shadow: 0 0 0 0.25rem rgba(220, 53, 69, 0.25) !important;
+    }
+
+    /* Alert accessibility */
+    .alert {
+        border-left: 4px solid;
+    }
+
+    .alert-success {
+        border-left-color: #198754;
+    }
+
+    .alert-danger {
+        border-left-color: #dc3545;
+    }
+
+    /* Screen reader improvements */
+    .sr-only {
+        position: absolute !important;
+        width: 1px !important;
+        height: 1px !important;
+        padding: 0 !important;
+        margin: -1px !important;
+        overflow: hidden !important;
+        clip: rect(0, 0, 0, 0) !important;
+        white-space: nowrap !important;
+        border: 0 !important;
+    }
+
+    /* High contrast improvements */
+    @@media (prefers-contrast: high) {
+        .table {
+            border: 2px solid #000 !important;
+        }
+
+        .btn {
+            border-width: 2px !important;
+        }
+
+        .card {
+            border: 2px solid #000 !important;
+        }
+    }
+
+    /* Improved spacing for mobile */
+    @@media (max-width: 768px) {
+        .btn-sm {
+            margin-bottom: 0.25rem;
+        }
+
+        .d-flex.gap-2 {
+            gap: 0.25rem !important;
+        }
+    }
+</style>

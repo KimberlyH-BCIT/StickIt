@@ -1,200 +1,491 @@
-@model PagedResult<InventoryVM>
+﻿@model List<InventoryVM>
 
 @{
-    ViewData["Title"] = "Inventory";
+    ViewData["Title"] = "Inventory Management - Product Stock & Details | Admin Panel";
     Layout = "~/Views/Shared/_Layout.cshtml";
-
-    // Capture the current stock filter from ViewBag
-    string stockFilter = ViewBag.StockFilter as string ?? "";
+    var productCount = Model?.Count ?? 0;
 }
 
-<div class="container mt-4 pb-5" style="max-width:1100px;">
+@section title {
+    <header class="mb-4">
+        <nav aria-label="breadcrumb">
+            <ol class="breadcrumb">
+                <li class="breadcrumb-item">
+                    <a asp-controller="Admin" asp-action="Index" aria-label="Return to admin dashboard">Admin Dashboard</a>
+                </li>
+                <li class="breadcrumb-item active" aria-current="page">Inventory Management</li>
+            </ol>
+        </nav>
+        <h1 class="fw-bold d-flex align-items-center">
+            <i class="bi bi-box-seam me-2" aria-hidden="true"></i>
+            Inventory Management
+        </h1>
+        <p class="text-muted mb-0" role="status" aria-live="polite">
+            @if (productCount > 0) {
+                <text>Managing @productCount product@(productCount != 1 ? "s" : "") in inventory</text>
+            } else {
+                <text>No products found in inventory</text>
+            }
+        </p>
+    </header>
+}
 
-    @if (TempData["Success"] != null)
-    {
-        <div class="alert alert-success alert-dismissible fade show" role="alert">
-            @TempData["Success"]
-            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-        </div>
-    }
+<main class="container py-4" role="main">
 
-    <div class="text-center mb-4">
-        <h2 class="fw-bold text-primary mb-0">Inventory Management</h2>
-        <p class="text-muted small">Monitor stock levels and product status</p>
-    </div>
-
-    <div class="d-flex justify-content-between align-items-center mb-3">
-        <a asp-action="AddProduct" class="btn btn-primary rounded-pill px-4 shadow-sm">+ Add Product</a>
-        <a asp-controller="Staff" asp-action="Index" class="btn btn-outline-secondary rounded-pill px-4">← Back to Dashboard</a>
-    </div>
-
-    <div class="card border-0 shadow-sm rounded-4 mb-4">
-        <div class="card-body p-4">
-            <form asp-action="Index" method="get">
-                <div class="row g-3 align-items-center">
-                    
-                    <div class="col-md-4">
-                        <div class="input-group">
-                            <input class="form-control rounded-start-pill" type="search" name="searchString"
-                                   value="@ViewBag.CurrentFilter" placeholder="Search product..." />
-                            <button type="submit" class="btn btn-secondary rounded-end-pill px-3">Search</button>
-                        </div>
-                    </div>
-
-                    <div class="col-md-4 text-center">
-                        <div class="btn-group shadow-sm rounded-pill p-1 bg-light">
-                            <span class="px-2 small fw-bold text-muted align-self-center">Stock:</span>
-                            
-                            <a asp-action="Index" 
-                               asp-route-sortOrder="@ViewBag.CurrentSort" 
-                               asp-route-searchString="@ViewBag.CurrentFilter"
-                               class="btn btn-sm rounded-pill @(stockFilter == "" ? "btn-dark" : "text-muted")">All</a>
-                            
-                            <a asp-action="Index" asp-route-stockFilter="stocked" 
-                               asp-route-sortOrder="@ViewBag.CurrentSort" 
-                               asp-route-searchString="@ViewBag.CurrentFilter"
-                               class="btn btn-sm rounded-pill @(stockFilter == "stocked" ? "btn-success" : "text-outline-success")">Full</a>
-                            
-                            <a asp-action="Index" asp-route-stockFilter="low" 
-                               asp-route-sortOrder="@ViewBag.CurrentSort" 
-                               asp-route-searchString="@ViewBag.CurrentFilter"
-                               class="btn btn-sm rounded-pill @(stockFilter == "low" ? "btn-danger" : "text-outline-danger")">Low</a>
-                        </div>
-                    </div>
-
-                    <div class="col-md-4 text-md-end">
-                        <div class="dropdown d-inline-block">
-                            <button class="btn btn-outline-primary rounded-pill dropdown-toggle px-4" type="button" data-bs-toggle="dropdown">
-                                Sort By
-                            </button>
-                            <ul class="dropdown-menu dropdown-menu-end shadow border-0 rounded-3">
-                                <li><a class="dropdown-item" asp-action="Index" asp-route-sortOrder="name_asc" asp-route-searchString="@ViewBag.CurrentFilter" asp-route-stockFilter="@stockFilter">Name (A-Z)</a></li>
-                                <li><a class="dropdown-item" asp-action="Index" asp-route-sortOrder="name_desc" asp-route-searchString="@ViewBag.CurrentFilter" asp-route-stockFilter="@stockFilter">Name (Z-A)</a></li>
-                                <li><hr class="dropdown-divider"></li>
-                                <li><a class="dropdown-item" asp-action="Index" asp-route-sortOrder="price_asc" asp-route-searchString="@ViewBag.CurrentFilter" asp-route-stockFilter="@stockFilter">Price: Low to High</a></li>
-                                <li><a class="dropdown-item" asp-action="Index" asp-route-sortOrder="price_desc" asp-route-searchString="@ViewBag.CurrentFilter" asp-route-stockFilter="@stockFilter">Price: High to Low</a></li>
-                            </ul>
-                        </div>
-                        <a asp-action="Index" class="btn btn-link btn-sm text-decoration-none text-muted ms-2">Clear All</a>
-                    </div>
-
-                </div>
-                
-                @* Hidden fields to preserve state during search submit *@
-                <input type="hidden" name="sortOrder" value="@ViewBag.CurrentSort" />
-                <input type="hidden" name="stockFilter" value="@stockFilter" />
-            </form>
-        </div>
-    </div>
-
-    <div class="card border-0 shadow-sm rounded-4 overflow-hidden">
-        <div class="table-responsive">
-            <table class="table table-hover align-middle mb-0">
-                <thead class="bg-light">
-                    <tr>
-                        <th class="ps-4 py-3 text-uppercase small fw-bold text-muted">SKU</th>
-                        <th class="py-3 text-uppercase small fw-bold text-muted">Product</th>
-                        <th class="py-3 text-uppercase small fw-bold text-muted text-end pe-3">Price</th>
-                        <th class="py-3 text-uppercase small fw-bold text-muted text-center">Quantity</th>
-                        <th class="py-3 text-uppercase small fw-bold text-muted text-center">Status</th>
-                        <th class="py-3 text-uppercase small fw-bold text-muted text-center">Actions</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    @if (Model.Items.Any())
-                    {
-                        foreach (var pro in Model.Items)
-                        {
-                            string stockBadge = pro.Quantity == 0 ? "bg-secondary"
-                                              : pro.Quantity < 50 ? "bg-danger" : "bg-success";
-                            
-                            string rowClass = pro.Quantity == 0 ? "table-light"
-                                            : pro.Quantity < 50 ? "table-danger-subtle" : "";
-
-                            <tr class="@rowClass">
-                                <td class="ps-4 text-muted small">#@pro.PkProductId</td>
-                                <td class="fw-bold text-dark">@pro.ProductName</td>
-                                <td class="text-end pe-3 fw-bold text-success">
-                                    $@pro.Price.ToString("N2")
-                                </td>
-                                <td class="text-center">
-                                    <span class="badge @stockBadge px-3 py-2 rounded-pill shadow-sm">@pro.Quantity</span>
-                                </td>
-                                <td class="text-center">
-                                    @if (pro.IsActive)
-                                    {
-                                        <span class="badge rounded-pill bg-success-subtle text-success border border-success px-2 py-1">● Active</span>
-                                    }
-                                    else
-                                    {
-                                        <span class="badge rounded-pill bg-secondary-subtle text-secondary border border-secondary px-2 py-1">○ Inactive</span>
-                                    }
-                                </td>
-                                <td class="text-center">
-                                    <div class="d-flex justify-content-center gap-2">
-                                        <a asp-action="Detail" asp-route-id="@pro.PkProductId"
-                                           class="btn btn-sm btn-outline-secondary rounded-pill px-3">Detail</a>
-                                        <a asp-action="EditProduct" asp-route-id="@pro.PkProductId"
-                                           class="btn btn-sm btn-primary rounded-pill px-3 shadow-sm">Edit</a>
-                                    </div>
-                                </td>
-                            </tr>
-                        }
-                    }
-                    else
-                    {
-                        <tr>
-                            <td colspan="6" class="text-center py-5">
-                                <div class="text-muted">
-                                    <i class="bi bi-box-seam display-4 d-block mb-3"></i>
-                                    <p class="mb-0">No products match your current filters.</p>
-                                </div>
-                            </td>
-                        </tr>
-                    }
-                </tbody>
-            </table>
-        </div>
-
-        @if (Model.AllPages > 1)
-        {
-            <div class="card-footer bg-white py-3 border-0">
-                <nav>
-                    <ul class="pagination pagination-sm justify-content-center mb-0">
-                        <li class="page-item @(Model.CurrentPage == 1 ? "disabled" : "")">
-                            <a class="page-link rounded-start-pill px-3" asp-action="Index"
-                               asp-route-page="@(Model.CurrentPage - 1)"
-                               asp-route-searchString="@ViewBag.CurrentFilter"
-                               asp-route-sortOrder="@ViewBag.CurrentSort"
-                               asp-route-stockFilter="@stockFilter">Prev</a>
-                        </li>
-                        @for (int i = 1; i <= Model.AllPages; i++)
-                        {
-                            <li class="page-item @(i == Model.CurrentPage ? "active" : "")">
-                                <a class="page-link px-3" asp-action="Index" asp-route-page="@i"
-                                   asp-route-searchString="@ViewBag.CurrentFilter"
-                                   asp-route-sortOrder="@ViewBag.CurrentSort"
-                                   asp-route-stockFilter="@stockFilter">@i</a>
-                            </li>
-                        }
-                        <li class="page-item @(Model.CurrentPage == Model.AllPages ? "disabled" : "")">
-                            <a class="page-link rounded-end-pill px-3" asp-action="Index"
-                               asp-route-page="@(Model.CurrentPage + 1)"
-                               asp-route-searchString="@ViewBag.CurrentFilter"
-                               asp-route-sortOrder="@ViewBag.CurrentSort"
-                               asp-route-stockFilter="@stockFilter">Next</a>
-                        </li>
-                    </ul>
-                </nav>
+    <!-- Inventory Management Table -->
+    <section aria-labelledby="inventory-table-heading">
+        <div class="card shadow-sm border-0">
+            <div class="card-header bg-white py-3">
+                <h2 id="inventory-table-heading" class="fw-bold mb-0 h5">
+                    <i class="bi bi-table me-2" aria-hidden="true"></i>Product Inventory Overview
+                </h2>
             </div>
+
+            <div class="card-body p-0">
+                @if (Model?.Any() == true)
+                {
+                    <div class="table-responsive">
+                        <table class="table table-hover table-striped align-middle mb-0"
+                               role="table"
+                               aria-label="Product inventory management table with stock levels and actions"
+                               aria-describedby="inventory-table-desc">
+                            <caption id="inventory-table-desc" class="sr-only">
+                                Table showing product SKU, name, stock quantity, status, and available management actions
+                            </caption>
+
+                            <thead class="table-dark">
+                                <tr role="row">
+                                    <th scope="col" class="fw-semibold">
+                                        <i class="bi bi-upc-scan me-1" aria-hidden="true"></i>Product SKU
+                                    </th>
+                                    <th scope="col" class="fw-semibold">
+                                        <i class="bi bi-tag me-1" aria-hidden="true"></i>Product Name
+                                    </th>
+                                    <th scope="col" class="fw-semibold text-center">
+                                        <i class="bi bi-boxes me-1" aria-hidden="true"></i>Stock Quantity
+                                    </th>
+                                    <th scope="col" class="fw-semibold text-center">
+                                        <i class="bi bi-toggle2-on me-1" aria-hidden="true"></i>Status
+                                    </th>
+                                    <th scope="col" class="fw-semibold text-center">
+                                        <i class="bi bi-pencil me-1" aria-hidden="true"></i>Product Details
+                                    </th>
+                                    <th scope="col" class="fw-semibold text-center">
+                                        <i class="bi bi-images me-1" aria-hidden="true"></i>Images
+                                    </th>
+                                    <th scope="col" class="fw-semibold text-center">
+                                        <i class="bi bi-calculator me-1" aria-hidden="true"></i>Quantity Management
+                                    </th>
+                                </tr>
+                            </thead>
+
+                            <tbody>
+                                @foreach(var product in Model)
+                                {
+                                    <tr role="row" id="product-row-@product.PkProductId">
+
+                                        <!-- SKU Column -->
+                                        <td role="gridcell" class="font-monospace fw-semibold"
+                                            aria-label="Product SKU @product.PkProductId">
+                                            @product.PkProductId
+                                        </td>
+
+                                        <!-- Product Name Column -->
+                                        <td role="gridcell" class="fw-medium"
+                                            aria-label="Product name @product.ProductName">
+                                            @product.ProductName
+                                        </td>
+
+                                        <!-- Quantity Column -->
+                                        <td role="gridcell" class="text-center">
+                                            <span class="badge @(product.Quantity <= 5 ? "bg-danger" : product.Quantity <= 20 ? "bg-warning text-dark" : "bg-success") fs-6"
+                                                  aria-label="Current stock: @product.Quantity units@(product.Quantity <= 5 ? " - Low stock warning" : "")">
+                                                @product.Quantity
+                                                @if (product.Quantity <= 5)
+                                                {
+                                                    <i class="bi bi-exclamation-triangle ms-1" aria-hidden="true"></i>
+                                                }
+                                            </span>
+                                        </td>
+
+                                        <!-- Active Status Column -->
+                                        <td role="gridcell" class="text-center">
+                                            <span class="badge @(product.IsActive ? "bg-success" : "bg-secondary") fs-6"
+                                                  role="status"
+                                                  aria-label="Product status: @(product.IsActive ? "Active and available for purchase" : "Inactive and not available")">
+                                                @if (product.IsActive)
+                                                {
+                                                    <text><i class="bi bi-check-circle me-1" aria-hidden="true"></i>Active</text>
+                                                }
+                                                else
+                                                {
+                                                    <text><i class="bi bi-x-circle me-1" aria-hidden="true"></i>Inactive</text>
+                                                }
+                                            </span>
+                                        </td>
+
+                                        <!-- Edit Product Column -->
+                                        <td role="gridcell" class="text-center">
+                                            <a asp-controller="Product" 
+                                               asp-action="Edit" 
+                                               asp-route-id="@product.PkProductId"
+                                               class="btn btn-sm btn-outline-primary rounded-pill"
+                                               aria-label="Edit product details for @product.ProductName">
+                                                <i class="bi bi-pencil me-1" aria-hidden="true"></i>Edit Details
+                                            </a>
+                                        </td>
+
+                                        <!-- Edit Images Column -->
+                                        <td role="gridcell" class="text-center">
+                                            <a asp-controller="Inventory" 
+                                               asp-action="ProductImages" 
+                                               asp-route-id="@product.PkProductId"
+                                               class="btn btn-sm btn-outline-info rounded-pill"
+                                               aria-label="Manage images for @product.ProductName">
+                                                <i class="bi bi-images me-1" aria-hidden="true"></i>Manage Images
+                                            </a>
+                                        </td>
+
+                                        <!-- Edit Quantity Column -->
+                                        <td role="gridcell" class="text-center">
+                                            <div class="d-flex flex-column align-items-center gap-2">
+                                                <button type="button" 
+                                                        class="btn btn-sm btn-outline-warning rounded-pill editQuantityToggle"
+                                                        data-product-id="@product.PkProductId"
+                                                        aria-expanded="false"
+                                                        aria-controls="quantity-form-@product.PkProductId"
+                                                        aria-label="Toggle quantity editor for @product.ProductName">
+                                                    <i class="bi bi-calculator me-1" aria-hidden="true"></i>Update Stock
+                                                </button>
+
+                                                <div id="quantity-form-@product.PkProductId" 
+                                                     class="editQuantityArea d-none w-100" 
+                                                     aria-hidden="true"
+                                                     data-product-id="@product.PkProductId">
+                                                    <form method="post" 
+                                                          asp-action="EditProductAmount" 
+                                                          asp-controller="Inventory"
+                                                          class="p-3 border rounded bg-light"
+                                                          aria-labelledby="quantity-form-title-@product.PkProductId">
+
+                                                        <h3 id="quantity-form-title-@product.PkProductId" class="h6 mb-2">
+                                                            Update Stock for @product.ProductName
+                                                        </h3>
+
+                                                        <input type="hidden" name="productId" value="@product.PkProductId" />
+
+                                                        <div class="mb-2">
+                                                            <label for="quantity-@product.PkProductId" class="form-label small fw-semibold">
+                                                                New Quantity
+                                                            </label>
+                                                            <input type="number" 
+                                                                   id="quantity-@product.PkProductId"
+                                                                   name="quantityId" 
+                                                                   value="@product.Quantity" 
+                                                                   min="0"
+                                                                   max="9999"
+                                                                   class="form-control form-control-sm"
+                                                                   aria-describedby="quantity-help-@product.PkProductId"
+                                                                   required />
+                                                            <small id="quantity-help-@product.PkProductId" class="form-text text-muted">
+                                                                Current: @product.Quantity units
+                                                            </small>
+                                                        </div>
+
+                                                        <div class="d-flex gap-2">
+                                                            <button type="submit" 
+                                                                    class="btn btn-success btn-sm"
+                                                                    aria-label="Save new quantity for @product.ProductName">
+                                                                <i class="bi bi-check me-1" aria-hidden="true"></i>Update
+                                                            </button>
+                                                            <button type="button" 
+                                                                    class="btn btn-secondary btn-sm cancelQuantityEdit"
+                                                                    data-product-id="@product.PkProductId"
+                                                                    aria-label="Cancel quantity update for @product.ProductName">
+                                                                <i class="bi bi-x me-1" aria-hidden="true"></i>Cancel
+                                                            </button>
+                                                        </div>
+                                                    </form>
+                                                </div>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                }
+                            </tbody>
+                        </table>
+                    </div>
+                }
+                else
+                {
+                    <div class="text-center py-5">
+                        <div role="status" aria-live="polite">
+                            <i class="bi bi-inbox display-1 text-muted mb-3" aria-hidden="true"></i>
+                            <h3 class="h5 text-muted">No Products in Inventory</h3>
+                            <p class="text-muted">There are currently no products to manage.</p>
+                            <a asp-controller="Product" asp-action="Create" 
+                               class="btn btn-primary rounded-pill"
+                               aria-label="Add first product to inventory">
+                                <i class="bi bi-plus-circle me-1" aria-hidden="true"></i>Add Product
+                            </a>
+                        </div>
+                    </div>
+                }
+            </div>
+        </div>
+    </section>
+
+</main>
+
+@section Scripts {
+<script>
+    document.addEventListener("DOMContentLoaded", function() {
+        // Enhanced quantity editing with accessibility
+        const editButtons = document.querySelectorAll(".editQuantityToggle");
+        const cancelButtons = document.querySelectorAll(".cancelQuantityEdit");
+
+        // Handle edit quantity toggle
+        editButtons.forEach(button => {
+            button.addEventListener("click", function() {
+                const productId = this.getAttribute('data-product-id');
+                const formArea = document.getElementById(`quantity-form-${productId}`);
+                const isExpanded = this.getAttribute('aria-expanded') === 'true';
+
+                if (!isExpanded) {
+                    // Show form
+                    formArea.classList.remove('d-none');
+                    formArea.setAttribute('aria-hidden', 'false');
+                    this.setAttribute('aria-expanded', 'true');
+                    this.innerHTML = '<i class="bi bi-x me-1" aria-hidden="true"></i>Close Editor';
+                    this.classList.remove('btn-outline-warning');
+                    this.classList.add('btn-warning');
+
+                    // Focus the quantity input
+                    const quantityInput = formArea.querySelector('input[type="number"]');
+                    if (quantityInput) {
+                        quantityInput.focus();
+                        quantityInput.select();
+                    }
+
+                    // Announce to screen readers
+                    announceToScreenReader(`Quantity editor opened for product ${productId}`);
+                } else {
+                    // Hide form
+                    closeQuantityForm(productId);
+                }
+            });
+
+            // Add keyboard support
+            button.addEventListener('keydown', function(e) {
+                if (e.key === 'Enter' || e.key === ' ') {
+                    e.preventDefault();
+                    this.click();
+                }
+            });
+        });
+
+        // Handle cancel buttons
+        cancelButtons.forEach(button => {
+            button.addEventListener("click", function() {
+                const productId = this.getAttribute('data-product-id');
+                closeQuantityForm(productId);
+            });
+        });
+
+        // Enhanced form validation
+        const quantityForms = document.querySelectorAll('form[asp-action="EditProductAmount"]');
+        quantityForms.forEach(form => {
+            form.addEventListener('submit', function(e) {
+                const quantityInput = this.querySelector('input[type="number"]');
+                const value = parseInt(quantityInput.value);
+
+                if (isNaN(value) || value < 0 || value > 9999) {
+                    e.preventDefault();
+                    quantityInput.setAttribute('aria-invalid', 'true');
+                    quantityInput.focus();
+                    announceToScreenReader('Please enter a valid quantity between 0 and 9999');
+                    return false;
+                }
+
+                quantityInput.setAttribute('aria-invalid', 'false');
+                announceToScreenReader('Updating product quantity...');
+            });
+        });
+
+        // Enhanced table accessibility
+        const tableRows = document.querySelectorAll('tbody tr[role="row"]');
+        tableRows.forEach(row => {
+            row.addEventListener('focus', function() {
+                this.classList.add('table-row-focused');
+            });
+
+            row.addEventListener('blur', function() {
+                this.classList.remove('table-row-focused');
+            });
+        });
+
+        function closeQuantityForm(productId) {
+            const formArea = document.getElementById(`quantity-form-${productId}`);
+            const toggleButton = document.querySelector(`[data-product-id="${productId}"].editQuantityToggle`);
+
+            if (formArea && toggleButton) {
+                formArea.classList.add('d-none');
+                formArea.setAttribute('aria-hidden', 'true');
+                toggleButton.setAttribute('aria-expanded', 'false');
+                toggleButton.innerHTML = '<i class="bi bi-calculator me-1" aria-hidden="true"></i>Update Stock';
+                toggleButton.classList.remove('btn-warning');
+                toggleButton.classList.add('btn-outline-warning');
+
+                // Return focus to toggle button
+                toggleButton.focus();
+
+                // Reset form validation
+                const quantityInput = formArea.querySelector('input[type="number"]');
+                if (quantityInput) {
+                    quantityInput.setAttribute('aria-invalid', 'false');
+                }
+
+                announceToScreenReader(`Quantity editor closed for product ${productId}`);
+            }
         }
-    </div>
-</div>
+
+        function announceToScreenReader(message) {
+            const announcement = document.createElement('div');
+            announcement.setAttribute('aria-live', 'polite');
+            announcement.setAttribute('aria-atomic', 'true');
+            announcement.className = 'sr-only';
+            announcement.textContent = message;
+            document.body.appendChild(announcement);
+
+            setTimeout(() => {
+                document.body.removeChild(announcement);
+            }, 1000);
+        }
+
+        // Escape key to close forms
+        document.addEventListener('keydown', function(e) {
+            if (e.key === 'Escape') {
+                const openForms = document.querySelectorAll('.editQuantityArea:not(.d-none)');
+                openForms.forEach(form => {
+                    const productId = form.getAttribute('data-product-id');
+                    if (productId) {
+                        closeQuantityForm(productId);
+                    }
+                });
+            }
+        });
+    });
+</script>
+}
 
 <style>
-    .table-danger-subtle { background-color: rgba(220, 53, 69, 0.04) !important; }
-    .bg-success-subtle { background-color: #e6f4ea; }
-    .bg-secondary-subtle { background-color: #f1f3f4; }
-    .btn-outline-success:hover { color: #fff; background-color: #198754; }
-    .btn-outline-danger:hover { color: #fff; background-color: #dc3545; }
+    /* Enhanced table accessibility */
+    .table-hover tbody tr:hover {
+        background-color: rgba(0, 123, 255, 0.075);
+    }
+
+    .table-hover tbody tr:focus-within {
+        background-color: rgba(0, 123, 255, 0.1);
+        outline: 2px solid #0d6efd;
+        outline-offset: -2px;
+    }
+
+    .table-row-focused {
+        background-color: rgba(0, 123, 255, 0.1) !important;
+    }
+
+    /* Quantity form styling */
+    .editQuantityArea {
+        min-width: 200px;
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    }
+
+    /* Enhanced button accessibility */
+    .btn:focus {
+        box-shadow: 0 0 0 0.25rem rgba(13, 110, 253, 0.25);
+    }
+
+    /* Form control accessibility */
+    .form-control:focus {
+        border-color: #0d6efd;
+        box-shadow: 0 0 0 0.25rem rgba(13, 110, 253, 0.25);
+    }
+
+    .form-control[aria-invalid="true"] {
+        border-color: #dc3545;
+        box-shadow: 0 0 0 0.25rem rgba(220, 53, 69, 0.25);
+    }
+
+    /* Badge enhancements */
+    .badge {
+        font-weight: 500;
+    }
+
+    /* Stock level visual indicators */
+    .badge.bg-danger {
+        animation: pulse 2s infinite;
+    }
+
+    @@keyframes pulse {
+        0% { opacity: 1; }
+        50% { opacity: 0.7; }
+        100% { opacity: 1; }
+    }
+
+    /* Screen reader improvements */
+    .sr-only {
+        position: absolute !important;
+        width: 1px !important;
+        height: 1px !important;
+        padding: 0 !important;
+        margin: -1px !important;
+        overflow: hidden !important;
+        clip: rect(0, 0, 0, 0) !important;
+        white-space: nowrap !important;
+        border: 0 !important;
+    }
+
+    /* High contrast improvements */
+    @@media (prefers-contrast: high) {
+        .table {
+            border: 2px solid #000 !important;
+        }
+
+        .btn {
+            border-width: 2px !important;
+        }
+
+        .badge {
+            border: 1px solid #000 !important;
+        }
+    }
+
+    /* Reduced motion support */
+    @@media (prefers-reduced-motion: reduce) {
+        .badge.bg-danger {
+            animation: none;
+        }
+
+        * {
+            transition: none !important;
+        }
+    }
+
+    /* Focus management for complex interactions */
+    .editQuantityArea:not(.d-none) {
+        position: relative;
+        z-index: 10;
+    }
+
+    /* Improved spacing for mobile */
+    @@media (max-width: 768px) {
+        .table-responsive {
+            font-size: 0.875rem;
+        }
+
+        .btn-sm {
+            padding: 0.25rem 0.5rem;
+            font-size: 0.75rem;
+        }
+    }
 </style>
+

@@ -7,9 +7,47 @@ using ELKH.Services;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Localization;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.AspNetCore.Identity.UI.Services;
+using Microsoft.AspNetCore.Mvc.Versioning;
+using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Mvc.Filters;
+using Microsoft.AspNetCore.Mvc.ApiExplorer;
 using System.Globalization;
 
+// =====================================================================
+// PROGRAM.CS - APPLICATION STARTUP AND CONFIGURATION
+// =====================================================================
+//
+// TABLE OF CONTENTS
+// ==================
+// 1. Service Registration (lines 17-111)
+//    - Database & Identity (lines 17-46)
+//    - Health Checks (lines 48-50)
+//    - MVC / Razor Pages (lines 52-74)
+//    - Caching & Compression (lines 76-82)
+//    - Rate Limiting (lines 84)
+//    - Configuration Options (lines 86)
+//    - Payment & Security Services (lines 88-94)
+//    - Repository Registration (lines 96-102)
+//    - Mapping (ProductMapper instead of AutoMapper) (lines 104-114)
+//
+// 2. Application Build & Configuration (lines 116-169)
+//    - Allowed Hosts Validation (lines 121-132)
+//    - HTTP Request Pipeline (lines 134-159)
+//    - Routing & Endpoints (lines 161-165)
+//
+// 3. Database Migration & Seeding (lines 167-189)
+//    - Migration Strategy (controlled by config)
+//    - Idempotent Seeding (products, admin, customers)
+//
+// =====================================================================
+
 var builder = WebApplication.CreateBuilder(args);
+
+// Configure logging to avoid EventLog disposal issues
+builder.Logging.ClearProviders();
+builder.Logging.AddConsole();
+builder.Logging.AddDebug();
 
 // -- Database and Identity
 // SQLite database with Entity Framework Core. Connection string is required
@@ -24,13 +62,77 @@ builder.Services.AddDbContext<ImageStoreContext>(options =>
     options.UseSqlite(imageStoreConnection));
 builder.Services.AddDatabaseDeveloperPageExceptionFilter();
 
-// -- Identity
-builder.Services.AddDefaultIdentity<IdentityUser>(options => options.SignIn.RequireConfirmedAccount = true)
-    .AddRoles<IdentityRole>()
-    .AddEntityFrameworkStores<ApplicationDbContext>();
+// -- Health Checks (for monitoring and deployment readiness)
+// Exposes /health endpoint for load balancers, monitoring tools, and container orchestrators
+// Includes checks for:
+// - Database connectivity (ApplicationDbContext, ImageStoreContext)
+// - PayPal API accessibility and credential validation
+// - Email/SMTP server connectivity (production only, skipped in development)
+builder.Services.AddHealthChecks()
+    .AddDbContextCheck<ApplicationDbContext>(
+        name: "database",
+        failureStatus: Microsoft.Extensions.Diagnostics.HealthChecks.HealthStatus.Unhealthy,
+        tags: new[] { "db", "sql", "ready" })
+    .AddDbContextCheck<ImageStoreContext>(
+        name: "imagestore",
+        failureStatus: Microsoft.Extensions.Diagnostics.HealthChecks.HealthStatus.Unhealthy,
+        tags: new[] { "db", "sql", "ready" })
+    .AddCheck<ELKH.HealthChecks.PayPalHealthCheck>(
+        name: "paypal",
+        failureStatus: Microsoft.Extensions.Diagnostics.HealthChecks.HealthStatus.Degraded,
+        tags: new[] { "external", "payment", "live" })
+    .AddCheck<ELKH.HealthChecks.EmailHealthCheck>(
+        name: "email",
+        failureStatus: Microsoft.Extensions.Diagnostics.HealthChecks.HealthStatus.Degraded,
+        tags: new[] { "external", "smtp", "live" });
 
-// -- Health Checks
-builder.Services.AddHealthChecks();
+// Add Swagger/OpenAPI documentation
+builder.Services.AddSwaggerDocumentation();
+
+// -- Application Insights & Monitoring
+// Azure Application Insights for telemetry, performance monitoring, and diagnostics
+builder.Services.AddApplicationInsightsTelemetry(options =>
+{
+    options.ConnectionString = builder.Configuration.GetConnectionString("ApplicationInsights");
+    options.DeveloperMode = builder.Environment.IsDevelopment();
+    options.EnableAdaptiveSampling = !builder.Environment.IsDevelopment();
+    options.EnableQuickPulseMetricStream = true;
+    options.EnableAuthenticationTrackingJavaScript = true;
+    options.EnableDependencyTrackingTelemetryModule = true;
+    options.EnablePerformanceCounterCollectionModule = true;
+    options.EnableRequestTrackingTelemetryModule = true;
+});
+
+// Add API versioning
+builder.Services.AddApiVersioning(options =>
+{
+    options.DefaultApiVersion = new Microsoft.AspNetCore.Mvc.ApiVersion(1, 0);
+    options.AssumeDefaultVersionWhenUnspecified = true;
+    options.ApiVersionReader = ApiVersionReader.Combine(
+        new QueryStringApiVersionReader("v"),
+        new HeaderApiVersionReader("X-API-Version"),
+        new UrlSegmentApiVersionReader()
+    );
+    options.ReportApiVersions = true;
+});
+
+builder.Services.AddVersionedApiExplorer(setup =>
+{
+    setup.GroupNameFormat = "'v'VVV";
+    setup.SubstituteApiVersionInUrl = true;
+});
+
+// ASP.NET Core Identity with email confirmation requirement.
+// Users must confirm their email before they can sign in.
+// AddRoles<IdentityRole>() is required for [Authorize(Roles = "...")] to function —
+// without it, role claims are never populated and role-based access always fails.
+builder.Services.AddIdentity<IdentityUser, IdentityRole>(options =>
+    {
+        options.SignIn.RequireConfirmedAccount = true;
+    })
+    .AddEntityFrameworkStores<ApplicationDbContext>()
+    .AddDefaultTokenProviders()
+    .AddDefaultUI();
 
 // -- MVC / Razor
 builder.Services.AddControllersWithViews();
@@ -63,6 +165,49 @@ builder.Services.AddResponseCompression(options =>
 builder.Services.AddMemoryCache();
 builder.Services.AddOutputCachingPolicies();
 
+// Response caching for API endpoints
+builder.Services.AddResponseCaching(options =>
+{
+    options.MaximumBodySize = 1024 * 1024; // 1 MB
+    options.UseCaseSensitivePaths = false;
+});
+
+// Cache profiles for different types of content
+builder.Services.Configure<MvcOptions>(options =>
+{
+    options.CacheProfiles.Add("ProductCatalog", new CacheProfile
+    {
+        Duration = 300, // 5 minutes
+        Location = ResponseCacheLocation.Any,
+        VaryByHeader = "Accept,Accept-Encoding"
+    });
+
+    options.CacheProfiles.Add("ProductDetails", new CacheProfile
+    {
+        Duration = 600, // 10 minutes
+        Location = ResponseCacheLocation.Any,
+        VaryByHeader = "Accept,Accept-Encoding"
+    });
+
+    options.CacheProfiles.Add("SearchResults", new CacheProfile
+    {
+        Duration = 180, // 3 minutes
+        Location = ResponseCacheLocation.Any,
+        VaryByHeader = "Accept,Accept-Encoding",
+        VaryByQueryKeys = new[] { "q", "limit" }
+    });
+});
+
+// -- Session Support (for guest checkout)
+builder.Services.AddSession(options =>
+{
+    options.IdleTimeout = TimeSpan.FromMinutes(30); // Session expires after 30 minutes of inactivity
+    options.Cookie.HttpOnly = true; // Prevent JavaScript access to session cookie
+    options.Cookie.IsEssential = true; // Required for guest checkout functionality
+    options.Cookie.SecurePolicy = CookieSecurePolicy.Always; // HTTPS only
+    options.Cookie.SameSite = SameSiteMode.Lax; // CSRF protection
+});
+
 // -- Rate Limiting (brute-force / enumeration protection)
 builder.Services.AddRateLimitingPolicies();
 
@@ -85,7 +230,17 @@ builder.Services.AddApplicationServices(); // UserService, SearchService, Rating
 builder.Services.AddEmailServices();       // SmtpEmailSender, EmailSenderAdapter, IEmailSender
 builder.Services.AddRepositories();        // All repository implementations with base class inheritance
 
-// -- Repositories
+// -- Image Optimization Services
+builder.Services.AddScoped<IImageOptimizationService, ImageOptimizationService>();
+
+// -- Enhanced Logging Services
+builder.Services.AddScoped<IStructuredLoggingService, StructuredLoggingService>();
+builder.Services.AddHttpContextAccessor(); // Required for CorrelationId access and session-based cart
+
+// -- Guest Checkout Services
+builder.Services.AddScoped<IGuestCartService, GuestCartService>();
+
+// -- Additional Repositories (not covered by AddRepositories extension)
 builder.Services.AddScoped<IRoleRepository, RoleRepository>();
 builder.Services.AddScoped<OrderHistoryManagementRepo>();
 builder.Services.AddScoped<InventoryRepo>();
@@ -95,13 +250,41 @@ builder.Services.AddScoped<ContactDetailRepo>();
 builder.Services.AddScoped<TransactionRepo>();
 builder.Services.AddScoped<OrderHistoryStaffRepo>();
 
-// -- AutoMapper
-builder.Services.AddAutoMapper(typeof(ELKH.Mapping.AutoMapperProfile));
+// -- Mapping
+// NOTE: AutoMapper 16.x removed DI extension support and changed the API significantly.
+// AutoMapper versions 12.x-15.x have a known HIGH SEVERITY vulnerability (GHSA-rvv3-g6hj-g44x).
+// Since we only map ProductModel <-> ProductVM, we've removed AutoMapper entirely and
+// implemented manual mapping via IProductMapper/ProductMapper services.
+// 
+// Benefits: No vulnerabilities, better performance, type-safe, explicit mapping logic.
+// See Services/ProductMapper.cs for implementation and ProductService for usage.
+//
+// Future: If more complex mapping is needed, consider Mapperly (source-generated mapper)
+// which provides AutoMapper-like convenience without runtime overhead or security issues.
 
 // =====================================================================
 // Build application
 // =====================================================================
 var app = builder.Build();
+
+// ═══════════════════════════════════════════════════════════════════════
+// CONFIGURATION VALIDATION
+// Validate all required secrets and configuration at startup to fail fast
+// before any HTTP requests are processed. In Development, logs warnings.
+// In Production, throws exception and aborts startup.
+// ═══════════════════════════════════════════════════════════════════════
+using (var scope = app.Services.CreateScope())
+{
+    var validator = new ConfigurationValidator(
+        scope.ServiceProvider.GetRequiredService<ILogger<ConfigurationValidator>>(),
+        scope.ServiceProvider.GetRequiredService<IWebHostEnvironment>(),
+        scope.ServiceProvider.GetRequiredService<Microsoft.Extensions.Options.IOptions<PayPalOptions>>(),
+        scope.ServiceProvider.GetRequiredService<Microsoft.Extensions.Options.IOptions<ReCaptchaOptions>>(),
+        scope.ServiceProvider.GetRequiredService<Microsoft.Extensions.Options.IOptions<EmailOptions>>(),
+        scope.ServiceProvider.GetRequiredService<IConfiguration>());
+
+    validator.ValidateConfiguration();
+}
 
 // Warn loudly if AllowedHosts is still the development default in a non-Development environment.
 // Override via the ASPNETCORE_AllowedHosts environment variable (e.g. "yourdomain.com;www.yourdomain.com").
@@ -125,17 +308,26 @@ if (app.Environment.IsDevelopment())
     // Development: show detailed error page with stack traces and DB queries.
     app.UseDeveloperExceptionPage();
     app.UseMigrationsEndPoint();
+
+    // Enable Swagger in development
+    var devApiVersionProvider = app.Services.GetRequiredService<IApiVersionDescriptionProvider>();
+    app.UseSwaggerDocumentation(devApiVersionProvider);
 }
 else
 {
     // HSTS: Enforce HTTPS for 30 days (prevents downgrade attacks).
     // Exception handling and status-code pages are registered inside UseApplicationMiddleware.
     app.UseHsts();
+
+    // Enable Swagger in production for API documentation (consider security implications)
+    var prodApiVersionProvider = app.Services.GetRequiredService<IApiVersionDescriptionProvider>();
+    app.UseSwaggerDocumentation(prodApiVersionProvider);
 }
 
-app.UseStaticFiles();
+app.UseApplicationMiddleware(app.Environment);
 
-app.UseApplicationMiddleware();
+// Static files AFTER compression so they can be compressed
+app.UseStaticFiles();
 
 // =====================================================================
 // Routing and endpoints
@@ -176,30 +368,44 @@ await using (var migrationScope = app.Services.CreateAsyncScope())
 }
 
 // 2. Run Seeding in its own fresh scope
-await using (var seedScope = app.Services.CreateAsyncScope())
+// Seeding can be disabled via Database:RunSeeders = false in appsettings.json
+// or via environment variable. Useful after first run to prevent accidental reseeding.
+var runSeeders = app.Configuration.GetValue<bool>("Database:RunSeeders", defaultValue: true);
+
+if (runSeeders)
 {
-    var sp = seedScope.ServiceProvider;
-    try
+    await using (var seedScope = app.Services.CreateAsyncScope())
     {
+        var sp = seedScope.ServiceProvider;
         var db = sp.GetRequiredService<ApplicationDbContext>();
         var userManager = sp.GetRequiredService<UserManager<IdentityUser>>();
         var roleManager = sp.GetRequiredService<RoleManager<IdentityRole>>();
 
         app.Logger.LogInformation("Starting Seeding...");
 
-        await DbSeeder.SeedProductsAsync(db);
-        await DbSeeder.SeedAdminAsync(userManager, roleManager, app.Configuration);
+        // Temporarily disable foreign key constraints for seeding
+        await db.Database.ExecuteSqlRawAsync("PRAGMA foreign_keys=OFF");
 
-        // This is the heavy one. If it still hangs, check the file path!
-        await DbSeeder.SeedCustomersAsync(db, userManager, app.Environment.WebRootPath);
+        try
+        {
+            await DbSeeder.SeedProductsAsync(db);
+            await DbSeeder.SeedShippingMethodsAsync(db); // Seed shipping options
+            await DbSeeder.SeedUsersAndRolesAsync(userManager, roleManager, app.Configuration);
+            await DbSeeder.SeedCustomersAndOrdersAsync(db, userManager, app.Environment.WebRootPath);
+            await DbSeeder.SeedStoreReviewsAsync(db, userManager); // Seed featured homepage reviews
+            await DbSeeder.SeedTestTransactionsAsync(db);
 
-        await DbSeeder.SeedTestTransactionsAsync(db);
-
-        app.Logger.LogInformation("Seeding completed successfully.");
-    }
-    catch (Exception ex)
-    {
-        app.Logger.LogError(ex, "Seeding failed.");
+            app.Logger.LogInformation("Seeding completed successfully.");
+        }
+        catch (Exception ex)
+        {
+            app.Logger.LogError(ex, "Seeding failed.");
+        }
+        finally
+        {
+            // Re-enable foreign key constraints after seeding
+            await db.Database.ExecuteSqlRawAsync("PRAGMA foreign_keys=ON");
+        }
     }
 }
 

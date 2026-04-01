@@ -1,3 +1,4 @@
+using System.Globalization;
 using System.Text;
 using ELKH.Data;
 using ELKH.Models;
@@ -89,19 +90,19 @@ namespace ELKH.Controllers
                 var lastSec = new DateTimeOffset(_reindex.LastRun.Value).ToUnixTimeSeconds();
                 sb.AppendLine("# HELP fuzzy_reindex_last_run_seconds Unix timestamp of last fuzzy reindex completion");
                 sb.AppendLine("# TYPE fuzzy_reindex_last_run_seconds gauge");
-                sb.AppendLine($"fuzzy_reindex_last_run_seconds {lastSec}");
+                sb.AppendLine(CultureInfo.InvariantCulture, $"fuzzy_reindex_last_run_seconds {lastSec}");
             }
 
             if (_reindex.LastDuration.HasValue)
             {
                 sb.AppendLine("# HELP fuzzy_reindex_last_duration_seconds Duration in seconds of last fuzzy reindex");
                 sb.AppendLine("# TYPE fuzzy_reindex_last_duration_seconds gauge");
-                sb.AppendLine($"fuzzy_reindex_last_duration_seconds {_reindex.LastDuration.Value.TotalSeconds:F2}");
+                sb.AppendLine(CultureInfo.InvariantCulture, $"fuzzy_reindex_last_duration_seconds {_reindex.LastDuration.Value.TotalSeconds:F2}");
             }
 
             sb.AppendLine("# HELP fuzzy_reindex_run_count Number of times fuzzy reindex has run since startup");
             sb.AppendLine("# TYPE fuzzy_reindex_run_count counter");
-            sb.AppendLine($"fuzzy_reindex_run_count {_reindex.RunCount}");
+            sb.AppendLine(CultureInfo.InvariantCulture, $"fuzzy_reindex_run_count {_reindex.RunCount}");
 
             // =====================================================================
             // Database-Backed Counts
@@ -113,7 +114,7 @@ namespace ELKH.Controllers
                 var suggestionCount = await _db.FuzzySuggestions.CountAsync();
                 sb.AppendLine("# HELP fuzzy_suggestion_count Number of precomputed fuzzy suggestion rows");
                 sb.AppendLine("# TYPE fuzzy_suggestion_count gauge");
-                sb.AppendLine($"fuzzy_suggestion_count {suggestionCount}");
+                sb.AppendLine(CultureInfo.InvariantCulture, $"fuzzy_suggestion_count {suggestionCount}");
             }
             catch
             {

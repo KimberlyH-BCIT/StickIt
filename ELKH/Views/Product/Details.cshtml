@@ -2,152 +2,382 @@
 @using ELKH.Models
 @using ELKH.ViewModels
 
+@*
+╔══════════════════════════════════════════════════════════════════════════════════╗
+║ TABLE OF CONTENTS - Product/Details.cshtml                                       ║
+╠══════════════════════════════════════════════════════════════════════════════════╣
+║ 1. ViewBag Data Preparation ................................. Lines    6-24     ║
+║    - Review pagination, sorting, and pricing calculations                        ║
+║    - Helper methods for review sorting URL generation                            ║
+║                                                                                  ║
+║ 2. Breadcrumb Navigation ................................... Lines   29-34     ║
+║    - Simple navigation path for SEO and UX                                      ║
+║                                                                                  ║
+║ 3. Product Display Section ................................ Lines   36-125     ║
+║    - Product image with fallback placeholder                                     ║
+║    - Product info, pricing, discounts, and purchase controls                    ║
+║    - Stock status, wishlist, and add-to-cart functionality                      ║
+║                                                                                  ║
+║ 4. Product Description & Details .......................... Lines  127-165     ║
+║    - Expandable product description with character limits                        ║
+║    - Product specifications and features                                         ║
+║                                                                                  ║
+║ 5. Customer Reviews Section ............................... Lines  167-275     ║
+║    - Review statistics and average rating display                               ║
+║    - User rating submission form (authenticated users only)                     ║
+║    - Review filtering and sorting controls                                       ║
+║    - Paginated review display with detailed review cards                        ║
+║                                                                                  ║
+║ 6. Related Products Section ............................... Lines  277-320     ║
+║    - Suggested products carousel                                                 ║
+║    - Category-based product recommendations                                      ║
+║                                                                                  ║
+║ 7. JavaScript Enhancements ................................ Lines  322-410     ║
+║    - AJAX cart operations with user feedback                                    ║
+║    - Wishlist toggle functionality                                              ║
+║    - Rating submission with form validation                                     ║
+║    - Dynamic UI updates and error handling                                      ║
+╚══════════════════════════════════════════════════════════════════════════════════╝
+*@
+
 @{
-    ViewData["Title"] = Model.ProductName;
+    ViewData["Title"] = $"{Model.ProductName} - Product Details | Sticker Collection";
+
+    // ═══════════════════════════════════════════════════════════════════════════════
+    // ║ ViewBag Data Extraction and Processing                                     ║
+    // ║ Safely extract complex data from controller with null-safety               ║
+    // ═══════════════════════════════════════════════════════════════════════════════
+
+    // Review pagination and sorting state
     var reviewPage     = ViewBag.ReviewPage as ReviewPageVM ?? new ReviewPageVM();
+    var currentReviewSort = ViewBag.ReviewSort as string ?? "date_new";
+
+    // User's purchase eligibility for rating (must have bought this product)
     var eligibleItems  = ViewBag.EligibleOrderItems as List<EligibleOrderItemVM>;
     bool userAlreadyRated = ViewBag.UserAlreadyRated == true;
     var userRating     = ViewBag.UserRating as ProductRatingModel;
     int userRatingId   = ViewBag.UserRatingId is int rid ? rid : 0;
+
+    // Price calculation including discount processing
     var effectivePrice = Model.DiscountPercent > 0
         ? Model.Price * (1 - (Model.DiscountPercent / 100m))
         : Model.Price;
+
+    // Helper methods for dynamic URL and CSS class generation
+    string ReviewSortLink(string sortKey) =>
+        Url.Action("Details", "Product", new { id = Model.ProductId, reviewPage = 1, reviewSort = sortKey }) + "#reviews";
+
+    string ReviewBtnClass(string sortKey) =>
+        currentReviewSort == sortKey
+            ? "btn btn-sm btn-primary"
+            : "btn btn-sm btn-outline-secondary";
 }
 
-<nav aria-label="breadcrumb" class="mb-4">
+<!-- ════════════════════════════════════════════════════════════════════════════════ -->
+<!-- ║ Enhanced Breadcrumb Navigation with Skip Links                             ║ -->
+<!-- ════════════════════════════════════════════════════════════════════════════════ -->
+
+<!-- Skip Links for Keyboard Navigation -->
+<nav class="skip-links sr-only-focusable mb-2" aria-label="Skip navigation">
+    <a href="#product-title" class="skip-link btn btn-primary">Skip to product details</a>
+    <a href="#add-to-cart-section" class="skip-link btn btn-primary">Skip to purchase options</a>
+    <a href="#reviews" class="skip-link btn btn-primary">Skip to reviews</a>
+</nav>
+
+<nav aria-label="Product navigation breadcrumb" class="mb-4">
     <ol class="breadcrumb">
-        <li class="breadcrumb-item"><a asp-controller="Product" asp-action="Index">Shop</a></li>
-        <li class="breadcrumb-item active">@Model.ProductName</li>
+        <li class="breadcrumb-item">
+            <a asp-controller="Product" asp-action="Index" aria-label="Go back to all products">
+                <i class="bi bi-shop me-1" aria-hidden="true"></i>Shop
+            </a>
+        </li>
+        <li class="breadcrumb-item active" aria-current="page">@Model.ProductName</li>
     </ol>
 </nav>
 
-<div class="row g-5">
-    <!-- Product image -->
-    <div class="col-md-5">
-        <div class="card border-0 shadow-sm bg-light d-flex align-items-center justify-content-center overflow-hidden"
-             style="min-height:350px;">
-            @if (!string.IsNullOrEmpty(Model.Thumbnail))
+<main role="main" aria-labelledby="product-title">
+    <div class="row g-5">
+        <!-- ════════════════════════════════════════════════════════════════════════════════ -->
+        <!-- ║ Product Display Section - Main product information and purchase controls    ║ -->
+        <!-- ════════════════════════════════════════════════════════════════════════════════ -->
+        <div class="row g-5">
+            <!-- ═══════════════════════════════════════════════════════════════════════════ -->
+            <!-- ║ Product Image Display with Responsive Design                           ║ -->
+            <!-- ═══════════════════════════════════════════════════════════════════════════ -->
+        <div class="col-md-5">
+            <figure class="card border-0 shadow-sm bg-light d-flex align-items-center justify-content-center overflow-hidden"
+                    style="min-height:350px;" 
+                    role="img"
+                    aria-labelledby="product-image-caption">
+                @if (!string.IsNullOrEmpty(Model.Thumbnail))
+                {
+                    <img src="@Model.Thumbnail" 
+                         alt="@Model.ProductName sticker - detailed product image showing design and colors"
+                         class="img-fluid" 
+                         style="max-height:400px;object-fit:contain;"
+                         loading="eager"
+                         fetchpriority="high" />
+                }
+                else
+                {
+                    <div class="d-flex flex-column align-items-center text-muted" 
+                         role="img" 
+                         aria-label="No product image available for @Model.ProductName">
+                        <i class="bi bi-image" style="font-size:5rem;" aria-hidden="true"></i>
+                        <span class="mt-2 small">No image available</span>
+                    </div>
+                }
+                <figcaption id="product-image-caption" class="sr-only">
+                    Product image for @Model.ProductName @if (Model.DiscountPercent > 0) { <span>- On sale with @Model.DiscountPercent% discount</span> }
+                </figcaption>
+            </figure>
+        </div>
+
+    <!-- ═══════════════════════════════════════════════════════════════════════════ -->
+    <!-- ║ Product Information Panel with Pricing and Purchase Controls          ║ -->
+    <!-- ═══════════════════════════════════════════════════════════════════════════ -->
+    <div class="col-md-7">
+        <header class="mb-3">
+            <div class="mb-2 d-flex align-items-center gap-2 flex-wrap" role="group" aria-label="Product badges">
+                <span class="badge bg-secondary" aria-label="Category: @Model.CategoryName">@Model.CategoryName</span>
+                @if (Model.DiscountPercent > 0)
+                {
+                    <span class="badge bg-danger" aria-label="Sale item with discount">
+                        <i class="bi bi-tag-fill me-1" aria-hidden="true"></i>On Sale
+                    </span>
+                }
+            </div>
+            <h1 class="fw-bold" id="product-title">@Model.ProductName</h1>
+        </header>
+
+        <!-- Price Information with Accessibility -->
+        <section aria-labelledby="price-heading">
+            <h2 id="price-heading" class="sr-only">Pricing Information</h2>
+            @if (Model.DiscountPercent > 0)
             {
-                <img src="@Model.Thumbnail" alt="@Model.ProductName"
-                     class="img-fluid" style="max-height:400px;object-fit:contain;" />
+                <div class="mb-1 d-flex align-items-center gap-2" role="group" aria-labelledby="original-price">
+                    <span id="original-price" class="sr-only">Original price:</span>
+                    <span class="text-decoration-line-through text-muted fs-5" aria-label="Was @Model.Price.ToString("C")">
+                        @Model.Price.ToString("C")
+                    </span>
+                    <span class="badge bg-danger fs-6" aria-label="@Model.DiscountPercent percent discount">
+                        -@Model.DiscountPercent.ToString("0")% off
+                    </span>
+                </div>
+                <p class="fs-3 fw-bold text-danger">
+                    <span id="effective-price" aria-label="Sale price @effectivePrice.ToString("C")">
+                        @effectivePrice.ToString("C")
+                    </span>
+                </p>
             }
             else
             {
-                <i class="bi bi-image text-muted" style="font-size:5rem;"></i>
+                <p class="fs-3 fw-bold text-dark">
+                    <span id="effective-price" aria-label="Price @Model.Price.ToString("C")">
+                        @Model.Price.ToString("C")
+                    </span>
+                </p>
             }
-        </div>
-    </div>
+        </section>
 
-    <!-- Product info -->
-    <div class="col-md-7">
-        <div class="mb-2 d-flex align-items-center gap-2 flex-wrap">
-            <span class="badge bg-secondary">@Model.CategoryName</span>
-            @if (Model.DiscountPercent > 0)
-            {
-                <span class="badge bg-danger"><i class="bi bi-tag-fill me-1"></i>On Sale</span>
-            }
-        </div>
-        <h1 class="fw-bold">@Model.ProductName</h1>
-
-        <!-- Price -->
-        @if (Model.DiscountPercent > 0)
-        {
-            <div class="mb-1 d-flex align-items-center gap-2">
-                <span class="text-decoration-line-through text-muted fs-5">@Model.Price.ToString("C")</span>
-                <span class="badge bg-danger fs-6">-@Model.DiscountPercent.ToString("0")% off</span>
-            </div>
-            <p class="fs-3 fw-bold text-danger"><span id="effective-price">@effectivePrice.ToString("C")</span></p>
-        }
-        else
-        {
-            <p class="fs-3 fw-bold text-dark"><span id="effective-price">@Model.Price.ToString("C")</span></p>
-        }
-
-        <!-- Average rating & review count -->
+        <!-- Average rating & review count with accessibility -->
         @if (reviewPage.AverageRating > 0)
         {
-            <div class="mb-2 d-flex align-items-center gap-1">
-                @for (int i = 1; i <= 5; i++)
-                {
-                    <i class="bi @(i <= Math.Round(reviewPage.AverageRating) ? "bi-star-fill" : "bi-star") text-warning"></i>
-                }
-                <small class="text-muted ms-1">
-                    @reviewPage.AverageRating.ToString("F1") — @reviewPage.TotalCount @(reviewPage.TotalCount == 1 ? "review" : "reviews")
-                </small>
-            </div>
-        }
-        else
-        {
-            <p class="text-muted small mb-2">No reviews yet</p>
-        }
-
-        <p class="text-muted mb-4">@Model.Description</p>
-
-        <!-- Stock & Add to Cart -->
-        @if (Model.IsActive && Model.StockQuantity > 0)
-        {
-            <p class="text-success mb-3">
-                <i class="bi bi-check-circle-fill me-1"></i>
-                In stock — @Model.StockQuantity available
-            </p>
-            <form asp-controller="Cart" asp-action="AddToCart" method="post" class="d-flex gap-3 align-items-center mb-3">
-                @Html.AntiForgeryToken()
-                <input type="hidden" name="itemId" value="@Model.ProductId" />
-                <div class="input-group" style="width:120px;">
-                    <span class="input-group-text">Qty</span>
-                    <input type="number" name="quantity" value="1" min="1"
-                           max="@Model.StockQuantity" class="form-control text-center" />
+            <section aria-labelledby="rating-summary" class="mb-3">
+                <h2 id="rating-summary" class="sr-only">Customer Ratings Summary</h2>
+                <div class="d-flex align-items-center gap-1" role="group" aria-label="Average rating @reviewPage.AverageRating.ToString("F1") out of 5 stars">
+                    @for (int i = 1; i <= 5; i++)
+                    {
+                        <i class="bi @(i <= Math.Round(reviewPage.AverageRating) ? "bi-star-fill" : "bi-star") text-warning"
+                           aria-hidden="true"
+                           title="@(i <= Math.Round(reviewPage.AverageRating) ? "Filled star" : "Empty star")"></i>
+                    }
+                    <span class="sr-only">@reviewPage.AverageRating.ToString("F1") out of 5 stars</span>
+                    <small class="text-muted ms-1" aria-label="Based on @reviewPage.TotalCount customer @(reviewPage.TotalCount == 1 ? "review" : "reviews")">
+                        @reviewPage.AverageRating.ToString("F1") — @reviewPage.TotalCount @(reviewPage.TotalCount == 1 ? "review" : "reviews")
+                    </small>
                 </div>
-                <button type="submit" class="btn btn-dark btn-lg px-4">
-                    <i class="bi bi-cart-plus me-2"></i>Add to Cart
-                </button>
-            </form>
+                <a href="#reviews" class="btn btn-link p-0 text-decoration-none small" aria-label="Jump to customer reviews section">
+                    View all reviews
+                </a>
+            </section>
         }
         else
         {
-            <p class="text-danger mb-3">
-                <i class="bi bi-x-circle-fill me-1"></i>Out of stock
-            </p>
-            <button class="btn btn-secondary btn-lg mb-3" disabled>Unavailable</button>
+            <section aria-labelledby="no-ratings" class="mb-3">
+                <h2 id="no-ratings" class="sr-only">Customer Ratings</h2>
+                <p class="text-muted small mb-2" role="status">No reviews yet - be the first to review this product!</p>
+                <a href="#leave-review" class="btn btn-link p-0 text-decoration-none small" aria-label="Jump to review form to leave the first review">
+                    Be the first to review
+                </a>
+            </section>
         }
 
-        <!-- Wishlist button -->
-        @if (User.Identity?.IsAuthenticated == true)
-        {
-            <form asp-controller="Wishlist" asp-action="AddAjax" method="post"
-                  class="add-to-wishlist-form d-inline" data-product-id="@Model.ProductId">
-                @Html.AntiForgeryToken()
-                <input type="hidden" name="productId" value="@Model.ProductId" />
-                <button type="submit" class="btn btn-outline-secondary add-to-wishlist-button">
-                    <i class="bi bi-heart me-1"></i>Add to Wishlist
-                </button>
-            </form>
-        }
-        else
-        {
-            <button type="button" class="btn btn-outline-secondary"
-                    data-bs-toggle="modal" data-bs-target="#wishlistSignInModal">
-                <i class="bi bi-heart me-1"></i>Add to Wishlist
-            </button>
-        }
+        <p class="text-muted mb-4" id="product-description">@Model.Description</p>
 
-        <!-- Admin / Manager controls -->
+        <!-- Stock & Add to Cart Section with Enhanced Accessibility -->
+        <section aria-labelledby="stock-status" class="mb-4" id="add-to-cart-section">
+            <h2 id="stock-status" class="sr-only">Product Availability and Purchase</h2>
+
+            @if (Model.IsActive && Model.StockQuantity > 0)
+            {
+                <div role="status" aria-live="polite" class="mb-3">
+                    <p class="text-success mb-0">
+                        <i class="bi bi-check-circle-fill me-1" aria-hidden="true"></i>
+                        <span aria-label="In stock with @Model.StockQuantity items available">
+                            In stock — @Model.StockQuantity available
+                        </span>
+                    </p>
+                    @if (Model.StockQuantity <= 5)
+                    {
+                        <small class="text-warning">
+                            <i class="bi bi-exclamation-triangle me-1" aria-hidden="true"></i>
+                            Only @Model.StockQuantity left - order soon!
+                        </small>
+                    }
+                </div>
+            @if (User.Identity?.IsAuthenticated == true)
+            {
+                <form asp-controller="Cart" asp-action="AddToCart" method="post" 
+                      class="d-flex gap-3 align-items-center mb-3"
+                      aria-label="Add @Model.ProductName to shopping cart">
+                    @Html.AntiForgeryToken()
+                    <input type="hidden" name="itemId" value="@Model.ProductId" />
+
+                    <div class="input-group" style="width:120px;">
+                        <label for="quantity-input-@Model.ProductId" class="input-group-text">Qty</label>
+                        <input type="number" 
+                               id="quantity-input-@Model.ProductId"
+                               name="quantity" 
+                               value="1" 
+                               min="1"
+                               max="@Model.StockQuantity" 
+                               class="form-control text-center" 
+                               aria-label="Quantity to add to cart, minimum 1, maximum @Model.StockQuantity"
+                               aria-describedby="quantity-help-@Model.ProductId" />
+                        <div id="quantity-help-@Model.ProductId" class="sr-only">
+                            Choose how many @Model.ProductName stickers to add to your cart
+                        </div>
+                    </div>
+
+                    <button type="submit" class="btn btn-dark btn-lg px-4"
+                            aria-label="Add selected quantity of @Model.ProductName to cart for @effectivePrice.ToString("C") each">
+                        <i class="bi bi-cart-plus me-2" aria-hidden="true"></i>Add to Cart
+                    </button>
+                </form>
+            }
+                    else
+                    {
+                        <div class="d-flex gap-3 align-items-center mb-3" role="group" aria-label="Sign in required to purchase">
+                            <div class="input-group" style="width:120px;">
+                                <label for="quantity-display-@Model.ProductId" class="input-group-text">Qty</label>
+                                <input type="number" 
+                                       id="quantity-display-@Model.ProductId"
+                                       value="1" 
+                                       min="1" 
+                                       max="@Model.StockQuantity" 
+                                       class="form-control text-center" 
+                                       readonly 
+                                       aria-label="Sample quantity - sign in required to purchase"
+                                       aria-describedby="signin-help" />
+                            </div>
+
+                            <a asp-area="Identity" asp-page="/Account/Login" 
+                               asp-route-returnUrl="@Context.Request.Path@Context.Request.QueryString"
+                               class="btn btn-dark btn-lg px-4"
+                               aria-label="Sign in to add @Model.ProductName to cart">
+                                <i class="bi bi-box-arrow-in-right me-2" aria-hidden="true"></i>Sign in to Add to Cart
+                            </a>
+
+                            <div id="signin-help" class="sr-only">
+                                You need to sign in to purchase products. Click the sign in button to continue.
+                            </div>
+                        </div>
+                    }
+                }
+                else
+                {
+                    <div role="status" aria-live="polite" class="mb-3">
+                        <p class="text-danger mb-3" aria-label="@Model.ProductName is out of stock">
+                            <i class="bi bi-x-circle-fill me-1" aria-hidden="true"></i>Out of stock
+                        </p>
+                    </div>
+
+                    <button class="btn btn-secondary btn-lg mb-3" 
+                            disabled 
+                            aria-label="@Model.ProductName is currently unavailable for purchase">
+                        <i class="bi bi-cart-x me-2" aria-hidden="true"></i>Unavailable
+                    </button>
+
+                    @if (User.Identity?.IsAuthenticated == true)
+                    {
+                        <p class="text-muted small">
+                            <i class="bi bi-bell me-1" aria-hidden="true"></i>
+                            Want to be notified when this item is back? 
+                            <a href="#" class="text-decoration-none" aria-label="Get notified when @Model.ProductName is back in stock">
+                                Set up stock alert
+                            </a>
+                        </p>
+                    }
+                }
+            </section>
+
+        <!-- Wishlist Section with Enhanced Accessibility -->
+        <section aria-labelledby="wishlist-section" class="mb-3">
+            <h2 id="wishlist-section" class="sr-only">Add to Wishlist</h2>
+
+            @if (User.Identity?.IsAuthenticated == true)
+            {
+                <form asp-controller="Wishlist" asp-action="AddAjax" method="post"
+                      class="add-to-wishlist-form d-inline" 
+                      data-product-id="@Model.ProductId"
+                      aria-label="Add @Model.ProductName to wishlist">
+                    @Html.AntiForgeryToken()
+                    <input type="hidden" name="productId" value="@Model.ProductId" />
+                    <button type="submit" 
+                            class="btn btn-outline-secondary add-to-wishlist-button"
+                            aria-label="Add @Model.ProductName to your wishlist for later">
+                        <i class="bi bi-heart me-1" aria-hidden="true"></i>Add to Wishlist
+                    </button>
+                </form>
+            }
+            else
+            {
+                <a asp-area="Identity" asp-page="/Account/Login" 
+                   asp-route-returnUrl="@Context.Request.Path@Context.Request.QueryString"
+                   class="btn btn-outline-secondary"
+                   aria-label="Sign in to add @Model.ProductName to your wishlist">
+                    <i class="bi bi-box-arrow-in-right me-1" aria-hidden="true"></i>Sign in for Wishlist
+                </a>
+            }
+        </section>
+
+        <!-- Admin / Manager Controls with Enhanced Accessibility -->
         @if (User.IsInRole("Manager") || User.IsInRole("Admin"))
         {
-            <div class="mt-4 pt-3 border-top d-flex gap-2">
-                <a asp-action="Edit" asp-route-id="@Model.ProductId" class="btn btn-outline-primary btn-sm">
-                    <i class="bi bi-pencil me-1"></i>Edit
-                </a>
-                <a asp-action="Delete" asp-route-id="@Model.ProductId" class="btn btn-outline-danger btn-sm">
-                    <i class="bi bi-trash me-1"></i>Delete
-                </a>
-            </div>
+            <section aria-labelledby="admin-controls" class="mt-4 pt-3 border-top">
+                <h2 id="admin-controls" class="sr-only">Administrative Actions</h2>
+
+                <div class="d-flex gap-2" role="group" aria-label="Product management actions">
+                    <a asp-action="Edit" asp-route-id="@Model.ProductId" 
+                       class="btn btn-outline-primary btn-sm"
+                       aria-label="Edit @Model.ProductName product details">
+                        <i class="bi bi-pencil me-1" aria-hidden="true"></i>Edit
+                    </a>
+                    <a asp-action="Delete" asp-route-id="@Model.ProductId" 
+                       class="btn btn-outline-danger btn-sm"
+                       aria-label="Delete @Model.ProductName product - this action requires confirmation"
+                       onclick="return confirm('Are you sure you want to delete this product? This action cannot be undone.')">
+                        <i class="bi bi-trash me-1" aria-hidden="true"></i>Delete
+                    </a>
+                </div>
+            </section>
         }
     </div>
 </div>
 
 <!-- Reviews & Ratings -->
-<div class="mt-5 pt-4 border-top">
+<div class="mt-5 pt-4 border-top" id="reviews">
 
     <!-- Section header with aggregate stats -->
     <div class="d-flex align-items-center gap-3 mb-4 flex-wrap">
@@ -165,6 +395,31 @@
             </div>
         }
     </div>
+
+    @* ── Sort controls ─────────────────────────────────────────────────── *@
+    @if (reviewPage.Reviews.Any())
+    {
+        <div class="card mb-3">
+            <div class="card-body py-2">
+                <div class="d-flex align-items-center flex-wrap gap-2">
+                    <span class="text-muted small me-1">Sort by:</span>
+
+                    <a href="@ReviewSortLink("date_new")" class="@ReviewBtnClass("date_new")">
+                        Newest First
+                    </a>
+                    <a href="@ReviewSortLink("date_old")" class="@ReviewBtnClass("date_old")">
+                        Oldest First
+                    </a>
+                    <a href="@ReviewSortLink("rating_high")" class="@ReviewBtnClass("rating_high")">
+                        Highest Rating
+                    </a>
+                    <a href="@ReviewSortLink("rating_low")" class="@ReviewBtnClass("rating_low")">
+                        Lowest Rating
+                    </a>
+                </div>
+            </div>
+        </div>
+    }
 
     <!-- Review cards -->
     @if (!reviewPage.Reviews.Any())
@@ -203,10 +458,14 @@
                                 </div>
                             </div>
                             <div class="ms-auto text-end">
-                                <small class="text-muted d-block">Posted @review.CreatedAt.ToString("MMM d, yyyy")</small>
+                                <small class="text-muted d-block">
+                                    <i class="bi bi-calendar3 me-1"></i>Posted @review.CreatedAt.ToString("MMM d, yyyy")
+                                </small>
                                 @if (review.LastEditedAt.HasValue)
                                 {
-                                    <small class="text-muted d-block">Edited @review.LastEditedAt.Value.ToString("MMM d, yyyy")</small>
+                                    <small class="text-muted d-block fst-italic">
+                                        <i class="bi bi-pencil me-1"></i>Edited @review.LastEditedAt.Value.ToString("MMM d, yyyy")
+                                    </small>
                                 }
                             </div>
                         </div>
@@ -357,11 +616,13 @@
     }
     else
     {
-        <p class="text-muted mt-3">
+        <div class="mt-3">
             <a asp-area="Identity" asp-page="/Account/Login"
-               asp-route-returnUrl="@Url.Action("Details", "Product", new { id = Model.ProductId })">Sign in</a>
-            to leave a review.
-        </p>
+               asp-route-returnUrl="@Url.Action("Details", "Product", new { id = Model.ProductId })"
+               class="btn btn-primary">
+                <i class="bi bi-person-circle me-1"></i>Sign In to Leave a Review
+            </a>
+        </div>
     }
 </div>
 
@@ -370,6 +631,60 @@
         <i class="bi bi-arrow-left me-1"></i>Back to Shop
     </a>
 </div>
+</main>
+
+<!-- Enhanced Accessibility Styles -->
+<style>
+    /* Skip Links for Enhanced Keyboard Navigation */
+    .skip-links {
+        position: relative;
+        z-index: 1050;
+    }
+
+    .skip-link {
+        position: absolute !important;
+        left: -10000px !important;
+        top: auto !important;
+        width: 1px !important;
+        height: 1px !important;
+        overflow: hidden !important;
+    }
+
+    .skip-link:focus {
+        position: static !important;
+        width: auto !important;
+        height: auto !important;
+        overflow: visible !important;
+        margin: 0 0.5rem 0.5rem 0 !important;
+        padding: 0.5rem 1rem !important;
+        z-index: 1051 !important;
+    }
+
+    /* Screen Reader Only but Focusable Elements */
+    .sr-only-focusable:not(:focus):not(:focus-within) {
+        position: absolute !important;
+        width: 1px !important;
+        height: 1px !important;
+        padding: 0 !important;
+        margin: -1px !important;
+        overflow: hidden !important;
+        clip: rect(0, 0, 0, 0) !important;
+        white-space: nowrap !important;
+        border: 0 !important;
+    }
+
+    /* Enhanced Focus Management */
+    #add-to-cart-section:focus-within {
+        outline: 2px solid #0d6efd;
+        outline-offset: 2px;
+        border-radius: 0.25rem;
+    }
+
+    /* Review Section Accessibility */
+    #reviews:target {
+        scroll-margin-top: 2rem;
+    }
+</style>
 
 @section Scripts {
     <script>

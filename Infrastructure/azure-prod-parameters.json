@@ -1,0 +1,35 @@
+# ELKH Sticker Store - Azure Deployment Parameters
+# Production environment configuration
+
+{
+  "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentParameters.json#",
+  "contentVersion": "1.0.0.0",
+  "parameters": {
+    "appName": {
+      "value": "elkh-stickers"
+    },
+    "environment": {
+      "value": "prod"
+    },
+    "location": {
+      "value": "East US"
+    },
+    "sku": {
+      "value": "P1V3"
+    },
+    "containerImage": {
+      "value": "ghcr.io/velyene/stickit:latest"
+    },
+    "databaseAdminLogin": {
+      "value": "elkhadmin"
+    },
+    "databaseAdminPassword": {
+      "reference": {
+        "keyVault": {
+          "id": "/subscriptions/{subscription-id}/resourceGroups/elkh-stickers-rg-prod/providers/Microsoft.KeyVault/vaults/elkh-stickers-kv-prod"
+        },
+        "secretName": "database-admin-password"
+      }
+    }
+  }
+}

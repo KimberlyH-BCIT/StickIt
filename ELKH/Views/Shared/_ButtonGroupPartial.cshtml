@@ -1,0 +1,47 @@
+@model ELKH.ViewModels.ButtonGroupVM
+
+@*
+╔══════════════════════════════════════════════════════════════════════════════════╗
+║ Generic Button Group Component                                                  ║
+║ Reusable partial for displaying groups of buttons (sorting, filtering, etc.)   ║
+╚══════════════════════════════════════════════════════════════════════════════════╝
+*@
+
+<div class="@Model.ContainerClass">
+    @if (!string.IsNullOrEmpty(Model.Title))
+    {
+        <span class="@Model.TitleClass">@Model.Title</span>
+    }
+
+    <div class="@Model.ButtonGroupClass" role="group" aria-label="@Model.AriaLabel">
+        @foreach (var button in Model.Buttons)
+        {
+            @if (!string.IsNullOrEmpty(button.Controller))
+            {
+                <a asp-controller="@button.Controller" 
+                   asp-action="@button.Action" 
+                   class="@button.CssClass @(button.IsActive ? Model.ActiveButtonClass : "")"
+                   title="@button.Title">
+                    @if (!string.IsNullOrEmpty(button.Icon))
+                    {
+                        <i class="bi bi-@button.Icon @(string.IsNullOrEmpty(button.Text) ? "" : "me-1")"></i>
+                    }
+                    @button.Text
+                </a>
+            }
+            else
+            {
+                <button type="@button.ButtonType" 
+                        class="@button.CssClass @(button.IsActive ? Model.ActiveButtonClass : "")"
+                        onclick="@button.OnClick"
+                        title="@button.Title">
+                    @if (!string.IsNullOrEmpty(button.Icon))
+                    {
+                        <i class="bi bi-@button.Icon @(string.IsNullOrEmpty(button.Text) ? "" : "me-1")"></i>
+                    }
+                    @button.Text
+                </button>
+            }
+        }
+    </div>
+</div>

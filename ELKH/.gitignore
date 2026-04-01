@@ -463,6 +463,12 @@ $RECYCLE.BIN/
 # =====================================================================
 # Project-Specific
 # =====================================================================
+# Supplemental documentation and analysis files (working documents)
+# NOTE: .gitignore patterns cannot reliably match paths outside the directory
+# that contains this file. To ignore the shared docs folder, add the following
+# entry to the repository-root .gitignore instead:
+# docs/supplementalDocs/
+
 # wwwroot compiled assets (if using build tools)
 # Uncomment if you compile CSS/JS into wwwroot
 # wwwroot/css/*.min.css

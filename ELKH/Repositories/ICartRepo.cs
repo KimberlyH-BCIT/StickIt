@@ -2,6 +2,10 @@ using ELKH.Models;
 
 namespace ELKH.Repositories;
 
+/// <summary>
+/// Repository interface for cart operations providing data access methods for
+/// managing user shopping carts, cart items, and cart persistence operations.
+/// </summary>
 public interface ICartRepo
 {
     Task<IEnumerable<CartModel>> GetByUserIdAsync(int registeredUserId);

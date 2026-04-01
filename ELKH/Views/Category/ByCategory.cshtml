@@ -1,0 +1,322 @@
+@model IEnumerable<ELKH.ViewModels.ProductVM>
+
+@*
+╔══════════════════════════════════════════════════════════════════════════════════╗
+║ Category Product View - Display Products by Category                            ║
+║ Shows products filtered by a specific category with sorting and pagination      ║
+╚══════════════════════════════════════════════════════════════════════════════════╝
+*@
+
+@{
+    ViewData["Title"] = $"{ViewBag.CategoryName} - Browse Stickers by Category";
+
+    // ═══════════════════════════════════════════════════════════════════════════════
+    // ║ ViewBag Data Extraction and Processing                                     ║
+    // ║ Extract pagination, sorting, and category parameters from controller       ║
+    // ═══════════════════════════════════════════════════════════════════════════════
+
+    var products = Model.ToList();
+    var page = ViewBag.Page as int? ?? 1;
+    var totalPages = ViewBag.TotalPages as int? ?? 1;
+    var total = ViewBag.Total as int? ?? products.Count;
+    var categoryId = ViewBag.CategoryId as int?;
+    var categoryName = ViewBag.CategoryName as string;
+    var currentSort = ViewBag.Sort as string ?? "name_asc";
+
+    // Prepare ViewModels for partial views
+    var sortingVM = ViewBag.SortingVM as ELKH.ViewModels.ProductSortingVM;
+    var paginationVM = ViewBag.PaginationVM as ELKH.ViewModels.PaginationVM;
+}
+
+<!-- ════════════════════════════════════════════════════════════════════════════════ -->
+<!-- ║ Page Header & Category Display with Enhanced Accessibility                 ║ -->
+<!-- ════════════════════════════════════════════════════════════════════════════════ -->
+
+<header class="category-header mb-4" role="banner">
+    <!-- Skip Links for Keyboard Navigation -->
+    <nav class="skip-links sr-only-focusable" aria-label="Skip navigation">
+        <a href="#category-sorting" class="skip-link btn btn-primary">Skip to sorting</a>
+        <a href="#categoryProductGrid" class="skip-link btn btn-primary">Skip to products</a>
+        <a href="#pagination" class="skip-link btn btn-primary">Skip to pagination</a>
+    </nav>
+
+    <div class="d-flex justify-content-between align-items-center mb-3">
+        <div>
+            <nav aria-label="Breadcrumb">
+                <ol class="breadcrumb">
+                    <li class="breadcrumb-item"><a asp-controller="Home" asp-action="Index">Home</a></li>
+                    <li class="breadcrumb-item"><a asp-controller="Product" asp-action="Index">Products</a></li>
+                    <li class="breadcrumb-item"><a asp-controller="Category" asp-action="Index">Categories</a></li>
+                    <li class="breadcrumb-item active" aria-current="page">@categoryName</li>
+                </ol>
+            </nav>
+            <h1 class="mb-1" id="main-heading">
+                <i class="bi bi-tag-fill me-2 text-primary" aria-hidden="true"></i>@categoryName
+            </h1>
+            <p class="text-muted mb-0">
+                <span class="badge bg-secondary">@total @(total == 1 ? "product" : "products")</span>
+            </p>
+        </div>
+    </div>
+</header>
+
+@* ══════════════════════════════════════════════════════════════════════════════════ *@
+@* ║ Sorting Controls Section                                                       ║ *@
+@* ══════════════════════════════════════════════════════════════════════════════════ *@
+@if (products.Any())
+{
+    <div class="mb-4" id="category-sorting">
+        <div class="row align-items-center">
+            <div class="col-md-6">
+                <h2 class="h6 mb-0 text-muted">
+                    Showing @products.Count of @total products
+                </h2>
+            </div>
+            <div class="col-md-6">
+                @if (sortingVM != null)
+                {
+                    @await Html.PartialAsync("_ProductSortingPartial", sortingVM)
+                }
+            </div>
+        </div>
+    </div>
+}
+
+@* ══════════════════════════════════════════════════════════════════════════════════ *@
+@* ║ Product Grid Section                                                           ║ *@
+@* ══════════════════════════════════════════════════════════════════════════════════ *@
+
+<main role="main" aria-label="@categoryName products">
+    @if (products.Any())
+    {
+        <!-- Product Grid -->
+        <div id="categoryProductGrid" class="row g-4" role="grid" aria-label="Product grid">
+            @foreach (var product in products)
+            {
+                <div class="col-lg-3 col-md-4 col-sm-6" role="gridcell">
+                    <div class="card product-card h-100 shadow-sm" tabindex="0">
+                        <div class="position-relative">
+                            @if (!string.IsNullOrEmpty(product.Thumbnail))
+                            {
+                                <img src="@product.Thumbnail" 
+                                     class="card-img-top" 
+                                     alt="@product.ProductName"
+                                     style="height: 200px; object-fit: cover;"
+                                     loading="lazy">
+                            }
+                            else
+                            {
+                                <div class="card-img-top d-flex align-items-center justify-content-center bg-light" 
+                                     style="height: 200px;">
+                                    <i class="bi bi-image text-muted" style="font-size: 2rem;" aria-hidden="true"></i>
+                                </div>
+                            }
+
+                            @if (product.DiscountPercent > 0)
+                            {
+                                <span class="badge bg-danger position-absolute top-0 end-0 m-2">
+                                    @product.DiscountPercent% OFF
+                                </span>
+                            }
+                        </div>
+                        
+                        <div class="card-body d-flex flex-column">
+                            <h3 class="card-title h6 mb-2">
+                                <a asp-controller="Product" asp-action="Details" asp-route-id="@product.ProductId" 
+                                   class="stretched-link text-decoration-none">
+                                    @product.ProductName
+                                </a>
+                            </h3>
+                            
+                            <p class="card-text text-muted small flex-grow-1">
+                                @(product.Description.Length > 80 
+                                    ? product.Description.Substring(0, 80) + "..." 
+                                    : product.Description)
+                            </p>
+                            
+                            <div class="mt-auto">
+                                <div class="d-flex justify-content-between align-items-center">
+                                    @if (product.DiscountPercent > 0)
+                                    {
+                                        var effectivePrice = product.Price * (1 - product.DiscountPercent / 100m);
+                                        <div>
+                                            <span class="text-muted text-decoration-line-through small">
+                                                $@product.Price.ToString("0.00")
+                                            </span>
+                                            <br>
+                                            <strong class="text-primary">
+                                                $@effectivePrice.ToString("0.00")
+                                            </strong>
+                                        </div>
+                                    }
+                                    else
+                                    {
+                                        <strong class="text-primary">$@product.Price.ToString("0.00")</strong>
+                                    }
+
+                                    @if (product.IsInStock)
+                                    {
+                                        <small class="text-success">
+                                            <i class="bi bi-check-circle-fill me-1" aria-hidden="true"></i>In Stock
+                                        </small>
+                                    }
+                                    else
+                                    {
+                                        <small class="text-danger">
+                                            <i class="bi bi-x-circle-fill me-1" aria-hidden="true"></i>Out of Stock
+                                        </small>
+                                    }
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            }
+        </div>
+
+        @* ══════════════════════════════════════════════════════════════════════════════ *@
+        @* ║ Pagination Controls                                                        ║ *@
+        @* ══════════════════════════════════════════════════════════════════════════════ *@
+        @if (totalPages > 1)
+        {
+            <div class="mt-5" id="pagination">
+                @if (paginationVM != null)
+                {
+                    @await Html.PartialAsync("_PaginationPartial", paginationVM)
+                }
+            </div>
+        }
+    }
+    else
+    {
+        <!-- Empty State -->
+        <div class="text-center py-5">
+            <div class="mb-4">
+                <i class="bi bi-inbox text-muted" style="font-size: 4rem;" aria-hidden="true"></i>
+            </div>
+            <h2 class="h4 mb-3">No products found in @categoryName</h2>
+            <p class="text-muted mb-4">
+                This category doesn't have any products yet. Check back later or explore other categories.
+            </p>
+            <div class="d-flex justify-content-center gap-3">
+                <a asp-controller="Category" asp-action="Index" class="btn btn-outline-primary">
+                    <i class="bi bi-arrow-left me-2" aria-hidden="true"></i>Browse All Categories
+                </a>
+                <a asp-controller="Product" asp-action="Index" class="btn btn-primary">
+                    <i class="bi bi-grid me-2" aria-hidden="true"></i>View All Products
+                </a>
+            </div>
+        </div>
+    }
+</main>
+
+<!-- ════════════════════════════════════════════════════════════════════════════════ -->
+<!-- ║ CSS Styles - Category Page Styling & Accessibility                         ║ -->
+<!-- ════════════════════════════════════════════════════════════════════════════════ -->
+<style>
+    /* Product card hover effects for enhanced user interaction feedback */
+    .product-card {
+        cursor: pointer;
+        transition: transform .15s ease, box-shadow .15s ease;
+        position: relative;
+        border: 1px solid rgba(0, 0, 0, 0.125);
+    }
+
+    .product-card:hover {
+        transform: translateY(-3px);
+        box-shadow: 0 .5rem 1rem rgba(0,0,0,.15) !important;
+        border-color: rgba(0, 123, 255, 0.25);
+    }
+
+    /* Enhanced focus management for product cards */
+    .product-card:focus-within {
+        outline: 2px solid #0066cc;
+        outline-offset: 2px;
+        transform: translateY(-2px);
+        box-shadow: 0 .5rem 1rem rgba(0,0,0,.2) !important;
+    }
+
+    /* Ensure stretched link accessibility */
+    .stretched-link:focus {
+        z-index: 2;
+    }
+
+    /* Improve keyboard navigation for action buttons */
+    .product-card .btn:focus {
+        z-index: 3;
+        position: relative;
+    }
+
+    /* Category header styling */
+    .category-header {
+        border-bottom: 2px solid #f8f9fa;
+        padding-bottom: 1rem;
+    }
+
+    /* Breadcrumb styling */
+    .breadcrumb {
+        background: transparent;
+        padding: 0;
+        margin-bottom: 0.5rem;
+    }
+
+    .breadcrumb-item + .breadcrumb-item::before {
+        content: "›";
+        font-weight: bold;
+    }
+
+    /* Reduce motion for users who prefer it */
+    @@media (prefers-reduced-motion: reduce) {
+        .product-card {
+            transition: none;
+        }
+        .product-card:hover {
+            transform: none;
+        }
+    }
+
+    /* Enhanced Skip Links */
+    .skip-links {
+        position: relative;
+        z-index: 1000;
+    }
+
+    .skip-link {
+        position: absolute;
+        left: -10000px;
+        top: auto;
+        width: 1px;
+        height: 1px;
+        overflow: hidden;
+    }
+
+    .skip-link:focus {
+        position: static;
+        width: auto;
+        height: auto;
+        overflow: visible;
+        margin: 0 10px 10px 0;
+        display: inline-block;
+    }
+</style>
+
+<!-- ════════════════════════════════════════════════════════════════════════════════ -->
+<!-- ║ JavaScript for Enhanced Interaction (Optional)                             ║ -->
+<!-- ════════════════════════════════════════════════════════════════════════════════ -->
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Add click handler for product cards (for better UX on mobile)
+        document.querySelectorAll('.product-card').forEach(card => {
+            card.addEventListener('click', function(e) {
+                // Only trigger if clicking on the card itself, not on buttons or links
+                if (e.target === this || e.target.classList.contains('card-img-top') || 
+                    e.target.classList.contains('card-body') || e.target.tagName === 'P') {
+                    const link = this.querySelector('.stretched-link');
+                    if (link) {
+                        window.location.href = link.href;
+                    }
+                }
+            });
+        });
+    });
+</script>

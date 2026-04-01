@@ -1,0 +1,103 @@
+@*
+╔══════════════════════════════════════════════════════════════════════════════════╗
+║ Kawaii Badge Partial Component                                                  ║
+║ Reusable pill-shaped badges with soft pastel colors and animations             ║
+╚══════════════════════════════════════════════════════════════════════════════════╝
+*@
+
+@model ELKH.ViewModels.BadgeVM
+
+@{
+    var badgeClass = "badge-kawaii";
+    var iconClass = "";
+    var extraClass = "";
+
+    switch (Model.Type.ToLower())
+    {
+        case "new":
+            badgeClass += " badge-new";
+            iconClass = "bi bi-stars";
+            break;
+        case "sale":
+            badgeClass += " badge-sale";
+            iconClass = "bi bi-percent";
+            extraClass = "sparkle";
+            break;
+        case "best":
+        case "featured":
+            badgeClass += " badge-best";
+            iconClass = "bi bi-award";
+            extraClass = "sparkle";
+            break;
+        case "limited":
+            badgeClass += " badge-limited";
+            iconClass = "bi bi-hourglass-split";
+            break;
+        case "promo":
+            badgeClass += " badge-promo";
+            iconClass = "bi bi-ticket-perforated";
+            break;
+        case "category":
+            badgeClass += " badge-category";
+            iconClass = "bi bi-tag";
+            break;
+        case "hot":
+            badgeClass += " badge-hot";
+            iconClass = "bi bi-fire";
+            extraClass = "sparkle";
+            break;
+        default:
+            badgeClass += " badge-default";
+            break;
+    }
+
+    if (!string.IsNullOrEmpty(Model.CustomClass))
+    {
+        badgeClass += " " + Model.CustomClass;
+    }
+
+    if (!string.IsNullOrEmpty(extraClass))
+    {
+        badgeClass += " " + extraClass;
+    }
+
+    // Add size class
+    if (!string.IsNullOrEmpty(Model.Size) && Model.Size != "default")
+    {
+        badgeClass += " badge-" + Model.Size;
+    }
+}
+
+@if (Model.IsClickable && (!string.IsNullOrEmpty(Model.Url) || !string.IsNullOrEmpty(Model.Controller)))
+{
+    if (!string.IsNullOrEmpty(Model.Url))
+    {
+        <a href="@Model.Url" class="@badgeClass clickable">
+            @if (!string.IsNullOrEmpty(iconClass) && Model.ShowIcon)
+            {
+                <i class="@iconClass" aria-hidden="true"></i>
+            }
+            @Model.Text
+        </a>
+    }
+    else
+    {
+        <a asp-controller="@Model.Controller" asp-action="@Model.Action" class="@badgeClass clickable">
+            @if (!string.IsNullOrEmpty(iconClass) && Model.ShowIcon)
+            {
+                <i class="@iconClass" aria-hidden="true"></i>
+            }
+            @Model.Text
+        </a>
+    }
+}
+else
+{
+    <span class="@badgeClass">
+        @if (!string.IsNullOrEmpty(iconClass) && Model.ShowIcon)
+        {
+            <i class="@iconClass" aria-hidden="true"></i>
+        }
+        @Model.Text
+    </span>
+}

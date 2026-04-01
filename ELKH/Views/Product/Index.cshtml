@@ -1,213 +1,313 @@
 @model IEnumerable<ELKH.ViewModels.ProductVM>
 
- @{
-    ViewData["Title"] = "Products";
+@*
+╔══════════════════════════════════════════════════════════════════════════════════╗
+║ Product Index View - Optimized with Reusable Partial Components                ║
+║ Uses partial views for better maintainability and code reuse                    ║
+╚══════════════════════════════════════════════════════════════════════════════════╝
+*@
+
+@{
+    ViewData["Title"] = "Products - Browse Our Sticker Collection";
+
+    // ═══════════════════════════════════════════════════════════════════════════════
+    // ║ ViewBag Data Extraction and Processing                                     ║
+    // ║ Extract pagination, search, and filtering parameters from controller       ║
+    // ═══════════════════════════════════════════════════════════════════════════════
+
     var products   = Model.ToList();
     var page       = ViewBag.Page       as int? ?? 1;
     var totalPages = ViewBag.TotalPages as int? ?? 1;
     var total      = ViewBag.Total      as int? ?? products.Count;
     var search     = ViewBag.Search     as string;
     var categoryId = ViewBag.CategoryId as int?;
-    var pageSize   = ViewBag.PageSize   as int? ?? 10;
-}
+    var currentSort = ViewBag.Sort as string ?? "name_asc";
+
+    // Prepare ViewModels for partial views
+    var searchFilterVM = new ELKH.ViewModels.ProductSearchFilterVM
+    {
+        Search = search,
+        CategoryId = categoryId,
+        CurrentSort = currentSort,
+        Categories = ViewBag.Categories
+    };
+
+    var sortingVM = new ELKH.ViewModels.ProductSortingVM
+    {
+        Search = search,
+        CategoryId = categoryId,
+        CurrentSort = currentSort
+    };
+
+    var paginationVM = new ELKH.ViewModels.PaginationVM
+    {
+        CurrentPage = page,
+        TotalPages = totalPages,
+        Search = search,
+        CategoryId = categoryId
+    };
 }
 
-<h2 class="mb-3">Products</h2>
+<!-- ════════════════════════════════════════════════════════════════════════════════ -->
+<!-- ║ Page Header & Search Results Display with Enhanced Accessibility           ║ -->
+<!-- ════════════════════════════════════════════════════════════════════════════════ -->
 
+<header class="kawaii-hero" role="banner">
+    <!-- Skip Links for Keyboard Navigation -->
+    <nav class="skip-links sr-only-focusable" aria-label="Skip navigation">
+        <a href="#product-search-input" class="skip-link btn-kawaii btn-secondary-kawaii">Skip to search</a>
+        <a href="#productGrid" class="skip-link btn-kawaii btn-secondary-kawaii">Skip to products</a>
+        <a href="#pagination" class="skip-link btn-kawaii btn-secondary-kawaii">Skip to pagination</a>
+    </nav>
+
+    <div class="container-kawaii">
+        <div class="text-center">
+            <div class="kawaii-cloud-title display-title sparkle">
+                <i class="bi bi-grid me-3" aria-hidden="true" style="color: var(--butter);"></i>
+                Products
+            </div>
+            <div class="kawaii-subtitle">
+                Browse our amazing collection of stickers!
+            </div>
+
+            @if (!string.IsNullOrWhiteSpace(search) || categoryId.HasValue)
+            {
+                <div class="mt-4">
+                    <div class="kawaii-card surface-sky d-inline-block px-4 py-2">
+                        <div class="badge-group" role="group" aria-label="Active filters">
+                            @if (!string.IsNullOrWhiteSpace(search))
+                            {
+                                <span class="kawaii-badge badge-primary" aria-label="Search filter: @search">
+                                    <i class="bi bi-search me-1" aria-hidden="true"></i>@search
+                                </span>
+                            }
+                            @if (categoryId.HasValue && ViewBag.CategoryName != null)
+                            {
+                                <span class="kawaii-badge badge-secondary ms-1" aria-label="Category filter: @ViewBag.CategoryName">
+                                    <i class="bi bi-tag-fill me-1" aria-hidden="true"></i>@ViewBag.CategoryName
+                                </span>
+                            }
+                        </div>
+                    </div>
+                </div>
+            }
+        </div>
+    </div>
+</header>
+
+@* ══════════════════════════════════════════════════════════════════════════════════ *@
+@* ║ Search Results Information Banner                                              ║ *@
+@* ══════════════════════════════════════════════════════════════════════════════════ *@
+@if (!string.IsNullOrWhiteSpace(search))
+{
+    var searchAlertVM = new ELKH.ViewModels.AlertBannerVM
+    {
+        Message = $"Search results for: <strong>&ldquo;{search}&rdquo;</strong>",
+        AlertType = "alert-info",
+        Icon = "info-fill",
+        IconType = "bootstrap",
+        IconAriaLabel = "Search results information"
+    };
+
+    <div role="status" aria-live="polite" aria-label="Search results notification">
+        @await Html.PartialAsync("_AlertBannerPartial", searchAlertVM)
+    </div>
+}
+
+<!-- ════════════════════════════════════════════════════════════════════════════════ -->
+<!-- ║ CSS Styles - Product Card Accessibility & Hover Animations                 ║ -->
+<!-- ════════════════════════════════════════════════════════════════════════════════ -->
 <style>
+    /* Product card hover effects for enhanced user interaction feedback */
     .product-card {
         cursor: pointer;
         transition: transform .15s ease, box-shadow .15s ease;
+        position: relative;
     }
+
     .product-card:hover {
         transform: translateY(-3px);
         box-shadow: 0 .5rem 1rem rgba(0,0,0,.12) !important;
     }
+
+    /* Enhanced focus management for product cards */
+    .product-card:focus-within {
+        outline: 2px solid #0066cc;
+        outline-offset: 2px;
+        transform: translateY(-2px);
+        box-shadow: 0 .5rem 1rem rgba(0,0,0,.15) !important;
+    }
+
+    /* Ensure stretched link accessibility */
+    .stretched-link:focus {
+        z-index: 2;
+    }
+
+    /* Improve keyboard navigation for action buttons */
+    .product-card .btn:focus {
+        z-index: 3;
+        position: relative;
+    }
+
+    /* Reduce motion for users who prefer it */
+    @@media (prefers-reduced-motion: reduce) {
+        .product-card {
+            transition: none;
+        }
+        .product-card:hover {
+            transform: none;
+        }
+    }
+
+    /* Enhanced Skip Links */
+    .skip-links {
+        position: relative;
+        z-index: 1050;
+    }
+
+    .skip-link {
+        position: absolute !important;
+        left: -10000px !important;
+        top: auto !important;
+        width: 1px !important;
+        height: 1px !important;
+        overflow: hidden !important;
+    }
+
+    .skip-link:focus {
+        position: static !important;
+        width: auto !important;
+        height: auto !important;
+        overflow: visible !important;
+        margin: 0 0.5rem 0.5rem 0 !important;
+        padding: 0.5rem 1rem !important;
+        z-index: 1051 !important;
+    }
+
+    /* Enhanced Badge Groups */
+    .badge-group .badge {
+        margin-right: 0.25rem;
+    }
+
+    .badge-group .badge:last-child {
+        margin-right: 0;
+    }
+
+    /* Screen Reader Only but Focusable Elements */
+    .sr-only-focusable:not(:focus):not(:focus-within) {
+        position: absolute !important;
+        width: 1px !important;
+        height: 1px !important;
+        padding: 0 !important;
+        margin: -1px !important;
+        overflow: hidden !important;
+        clip: rect(0, 0, 0, 0) !important;
+        white-space: nowrap !important;
+        border: 0 !important;
+    }
 </style>
 
-@* ── Filter form ──────────────────────────────────────────────────────── *@
-<form method="get" asp-action="Index" class="row g-2 mb-4 align-items-end">
-    <div class="col-sm-5">
-        <label class="form-label fw-semibold">Search</label>
-        <input type="search" name="search" value="@search"
-               class="form-control" placeholder="Search by name or description…" />
-    </div>
-    <div class="col-sm-4">
-        <label class="form-label fw-semibold">Category</label>
-        <select name="categoryId" asp-items="ViewBag.Categories" class="form-select">
-            <option value="">All categories</option>
-        </select>
-    </div>
-    <div class="col-sm-auto d-flex gap-2">
-        <button type="submit" class="btn btn-primary">Filter</button>
-        @if (!string.IsNullOrWhiteSpace(search) || categoryId.HasValue)
-        {
-            <a asp-action="Index" class="btn btn-outline-secondary">Clear</a>
-        }
-    </div>
-</form>
+@* ── Search and Filter Form ──────────────────────────────────────────── *@
+@await Html.PartialAsync("_ProductSearchFilterPartial", searchFilterVM)
 
-@* ── Result count ─────────────────────────────────────────────────────── *@
-<p class="text-muted small mb-3">
-    Showing @products.Count of @total product@(total != 1 ? "s" : "")
-    @if (!string.IsNullOrWhiteSpace(search)) { <span>matching &ldquo;@search&rdquo;</span> }
-</p>
+@* ── Sort Controls with kawaii styling ─────────────────────────────────────────────────── *@
+<section class="container-kawaii mb-4">
+    <div class="kawaii-card">
+        <div class="d-flex flex-column flex-md-row align-items-md-center justify-content-between">
+            <div class="mb-2 mb-md-0">
+                <h2 class="font-heading">
+                    <i class="bi bi-collection me-2" style="color: var(--purple);" aria-hidden="true"></i>
+                    Showing @products.Count of @total products
+                </h2>
+            </div>
+            <div>
+                @await Html.PartialAsync("_ProductSortingPartial", sortingVM)
+            </div>
+        </div>
+    </div>
+</section>
+
+@* ── Enhanced Result count with kawaii styling ─────────────────────────────────── *@
+@if (products.Any())
+{
+    <section class="container-kawaii mb-4">
+        <div class="kawaii-panel surface-mint">
+            <div class="results-summary" role="region" aria-labelledby="results-summary-heading">
+                <h2 id="results-summary-heading" class="sr-only">Search Results Summary</h2>
+                <div role="status" 
+                     aria-live="polite" 
+                     aria-label="Search results count"
+                     id="results-announcement">
+                    <p class="hierarchy-secondary mb-0" id="results-count">
+                        <i class="bi bi-check-circle me-2" style="color: var(--purple);" aria-hidden="true"></i>
+                        <strong>@products.Count</strong> of <strong>@total</strong> product@(total != 1 ? "s" : "") found
+                        @if (!string.IsNullOrWhiteSpace(search)) { 
+                            <span> matching <em>&ldquo;@search&rdquo;</em></span> 
+                        }
+                        @if (categoryId.HasValue && ViewBag.CategoryName != null)
+                        {
+                            <span> in category <em>@ViewBag.CategoryName</em></span>
+                        }
+                    </p>
+                </div>
+            </div>
+        </div>
+    </section>
+}
 
 @* ── Product grid ─────────────────────────────────────────────────────── *@
 @if (!products.Any())
 {
-    <div class="alert alert-light border">No products found. <a asp-action="Index">Clear filters</a></div>
+    var productEmptyStateVM = new ELKH.ViewModels.EmptyStateCardVM
+    {
+        Title = "No products found",
+        Icon = "search",
+        IconType = "bootstrap",
+        Description = !string.IsNullOrWhiteSpace(search) 
+            ? $"No products match your search for \"{search}\". Try adjusting your search terms or browse all products."
+            : (categoryId.HasValue 
+                ? "No products found in the selected category. Try browsing other categories or search for specific items."
+                : "No products available at the moment."),
+        ActionText = !string.IsNullOrWhiteSpace(search) || categoryId.HasValue ? "Browse All Products" : null,
+        ActionController = !string.IsNullOrWhiteSpace(search) || categoryId.HasValue ? "Product" : null,
+        ActionAction = !string.IsNullOrWhiteSpace(search) || categoryId.HasValue ? "Index" : null,
+        ActionButtonClass = "btn-kawaii btn-primary-kawaii"
+    };
+
+    @await Html.PartialAsync("_EmptyStateCardPartial", productEmptyStateVM)
 }
 else
 {
-    <div class="row row-cols-1 row-cols-sm-2 row-cols-md-3 row-cols-lg-4 g-3" id="productGrid">
-        @foreach (var p in products)
-        {
-            <div class="col">
-                <div class="card h-100 shadow-sm product-card"
-                     data-href="@Url.Action("Details", "Product", new { id = p.ProductId })">
-                    <div class="card-body d-flex flex-column p-3">
+    <main role="main" aria-labelledby="products-main-heading" class="container-kawaii">
+        <section class="product-results" aria-labelledby="products-heading">
+            <h2 id="products-main-heading" class="sr-only">Product Catalog</h2>
+            <h3 id="products-heading" class="sr-only">
+                @total Product@(total != 1 ? "s" : "") 
+                @if (!string.IsNullOrWhiteSpace(search)) { <text>matching "@search"</text> }
+                @if (categoryId.HasValue && ViewBag.CategoryName != null) { <text>in @ViewBag.CategoryName</text> }
+            </h3>
 
-                    @* Product name — single line, truncated *@
-                        <h6 class="card-title text-truncate mb-2 fw-semibold"
-                            title="@p.ProductName">@p.ProductName</h6>
-
-                        <p class="text-muted small mb-2" style="display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;">
-                            @p.Description
-                        </p>
-
-                        <div class="mb-3">
-                            @if (p.DiscountPercent > 0)
-                            {
-                                var effective = p.Price * (1 - p.DiscountPercent / 100m);
-                                <div>
-                                    <span class="text-muted text-decoration-line-through small">@p.Price.ToString("C")</span>
-                                    <span class="badge bg-danger ms-1">@p.DiscountPercent%&nbsp;off</span>
-                                </div>
-                                <span class="fw-bold text-success">@effective.ToString("C")</span>
-                            }
-                            else
-                            {
-                                <span class="fw-semibold">@p.Price.ToString("C")</span>
-                            }
-                        </div>
-
-                    @* Action buttons — stop click from bubbling to card *@
-                        <div class="mt-auto d-flex flex-column gap-2">
-                            <form asp-controller="Cart" asp-action="AddToCart" method="post">
-                                @Html.AntiForgeryToken()
-                                <input type="hidden" name="itemId" value="@p.ProductId" />
-                                <input type="hidden" name="quantity" value="1" />
-                                <button type="submit" class="btn btn-sm btn-primary w-100">Add to Cart</button>
-                            </form>
-
-                            @if (User.Identity?.IsAuthenticated == true)
-                            {
-                                <form asp-controller="Wishlist" asp-action="AddAjax" method="post"
-                                      class="add-to-wishlist-form" data-product-id="@p.ProductId">
-                                    @Html.AntiForgeryToken()
-                                    <input type="hidden" name="productId" value="@p.ProductId" />
-                                    <button type="submit"
-                                            class="btn btn-sm btn-outline-secondary w-100 add-to-wishlist-button">
-                                        ♡&nbsp;Wishlist
-                                    </button>
-                                </form>
-                            }
-                            else
-                            {
-                                <button type="button"
-                                        class="btn btn-sm btn-outline-secondary w-100"
-                                        data-bs-toggle="modal" data-bs-target="#wishlistSignInModal">
-                                    ♡&nbsp;Wishlist
-                                </button>
-                            }
-                            }
-                        </div>
-
-                    </div>
-                </div>
-            </div>
-        }
-    </div>
-
-    @* ── Pagination ───────────────────────────────────────────────────── *@
-    @if (totalPages > 1)
-    {
-        <nav class="mt-4" aria-label="Product pages">
-            <ul class="pagination justify-content-center flex-wrap">
-                <li class="page-item @(page <= 1 ? "disabled" : "")">
-                    <a class="page-link"
-                       asp-action="Index"
-                       asp-route-search="@search"
-                       asp-route-categoryId="@categoryId"
-                       asp-route-page="@(page - 1)">‹</a>
-                </li>
-                @for (int i = 1; i <= totalPages; i++)
+            <!-- Product Grid using kawaii styling -->
+            <div id="productGrid" class="row g-4" role="grid" aria-label="Product grid with @products.Count items displayed">
+                @foreach (var p in products)
                 {
-                    <li class="page-item @(i == page ? "active" : "")">
-                        <a class="page-link"
-                           asp-action="Index"
-                           asp-route-search="@search"
-                           asp-route-categoryId="@categoryId"
-                           asp-route-page="@i">@i</a>
-                    </li>
+                    <div class="col-lg-3 col-md-4 col-sm-6" role="gridcell">
+                        @await Html.PartialAsync("_ProductCard", p)
+                    </div>
                 }
-                <li class="page-item @(page >= totalPages ? "disabled" : "")">
-                    <a class="page-link"
-                       asp-action="Index"
-                       asp-route-search="@search"
-                       asp-route-categoryId="@categoryId"
-                       asp-route-page="@(page + 1)">›</a>
-                </li>
-            </ul>
-        </nav>
-    }
-}
+            </div>
 
-@section Scripts {
-    <script>
-        (function () {
-            // Navigate to product details when clicking the card body,
-            // but let form submissions and button clicks proceed normally.
-            document.querySelectorAll('.product-card').forEach(function (card) {
-                card.addEventListener('click', function (e) {
-                    if (!e.target.closest('form') && !e.target.closest('button') && !e.target.closest('a')) {
-                        window.location.href = card.dataset.href;
-                    }
-                });
-            });
-
-            var step = @pageSize;
-
-            window.showMoreProducts = function () {
-                var hidden = document.querySelectorAll('.extra-product.d-none');
-                var toShow = Array.prototype.slice.call(hidden, 0, step);
-                toShow.forEach(function (el) { el.classList.remove('d-none'); });
-
-                if (document.querySelectorAll('.extra-product.d-none').length === 0) {
-                    var container = document.getElementById('showMoreContainer');
-                    if (container) container.style.display = 'none';
-                }
-            };
-        })();
-    </script>
-}
-    <script>
-        (function () {
-            var shown = @pageSize;
-            var step  = @pageSize;
-
-            window.showMoreProducts = function () {
-                var hidden = document.querySelectorAll('.extra-product.d-none');
-                var toShow = Array.prototype.slice.call(hidden, 0, step);
-                toShow.forEach(function (el) { el.classList.remove('d-none'); });
-                shown += toShow.length;
-
-                if (document.querySelectorAll('.extra-product.d-none').length === 0) {
-                    var container = document.getElementById('showMoreContainer');
-                    if (container) container.style.display = 'none';
-                }
-            };
-        })();
-    </script>
+            @* ── Kawaii Pagination ───────────────────────────── *@
+            @if (totalPages > 1)
+            {
+                <section class="container-kawaii mt-5" id="pagination" aria-label="Pagination">
+                    <div class="kawaii-card text-center">
+                        <nav aria-label="Product pagination">
+                            @await Html.PartialAsync("_PaginationPartial", paginationVM)
+                        </nav>
+                    </div>
+                </section>
+            }
+        </section>
+    </main>
 }

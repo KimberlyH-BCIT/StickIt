@@ -1,10 +1,11 @@
-﻿namespace ELKH.Models
+namespace ELKH.Models
 {
     public enum OrderStatus
     {
         Pending = 0,   // Order placed, waiting for action
-        Shipped = 1,   // Order is on the way / finished
-        Cancelled = 2  // Order was aborted
+        Paid = 1,      // Payment confirmed (PayPal captured)
+        Shipped = 2,   // Order is on the way / finished
+        Cancelled = 3  // Order was aborted
     }
 
     public enum DeliveryStatus

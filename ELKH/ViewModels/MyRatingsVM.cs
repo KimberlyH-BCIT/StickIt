@@ -48,5 +48,19 @@ namespace ELKH.ViewModels
         /// rating_high, rating_low
         /// </summary>
         public string CurrentSort { get; set; } = "purchase_desc";
+
+        /// <summary>Products from user's order history that haven't been rated yet.</summary>
+        public List<ProductToReviewVM> ProductsToReview { get; set; } = [];
+    }
+
+    /// <summary>
+    /// Lightweight product suggestion for products waiting to be reviewed.
+    /// </summary>
+    public class ProductToReviewVM
+    {
+        public int ProductId { get; set; }
+        public string ProductName { get; set; } = string.Empty;
+        public DateTime PurchaseDate { get; set; }
+        public int OrderId { get; set; }
     }
 }

@@ -78,7 +78,7 @@ namespace ELKH.Services
             try
             {
                 // Prepare a helpful notification including direct links into the moderation console.
-                var product = await _db.Product.FindAsync(r.FkProductId);
+                var product = await _db.Products.FindAsync(r.FkProductId);
                 var productName = product?.Name ?? r.FkProductId.ToString();
                 var subject = $"Review flagged for product '{productName}' (Id: {r.PkRatingId})";
 

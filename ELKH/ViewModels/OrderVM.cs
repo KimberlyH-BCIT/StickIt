@@ -1,7 +1,9 @@
-using ELKH.Models;
-
 namespace ELKH.ViewModels;
 
+/// <summary>
+/// View model for order information containing complete order details,
+/// customer information, order items, and transaction data for order management.
+/// </summary>
 public class OrderVM
 {
     public OrderModel Order { get; set; } = null!;
@@ -12,5 +14,6 @@ public class OrderVM
 
 public class OrderHistoryVM
 {
-    public IEnumerable<OrderModel> Orders { get; set; } = new List<OrderModel>();
+    public IEnumerable<OrderModel> Orders { get; set; } = [];
+    public string CurrentSort { get; set; } = "date_desc";
 }

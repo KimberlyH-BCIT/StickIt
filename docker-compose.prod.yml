@@ -1,0 +1,118 @@
+# ELKH Sticker Store - Production Docker Compose Override
+# Production-specific configurations with enhanced security and performance
+
+version: '3.8'
+
+services:
+  # ====================================
+  # Production Application Configuration
+  # ====================================
+  elkh-app:
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Production
+      - ConnectionStrings__DefaultConnection=${DATABASE_CONNECTION_STRING}
+      - Authentication__Google__ClientId=${GOOGLE_CLIENT_ID}
+      - Authentication__Google__ClientSecret=${GOOGLE_CLIENT_SECRET}
+      - Cache__Redis__ConnectionString=redis:6379
+      - ApplicationInsights__ConnectionString=${APPLICATION_INSIGHTS_CONNECTION_STRING}
+      - Logging__LogLevel__Default=Warning
+      - Logging__LogLevel__Microsoft.AspNetCore=Error
+      - ASPNETCORE_FORWARDEDHEADERS_ENABLED=true
+    deploy:
+      replicas: 2
+      resources:
+        limits:
+          memory: 512M
+          cpus: '0.5'
+        reservations:
+          memory: 256M
+          cpus: '0.25'
+      restart_policy:
+        condition: any
+        delay: 10s
+        max_attempts: 3
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+  # ====================================
+  # Production Database Configuration
+  # ====================================
+  postgres:
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB}
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+    deploy:
+      resources:
+        limits:
+          memory: 1G
+          cpus: '0.5'
+        reservations:
+          memory: 512M
+          cpus: '0.25'
+    command: >
+      postgres
+      -c max_connections=100
+      -c shared_buffers=256MB
+      -c effective_cache_size=1GB
+      -c maintenance_work_mem=64MB
+      -c checkpoint_completion_target=0.9
+      -c wal_buffers=16MB
+      -c default_statistics_target=100
+
+  # ====================================
+  # Production Redis Configuration
+  # ====================================
+  redis:
+    command: >
+      redis-server
+      --appendonly yes
+      --requirepass ${REDIS_PASSWORD}
+      --maxmemory 256mb
+      --maxmemory-policy allkeys-lru
+    deploy:
+      resources:
+        limits:
+          memory: 256M
+          cpus: '0.25'
+        reservations:
+          memory: 128M
+          cpus: '0.1'
+
+  # ====================================
+  # Production Nginx Configuration
+  # ====================================
+  nginx:
+    volumes:
+      - ./nginx/nginx.prod.conf:/etc/nginx/nginx.conf:ro
+      - ./nginx/ssl:/etc/nginx/ssl:ro
+      - /etc/letsencrypt:/etc/letsencrypt:ro
+    deploy:
+      resources:
+        limits:
+          memory: 128M
+          cpus: '0.25'
+        reservations:
+          memory: 64M
+          cpus: '0.1'
+
+# ====================================
+# Production Usage
+# ====================================
+# 
+# Create .env file with production secrets:
+# DATABASE_CONNECTION_STRING=your-production-db
+# GOOGLE_CLIENT_ID=your-google-client-id
+# GOOGLE_CLIENT_SECRET=your-google-client-secret
+# REDIS_PASSWORD=your-redis-password
+# APPLICATION_INSIGHTS_CONNECTION_STRING=your-app-insights
+# 
+# Deploy to production:
+# docker-compose -f docker-compose.yml -f docker-compose.prod.yml up -d
+#
+# Scale for high availability:
+# docker-compose -f docker-compose.yml -f docker-compose.prod.yml up -d --scale elkh-app=3
+#

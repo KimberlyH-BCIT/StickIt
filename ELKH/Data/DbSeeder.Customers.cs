@@ -165,7 +165,7 @@ public static partial class DbSeeder
             ? await File.ReadAllBytesAsync(avatarPath)
             : null;
 
-        var products = await db.Product.AsNoTracking().ToListAsync();
+        var products = await db.Products.AsNoTracking().ToListAsync();
         if (products.Count == 0) return;
 
         var rng = GetRandom();

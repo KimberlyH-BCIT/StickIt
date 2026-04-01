@@ -47,14 +47,29 @@ public class OrderController : AuthenticatedControllerBase
     // ---------------------------------------------------------------------
     // User-facing order history endpoints
     // ---------------------------------------------------------------------
-    // GET: /Order/MyHistory - current user's order history
-    public async Task<IActionResult> MyHistory()
+    // GET: /Order/MyHistory?sort=date_desc - current user's order history
+    public async Task<IActionResult> MyHistory(string sort = "date_desc")
     {
         var authResult = RequireAuthenticatedUser(out var email);
         if (authResult != null) return authResult;
 
         var orders = await _orderManagementRepo.GetUserOrdersAsync(email);
-        return View("~/Views/OrderHistory/History.cshtml", new OrderHistoryVM { Orders = orders });
+
+        // Apply sorting
+        IEnumerable<ELKH.Models.OrderModel> sortedOrders = sort switch
+        {
+            "date_asc"   => orders.OrderBy(o => o.CreatedAt),
+            "total_high" => orders.OrderByDescending(o => o.TotalAmount),
+            "total_low"  => orders.OrderBy(o => o.TotalAmount),
+            "status"     => orders.OrderBy(o => o.OrderStatus).ThenByDescending(o => o.CreatedAt),
+            _            => orders.OrderByDescending(o => o.CreatedAt) // date_desc
+        };
+
+        return View("~/Views/OrderHistory/History.cshtml", new OrderHistoryVM 
+        { 
+            Orders = sortedOrders.ToList(),
+            CurrentSort = sort
+        });
     }
 
     // Lists all orders ordered by creation date (admin history view)
@@ -89,8 +104,8 @@ public class OrderController : AuthenticatedControllerBase
         var productDict = await _productService.GetByIdsAsync(productIds);
 
         var productVms = order.OrderItems
-            .Select(oi => productDict.ContainsKey(oi.FkProductId)
-                ? productDict[oi.FkProductId]
+            .Select(oi => productDict.TryGetValue(oi.FkProductId, out var product)
+                ? product
                 : null)
             .ToList();
 

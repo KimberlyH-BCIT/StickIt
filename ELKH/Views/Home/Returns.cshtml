@@ -1,0 +1,76 @@
+@{
+    ViewData["Title"] = "Returns & Refunds";
+}
+
+<div class="container my-5">
+    <div class="row justify-content-center">
+        <div class="col-lg-8">
+            <h1 class="mb-4">@ViewData["Title"]</h1>
+            
+            <div class="card shadow-sm mb-4">
+                <div class="card-body p-4">
+                    <h5 class="card-title mb-3">Return Policy</h5>
+                    <p>We want you to love your stickers! If you're not completely satisfied, we offer a 30-day return policy from the date of delivery.</p>
+                    
+                    <h6 class="mt-4">Return Requirements:</h6>
+                    <ul>
+                        <li>Items must be unused and in original packaging</li>
+                        <li>Stickers must not have been peeled or applied</li>
+                        <li>Original receipt or proof of purchase required</li>
+                        <li>Returns must be initiated within 30 days of delivery</li>
+                    </ul>
+                </div>
+            </div>
+
+            <div class="card shadow-sm mb-4">
+                <div class="card-body p-4">
+                    <h5 class="card-title mb-3">How to Return an Item</h5>
+                    <ol class="mb-0">
+                        <li class="mb-2">
+                            <strong>Contact Us:</strong> Email our support team at support@stickit.dev with your order number and the item(s) you wish to return.
+                        </li>
+                        <li class="mb-2">
+                            <strong>Get Return Authorization:</strong> We'll provide you with a Return Authorization (RA) number and return shipping instructions.
+                        </li>
+                        <li class="mb-2">
+                            <strong>Package Your Return:</strong> Securely package the item(s) with the RA number clearly marked on the outside of the package.
+                        </li>
+                        <li class="mb-2">
+                            <strong>Ship It Back:</strong> Send the package to the address provided. We recommend using a trackable shipping method.
+                        </li>
+                        <li>
+                            <strong>Get Your Refund:</strong> Once we receive and inspect your return, we'll process your refund within 5-7 business days.
+                        </li>
+                    </ol>
+                </div>
+            </div>
+
+            <div class="card shadow-sm mb-4">
+                <div class="card-body p-4">
+                    <h5 class="card-title mb-3">Refund Information</h5>
+                    <p>Refunds will be issued to the original payment method used for the purchase. Please allow 5-7 business days for the refund to appear in your account.</p>
+                    <p class="mb-0"><strong>Note:</strong> Shipping costs are non-refundable unless the return is due to our error (e.g., wrong item shipped, defective product).</p>
+                </div>
+            </div>
+
+            <div class="card shadow-sm mb-4">
+                <div class="card-body p-4">
+                    <h5 class="card-title mb-3">Exchanges</h5>
+                    <p class="mb-0">We currently do not offer direct exchanges. If you'd like a different item, please return your original purchase for a refund and place a new order.</p>
+                </div>
+            </div>
+
+            <div class="card shadow-sm">
+                <div class="card-body p-4">
+                    <h5 class="card-title mb-3">Damaged or Defective Items</h5>
+                    <p>If you receive a damaged or defective item, please contact us immediately at support@stickit.dev with photos of the damage. We'll arrange for a replacement or full refund, including return shipping costs.</p>
+                </div>
+            </div>
+
+            <div class="alert alert-info mt-4">
+                <i class="bi bi-headset me-2"></i>
+                Need help with a return? <a asp-action="Contact" class="alert-link">Contact our support team</a> and we'll assist you!
+            </div>
+        </div>
+    </div>
+</div>

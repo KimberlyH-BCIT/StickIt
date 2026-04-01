@@ -1,0 +1,261 @@
+@model IEnumerable<ELKH.ViewModels.ProductVM>
+
+@*
+╔══════════════════════════════════════════════════════════════════════════════════╗
+║ Kawaii Promotions Index - Special Deals with Kawaii Design                     ║
+║ Shows products with discounts using strategic color hierarchy                   ║
+╚══════════════════════════════════════════════════════════════════════════════════╝
+*@
+
+@{
+    ViewData["Title"] = "Promotions - Special Deals & Discounts";
+
+    var products = Model.ToList();
+    var page = ViewBag.Page as int? ?? 1;
+    var totalPages = ViewBag.TotalPages as int? ?? 1;
+    var total = ViewBag.Total as int? ?? products.Count;
+    var currentSort = ViewBag.Sort as string ?? "discount_high";
+
+    var sortingVM = ViewBag.SortingVM as ELKH.ViewModels.ProductSortingVM;
+    var paginationVM = ViewBag.PaginationVM as ELKH.ViewModels.PaginationVM;
+
+    // Calculate savings statistics
+    var totalSavingsAvailable = products.Where(p => p.DiscountPercent > 0)
+        .Sum(p => p.Price * (p.DiscountPercent / 100));
+    var averageDiscount = products.Where(p => p.DiscountPercent > 0)
+        .DefaultIfEmpty()
+        .Average(p => p?.DiscountPercent ?? 0);
+}
+
+<!-- ════════════════════════════════════════════════════════════════════════════════ -->
+<!-- ║ Kawaii Promotions Header with Strategic Color Usage                        ║ -->
+<!-- ════════════════════════════════════════════════════════════════════════════════ -->
+
+<header class="kawaii-hero" role="banner">
+    <!-- Skip Links for Accessibility -->
+    <nav class="skip-links sr-only-focusable" aria-label="Skip navigation">
+        <a href="#promotions-sorting" class="skip-link btn-kawaii btn-secondary-kawaii">Skip to sorting</a>
+        <a href="#promotionsProductGrid" class="skip-link btn-kawaii btn-secondary-kawaii">Skip to products</a>
+        <a href="#pagination" class="skip-link btn-kawaii btn-secondary-kawaii">Skip to pagination</a>
+    </nav>
+
+    <div class="container-kawaii">
+        <div class="text-center">
+            <div class="kawaii-cloud-title display-title sparkle">
+                <i class="bi bi-percent me-3" aria-hidden="true" style="color: var(--butter);"></i>
+                Special Promotions
+            </div>
+
+            <div class="kawaii-subtitle">
+                Discover amazing deals on our featured stickers!
+            </div>
+
+            <!-- Promotional stats with kawaii styling -->
+            @if (products.Any(p => p.DiscountPercent > 0))
+            {
+                <div class="promotion-stats kawaii-card surface-butter mt-4 d-inline-block">
+                    <h3 class="font-heading mb-2">🎉 Amazing Savings!</h3>
+                    <div class="stats-row">
+                        <p class="mb-1">Average Discount: <span class="accent-featured">@averageDiscount.ToString("0")%</span></p>
+                        <p class="mb-0">Total Savings Available: <span class="accent-featured">$@totalSavingsAvailable.ToString("0.00")</span></p>
+                    </div>
+                </div>
+            }
+            else
+            {
+                <div class="promotion-stats kawaii-card surface-lavender mt-4 d-inline-block">
+                    <p class="mb-0 hierarchy-secondary">Check back soon for new deals!</p>
+                </div>
+            }
+        </div>
+    </div>
+</header>
+
+@* ══════════════════════════════════════════════════════════════════════════════════ *@
+@* ║ Kawaii Promotion Information Banner                                            ║ *@
+@* ══════════════════════════════════════════════════════════════════════════════════ *@
+@if (products.Any())
+{
+    <section class="promotion-banner container-kawaii mb-4" role="region" aria-label="Promotion information">
+        <div class="kawaii-panel surface-butter">
+            <div class="d-flex align-items-center">
+                <i class="bi bi-info-circle-fill me-3" style="color: var(--purple); font-size: 1.5rem;" aria-hidden="true"></i>
+                <div>
+                    <strong class="hierarchy-primary">Limited Time Offers!</strong> 
+                    <span class="hierarchy-secondary">Don't miss out on these exclusive deals. Products shown have active discounts or eligible coupons.</span>
+                    <a asp-controller="Home" asp-action="Index" class="kawaii-link ms-2">View all coupons</a>
+                </div>
+            </div>
+        </div>
+    </section>
+}
+
+@* ══════════════════════════════════════════════════════════════════════════════════ *@
+@* ║ Kawaii Sorting Controls Section                                               ║ *@
+@* ══════════════════════════════════════════════════════════════════════════════════ *@
+@if (products.Any())
+{
+    <section class="container-kawaii mb-4" id="promotions-sorting">
+        <div class="kawaii-card">
+            <div class="d-flex flex-column flex-md-row align-items-md-center justify-content-between">
+                <div class="mb-2 mb-md-0">
+                    <h2 class="font-heading">
+                        <i class="bi bi-fire me-2" style="color: var(--butter);" aria-hidden="true"></i>
+                        Showing @products.Count of @total promotional products
+                    </h2>
+                </div>
+                <div>
+                    @if (sortingVM != null)
+                    {
+                        <div class="dropdown">
+                            <button class="btn-kawaii btn-secondary-kawaii dropdown-toggle" 
+                                    type="button" 
+                                    id="promotionsSortDropdown" 
+                                    data-bs-toggle="dropdown" 
+                                    aria-expanded="false" 
+                                    aria-label="Sort promotional products">
+                                <i class="bi bi-sort-down me-1" aria-hidden="true"></i>
+                                Sort: @(currentSort switch {
+                                    "discount_high" => "Highest Discount",
+                                    "name_asc" => "Name A-Z",
+                                    "name_desc" => "Name Z-A", 
+                                    "price_low" => "Price: Low to High",
+                                    "price_high" => "Price: High to Low",
+                                    "newest" => "Newest First",
+                                    "oldest" => "Oldest First",
+                                    _ => "Highest Discount"
+                                })
+                            </button>
+                            <ul class="dropdown-menu kawaii-dropdown-menu" aria-labelledby="promotionsSortDropdown">
+                                <li><a class="dropdown-item kawaii-dropdown-item @(currentSort == "discount_high" ? "active" : "")" 
+                                       asp-action="Index" asp-route-sort="discount_high">
+                                    <i class="bi bi-percent me-2" aria-hidden="true"></i>Highest Discount</a></li>
+                                <li><hr class="dropdown-divider soft-divider"></li>
+                                <li><a class="dropdown-item kawaii-dropdown-item @(currentSort == "price_low" ? "active" : "")" 
+                                       asp-action="Index" asp-route-sort="price_low">
+                                    <i class="bi bi-currency-dollar me-2" aria-hidden="true"></i>Price: Low to High</a></li>
+                                <li><a class="dropdown-item kawaii-dropdown-item @(currentSort == "price_high" ? "active" : "")" 
+                                       asp-action="Index" asp-route-sort="price_high">
+                                    <i class="bi bi-currency-dollar me-2" aria-hidden="true"></i>Price: High to Low</a></li>
+                                                                    <li><hr class="dropdown-divider soft-divider"></li>
+                                                                    <li><a class="dropdown-item kawaii-dropdown-item @(currentSort == "name_asc" ? "active" : "")" 
+                                                                           asp-action="Index" asp-route-sort="name_asc">
+                                                                        <i class="bi bi-sort-alpha-down me-2" aria-hidden="true"></i>Name A-Z</a></li>
+                                                                    <li><a class="dropdown-item kawaii-dropdown-item @(currentSort == "name_desc" ? "active" : "")" 
+                                                                           asp-action="Index" asp-route-sort="name_desc">
+                                                                        <i class="bi bi-sort-alpha-up me-2" aria-hidden="true"></i>Name Z-A</a></li>
+                                                                    <li><hr class="dropdown-divider soft-divider"></li>
+                                                                    <li><a class="dropdown-item kawaii-dropdown-item @(currentSort == "newest" ? "active" : "")" 
+                                                                           asp-action="Index" asp-route-sort="newest">
+                                                                        <i class="bi bi-calendar-plus me-2" aria-hidden="true"></i>Newest First</a></li>
+                                                                    <li><a class="dropdown-item kawaii-dropdown-item @(currentSort == "oldest" ? "active" : "")" 
+                                                                           asp-action="Index" asp-route-sort="oldest">
+                                                                        <i class="bi bi-calendar me-2" aria-hidden="true"></i>Oldest First</a></li>
+                                                                </ul>
+                                                            </div>
+                                                    }
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </section>
+                                    }
+
+@* ══════════════════════════════════════════════════════════════════════════════════ *@
+@* ║ Kawaii Product Grid Section using standardized ProductCard                    ║ *@
+@* ══════════════════════════════════════════════════════════════════════════════════ *@
+
+<main role="main" aria-label="Promotional products" class="container-kawaii">
+    @if (products.Any())
+    {
+        <!-- Promotional Product Grid using standardized kawaii design -->
+        <div id="promotionsProductGrid" class="row g-4" role="grid" aria-label="Promotional product grid">
+            @foreach (var product in products)
+            {
+                <div class="col-lg-3 col-md-4 col-sm-6" role="gridcell">
+                    <partial name="_ProductCard" model="product" />
+                </div>
+            }
+        </div>
+    }
+    else
+    {
+        <!-- No Products Found with kawaii styling -->
+        <div class="no-products-found text-center py-5">
+            <div class="kawaii-card surface-mint">
+                <div class="empty-state">
+                    <i class="bi bi-emoji-frown" style="font-size: 4rem; color: var(--purple-light);" aria-hidden="true"></i>
+                    <h2 class="font-heading mt-3 mb-2">No Promotions Available</h2>
+                    <p class="hierarchy-secondary mb-4">
+                        We don't have any promotional products available right now, but check back soon!
+                    </p>
+                    <a asp-controller="Product" asp-action="Index" class="btn-kawaii btn-secondary-kawaii">
+                        <i class="bi bi-arrow-left me-2" aria-hidden="true"></i>
+                        Browse All Products
+                    </a>
+                </div>
+            </div>
+        </div>
+    }
+</main>
+
+@* ══════════════════════════════════════════════════════════════════════════════════ *@
+@* ║ Pagination Section with Kawaii Styling                                        ║ *@
+@* ══════════════════════════════════════════════════════════════════════════════════ *@
+
+@if (paginationVM != null && totalPages > 1)
+{
+    <section class="container-kawaii mt-5" id="pagination" aria-label="Pagination">
+        <div class="kawaii-card text-center">
+            <nav aria-label="Promotional products pagination">
+                <ul class="pagination justify-content-center mb-0">
+                    <!-- Previous page -->
+                    @if (page > 1)
+                    {
+                        <li class="page-item">
+                            <a class="page-link kawaii-link" asp-action="Index" asp-route-page="@(page - 1)" asp-route-sort="@currentSort" aria-label="Previous page">
+                                <i class="bi bi-chevron-left" aria-hidden="true"></i>
+                                Previous
+                            </a>
+                        </li>
+                    }
+
+                    <!-- Page numbers -->
+                    @for (int i = Math.Max(1, page - 2); i <= Math.Min(totalPages, page + 2); i++)
+                    {
+                        <li class="page-item @(i == page ? "active" : "")">
+                            <a class="page-link kawaii-link @(i == page ? "accent-featured" : "")" 
+                               asp-action="Index" 
+                               asp-route-page="@i" 
+                               asp-route-sort="@currentSort"
+                               aria-label="Page @i"
+                               aria-current="@(i == page ? "page" : "false")">
+                                @i
+                            </a>
+                        </li>
+                    }
+
+                    <!-- Next page -->
+                    @if (page < totalPages)
+                    {
+                        <li class="page-item">
+                            <a class="page-link kawaii-link" asp-action="Index" asp-route-page="@(page + 1)" asp-route-sort="@currentSort" aria-label="Next page">
+                                Next
+                                <i class="bi bi-chevron-right" aria-hidden="true"></i>
+                            </a>
+                        </li>
+                    }
+                </ul>
+
+                <div class="pagination-info mt-3">
+                    <small class="hierarchy-tertiary">
+                        Showing page @(page) of @(totalPages) (@(total) total products)
+                    </small>
+                </div>
+            </nav>
+        </div>
+    </section>
+}
+
+@* ═══════════════════════════════════════════════════════════════════════════════════════ *@
+@* ║ END OF PROMOTIONS PAGE - All promotional styles now in kawaii-theme.css             ║ *@
+@* ═══════════════════════════════════════════════════════════════════════════════════════ *@

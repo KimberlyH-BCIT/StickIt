@@ -1,0 +1,55 @@
+@model ELKH.ViewModels.ProductSearchFilterVM
+
+@*
+╔══════════════════════════════════════════════════════════════════════════════════╗
+║ Product Search & Filter Partial View Component                                   ║
+║ Provides reusable search input, category filter, and clear functionality        ║
+╚══════════════════════════════════════════════════════════════════════════════════╝
+*@
+
+<section aria-labelledby="search-filter-heading">
+    <h2 id="search-filter-heading" class="sr-only">Search and Filter Products</h2>
+
+    <form method="get" asp-action="Index" class="row g-2 mb-3 align-items-end" role="search" aria-label="Product search and filtering">
+        <div class="col-sm-5">
+            <label for="product-search-input" class="form-label fw-semibold">Search</label>
+            <input type="search" 
+                   id="product-search-input"
+                   name="search" 
+                   value="@Model.Search"
+                   class="form-control" 
+                   placeholder="Search by name or description…"
+                   aria-describedby="search-help" />
+            <div id="search-help" class="form-text sr-only">
+                Enter keywords to search product names and descriptions
+            </div>
+        </div>
+        <div class="col-sm-4">
+            <label for="category-filter-select" class="form-label fw-semibold">Category</label>
+            <select id="category-filter-select"
+                    name="categoryId" 
+                    asp-items="Model.Categories" 
+                    class="form-select"
+                    aria-describedby="category-help">
+                <option value="">All categories</option>
+            </select>
+            <div id="category-help" class="form-text sr-only">
+                Filter products by category
+            </div>
+        </div>
+        <div class="col-sm-auto d-flex gap-2">
+            <input type="hidden" name="sort" value="@Model.CurrentSort" />
+            <button type="submit" class="btn btn-primary" aria-label="Apply search and category filters">
+                <span class="d-none d-sm-inline">Filter</span>
+                <span class="d-sm-none">Go</span>
+            </button>
+            @if (!string.IsNullOrWhiteSpace(Model.Search) || Model.CategoryId.HasValue)
+            {
+                <a asp-action="Index" class="btn btn-outline-secondary" aria-label="Clear all filters and show all products">
+                    <span class="d-none d-sm-inline">Clear</span>
+                    <span class="d-sm-none">✕</span>
+                </a>
+            }
+        </div>
+    </form>
+</section>

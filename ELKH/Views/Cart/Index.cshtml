@@ -1,157 +1,290 @@
 @model ELKH.ViewModels.CartVM
 @{
-    ViewData["Title"] = "Your Cart";
+    ViewData["Title"] = $"Shopping Cart - {Model.Items.Sum(i => i.Quantity)} Items | Your Order";
     Layout = "~/Views/Shared/_Layout.cshtml";
+    var totalQuantity = Model.Items.Sum(i => i.Quantity);
 }
 
 @section title {
-    <h1 class="fw-bold mb-4">Your Cart 🛒</h1>
+    <header class="mb-4">
+        <h1 class="fw-bold">
+            <i class="bi bi-cart3 me-2" aria-hidden="true"></i>
+            Your Shopping Cart
+        </h1>
+        @if (!Model.IsEmpty)
+        {
+            <p class="text-muted mb-0" role="status" aria-live="polite">
+                @totalQuantity item@(totalQuantity != 1 ? "s" : "") in your cart
+            </p>
+        }
+    </header>
 }
 
-<div class="container py-4">
-
-    @if (TempData["Message"] is string msg)
-{
-        var parts = msg.Split(',', 2);
-        var alertType = parts[0].Trim() == "success" ? "alert-success" : "alert-warning";
-        <div class="alert @alertType alert-dismissible fade show" role="alert">
-            @parts[^1].Trim()
-            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-        </div>
-}
+<main class="container py-4" data-cart-count="@totalQuantity" role="main">
+    <div id="cart-status" aria-live="polite" aria-atomic="true" class="sr-only"></div>
 
     @if (Model.IsEmpty)
     {
-        <div class="text-center py-5">
-            <i class="bi bi-cart-x display-1 text-muted"></i>
-            <p class="fs-5 text-muted mt-3">Your cart is empty.</p>
-            @if (User.Identity?.IsAuthenticated == true)
-            {
-                <a asp-controller="Product" asp-action="Index" class="btn btn-dark mt-2">Shop Stickers</a>
-            }
-else
-{
-                <p class="text-muted">
-                    <a asp-area="Identity" asp-page="/Account/Login">Log in</a> to start shopping.
-                </p>
-            }
-        </div>
+        var emptyCartVM = new ELKH.ViewModels.EmptyStateCardVM
+        {
+            Title = "Your cart is empty",
+            Icon = "cart-x",
+            IconType = "bootstrap",
+            Description = User.Identity?.IsAuthenticated == true 
+                ? "Start shopping to add items to your cart" 
+                : "Log in to start shopping and save items to your cart",
+            ActionText = User.Identity?.IsAuthenticated == true ? "Shop Stickers" : "Sign In",
+            ActionController = User.Identity?.IsAuthenticated == true ? "Product" : null,
+            ActionAction = User.Identity?.IsAuthenticated == true ? "Index" : null,
+            ActionButtonClass = "btn btn-dark mt-2"
+        };
+
+        <section aria-labelledby="empty-cart-heading">
+            <h2 id="empty-cart-heading" class="sr-only">Empty Cart</h2>
+            @await Html.PartialAsync("_EmptyStateCardPartial", emptyCartVM)
+        </section>
     }
     else
     {
         <div class="row g-4">
-            <!-- Cart Items -->
+            <!-- Cart Items Section -->
             <div class="col-lg-8">
-                <div class="card shadow-sm">
-                    <div class="card-body p-0">
-                        <table class="table table-borderless mb-0">
-                            <thead class="table-light">
-            <tr>
-                <th>Product</th>
-                                    <th class="text-center">Price</th>
-                                    <th class="text-center">Qty</th>
-                                    <th class="text-end">Total</th>
-                <th></th>
-            </tr>
-        </thead>
-        <tbody>
+                <section aria-labelledby="cart-items-heading">
+                    <h2 id="cart-items-heading" class="sr-only">Cart Items</h2>
+
+                    <div class="card shadow-sm">
+                        <div class="card-body p-0">
+                            <table class="table table-borderless mb-0" 
+                                   role="table"
+                                   aria-label="Shopping cart items with quantity and price information">
+                                <caption class="sr-only">
+                                    Your shopping cart contains @totalQuantity item@(totalQuantity != 1 ? "s" : ""). 
+                                    Adjust quantities or remove items as needed.
+                                </caption>
+                                <thead class="table-light">
+                                    <tr role="row">
+                                        <th scope="col" class="ps-3">
+                                            <span class="sr-only">Product image and </span>Product Details
+                                        </th>
+                                        <th scope="col" class="text-center">Unit Price</th>
+                                        <th scope="col" class="text-center">Quantity</th>
+                                        <th scope="col" class="text-end">Total Price</th>
+                                        <th scope="col" class="text-center pe-3">
+                                            <span class="sr-only">Remove Item Actions</span>
+                                            Actions
+                                        </th>
+                                    </tr>
+                                </thead>
+                                <tbody>
                                 @foreach (var item in Model.Items)
-            {
-                                    <tr class="align-middle">
-                    <td>
+                                {
+                                    <tr class="align-middle" role="row" aria-labelledby="item-@item.ProductId-name">
+                                        <td role="gridcell" class="ps-3">
                                             <div class="d-flex align-items-center gap-3">
                                                 @if (!string.IsNullOrEmpty(item.ImageUrl))
                                                 {
-                                                    <img src="@item.ImageUrl" alt="@item.ProductName"
-                                                         style="width:50px;height:50px;object-fit:contain;" />
+                                                    <img src="@item.ImageUrl" 
+                                                         alt="@item.ProductName product image"
+                                                         style="width:50px;height:50px;object-fit:contain;"
+                                                         loading="lazy" />
                                                 }
                                                 else
                                                 {
-                                                    <div style="width:50px;height:50px;" class="bg-light rounded d-flex align-items-center justify-content-center">
-                                                        <i class="bi bi-image text-muted"></i>
+                                                    <div style="width:50px;height:50px;" 
+                                                         class="bg-light rounded d-flex align-items-center justify-content-center"
+                                                         role="img"
+                                                         aria-label="No product image available for @item.ProductName">
+                                                        <i class="bi bi-image text-muted" aria-hidden="true"></i>
                                                     </div>
                                                 }
-                                                <span class="fw-semibold">@item.ProductName</span>
+                                                <div>
+                                                    <span id="item-@item.ProductId-name" class="fw-semibold d-block">@item.ProductName</span>
+                                                    <small class="text-muted">SKU: @item.ProductId</small>
+                                                </div>
                                             </div>
                                         </td>
-                                        <td class="text-center">$@item.UnitPrice.ToString("F2")</td>
-                                        <td class="text-center" style="width:140px;">
-                                            <form asp-controller="Cart" asp-action="Update" method="post" class="d-flex gap-1">
-                                                @Html.AntiForgeryToken()
-                                                <input type="hidden" name="cartId" value="@item.CartItemId" />
-                                                <input type="number" name="quantity" value="@item.Quantity" min="1"
-                                                       class="form-control form-control-sm text-center" style="width:70px;" />
-                                                <button type="submit" class="btn btn-sm btn-outline-secondary" title="Update">↻</button>
-                                            </form>
+                                        <td role="gridcell" class="text-center">
+                                            <span aria-label="Unit price @item.UnitPrice.ToString("C")">
+                                                @item.UnitPrice.ToString("C")
+                                            </span>
                                         </td>
-                                        <td class="text-end fw-bold">$@item.LineTotal.ToString("F2")</td>
-                                        <td class="text-end">
-                                            <form asp-controller="Cart" asp-action="Remove" method="post">
-                            @Html.AntiForgeryToken()
-                                                <input type="hidden" name="cartId" value="@item.CartItemId" />
-                                                <button type="submit" class="btn btn-sm btn-outline-danger" title="Remove">
-                                                    <i class="bi bi-trash"></i>
-                                                </button>
-                        </form>
-                    </td>
-                </tr>
-            }
-        </tbody>
-    </table>
-                    </div>
-                </div>
+                                        <td role="gridcell" class="text-center" style="width:140px;">
+                                            <form asp-controller="Cart" 
+                                                  asp-action="Update" 
+                                                  method="post" 
+                                                  class="d-flex gap-1 align-items-center"
+                                                  aria-label="Update quantity for @item.ProductName">
+                                                @Html.AntiForgeryToken()
+                                                <input type="hidden" name="itemId" value="@item.ProductId" />
 
-                <div class="mt-2">
-                    <form asp-controller="Cart" asp-action="Clear" method="post">
-                        @Html.AntiForgeryToken()
-                        <button type="submit" class="btn btn-outline-danger btn-sm"
-                                onclick="return confirm('Clear your entire cart?')">
-                            <i class="bi bi-trash me-1"></i>Clear Cart
-                        </button>
-                    </form>
-                </div>
+                                                <label for="quantity-@item.ProductId" class="sr-only">
+                                                    Quantity for @item.ProductName
+                                                </label>
+                                                <div class="input-group input-group-sm" style="width:100px;">
+                                                    <button type="button" 
+                                                            class="btn btn-outline-secondary"
+                                                            onclick="decrementQuantity('@item.ProductId')"
+                                                            aria-label="Decrease quantity of @item.ProductName">
+                                                        <i class="bi bi-dash" aria-hidden="true"></i>
+                                                    </button>
+                                                    <input type="number" 
+                                                           id="quantity-@item.ProductId"
+                                                           name="quantity" 
+                                                           value="@item.Quantity" 
+                                                           min="1" 
+                                                           max="99"
+                                                           class="form-control text-center" 
+                                                           aria-label="Quantity of @item.ProductName, current value @item.Quantity"
+                                                           onchange="this.form.submit()" />
+                                                    <button type="button" 
+                                                            class="btn btn-outline-secondary"
+                                                            onclick="incrementQuantity('@item.ProductId')"
+                                                            aria-label="Increase quantity of @item.ProductName">
+                                                        <i class="bi bi-plus" aria-hidden="true"></i>
+                                                    </button>
+                                                                                 </div>
+                                                                             </form>
+                                                                         </td>
+                                                                         <td role="gridcell" class="text-end">
+                                                                             <span class="fw-bold" aria-label="Total price for @item.Quantity @item.ProductName: @item.LineTotal.ToString("C")">
+                                                                                 @item.LineTotal.ToString("C")
+                                                                             </span>
+                                                                         </td>
+                                                                         <td role="gridcell" class="text-center pe-3">
+                                                                             <form asp-controller="Cart" asp-action="Remove" method="post" 
+                                                                                   aria-label="Remove @item.ProductName from cart">
+                                                                                 @Html.AntiForgeryToken()
+                                                                                 <input type="hidden" name="cartId" value="@item.CartItemId" />
+                                                                                 <button type="submit"
+                                                                                         class="btn btn-sm btn-outline-danger d-inline-flex align-items-center justify-content-center"
+                                                                                         style="width:32px;height:32px;border-radius:999px;line-height:1;"
+                                                                                         aria-label="Remove @item.ProductName from cart"
+                                                                                         onclick="return confirm('Remove @item.ProductName from your cart?')">
+                                                                                     <i class="bi bi-x" aria-hidden="true"></i>
+                                                                                     <span class="sr-only">Remove</span>
+                                                                                 </button>
+                                                                             </form>
+                                                                         </td>
+                                                                     </tr>
+                                                                }
+                                                                </tbody>
+                                                            </table>
+                                                        </div>
+                                                    </div>
+                                                </section>
+
+                                                <!-- Cart Actions -->
+                                                <section aria-labelledby="cart-actions-heading" class="mt-3">
+                                                    <h3 id="cart-actions-heading" class="sr-only">Cart Management Actions</h3>
+                                                    <div class="d-flex gap-2">
+                                                        <form asp-controller="Cart" asp-action="Clear" method="post" 
+                                                              aria-label="Clear all items from cart">
+                                                            @Html.AntiForgeryToken()
+                                                            <button type="submit" class="btn btn-outline-danger btn-sm"
+                                                                    aria-label="Remove all items from your cart"
+                                                                    onclick="return confirm('Are you sure you want to clear your entire cart? This action cannot be undone.')">
+                                                                <i class="bi bi-trash me-1" aria-hidden="true"></i>Clear Cart
+                                                            </button>
+                                                        </form>
+                                                        <a asp-controller="Product" asp-action="Index" 
+                                                           class="btn btn-outline-primary btn-sm"
+                                                           aria-label="Continue shopping for more products">
+                                                            <i class="bi bi-arrow-left me-1" aria-hidden="true"></i>Continue Shopping
+                                                        </a>
+                                                    </div>
+                                                </section>
             </div>
 
-            <!-- Order Summary -->
+            <!-- Order Summary Section with Enhanced Accessibility -->
             <div class="col-lg-4">
-                <div class="card shadow-sm">
-                    <div class="card-body">
-                        <h5 class="fw-bold mb-3">Order Summary</h5>
-                        <div class="d-flex justify-content-between mb-2">
-                            <span>Subtotal</span>
-                            <span>$@Model.Subtotal.ToString("F2")</span>
-                        </div>
-                        <div class="d-flex justify-content-between mb-2">
-                            <span>Tax (12%)</span>
-                            <span>$@Model.Tax.ToString("F2")</span>
-                        </div>
-                        <div class="d-flex justify-content-between mb-3">
-                            <span class="text-muted">Shipping</span>
-                            <span>@(Model.ShippingCost == 0 ? "Free!" : "$" + Model.ShippingCost.ToString("F2"))</span>
-                        </div>
-                        <hr />
-                        <div class="d-flex justify-content-between fw-bold fs-5 mb-3">
-                            <span>Total</span>
-                            <span>$@Model.Total.ToString("F2")</span>
-                        </div>
+                <section aria-labelledby="order-summary-heading" class="sticky-top" style="top: 2rem;">
+                    <div class="card shadow-sm">
+                        <div class="card-body">
+                            <h2 id="order-summary-heading" class="fw-bold mb-3 h5">Order Summary</h2>
 
-                        <p class="text-muted small text-center mb-3">
-                            <i class="bi bi-truck me-1"></i>@Model.ShippingNote
-                        </p>
-                        @if (User.Identity?.IsAuthenticated == true)
-                        {
-                            <a asp-controller="Checkout" asp-action="Index" class="btn btn-dark w-100 btn-lg">
-                                <i class="bi bi-credit-card me-2"></i>Proceed to Checkout
-                            </a>
-                        }
-                        else
-                        {
-                            <a asp-area="Identity" asp-page="/Account/Login"
-                               class="btn btn-dark w-100 btn-lg">Login to Checkout</a>
-                        }
+                            <dl class="row mb-3">
+                                <dt class="col-sm-8 col-7">Subtotal (@totalQuantity item@(totalQuantity != 1 ? "s" : "")):</dt>
+                                <dd class="col-sm-4 col-5 text-end" aria-label="Subtotal amount">
+                                    @Model.Subtotal.ToString("C")
+                                </dd>
+
+                                <dt class="col-sm-8 col-7">Tax (HST 13%):</dt>
+                                <dd class="col-sm-4 col-5 text-end" aria-label="Tax amount">
+                                    @Model.Tax.ToString("C")
+                                </dd>
+
+                                <dt class="col-sm-8 col-7 text-muted">Shipping:</dt>
+                                <dd class="col-sm-4 col-5 text-end text-muted" aria-label="Shipping cost">
+                                    @(Model.ShippingCost == 0 ? "Free!" : Model.ShippingCost.ToString("C"))
+                                </dd>
+                            </dl>
+
+                            <hr role="separator" aria-label="Subtotal and total separator" />
+
+                            <dl class="row mb-3">
+                                <dt class="col-sm-8 col-7 fw-bold fs-5">Total:</dt>
+                                <dd class="col-sm-4 col-5 text-end fw-bold fs-5" 
+                                    id="cart-total" 
+                                    aria-label="Order total amount"
+                                    aria-live="polite">
+                                    @Model.Total.ToString("C")
+                                </dd>
+                            </dl>
+
+                            @if (Model.ShippingCost == 0)
+                            {
+                                <div class="text-success small text-center mb-3" role="status">
+                                    <i class="bi bi-truck me-1" aria-hidden="true"></i>
+                                    <strong>Free shipping on all orders!</strong>
+                                </div>
+                            }
+
+                            <!-- Checkout Actions -->
+                            <div class="d-grid gap-2">
+                                @if (User.Identity?.IsAuthenticated == true)
+                                {
+                                    <a asp-controller="Checkout" asp-action="Index" 
+                                       class="btn btn-dark btn-lg"
+                                       aria-label="Proceed to secure checkout for @Model.Total.ToString("C")">
+                                        <i class="bi bi-credit-card me-2" aria-hidden="true"></i>
+                                        Proceed to Checkout
+                                    </a>
+                                    <p class="small text-muted text-center mb-0">
+                                        <i class="bi bi-shield-lock me-1" aria-hidden="true"></i>
+                                        Secure SSL checkout
+                                    </p>
+                                }
+                                else
+                                {
+                                    <a asp-area="Identity" asp-page="/Account/Login"
+                                       asp-route-returnUrl="@Context.Request.Path"
+                                       class="btn btn-dark btn-lg"
+                                       aria-label="Sign in to checkout your order totaling @Model.Total.ToString("C")">
+                                        <i class="bi bi-box-arrow-in-right me-2" aria-hidden="true"></i>
+                                        Sign In to Checkout
+                                    </a>
+                                    <p class="small text-muted text-center mb-0">
+                                        Sign in to save your cart and checkout securely
+                                    </p>
+                                }
+                            </div>
+                        </div>
                     </div>
-                </div>
+                </section>
             </div>
         </div>
+    }
+</main>
+
+@section Scripts {
+    <script src="~/js/cart-interactions.js" asp-append-version="true"></script>
+
+    @if(TempData["CartUpdated"] != null)
+    {
+        <script>
+            document.addEventListener('DOMContentLoaded', function() {
+                setCartStatusMessage('@TempData["CartUpdated"]');
+            });
+        </script>
+    }
 }
-</div>

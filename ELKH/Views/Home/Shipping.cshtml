@@ -1,0 +1,80 @@
+@{
+    ViewData["Title"] = "Shipping Information";
+}
+
+<div class="container my-5">
+    <div class="row justify-content-center">
+        <div class="col-lg-8">
+            <h1 class="mb-4">@ViewData["Title"]</h1>
+            
+            <div class="card shadow-sm mb-4">
+                <div class="card-body p-4">
+                    <h5 class="card-title mb-3">Shipping Options</h5>
+                    <div class="table-responsive">
+                        <table class="table">
+                            <thead>
+                                <tr>
+                                    <th>Shipping Method</th>
+                                    <th>Delivery Time</th>
+                                    <th>Cost</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr>
+                                    <td>Standard Shipping</td>
+                                    <td>5-7 business days</td>
+                                    <td>$5.99</td>
+                                </tr>
+                                <tr>
+                                    <td>Express Shipping</td>
+                                    <td>2-3 business days</td>
+                                    <td>$12.99</td>
+                                </tr>
+                                <tr>
+                                    <td>Overnight Shipping</td>
+                                    <td>1 business day</td>
+                                    <td>$24.99</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                    <p class="small text-muted mb-0">
+                        <i class="bi bi-truck me-2"></i>
+                        Free standard shipping on orders over $50!
+                    </p>
+                </div>
+            </div>
+
+            <div class="card shadow-sm mb-4">
+                <div class="card-body p-4">
+                    <h5 class="card-title mb-3">Processing Time</h5>
+                    <p>Orders are typically processed within 1-2 business days. You will receive a confirmation email once your order has been shipped with tracking information.</p>
+                </div>
+            </div>
+
+            <div class="card shadow-sm mb-4">
+                <div class="card-body p-4">
+                    <h5 class="card-title mb-3">Shipping Locations</h5>
+                    <p>We currently ship to all Canadian provinces and territories. International shipping is not available at this time.</p>
+                </div>
+            </div>
+
+            <div class="card shadow-sm">
+                <div class="card-body p-4">
+                    <h5 class="card-title mb-3">Order Tracking</h5>
+                    <p>Once your order has shipped, you'll receive a tracking number via email. You can also track your order by:</p>
+                    <ol>
+                        <li>Logging into your account</li>
+                        <li>Visiting <a asp-controller="Order" asp-action="MyHistory">My Orders</a></li>
+                        <li>Clicking on the order you wish to track</li>
+                    </ol>
+                </div>
+            </div>
+
+            <div class="alert alert-info mt-4">
+                <i class="bi bi-question-circle me-2"></i>
+                Have shipping questions? Check our <a asp-action="FAQ" class="alert-link">FAQ</a> or <a asp-action="Contact" class="alert-link">contact us</a>.
+            </div>
+        </div>
+    </div>
+</div>

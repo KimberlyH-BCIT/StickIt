@@ -1,102 +1,403 @@
 @model ELKH.ViewModels.UserDashboardVM
 @{
-    ViewData["Title"] = "My Account";
+    ViewData["Title"] = $"My Account Dashboard - {Model.Profile?.FirstName ?? "User"} | Account Management";
 }
 
-<div class="row g-4">
-    <!-- Welcome panel -->
-    <div class="col-12">
-        <div class="card shadow-sm border-0 bg-dark text-white">
-            <div class="card-body p-4 d-flex justify-content-between align-items-center flex-wrap gap-3">
-                <div>
-                    <h2 class="fw-bold mb-1">
-                        Welcome back, @(Model.Profile?.FirstName ?? User.Identity?.Name?.Split('@')[0]) 👋
-                    </h2>
-                    <p class="text-white-50 mb-0">@User.Identity?.Name</p>
+@section title {
+    <header class="mb-4">
+        <h1 class="fw-bold">My Account Dashboard</h1>
+        <p class="text-muted mb-0">
+            Manage your profile, orders, and account settings
+        </p>
+    </header>
+}
+
+<main class="container py-4" role="main">
+    <div class="row g-4">
+        <!-- Welcome panel -->
+        <div class="col-12">
+            <section aria-labelledby="welcome-heading" role="banner">
+                <div class="card shadow-sm border-0 bg-dark text-white">
+                    <div class="card-body p-4 d-flex justify-content-between align-items-center flex-wrap gap-3">
+                        <div>
+                            <h2 id="welcome-heading" class="fw-bold mb-1" role="status" aria-live="polite">
+                                Welcome back, @(Model.Profile?.FirstName ?? User.Identity?.Name?.Split('@')[0]) 
+                                <span aria-hidden="true">👋</span>
+                            </h2>
+                            <p class="text-white-50 mb-0" aria-label="Logged in as @User.Identity?.Name">
+                                @User.Identity?.Name
+                            </p>
+                        </div>
+                        <a asp-action="EditProfile" 
+                           class="btn btn-outline-light btn-sm"
+                           aria-label="Edit your profile information">
+                            <i class="bi bi-pencil me-1" aria-hidden="true"></i>Edit Profile
+                        </a>
+                    </div>
                 </div>
-                <a asp-action="EditProfile" class="btn btn-outline-light btn-sm">
-                    <i class="bi bi-pencil me-1"></i>Edit Profile
-                </a>
-            </div>
+            </section>
         </div>
-    </div>
 
-    <!-- Quick links -->
-    <div class="col-md-4">
-        <a asp-controller="Order" asp-action="History" class="text-decoration-none">
-            <div class="card shadow-sm border-0 h-100 text-center p-4">
-                <i class="bi bi-bag-check display-4 text-primary mb-3"></i>
-                <h5 class="fw-bold">My Orders</h5>
-                <p class="text-muted small">View and track your order history</p>
-            </div>
-        </a>
-    </div>
-    <div class="col-md-4">
-        <a asp-action="Addresses" class="text-decoration-none">
-            <div class="card shadow-sm border-0 h-100 text-center p-4">
-                <i class="bi bi-geo-alt display-4 text-success mb-3"></i>
-                <h5 class="fw-bold">Addresses</h5>
-                <p class="text-muted small">Manage your shipping addresses</p>
-            </div>
-        </a>
-    </div>
-    <div class="col-md-4">
-        <a asp-action="LoginHistory" class="text-decoration-none">
-            <div class="card shadow-sm border-0 h-100 text-center p-4">
-                <i class="bi bi-clock-history display-4 text-warning mb-3"></i>
-                <h5 class="fw-bold">Login History</h5>
-                <p class="text-muted small">Review your recent login activity</p>
-            </div>
-        </a>
-    </div>
-
-    <!-- Profile summary -->
-    @if (Model.Profile is not null)
-    {
-        <div class="col-md-6">
-            <div class="card shadow-sm">
-                <div class="card-header fw-bold"><i class="bi bi-person me-2"></i>Profile</div>
-                <div class="card-body">
-                    <dl class="row mb-0">
-                        <dt class="col-sm-4 text-muted">Name</dt>
-                        <dd class="col-sm-8">@Model.Profile.FirstName @Model.Profile.LastName</dd>
-                        <dt class="col-sm-4 text-muted">Email</dt>
-                        <dd class="col-sm-8">@Model.Profile.PkEmail</dd>
-                    </dl>
+        <!-- Quick Action Links -->
+        <nav aria-labelledby="quick-links-heading" class="col-12">
+            <h2 id="quick-links-heading" class="sr-only">Quick action links</h2>
+            <div class="row g-3">
+                <div class="col-md-4">
+                    <a asp-controller="Order" 
+                       asp-action="MyHistory" 
+                       class="text-decoration-none"
+                       aria-labelledby="orders-link-title"
+                       aria-describedby="orders-link-desc">
+                        <div class="card shadow-sm border-0 h-100 text-center p-4 hover-lift" 
+                             role="button"
+                             tabindex="-1">
+                            <i class="bi bi-bag-check display-4 text-primary mb-3" aria-hidden="true"></i>
+                            <h3 id="orders-link-title" class="fw-bold h5">My Orders</h3>
+                            <p id="orders-link-desc" class="text-muted small mb-0">
+                                View and track your order history
+                            </p>
+                        </div>
+                    </a>
                 </div>
-                <div class="card-footer bg-white">
-                    <a asp-action="EditProfile" class="btn btn-sm btn-outline-primary">
-                        <i class="bi bi-pencil me-1"></i>Edit
+                <div class="col-md-4">
+                    <a asp-action="Addresses" 
+                       class="text-decoration-none"
+                       aria-labelledby="addresses-link-title"
+                       aria-describedby="addresses-link-desc">
+                        <div class="card shadow-sm border-0 h-100 text-center p-4 hover-lift" 
+                             role="button"
+                             tabindex="-1">
+                            <i class="bi bi-geo-alt display-4 text-success mb-3" aria-hidden="true"></i>
+                            <h3 id="addresses-link-title" class="fw-bold h5">Addresses</h3>
+                            <p id="addresses-link-desc" class="text-muted small mb-0">
+                                Manage your shipping addresses
+                            </p>
+                        </div>
+                    </a>
+                </div>
+                <div class="col-md-4">
+                    <a asp-action="LoginHistory" 
+                       class="text-decoration-none"
+                       aria-labelledby="login-history-link-title"
+                       aria-describedby="login-history-link-desc">
+                        <div class="card shadow-sm border-0 h-100 text-center p-4 hover-lift" 
+                             role="button"
+                             tabindex="-1">
+                            <i class="bi bi-clock-history display-4 text-warning mb-3" aria-hidden="true"></i>
+                            <h3 id="login-history-link-title" class="fw-bold h5">Login History</h3>
+                            <p id="login-history-link-desc" class="text-muted small mb-0">
+                                Review your recent login activity
+                            </p>
+                        </div>
                     </a>
                 </div>
             </div>
-        </div>
-    }
-    else
-    {
-        <div class="col-md-6">
-            <div class="card shadow-sm border-warning">
-                <div class="card-body text-center py-4">
-                    <i class="bi bi-person-exclamation fs-1 text-warning mb-2"></i>
-                    <p class="mb-2">Your profile is incomplete.</p>
-                    <a asp-action="EditProfile" class="btn btn-warning btn-sm">
-                        <i class="bi bi-pencil me-1"></i>Complete Profile
-                    </a>
-                </div>
-            </div>
-        </div>
-    }
+        </nav>
 
-    <!-- Account settings link -->
-    <div class="col-md-6">
-        <div class="card shadow-sm">
-            <div class="card-header fw-bold"><i class="bi bi-gear me-2"></i>Account Settings</div>
-            <div class="card-body">
-                <p class="text-muted small mb-3">Change your password, email, or two-factor settings.</p>
-                <a asp-area="Identity" asp-page="/Account/Manage/Index" class="btn btn-outline-secondary btn-sm">
-                    <i class="bi bi-gear me-1"></i>Manage Identity
-                </a>
+        <!-- Recent Orders Section -->
+        @if (Model.ActiveOrdersSection?.Items?.Any() == true || Model.OrderHistorySection?.Items?.Any() == true)
+        {
+            <div class="col-12">
+                <section aria-labelledby="recent-orders-heading">
+                    <div class="card shadow-sm">
+                        <div class="card-header bg-white py-3 d-flex justify-content-between align-items-center">
+                            <h2 id="recent-orders-heading" class="fw-bold mb-0 h5">
+                                <i class="bi bi-bag-check me-2" aria-hidden="true"></i>Recent Orders
+                            </h2>
+                            <a asp-controller="Order" 
+                               asp-action="MyHistory" 
+                               class="btn btn-sm btn-outline-primary"
+                               aria-label="View complete order history">
+                                View All Orders
+                            </a>
+                        </div>
+                        <div class="card-body p-0">
+                            <div class="table-responsive">
+                                <table class="table table-hover mb-0"
+                                       role="table"
+                                       aria-label="Recent order summary with order details">
+                                    <caption class="sr-only">
+                                        Your most recent orders with order numbers, dates, status, and totals
+                                    </caption>
+                                    <thead class="table-light">
+                                        <tr role="row">
+                                            <th scope="col">Order Number</th>
+                                            <th scope="col">Date Placed</th>
+                                            <th scope="col">Status</th>
+                                            <th scope="col">Items</th>
+                                            <th scope="col" class="text-end">Total Amount</th>
+                                            <th scope="col">
+                                                <span class="sr-only">View Details Actions</span>
+                                            </th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        @{
+                                            var recentOrders = (Model.ActiveOrdersSection?.Items ?? new List<DashboardOrderVM>())
+                                                .Concat(Model.OrderHistorySection?.Items ?? new List<DashboardOrderVM>())
+                                                .OrderByDescending(o => o.CreatedAt)
+                                                .Take(5);
+                                        }
+                                        @foreach (var order in recentOrders)
+                                        {
+                                            <tr role="row">
+                                                <td role="gridcell" class="fw-semibold" aria-label="Order number @order.OrderId">
+                                                    #@order.OrderId
+                                                </td>
+                                                <td role="gridcell" aria-label="Placed on @order.CreatedAt.ToString("MMMM d, yyyy")">
+                                                    @order.CreatedAt.ToString("MMM d, yyyy")
+                                                </td>
+                                                <td role="gridcell">
+                                                    <span class="badge @(order.OrderStatus == "Delivered" ? "bg-success" : order.OrderStatus == "Shipped" ? "bg-info" : "bg-warning")"
+                                                          role="status"
+                                                          aria-label="Order status: @order.OrderStatus">
+                                                        @order.OrderStatus
+                                                    </span>
+                                                </td>
+                                                <td role="gridcell" aria-label="@order.ItemCount item@(order.ItemCount != 1 ? "s" : "")">
+                                                    @order.ItemCount item@(order.ItemCount != 1 ? "s" : "")
+                                                </td>
+                                                <td role="gridcell" class="text-end fw-semibold" aria-label="Total @order.TotalAmount.ToString("C")">
+                                                    @order.TotalAmount.ToString("C")
+                                                </td>
+                                                <td role="gridcell" class="text-end">
+                                                    <a asp-controller="Order" 
+                                                       asp-action="Details" 
+                                                       asp-route-id="@order.OrderId" 
+                                                       class="btn btn-sm btn-outline-secondary"
+                                                       aria-label="View details for order @order.OrderId">
+                                                        <i class="bi bi-eye" aria-hidden="true"></i>
+                                                        <span class="sr-only">View Details</span>
+                                                    </a>
+                                                </td>
+                                            </tr>
+                                        }
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </section>
             </div>
+        }
+
+        <!-- Wishlist Preview -->
+        @if (Model.WishlistSection?.Items?.Any() == true)
+        {
+            <div class="col-12">
+                <section aria-labelledby="wishlist-heading">
+                    <div class="card shadow-sm">
+                        <div class="card-header bg-white py-3 d-flex justify-content-between align-items-center">
+                            <h2 id="wishlist-heading" class="fw-bold mb-0 h5">
+                                <i class="bi bi-heart me-2" aria-hidden="true"></i>
+                                My Wishlist (<span aria-label="@Model.WishlistCount items">@Model.WishlistCount</span>)
+                            </h2>
+                            <a asp-controller="Wishlist" 
+                               asp-action="Index" 
+                               class="btn btn-sm btn-outline-primary"
+                               aria-label="View complete wishlist with all @Model.WishlistCount items">
+                                View All
+                            </a>
+                        </div>
+                        <div class="card-body">
+                            <div class="row row-cols-1 row-cols-md-3 row-cols-lg-4 g-3" 
+                                 role="grid" 
+                                 aria-label="Wishlist items preview">
+                                @foreach (var item in Model.WishlistSection.Items.Take(4))
+                                {
+                                    <div class="col" role="gridcell">
+                                        <article class="card h-100 border" aria-labelledby="wishlist-item-@item.ProductId">
+                                            <div class="card-body p-3">
+                                                <h3 id="wishlist-item-@item.ProductId" class="card-title mb-2 h6">
+                                                    @item.ProductName
+                                                </h3>
+                                                @if (item.DiscountPercent > 0)
+                                                {
+                                                    <div class="mb-0">
+                                                        <span class="text-muted text-decoration-line-through small" 
+                                                              aria-label="Original price @item.Price.ToString("C")">
+                                                            @item.Price.ToString("C")
+                                                        </span>
+                                                        <br />
+                                                        <strong class="text-success" aria-label="Sale price @item.EffectivePrice.ToString("C")">
+                                                            @item.EffectivePrice.ToString("C")
+                                                        </strong>
+                                                        <span class="badge bg-danger ms-1" aria-label="@item.DiscountPercent percent off">
+                                                            @item.DiscountPercent% OFF
+                                                        </span>
+                                                    </div>
+                                                }
+                                                else
+                                                {
+                                                    <p class="mb-0 fw-semibold" aria-label="Price @item.Price.ToString("C")">
+                                                        @item.Price.ToString("C")
+                                                    </p>
+                                                }
+                                            </div>
+                                            <div class="card-footer bg-white border-top-0 p-2">
+                                                <a asp-controller="Product" 
+                                                   asp-action="Details" 
+                                                   asp-route-id="@item.ProductId" 
+                                                   class="btn btn-sm btn-outline-primary w-100"
+                                                   aria-label="View details for @item.ProductName">
+                                                    View Product
+                                                </a>
+                                            </div>
+                                        </article>
+                                    </div>
+                                }
+                            </div>
+                        </div>
+                    </div>
+                </section>
+            </div>
+        }
+
+        <!-- Profile Information and Account Settings -->
+        <div class="col-md-6">
+            @if (Model.Profile is not null)
+            {
+                <section aria-labelledby="profile-section-heading">
+                    <div class="card shadow-sm h-100">
+                        <div class="card-header bg-white fw-bold">
+                            <h2 id="profile-section-heading" class="mb-0 h6">
+                                <i class="bi bi-person me-2" aria-hidden="true"></i>Profile Information
+                            </h2>
+                        </div>
+                        <div class="card-body">
+                            <dl class="row mb-0">
+                                <dt class="col-sm-4 text-muted">Full Name</dt>
+                                <dd class="col-sm-8">@Model.Profile.FirstName @Model.Profile.LastName</dd>
+                                <dt class="col-sm-4 text-muted">Email Address</dt>
+                                <dd class="col-sm-8" aria-label="Email @Model.Profile.PkEmail">
+                                    @Model.Profile.PkEmail
+                                </dd>
+                            </dl>
+                        </div>
+                        <div class="card-footer bg-white">
+                            <a asp-action="EditProfile" 
+                               class="btn btn-sm btn-outline-primary"
+                               aria-label="Edit your profile information">
+                                <i class="bi bi-pencil me-1" aria-hidden="true"></i>Edit Profile
+                            </a>
+                        </div>
+                    </div>
+                </section>
+            }
+            else
+            {
+                <section aria-labelledby="incomplete-profile-heading" role="alert">
+                    <div class="card shadow-sm border-warning h-100">
+                        <div class="card-body text-center py-5">
+                            <i class="bi bi-person-exclamation fs-1 text-warning mb-2" aria-hidden="true"></i>
+                            <h2 id="incomplete-profile-heading" class="h6 mb-2">Profile Incomplete</h2>
+                            <p class="mb-2">Complete your profile to enhance your shopping experience.</p>
+                            <a asp-action="EditProfile" 
+                               class="btn btn-warning btn-sm"
+                               aria-label="Complete your profile information">
+                                <i class="bi bi-pencil me-1" aria-hidden="true"></i>Complete Profile
+                            </a>
+                        </div>
+                    </div>
+                </section>
+            }
+        </div>
+
+        <!-- Account Security Settings -->
+        <div class="col-md-6">
+            <section aria-labelledby="account-settings-heading">
+                <div class="card shadow-sm h-100">
+                    <div class="card-header bg-white fw-bold">
+                        <h2 id="account-settings-heading" class="mb-0 h6">
+                            <i class="bi bi-gear me-2" aria-hidden="true"></i>Account Security
+                        </h2>
+                    </div>
+                    <div class="card-body">
+                        <p class="text-muted small mb-3">
+                            Manage your password, email preferences, and security settings.
+                        </p>
+                        <a asp-area="Identity" 
+                           asp-page="/Account/Manage/Index" 
+                           class="btn btn-outline-secondary btn-sm"
+                           aria-label="Manage account security and identity settings">
+                            <i class="bi bi-gear me-1" aria-hidden="true"></i>Manage Security
+                        </a>
+                    </div>
+                </div>
+            </section>
         </div>
     </div>
-</div>
+</main>
+
+@section Scripts {
+    <script>
+        // Enhanced hover effects with accessibility support
+        document.addEventListener('DOMContentLoaded', function() {
+            // Add keyboard navigation support to hover-lift elements
+            const hoverLiftElements = document.querySelectorAll('.hover-lift');
+
+            hoverLiftElements.forEach(element => {
+                // Add keyboard focus support
+                element.addEventListener('focusin', function() {
+                    this.classList.add('hover-effect');
+                });
+
+                element.addEventListener('focusout', function() {
+                    this.classList.remove('hover-effect');
+                });
+
+                // Announce navigation to screen readers
+                const link = element.closest('a');
+                if (link) {
+                    link.addEventListener('focus', function() {
+                        const title = this.querySelector('h3')?.textContent || 'Navigation option';
+                        // Screen reader will announce the link naturally
+                    });
+                }
+            });
+        });
+    </script>
+}
+
+<style>
+    .hover-lift {
+        transition: transform 0.2s ease, box-shadow 0.2s ease;
+    }
+
+    /* Enhanced accessibility - support both hover and focus */
+    .hover-lift:hover,
+    .hover-lift:focus-within,
+    .hover-lift.hover-effect {
+        transform: translateY(-4px);
+        box-shadow: 0 .5rem 1.5rem rgba(0,0,0,.1) !important;
+    }
+
+    /* Ensure focus indicators are visible */
+    .hover-lift:focus-within {
+        outline: 2px solid #0d6efd;
+        outline-offset: 2px;
+    }
+
+    /* Remove focus outline from nested elements when parent handles it */
+    .hover-lift a:focus {
+        outline: none;
+    }
+
+    /* Ensure text remains readable with transforms */
+    .hover-lift * {
+        backface-visibility: hidden;
+    }
+
+    /* Screen reader improvements */
+    .sr-only {
+        position: absolute !important;
+        width: 1px !important;
+        height: 1px !important;
+        padding: 0 !important;
+        margin: -1px !important;
+        overflow: hidden !important;
+        clip: rect(0, 0, 0, 0) !important;
+        white-space: nowrap !important;
+        border: 0 !important;
+    }
+</style>

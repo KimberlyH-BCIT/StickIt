@@ -1,0 +1,353 @@
+@model IEnumerable<ELKH.ViewModels.ProductVM>
+
+@*
+╔══════════════════════════════════════════════════════════════════════════════════╗
+║ Kawaii Category Product Grid - Responsive Grid with Kawaii Design              ║ 
+║ Shows products using the kawaii design system with proper typography           ║
+╚══════════════════════════════════════════════════════════════════════════════════╝
+*@
+
+@{
+    var products = Model.ToList();
+    var categoryName = ViewBag.CategoryName as string;
+}
+
+<div id="categoryProductGrid" class="row g-4" role="grid" 
+     aria-label="@(categoryName != null ? $"{categoryName} products" : "Products")">
+    @foreach (var product in products)
+    {
+        <div class="col-lg-3 col-md-4 col-sm-6" role="gridcell">
+            <article class="product-card-kawaii kawaii-card glow-on-hover h-100" 
+                     tabindex="0" 
+                     aria-labelledby="product-@product.ProductId-title"
+                     data-product-id="@product.ProductId">
+
+                <!-- Product badges with kawaii design -->
+                @if (product.DiscountPercent > 0 || product.IsNewArrival || product.IsBestSeller || product.IsTrending)
+                {
+                    <div class="product-badges">
+                        @if (product.IsNewArrival)
+                        {
+                            <partial name="_Badge" model="@(new ELKH.ViewModels.BadgeVM { Text = "New", Type = "new" })" />
+                        }
+                        @if (product.DiscountPercent > 0)
+                        {
+                            <partial name="_Badge" model="@(new ELKH.ViewModels.BadgeVM { Text = $"{product.DiscountPercent}% Off", Type = "sale" })" />
+                        }
+                        @if (product.IsBestSeller)
+                        {
+                            <partial name="_Badge" model="@(new ELKH.ViewModels.BadgeVM { Text = "Best Seller", Type = "best" })" />
+                        }
+                        @if (product.IsTrending)
+                        {
+                            <partial name="_Badge" model="@(new ELKH.ViewModels.BadgeVM { Text = "Trending", Type = "hot" })" />
+                        }
+                    </div>
+                }
+
+                <!-- Product Image -->
+                <div class="product-media">
+                    @if (!string.IsNullOrEmpty(product.Thumbnail))
+                    {
+                        <img src="@product.Thumbnail" 
+                             class="product-image" 
+                             alt="@product.ProductName sticker"
+                             loading="lazy"
+                             onerror="this.src='/images/placeholder-sticker.png';">
+                    }
+                    else
+                    {
+                        <div class="product-placeholder">
+                            <i class="bi bi-image" style="font-size: 3rem; color: var(--purple-light);" aria-hidden="true"></i>
+                            <p class="text-muted mt-2 mb-0">No Image</p>
+                        </div>
+                    }
+
+                    <!-- Stock Status Badge -->
+                    @if (!product.IsInStock)
+                    {
+                        <partial name="_Badge" model="@(new ELKH.ViewModels.BadgeVM { 
+                            Text = "Out of Stock", 
+                            Type = "default",
+                            CustomClass = "position-absolute bottom-0 start-0 m-2"
+                        })" />
+                    }
+                    else if (product.IsLowStock)
+                    {
+                        <partial name="_Badge" model="@(new ELKH.ViewModels.BadgeVM { 
+                            Text = $"Only {product.StockQuantity} left", 
+                            Type = "limited",
+                            CustomClass = "position-absolute bottom-0 start-0 m-2"
+                        })" />
+                    }
+                </div>
+
+                <!-- Product Details -->
+                <div class="product-info">
+                    <!-- Product title with proper typography -->
+                    <h3 class="product-title font-heading" id="product-@product.ProductId-title">
+                        <a asp-controller="Product" asp-action="Details" asp-route-id="@product.ProductId" 
+                           class="text-decoration-none text-purple"
+                           aria-describedby="product-@product.ProductId-desc product-@product.ProductId-price">
+                            @product.ProductName
+                        </a>
+                    </h3>
+
+                    <!-- Category badge -->
+                    @if (!string.IsNullOrEmpty(product.CategoryName))
+                    {
+                        <div class="product-category mb-2">
+                            <partial name="_Badge" model="@(new ELKH.ViewModels.BadgeVM { 
+                                Text = product.CategoryName, 
+                                Type = "category",
+                                Size = "sm" 
+                            })" />
+                        </div>
+                    }
+
+                    <!-- Description with proper typography -->
+                    <p class="product-description text-muted" id="product-@product.ProductId-desc">
+                        @{
+                            var description = product.Description ?? "";
+                            const int maxLength = 85;
+                        }
+                        @if (description.Length > maxLength)
+                        {
+                            @(description.Substring(0, maxLength).Trim())<text>...</text>
+                        }
+                        else
+                        {
+                            @description
+                        }
+                    </p>
+
+                    <!-- Price with kawaii styling -->
+                    <div class="product-price mb-3" id="product-@product.ProductId-price">
+                        @if (product.DiscountPercent > 0)
+                        {
+                            var effectivePrice = product.Price * (1 - product.DiscountPercent / 100m);
+                            <div class="price-container">
+                                <span class="discounted-price font-heading">$@effectivePrice.ToString("F2")</span>
+                                <span class="original-price text-muted">$@product.Price.ToString("F2")</span>
+                                <span class="savings text-success font-weight-bold">
+                                    Save $@((product.Price - effectivePrice).ToString("F2"))
+                                </span>
+                            </div>
+                        }
+                        else
+                        {
+                            <span class="current-price font-heading">$@product.Price.ToString("F2")</span>
+                        }
+                    </div>
+                </div>
+
+                <!-- Product actions with kawaii buttons -->
+                <div class="product-actions mt-auto">
+                    @if (product.IsInStock)
+                    {
+                        <button class="btn-kawaii btn-primary-kawaii w-100 add-to-cart-btn" 
+                                data-product-id="@product.ProductId"
+                                aria-label="Add @product.ProductName to cart">
+                            <i class="bi bi-cart-plus me-2" aria-hidden="true"></i>
+                            Add to Cart
+                        </button>
+                    }
+                    else
+                    {
+                        <button class="btn-kawaii btn-outline-kawaii w-100" disabled>
+                            <i class="bi bi-cart-x me-2" aria-hidden="true"></i>
+                            Out of Stock
+                        </button>
+                    }
+
+                    <a asp-controller="Product" asp-action="Details" asp-route-id="@product.ProductId"
+                       class="btn-kawaii btn-secondary-kawaii w-100 mt-2">
+                        <i class="bi bi-eye me-2" aria-hidden="true"></i>
+                        View Details
+                    </a>
+                </div>
+            </article>
+        </div>
+    }
+}
+        transition: transform .15s ease, box-shadow .15s ease, border-color .15s ease;
+        position: relative;
+        border: 1px solid rgba(0, 0, 0, 0.125);
+        overflow: hidden;
+    }
+
+    /* Product Image Styling */
+    .product-image {
+        height: 200px;
+        object-fit: cover;
+        transition: transform .3s ease;
+    }
+
+    .product-image-placeholder {
+        height: 200px;
+    }
+
+    .product-image-container {
+        overflow: hidden;
+    }
+
+    /* Card Hover Effects */
+    .product-card:hover {
+        transform: translateY(-3px);
+        box-shadow: 0 .5rem 1rem rgba(0,0,0,.15) !important;
+        border-color: rgba(0, 123, 255, 0.25);
+    }
+
+    .product-card:hover .product-image {
+        transform: scale(1.05);
+    }
+
+    /* Enhanced Focus Styles */
+    .product-card:focus-within {
+        outline: 2px solid #0066cc;
+        outline-offset: 2px;
+        transform: translateY(-2px);
+        box-shadow: 0 .5rem 1rem rgba(0,0,0,.2) !important;
+    }
+
+    /* Badge Styling */
+    .discount-badge {
+        font-size: 0.75rem;
+        font-weight: 600;
+    }
+
+    .stock-badge {
+        font-size: 0.65rem;
+        font-weight: 600;
+    }
+
+    /* Product Title Styling */
+    .product-title {
+        line-height: 1.3;
+        height: 2.6em;
+        overflow: hidden;
+        display: -webkit-box;
+        -webkit-line-clamp: 2;
+        -webkit-box-orient: vertical;
+    }
+
+    /* Price Display Styling */
+    .price-container {
+        min-width: fit-content;
+    }
+
+    .price-with-discount {
+        text-align: left;
+    }
+
+    .original-price {
+        font-size: 0.8rem;
+    }
+
+    .discounted-price {
+        margin-top: -2px;
+    }
+
+    /* Product Tags */
+    .product-tags .badge {
+        font-size: 0.7rem;
+        border: 1px solid #dee2e6;
+    }
+
+    /* Stock Status */
+    .stock-status {
+        text-align: right;
+        min-width: fit-content;
+    }
+
+    .stock-text {
+        white-space: nowrap;
+    }
+
+    /* Stretched Link Accessibility */
+    .stretched-link:focus {
+        z-index: 2;
+    }
+
+    /* Quick Actions (for future enhancement) */
+    .quick-actions .btn:focus {
+        z-index: 3;
+        position: relative;
+    }
+
+    /* Text Truncation */
+    .text-truncate-indicator {
+        color: #6c757d;
+    }
+
+    /* Responsive Adjustments */
+    @@media (max-width: 576px) {
+        .product-image,
+        .product-image-placeholder {
+            height: 180px;
+        }
+        
+        .card-body {
+            padding: 0.75rem;
+        }
+        
+        .product-title {
+            font-size: 0.9rem;
+        }
+    }
+
+    @@media (max-width: 768px) {
+        .stock-status {
+            text-align: left;
+            margin-top: 0.25rem;
+        }
+        
+        .product-footer .d-flex {
+            flex-direction: column;
+            align-items: start !important;
+        }
+    }
+
+    /* Reduce Motion for Accessibility */
+    @@media (prefers-reduced-motion: reduce) {
+        .product-card,
+        .product-image {
+            transition: none;
+        }
+        
+        .product-card:hover {
+            transform: none;
+        }
+        
+        .product-card:hover .product-image {
+            transform: none;
+        }
+    }
+
+    /* High Contrast Mode Support */
+    @@media (prefers-contrast: high) {
+        .product-card {
+            border: 2px solid;
+        }
+        
+        .badge {
+            border: 1px solid;
+        }
+    }
+
+    /* Print Styles */
+    @@media print {
+        .product-card {
+            break-inside: avoid;
+            box-shadow: none !important;
+            border: 1px solid #000;
+        }
+        
+        .discount-badge,
+        .stock-badge {
+            background: transparent !important;
+            color: #000 !important;
+            border: 1px solid #000;
+        }
+    }
+</style>

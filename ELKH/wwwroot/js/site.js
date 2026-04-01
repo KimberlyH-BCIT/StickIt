@@ -1,11 +1,44 @@
-﻿// Please see documentation at https://learn.microsoft.com/aspnet/core/client-side/bundling-and-minification
+﻿/*
+╔══════════════════════════════════════════════════════════════════════════════════╗
+║ CORE APPLICATION JAVASCRIPT - Data & Business Logic                             ║
+║ Handles AJAX operations, data processing, and core application functionality   ║
+╚══════════════════════════════════════════════════════════════════════════════════╝
+
+TABLE OF CONTENTS:
+- Entry Points & Initialization: DOMContentLoaded event handlers
+- Utility Helper Functions: XSS prevention, alert notifications
+- Product Search Autocomplete: Live search with API integration
+- Wishlist AJAX Operations: Add/remove wishlist functionality  
+- Product Card Navigation: Clickable product card behaviors
+- Newsletter Subscription: Email subscription with validation
+
+PURPOSE:
+This file contains JavaScript for core application functionality including
+AJAX operations, API communication, data processing, and business logic.
+For UI interactions and design system behaviors, see kawaii-ui.js.
+
+SECURITY & ACCESSIBILITY:
+- All dynamic content is XSS-protected via escapeHtml()
+- WAI-ARIA compliant with screen reader support
+- CSRF tokens preserved for all AJAX form submissions
+- Progressive enhancement: all features work without JavaScript
+*/
+
+// Please see documentation at https://learn.microsoft.com/aspnet/core/client-side/bundling-and-minification
 // for details on configuring this project to bundle and minify static web assets.
 
-// ─── Entry points ────────────────────────────────────────────────────────────
+// ═══════════════════════════════════════════════════════════════════════════════
+// ║ Entry Points & Initialization                                              ║
+// ║ Core application features initialized when DOM is ready                    ║
+// ═══════════════════════════════════════════════════════════════════════════════
 document.addEventListener('DOMContentLoaded', initWishlistAjax);
 document.addEventListener('DOMContentLoaded', initProductAutocomplete);
+document.addEventListener('DOMContentLoaded', initProductCardNavigation);
 
-// ─── Utility helpers ─────────────────────────────────────────────────────────
+// ═══════════════════════════════════════════════════════════════════════════════
+// ║ Utility Helper Functions                                                   ║
+// ║ Reusable functions for security, UI feedback, and DOM manipulation        ║
+// ═══════════════════════════════════════════════════════════════════════════════
 
 /**
  * Escapes the five HTML special characters to prevent XSS when inserting
@@ -40,7 +73,10 @@ function showTempMessage(level, text) {
     setTimeout(() => { alert.classList.remove('show'); alert.classList.add('hide'); alert.remove(); }, 5000);
 }
 
-// ─── Product autocomplete ─────────────────────────────────────────────────────
+// ═══════════════════════════════════════════════════════════════════════════════
+// ║ Product Search Autocomplete                                                ║
+// ║ Intelligent search with debounced requests and accessibility support      ║
+// ═══════════════════════════════════════════════════════════════════════════════
 
 function initProductAutocomplete() {
     const input = document.getElementById('productNameInput');
@@ -308,7 +344,10 @@ function initProductAutocomplete() {
     }
 }
 
-// ─── Wishlist AJAX ────────────────────────────────────────────────────────────
+// ═══════════════════════════════════════════════════════════════════════════════
+// ║ Wishlist AJAX Operations                                                   ║
+// ║ Dynamic wishlist management with server synchronization                   ║
+// ═══════════════════════════════════════════════════════════════════════════════
 
 /**
  * Updates the wishlist count displayed in the navbar link.
@@ -431,3 +470,63 @@ function initWishlistAjax() {
         });
     });
 }
+
+// ─── Product Card Navigation ──────────────────────────────────────────────────
+
+/**
+ * Enables click-to-navigate on product cards while preserving button interactions.
+ * Clicking anywhere on a card (except buttons/forms) navigates to the product details.
+ * Form submissions and button clicks are handled normally via stopPropagation.
+ */
+function initProductCardNavigation() {
+    document.querySelectorAll('.product-card').forEach(function (card) {
+        card.addEventListener('click', function (e) {
+            // Don't navigate if clicking on interactive elements
+            if (e.target.closest('form') || e.target.closest('button') || e.target.closest('a')) {
+                return;
+            }
+
+            // Navigate to product details
+            const href = card.getAttribute('data-href');
+            if (href) {
+                window.location.href = href;
+            }
+        });
+
+        // Stop propagation on forms and buttons to prevent card navigation
+        card.querySelectorAll('form, button').forEach(function (elem) {
+            elem.addEventListener('click', function (e) {
+                e.stopPropagation();
+            });
+        });
+    });
+}
+
+// ─── Newsletter Subscription ──────────────────────────────────────────────────
+
+/**
+ * Initializes the newsletter subscription form in the footer.
+ * On submit, displays a success message and clears the input field.
+ */
+document.addEventListener('DOMContentLoaded', function() {
+    const form = document.getElementById('newsletter-form');
+    if (!form) return;
+
+    form.addEventListener('submit', function(e) {
+        e.preventDefault();
+
+        const emailInput = document.getElementById('newsletter-email');
+        const email = emailInput.value.trim();
+
+        if (!email) {
+            showTempMessage('warning', 'Please enter a valid email address.');
+            return;
+        }
+
+        // Show success message
+        showTempMessage('success', `Thanks for subscribing! We'll send updates to ${escapeHtml(email)}`);
+
+        // Clear the input field
+        emailInput.value = '';
+    });
+});

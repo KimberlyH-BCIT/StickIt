@@ -53,7 +53,7 @@ namespace ELKH.Services
         public static readonly Func<ApplicationDbContext, int, CancellationToken, Task<ProductModel?>>
             GetProductById = EF.CompileAsyncQuery(
                 (ApplicationDbContext db, int productId, CancellationToken ct) =>
-                    db.Product
+                    db.Products
                         .Include(p => p.Category)
                         .AsNoTracking()
                         .FirstOrDefault(p => p.PkProductId == productId));

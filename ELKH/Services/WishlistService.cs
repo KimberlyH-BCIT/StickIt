@@ -1,29 +1,12 @@
-using ELKH.Data;
-using ELKH.Models;
-using Microsoft.EntityFrameworkCore;
-
-namespace ELKH.Services
-{
+namespace ELKH.Services;
     /// <summary>
     /// Handles all wishlist mutations and queries.
     /// WishlistController delegates entirely to this service — no EF access in the controller.
     /// </summary>
-    public class WishlistService : IWishlistService
+    /// <param name="db">EF Core context for wishlist and item mutations.</param>
+    /// <param name="userService">User lookup service (cached) for resolving the acting user.</param>
+    public class WishlistService(ApplicationDbContext db, IUserService userService) : IWishlistService
     {
-        private readonly ApplicationDbContext _db;
-        private readonly IUserService _userService;
-
-        /// <summary>
-        /// Initializes a new instance of <see cref="WishlistService"/>.
-        /// </summary>
-        /// <param name="db">EF Core context for wishlist and item mutations.</param>
-        /// <param name="userService">User lookup service (cached) for resolving the acting user.</param>
-        public WishlistService(ApplicationDbContext db, IUserService userService)
-        {
-            _db = db;
-            _userService = userService;
-        }
-
         /// <summary>
         /// Add a product to the user's wishlist.
         /// Creates the wishlist if the user doesn't have one yet.
@@ -31,47 +14,54 @@ namespace ELKH.Services
         /// </summary>
         public async Task<WishlistResult> AddAsync(string userEmail, int productId)
         {
-            var user = await _userService.GetByEmailAsync(userEmail);
+            var user = await userService.GetByEmailAsync(userEmail);
 
             // Lazily provision a RegisteredUserModel for accounts that were created
             // outside the standard registration flow (e.g. the seeded admin account).
             if (user is null)
             {
                 user = new RegisteredUserModel { Email = userEmail };
-                _db.RegisteredUsers.Add(user);
-                await _db.SaveChangesAsync();
+                db.RegisteredUsers.Add(user);
+                await db.SaveChangesAsync();
             }
 
-            var product = await _db.Product.FindAsync(productId);
+            var product = await db.Products.FindAsync(productId);
             if (product is null)
                 return new WishlistResult { Success = false, Message = "Product not found" };
 
-            var wishlist = await _db.WishLists
+            var wishlist = await db.WishLists
                 .Include(w => w.WishListItems)
                 .FirstOrDefaultAsync(w => w.FkUserId == user.PkRegisteredUserId);
 
             if (wishlist is null)
             {
                 wishlist = new WishListModel { FkUserId = user.PkRegisteredUserId };
-                _db.WishLists.Add(wishlist);
-                await _db.SaveChangesAsync();
+                db.WishLists.Add(wishlist);
+                await db.SaveChangesAsync();
                 wishlist.WishListItems = new List<WishListItemModel>();
             }
 
             if (wishlist.WishListItems.Any(wi => wi.FkProductId == productId))
             {
-                var existingCount = await _db.WishListItems.CountAsync(wi => wi.FkWishListId == wishlist.PkWishListId);
-                return new WishlistResult { Success = false, AlreadyExists = true, Message = "Already in wishlist", Count = existingCount };
+                // Item already exists, return count without additional DB call
+                return new WishlistResult 
+                { 
+                    Success = false, 
+                    AlreadyExists = true, 
+                    Message = "Already in wishlist", 
+                    Count = wishlist.WishListItems.Count 
+                };
             }
 
-            _db.WishListItems.Add(new WishListItemModel
+            db.WishListItems.Add(new WishListItemModel
             {
                 FkWishListId = wishlist.PkWishListId,
                 FkProductId  = productId
             });
-            await _db.SaveChangesAsync();
+            await db.SaveChangesAsync();
 
-            var count = await _db.WishListItems.CountAsync(wi => wi.FkWishListId == wishlist.PkWishListId);
+            // Calculate count based on in-memory collection + new item (avoid DB call)
+            var count = wishlist.WishListItems.Count + 1;
             return new WishlistResult { Success = true, Message = "Product added", Count = count };
         }
 
@@ -80,11 +70,11 @@ namespace ELKH.Services
         /// </summary>
         public async Task<WishlistResult> RemoveAsync(string userEmail, int productId)
         {
-            var user = await _userService.GetByEmailAsync(userEmail);
+            var user = await userService.GetByEmailAsync(userEmail);
             if (user is null)
                 return new WishlistResult { Success = false, Message = "User not found" };
 
-            var wishlist = await _db.WishLists
+            var wishlist = await db.WishLists
                 .Include(w => w.WishListItems)
                 .FirstOrDefaultAsync(w => w.FkUserId == user.PkRegisteredUserId);
 
@@ -95,10 +85,10 @@ namespace ELKH.Services
             if (item is null)
                 return new WishlistResult { Success = false, Message = "Item not found" };
 
-            _db.WishListItems.Remove(item);
-            await _db.SaveChangesAsync();
+            db.WishListItems.Remove(item);
+            await db.SaveChangesAsync();
 
-            var count = await _db.WishListItems.CountAsync(wi => wi.FkWishListId == wishlist.PkWishListId);
+            var count = await db.WishListItems.CountAsync(wi => wi.FkWishListId == wishlist.PkWishListId);
             return new WishlistResult { Success = true, Message = "Removed", Count = count };
         }
 
@@ -107,18 +97,18 @@ namespace ELKH.Services
         /// </summary>
         public async Task<IEnumerable<WishListItemModel>> GetItemsAsync(string userEmail, string sort)
         {
-            var user = await _userService.GetByEmailAsync(userEmail);
+            var user = await userService.GetByEmailAsync(userEmail);
             if (user is null)
                 return Enumerable.Empty<WishListItemModel>();
 
-            var wishlist = await _db.WishLists
+            var wishlist = await db.WishLists
                 .AsNoTracking()
                 .FirstOrDefaultAsync(w => w.FkUserId == user.PkRegisteredUserId);
 
             if (wishlist is null)
                 return Enumerable.Empty<WishListItemModel>();
 
-            IQueryable<WishListItemModel> query = _db.WishListItems
+            IQueryable<WishListItemModel> query = db.WishListItems
                 .AsNoTracking()
                 .Include(wi => wi.Product)
                 .Where(wi => wi.FkWishListId == wishlist.PkWishListId);
@@ -132,4 +122,3 @@ namespace ELKH.Services
             return await query.ToListAsync();
         }
     }
-}

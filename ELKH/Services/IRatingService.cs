@@ -80,7 +80,11 @@ namespace ELKH.Services
         /// (first name, avatar flag) together with pagination metadata and the
         /// aggregate average rating computed across <em>all</em> approved reviews.
         /// </summary>
-        Task<ViewModels.ReviewPageVM> GetPagedApprovedReviewsAsync(int productId, int page, CancellationToken ct = default);
+        /// <param name="productId">The product ID to get reviews for.</param>
+        /// <param name="page">Current page number (1-based).</param>
+        /// <param name="sort">Sort order: rating_high, rating_low, date_new (default), date_old.</param>
+        /// <param name="ct">Cancellation token.</param>
+        Task<ViewModels.ReviewPageVM> GetPagedApprovedReviewsAsync(int productId, int page, string sort = "date_new", CancellationToken ct = default);
 
         /// <summary>
         /// Determines whether the user is eligible to submit a new rating for a product
@@ -91,7 +95,26 @@ namespace ELKH.Services
         /// (for the create-form dropdown) and any existing non-deleted rating (for the edit form).
         /// </returns>
         Task<ViewModels.RatingEligibilityVM> GetRatingEligibilityAsync(int productId, int userId, CancellationToken ct = default);
+
+        /// <summary>
+        /// Returns all ratings for administrative review and moderation.
+        /// </summary>
         Task<List<ProductRatingModel>> GetAllRatingsAsync(CancellationToken ct = default);
+
+        /// <summary>
+        /// Marks a rating as read by admin.
+        /// </summary>
         Task<bool> MarkAsReadAsync(int id, CancellationToken ct = default);
+
+        /// <summary>
+        /// Returns a list of products from the user's order history that haven't been reviewed yet.
+        /// Only includes products from shipped or delivered orders.
+        /// </summary>
+        /// <param name="userId">The user's primary key.</param>
+        /// <param name="ct">Cancellation token.</param>
+        /// <returns>A list of <see cref="ViewModels.ProductToReviewVM"/> containing unreviewed products.</returns>
+        Task<List<ViewModels.ProductToReviewVM>> GetProductsToReviewAsync(int userId, CancellationToken ct = default);
+
     }
 }
+

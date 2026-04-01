@@ -1,4 +1,4 @@
-﻿using ELKH.Data;
+using ELKH.Data;
 using ELKH.Models;
 using ELKH.Services;
 using ELKH.ViewModels;
@@ -37,7 +37,7 @@ namespace ELKH.Controllers
             ViewBag.CancelledOrders = orders.Count(o => o.OrderStatus == OrderStatus.Cancelled);
             ViewBag.PendingOrders = orders.Count(o => o.OrderStatus == OrderStatus.Pending);
 
-            ViewBag.LowStockCount = await _context.Product
+            ViewBag.LowStockCount = await _context.Products
                 .CountAsync(p => p.StockQuantity < 20);
 
             ViewBag.Messages = await _context.StaffMessages

@@ -1,0 +1,222 @@
+@model IEnumerable<ELKH.Models.CategoryModel>
+
+@*
+╔══════════════════════════════════════════════════════════════════════════════════╗
+║ Kawaii Category Index - Browse All Categories with Kawaii Design               ║
+║ Displays all available product categories with proper typography               ║
+╚══════════════════════════════════════════════════════════════════════════════════╝
+*@
+
+@{
+    ViewData["Title"] = "Categories - Browse Stickers by Category";
+    var categoryProductCounts = ViewBag.CategoryProductCounts as IEnumerable<dynamic>;
+}
+
+<header class="kawaii-hero" role="banner">
+    <div class="container-kawaii">
+        <div class="text-center">
+            <h1 class="kawaii-cloud-title display-title sparkle">
+                <i class="bi bi-tags-fill me-3" aria-hidden="true" style="color: var(--purple);"></i>
+                Browse by Category
+            </h1>
+            <div class="kawaii-subtitle">
+                Discover our sticker collection organized by themes and occasions
+            </div>
+        </div>
+    </div>
+</header>
+
+<main role="main" aria-label="Product categories" class="container-kawaii">
+    @if (categoryProductCounts != null && categoryProductCounts.Any())
+    {
+        <div class="row g-4">
+            @foreach (var item in categoryProductCounts)
+            {
+                var category = item.Category as ELKH.Models.CategoryModel;
+                var productCount = (int)item.ProductCount;
+
+                @if (category != null)
+                {
+                    <div class="col-lg-4 col-md-6">
+                        <article class="kawaii-card category-card h-100 glow-on-hover" tabindex="0">
+                            <div class="text-center">
+                                <div class="category-icon mb-3">
+                                    @{
+                                        // Define category-specific icons with kawaii colors
+                                        var iconClass = category.CategoryName.ToLower() switch
+                                        {
+                                            "canadian" => "bi-flag-fill",
+                                            "christmas" => "bi-tree-fill",
+                                            "cute animals" => "bi-heart-fill",
+                                            "easter" => "bi-egg-fill",
+                                            "food" => "bi-cup-hot-fill",
+                                            "halloween" => "bi-moon-fill",
+                                            "lunar new year" => "bi-calendar2-event-fill",
+                                            "nature & floral" => "bi-flower1",
+                                            "new years eve" => "bi-stars", 
+                                            "thanksgiving" => "bi-heart-fill",
+                                            "miscellaneous" => "bi-collection-fill",
+                                            _ => "bi-tag-fill"
+                                        };
+                                    }
+                                    <i class="@iconClass" style="font-size: 3rem; color: var(--purple);" aria-hidden="true"></i>
+                                </div>
+
+                                <h2 class="category-title font-heading mb-2">@category.CategoryName</h2>
+
+                                <p class="category-description hierarchy-secondary flex-grow-1 mb-3">
+                                    @{
+                                        var description = category.CategoryName.ToLower() switch
+                                        {
+                                            "canadian" => "Show your Canadian pride with maple leaf and flag designs",
+                                            "christmas" => "Festive holiday stickers for the Christmas season",
+                                            "cute animals" => "Adorable animal designs that will melt your heart",
+                                            "easter" => "Celebrate Easter with bunnies, eggs, and spring themes",
+                                            "food" => "Delicious food and beverage themed stickers",
+                                            "halloween" => "Spooky and fun designs for Halloween celebrations",
+                                            "lunar new year" => "Traditional designs for Lunar New Year festivities",
+                                            "nature & floral" => "Beautiful nature scenes and floral patterns",
+                                            "new years eve" => "Ring in the new year with celebratory designs",
+                                            "thanksgiving" => "Grateful themes for Thanksgiving celebrations",
+                                            "miscellaneous" => "Unique designs that don't fit other categories",
+                                            _ => "Explore our collection of themed stickers"
+                                        };
+                                    }
+                                    @description
+                                </p>
+
+                                <div class="mt-auto">
+                                    <div class="mb-3">
+                                        <partial name="_Badge" model="@(new ELKH.ViewModels.BadgeVM { 
+                                            Text = $"{productCount} {(productCount == 1 ? "product" : "products")}", 
+                                            Type = "default",
+                                            Size = "lg" 
+                                        })" />
+                                    </div>
+
+                                    @if (productCount > 0)
+                                    {
+                                        <a asp-controller="Category" asp-action="ByCategory" asp-route-id="@category.PkCategoryId" 
+                                           class="btn-kawaii btn-secondary-kawaii btn-lg w-100 glow-on-hover">
+                                            Browse @category.CategoryName
+                                            <i class="bi bi-arrow-right ms-2" aria-hidden="true"></i>
+                                        </a>
+                                    }
+                                    else
+                                    {
+                                        <button class="btn-kawaii btn-outline-kawaii btn-lg w-100" disabled>
+                                            No Products Available
+                                        </button>
+                                    }
+                                </div>
+                            </div>
+                        </article>
+                    </div>
+                }
+            }
+        </div>
+
+        <!-- Back to Products Link -->
+        <div class="text-center mt-5">
+            <a asp-controller="Product" asp-action="Index" class="btn-kawaii btn-secondary-kawaii btn-lg sparkle">
+                <i class="bi bi-grid me-2" aria-hidden="true"></i>View All Products
+            </a>
+        </div>
+    }
+    else
+    {
+        <!-- Empty State -->
+        <div class="text-center py-5">
+            <div class="mb-4">
+                <i class="bi bi-inbox text-muted" style="font-size: 4rem;" aria-hidden="true"></i>
+            </div>
+            <h2 class="h4 mb-3">No categories available</h2>
+            <p class="text-muted mb-4">
+                Categories are currently being set up. Please check back later.
+            </p>
+            <a asp-controller="Product" asp-action="Index" class="btn btn-primary">
+                <i class="bi bi-grid me-2" aria-hidden="true"></i>View All Products
+            </a>
+        </div>
+    }
+</main>
+
+<!-- ════════════════════════════════════════════════════════════════════════════════ -->
+<!-- ║ CSS Styles - Category Index Styling                                        ║ -->
+<!-- ════════════════════════════════════════════════════════════════════════════════ -->
+<style>
+    /* Category card hover effects */
+    .category-card {
+        cursor: pointer;
+        transition: transform .2s ease, box-shadow .2s ease;
+        position: relative;
+        border: 1px solid rgba(0, 0, 0, 0.125);
+    }
+
+    .category-card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 .75rem 1.5rem rgba(0,0,0,.15) !important;
+        border-color: rgba(0, 123, 255, 0.25);
+    }
+
+    /* Enhanced focus management for category cards */
+    .category-card:focus-within {
+        outline: 2px solid #0066cc;
+        outline-offset: 2px;
+        transform: translateY(-3px);
+        box-shadow: 0 .75rem 1.5rem rgba(0,0,0,.2) !important;
+    }
+
+    /* Category icon styling */
+    .category-icon {
+        height: 80px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+
+    /* Custom color classes for category icons */
+    .text-pink { color: #e91e63 !important; }
+    .text-orange { color: #ff9800 !important; }
+    .text-gold { color: #ffc107 !important; }
+    .text-purple { color: #9c27b0 !important; }
+
+    /* Header styling */
+    .category-index-header {
+        background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+        padding: 3rem 1rem;
+        margin: -1rem -15px 2rem -15px;
+        border-radius: 0 0 1rem 1rem;
+    }
+
+    /* Ensure stretched link accessibility */
+    .stretched-link:focus {
+        z-index: 2;
+    }
+
+    /* Reduce motion for users who prefer it */
+    @@media (prefers-reduced-motion: reduce) {
+        .category-card {
+            transition: none;
+        }
+        .category-card:hover {
+            transform: none;
+        }
+    }
+
+    /* Responsive adjustments */
+    @@media (max-width: 768px) {
+        .category-index-header {
+            padding: 2rem 1rem;
+        }
+        
+        .display-4 {
+            font-size: 2rem;
+        }
+    }
+</style>
+
+<!-- ════════════════════════════════════════════════════════════════════════════════ -->
+<!-- ║ JavaScript for Enhanced Interaction                                         ║ -->
+<!-- ════════════════════════════════════════════════════════════════════════════════ -->
+<script src="~/js/category-interactions.js" asp-append-version="true"></script>

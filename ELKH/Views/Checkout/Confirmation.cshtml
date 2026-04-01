@@ -1,65 +1,183 @@
 @model ELKH.ViewModels.OrderVM
 @{
-    ViewData["Title"] = "Order Confirmed!";
+    ViewData["Title"] = $"Order Confirmation - Order #{Model.Order.PkOrderId} | Order Successfully Placed";
     Layout = "~/Views/Shared/_Layout.cshtml";
     var order = Model.Order;
+    var itemCount = order.OrderItems.Sum(i => i.Quantity);
 }
 
-<div class="container py-5">
-    <div class="text-center mb-5">
-        <div class="display-1 mb-3">🎉</div>
-        <h1 class="fw-bold text-success">Order Confirmed!</h1>
-        <p class="lead text-muted">Your stickers are on their way. Order #@order.PkOrderId</p>
-    </div>
+@section title {
+    <header class="mb-4">
+        <h1 class="fw-bold d-flex align-items-center justify-content-center">
+            <i class="bi bi-check-circle-fill text-success me-2" aria-hidden="true"></i>
+            Order Confirmed!
+        </h1>
+        <p class="text-center text-muted mb-0" role="status" aria-live="polite">
+            Order #@order.PkOrderId successfully placed for @itemCount item@(itemCount != 1 ? "s" : "")
+        </p>
+    </header>
+}
 
+<main class="container py-5" role="main">
     <div class="row justify-content-center">
-        <div class="col-lg-7">
-            <div class="card shadow-sm mb-4">
-                <div class="card-body">
-                    <h5 class="fw-bold mb-3">Order Details</h5>
+        <div class="col-lg-8">
+            <!-- Success Announcement -->
+            <div class="text-center mb-5" role="region" aria-labelledby="success-heading">
+                <div class="mb-4">
+                    <svg class="text-success" 
+                         width="80" 
+                         height="80" 
+                         fill="currentColor" 
+                         viewBox="0 0 16 16"
+                         role="img"
+                         aria-labelledby="success-icon-title">
+                        <title id="success-icon-title">Order confirmation checkmark</title>
+                        <path d="M16 8A8 8 0 1 1 0 8a8 8 0 0 1 16 0zm-3.97-3.03a.75.75 0 0 0-1.08.022L7.477 9.417 5.384 7.323a.75.75 0 0 0-1.06 1.06L6.97 11.03a.75.75 0 0 0 1.079-.02l3.992-4.99a.75.75 0 0 0-.01-1.05z"/>
+                    </svg>
+                </div>
+                <h2 id="success-heading" class="display-5 fw-bold text-success mb-3">Order Confirmed!</h2>
+                <p class="lead mb-2">Thank you for your purchase</p>
+                <p class="text-muted">
+                    Order Number: <strong class="text-dark" aria-label="Order number @order.PkOrderId">#@order.PkOrderId</strong>
+                </p>
+            </div>
 
-                    <div class="row mb-3">
-                        <div class="col-6">
-                            <p class="mb-1 text-muted small">Order Date</p>
-                            <p class="fw-semibold">@order.CreatedAt.ToString("MMMM d, yyyy")</p>
-                        </div>
-                        <div class="col-6">
-                            <p class="mb-1 text-muted small">Status</p>
-                            <span class="badge bg-success">@order.OrderStatus</span>
-                        </div>
+            <!-- Order Summary Card -->
+            <section aria-labelledby="order-summary-heading">
+                <div class="card shadow-sm mb-4">
+                    <div class="card-header bg-white py-3">
+                        <h3 id="order-summary-heading" class="fw-bold mb-0 h5">
+                            <i class="bi bi-receipt me-2" aria-hidden="true"></i>Order Summary
+                        </h3>
                     </div>
+                    <div class="card-body p-4">
+                        <!-- Order Details Grid -->
+                        <dl class="row mb-4">
+                            <dt class="col-md-6 mb-3 mb-md-0">
+                                <span class="mb-2 text-muted small text-uppercase fw-semibold d-block">Order Date</span>
+                                <span class="fw-semibold" aria-label="Order placed on @order.CreatedAt.ToString("MMMM d, yyyy") at @order.CreatedAt.ToString("h:mm tt")">
+                                    @order.CreatedAt.ToString("MMMM d, yyyy 'at' h:mm tt")
+                                </span>
+                            </dt>
+                            <dd class="col-md-6">
+                                <span class="mb-2 text-muted small text-uppercase fw-semibold d-block">Status</span>
+                                <span class="badge bg-success px-3 py-2" role="status" aria-label="Order status: @order.OrderStatus">
+                                    @order.OrderStatus
+                                </span>
+                            </dd>
+                        </dl>
 
+                    <!-- Shipping Address -->
                     @if (order.ContactDetail is not null)
                     {
-                        <h6 class="fw-bold mt-3 mb-2">Ship To</h6>
-                        <address class="text-muted mb-4">
-                            @order.ContactDetail.FirstName @order.ContactDetail.LastName<br />
-                            @order.ContactDetail.Street<br />
-                            @order.ContactDetail.City, @order.ContactDetail.Province @order.ContactDetail.PostCode<br />
-                            @order.ContactDetail.Country
-                        </address>
-                    }
-
-                    <h6 class="fw-bold mb-2">Items</h6>
-                    @foreach (var item in order.OrderItems)
-                    {
-                        <div class="d-flex justify-content-between mb-1">
-                            <span>@(item.Product?.Name ?? "Product") <span class="text-muted">× @item.Quantity</span></span>
-                            <span>$@((item.Product?.Price ?? 0) * item.Quantity).ToString("F2")</span>
+                        <hr class="my-4" role="separator" aria-label="Order details and shipping address separator" />
+                        <div>
+                            <h4 class="fw-bold mb-3 h6">
+                                <i class="bi bi-truck me-2" aria-hidden="true"></i>Shipping Address
+                            </h4>
+                            <address class="mb-0" aria-labelledby="shipping-address-heading">
+                                <span class="sr-only" id="shipping-address-heading">Order will be shipped to:</span>
+                                <strong>@order.ContactDetail.FirstName @order.ContactDetail.LastName</strong><br />
+                                @order.ContactDetail.Street<br />
+                                @order.ContactDetail.City, @order.ContactDetail.Province @order.ContactDetail.PostCode<br />
+                                @order.ContactDetail.Country
+                            </address>
                         </div>
                     }
-                    <hr />
-                    <div class="d-flex justify-content-between fw-bold fs-5 mt-2">
-                        <span>Total</span>
-                        <span>$@order.TotalAmount.ToString("F2")</span>
+
+                    <!-- Order Items -->
+                    <hr class="my-4" role="separator" aria-label="Shipping address and order items separator" />
+                    <div>
+                        <h4 class="fw-bold mb-3 h6">
+                            <i class="bi bi-bag-check me-2" aria-hidden="true"></i>Items Ordered
+                        </h4>
+                        <div class="table-responsive">
+                            <table class="table table-borderless mb-0"
+                                   role="table"
+                                   aria-label="Order items with quantities and prices"
+                                   aria-describedby="items-summary">
+                                <caption id="items-summary" class="sr-only">
+                                    Your order contains @itemCount item@(itemCount != 1 ? "s" : "") with individual quantities and prices listed below.
+                                </caption>
+                                <thead class="sr-only">
+                                    <tr>
+                                        <th scope="col">Product Information</th>
+                                        <th scope="col">Price</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    @foreach (var item in order.OrderItems)
+                                    {
+                                        var itemTotal = (item.Product?.Price ?? 0) * item.Quantity;
+                                        <tr>
+                                            <td class="ps-0" role="gridcell">
+                                                <strong>@(item.Product?.Name ?? "Product")</strong>
+                                                <br />
+                                                <small class="text-muted" aria-label="Quantity @item.Quantity">
+                                                    Quantity: @item.Quantity
+                                                </small>
+                                            </td>
+                                            <td class="text-end pe-0" role="gridcell">
+                                                <strong aria-label="Item total @itemTotal.ToString("C")">
+                                                    @itemTotal.ToString("C")
+                                                </strong>
+                                            </td>
+                                        </tr>
+                                    }
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+
+                                <!-- Order Total -->
+                                <hr class="my-3" role="separator" aria-label="Order items and total separator" />
+                                <dl class="d-flex justify-content-between align-items-center row">
+                                    <dt class="col-auto">
+                                        <span class="h5 mb-0 fw-bold">Total</span>
+                                    </dt>
+                                    <dd class="col-auto">
+                                        <span class="h4 mb-0 text-success fw-bold" 
+                                              id="order-total"
+                                              aria-label="Order total amount @order.TotalAmount.ToString("C")">
+                                            @order.TotalAmount.ToString("C")
+                                        </span>
+                                    </dd>
+                                </dl>
+                            </div>
+                        </div>
+                    </section>
+
+            <!-- Confirmation Message -->
+            <section aria-labelledby="confirmation-email-heading">
+                <div class="alert alert-info border-0 shadow-sm mb-4" role="status" aria-live="polite">
+                    <div class="d-flex align-items-start">
+                        <i class="bi bi-envelope-check fs-4 me-3 mt-1" aria-hidden="true"></i>
+                        <div>
+                            <h3 id="confirmation-email-heading" class="h6 fw-bold mb-2">Confirmation email sent!</h3>
+                            <p class="mb-0 small">
+                                We've sent an order confirmation email to your registered email address with all the order details.
+                            </p>
+                        </div>
                     </div>
                 </div>
-            </div>
+            </section>
 
-            <div class="d-flex gap-2 justify-content-center">
-                <a asp-controller="Order" asp-action="History" class="btn btn-outline-dark">View All Orders</a>
-                <a asp-controller="Product" asp-action="Index" class="btn btn-dark">Keep Shopping</a>
-            </div>
+            <!-- Action Buttons -->
+            <nav aria-labelledby="next-actions-heading" class="d-flex flex-column flex-md-row gap-3 justify-content-center">
+                <h3 id="next-actions-heading" class="sr-only">Next actions</h3>
+                <a asp-controller="Order" 
+                   asp-action="MyHistory" 
+                   class="btn btn-outline-primary btn-lg"
+                   aria-label="View your complete order history">
+                    <i class="bi bi-clock-history me-2" aria-hidden="true"></i>View Order History
+                </a>
+                <a asp-controller="Product" 
+                   asp-action="Index" 
+                   class="btn btn-primary btn-lg"
+                   aria-label="Continue shopping for more products">
+                    <i class="bi bi-bag-plus me-2" aria-hidden="true"></i>Continue Shopping
+                </a>
+            </nav>
         </div>
     </div>
-</div>
+</main>

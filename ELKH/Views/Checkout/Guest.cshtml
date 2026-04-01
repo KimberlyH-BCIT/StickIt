@@ -1,0 +1,722 @@
+@model ELKH.ViewModels.GuestCheckoutVM
+@{
+    ViewData["Title"] = $"Guest Checkout - Order Total {Model.Total:C} | Complete Your Purchase";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+    var paypalClientId = Model.PayPalClientId ?? "";
+    var itemCount = Model.Items.Sum(i => i.Quantity);
+}
+
+@section title {
+    <header class="mb-4">
+        <h1 class="fw-bold d-flex align-items-center">
+            <i class="bi bi-credit-card me-2" aria-hidden="true"></i>
+            Guest Checkout
+        </h1>
+        <p class="text-muted mb-0" role="status" aria-live="polite">
+            Complete your order of @itemCount item@(itemCount != 1 ? "s" : "") totaling @Model.Total.ToString("C")
+        </p>
+        <div class="alert alert-info mt-3" role="status">
+            <i class="bi bi-person-circle me-2" aria-hidden="true"></i>
+            <strong>Checking out as guest.</strong> No account required! 
+            <a asp-area="Identity" asp-page="/Account/Login" class="alert-link">Sign in</a> for faster checkout.
+        </div>
+    </header>
+}
+
+<main class="container py-4" role="main">
+    <div id="checkout-status" aria-live="polite" aria-atomic="true" class="sr-only"></div>
+
+    @if (!ViewData.ModelState.IsValid)
+    {
+        <div class="alert alert-danger alert-dismissible fade show" 
+             role="alert" 
+             aria-labelledby="form-errors-heading"
+             tabindex="-1"
+             id="form-errors">
+            <h2 id="form-errors-heading" class="alert-heading h6 mb-2">
+                <i class="bi bi-exclamation-triangle me-1" aria-hidden="true"></i>
+                Please correct the following errors:
+            </h2>
+            <ul class="mb-0">
+                @foreach (var error in ViewData.ModelState.Values.SelectMany(v => v.Errors))
+                {
+                    <li>@error.ErrorMessage</li>
+                }
+            </ul>
+            <button type="button" 
+                    class="btn-close" 
+                    data-bs-dismiss="alert"
+                    aria-label="Close error message"></button>
+        </div>
+        <script>
+            // Focus error section for screen readers when page loads with errors
+            document.addEventListener('DOMContentLoaded', function() {
+                document.getElementById('form-errors')?.focus();
+            });
+        </script>
+    }
+
+    <form id="guestCheckoutForm" 
+          asp-action="ProcessGuestPayment" 
+          method="post"
+          novalidate
+          aria-labelledby="checkout-form-heading">
+        @Html.AntiForgeryToken()
+        <h2 id="checkout-form-heading" class="sr-only">Guest Checkout Information Form</h2>
+
+        <div class="row g-4">
+            <!-- Contact & Shipping Information Section -->
+            <div class="col-lg-7">
+                <section aria-labelledby="contact-section-heading">
+                    <div class="card shadow-sm mb-4">
+                        <div class="card-body">
+                            <h2 id="contact-section-heading" class="fw-bold mb-4 h5">
+                                <i class="bi bi-envelope me-2" aria-hidden="true"></i>
+                                Contact Information
+                            </h2>
+
+                            <fieldset>
+                                <legend class="sr-only">Contact details</legend>
+
+                                <div class="mb-3">
+                                    <label asp-for="Email" class="form-label fw-semibold">
+                                        <span aria-hidden="true">*</span> Email Address
+                                    </label>
+                                    <input asp-for="Email" 
+                                           class="form-control" 
+                                           placeholder="Enter your email (e.g., jane.doe@example.com)" 
+                                           id="email"
+                                           required
+                                           aria-describedby="email-error email-help"
+                                           autocomplete="email"
+                                           type="email" />
+                                    <small id="email-help" class="form-text text-muted">
+                                        We'll send your order confirmation to this email address
+                                    </small>
+                                    <span id="email-error" asp-validation-for="Email" class="text-danger small" role="alert" aria-live="polite"></span>
+                                </div>
+                            </fieldset>
+                        </div>
+                    </div>
+                </section>
+
+                <section aria-labelledby="shipping-section-heading">
+                    <div class="card shadow-sm">
+                        <div class="card-body">
+                            <h2 id="shipping-section-heading" class="fw-bold mb-4 h5">
+                                <i class="bi bi-geo-alt me-2" aria-hidden="true"></i>
+                                Shipping Address
+                            </h2>
+
+                            <fieldset>
+                                <legend class="sr-only">Shipping address details</legend>
+
+                                <div class="mb-3">
+                                    <label asp-for="FullName" class="form-label fw-semibold">
+                                        <span aria-hidden="true">*</span> Full Name
+                                    </label>
+                                    <input asp-for="FullName" 
+                                           class="form-control" 
+                                           placeholder="Enter your full name (e.g., Jane Doe)" 
+                                           id="fullName"
+                                           required
+                                           aria-describedby="fullName-error fullName-help"
+                                           autocomplete="name" />
+                                    <small id="fullName-help" class="form-text text-muted">
+                                        Enter your first and last name as it should appear on the shipping label
+                                    </small>
+                                    <span id="fullName-error" asp-validation-for="FullName" class="text-danger small" role="alert" aria-live="polite"></span>
+                                </div>
+
+                                <div class="mb-3">
+                                    <label asp-for="PhoneNumber" class="form-label fw-semibold">
+                                        <span aria-hidden="true">*</span> Phone Number
+                                    </label>
+                                    <input asp-for="PhoneNumber" 
+                                           class="form-control" 
+                                           placeholder="Enter phone number (e.g., 604-555-0100)" 
+                                           id="phoneNumber"
+                                           required
+                                           aria-describedby="phoneNumber-error phoneNumber-help"
+                                           autocomplete="tel"
+                                           type="tel" />
+                                    <small id="phoneNumber-help" class="form-text text-muted">
+                                        Include area code for delivery contact purposes
+                                    </small>
+                                    <span id="phoneNumber-error" asp-validation-for="PhoneNumber" class="text-danger small" role="alert" aria-live="polite"></span>
+                                </div>
+
+                                <div class="mb-3">
+                                    <label asp-for="Street" class="form-label fw-semibold">
+                                        <span aria-hidden="true">*</span> Street Address
+                                    </label>
+                                    <input asp-for="Street" 
+                                           class="form-control" 
+                                           placeholder="Enter street address (e.g., 123 Sticker Lane)" 
+                                           id="street"
+                                           required
+                                           aria-describedby="street-error street-help"
+                                           autocomplete="street-address" />
+                                    <small id="street-help" class="form-text text-muted">
+                                        Include house/apartment number and street name
+                                    </small>
+                                    <span id="street-error" asp-validation-for="Street" class="text-danger small" role="alert" aria-live="polite"></span>
+                                </div>
+
+                                <div class="row">
+                                    <div class="col-md-6 mb-3">
+                                        <label asp-for="City" class="form-label fw-semibold">
+                                            <span aria-hidden="true">*</span> City
+                                        </label>
+                                        <input asp-for="City" 
+                                               class="form-control" 
+                                               id="city"
+                                               required
+                                               aria-describedby="city-error"
+                                               autocomplete="address-level2"
+                                               placeholder="Enter city name" />
+                                        <span id="city-error" asp-validation-for="City" class="text-danger small" role="alert" aria-live="polite"></span>
+                                    </div>
+                                    <div class="col-md-6 mb-3">
+                                        <label asp-for="Province" class="form-label fw-semibold">
+                                            <span aria-hidden="true">*</span> Province/State
+                                        </label>
+                                        <input asp-for="Province" 
+                                               class="form-control" 
+                                               placeholder="Enter province (e.g., BC)" 
+                                               id="province"
+                                               required
+                                               aria-describedby="province-error"
+                                               autocomplete="address-level1" />
+                                        <span id="province-error" asp-validation-for="Province" class="text-danger small" role="alert" aria-live="polite"></span>
+                                    </div>
+                                </div>
+
+                                <div class="row">
+                                    <div class="col-md-6 mb-3">
+                                        <label asp-for="PostalCode" class="form-label fw-semibold">
+                                            <span aria-hidden="true">*</span> Postal Code
+                                        </label>
+                                        <input asp-for="PostalCode" 
+                                               class="form-control" 
+                                               placeholder="Enter postal code (e.g., V6B 1A1)" 
+                                               id="postalCode"
+                                               required
+                                               aria-describedby="postalCode-error"
+                                               autocomplete="postal-code" />
+                                        <span id="postalCode-error" asp-validation-for="PostalCode" class="text-danger small" role="alert" aria-live="polite"></span>
+                                    </div>
+                                    <div class="col-md-6 mb-3">
+                                        <label asp-for="Country" class="form-label fw-semibold">
+                                            <span aria-hidden="true">*</span> Country
+                                        </label>
+                                        <input asp-for="Country" 
+                                               class="form-control" 
+                                               id="country"
+                                               required
+                                               aria-describedby="country-error"
+                                               autocomplete="country-name"
+                                               placeholder="Enter country" />
+                                        <span id="country-error" asp-validation-for="Country" class="text-danger small" role="alert" aria-live="polite"></span>
+                                    </div>
+                                </div>
+                            </fieldset>
+
+                            <hr role="separator" aria-label="Address and optional features separator" class="my-4" />
+
+                            <!-- Optional Features -->
+                            <fieldset>
+                                <legend class="h6 fw-semibold mb-3">
+                                    <i class="bi bi-sliders me-2" aria-hidden="true"></i>
+                                    Optional
+                                </legend>
+
+                                <div class="form-check mb-3">
+                                    <input asp-for="SubscribeToNewsletter" 
+                                           class="form-check-input" 
+                                           id="subscribeNewsletter"
+                                           aria-describedby="newsletter-help" />
+                                    <label asp-for="SubscribeToNewsletter" 
+                                           class="form-check-label"
+                                           for="subscribeNewsletter">
+                                        Send me updates about new products and exclusive offers
+                                    </label>
+                                    <small id="newsletter-help" class="form-text text-muted d-block ms-4">
+                                        You can unsubscribe at any time
+                                    </small>
+                                </div>
+
+                                <div class="form-check mb-3">
+                                    <input asp-for="CreateAccount" 
+                                           class="form-check-input" 
+                                           id="createAccount"
+                                           aria-describedby="create-account-help"
+                                           aria-controls="account-creation-fields" />
+                                    <label asp-for="CreateAccount" 
+                                           class="form-check-label"
+                                           for="createAccount">
+                                        Create an account to track my order and save my information
+                                    </label>
+                                    <small id="create-account-help" class="form-text text-muted d-block ms-4">
+                                        Get faster checkout next time and easily track your orders
+                                    </small>
+                                </div>
+
+                                <!-- Account Creation Fields (hidden by default) -->
+                                <div id="account-creation-fields" 
+                                     class="mt-3 ms-4 d-none"
+                                     role="region"
+                                     aria-labelledby="account-creation-heading">
+                                    <h3 id="account-creation-heading" class="h6 text-muted mb-3">
+                                        Create Password for Your Account
+                                    </h3>
+                                    <div class="row">
+                                        <div class="col-md-6 mb-3">
+                                            <label asp-for="Password" class="form-label">Password</label>
+                                            <input asp-for="Password" 
+                                                   class="form-control" 
+                                                   id="password"
+                                                   aria-describedby="password-error password-help"
+                                                   autocomplete="new-password"
+                                                   type="password" />
+                                            <small id="password-help" class="form-text text-muted">
+                                                Minimum 6 characters
+                                            </small>
+                                            <span id="password-error" asp-validation-for="Password" class="text-danger small" role="alert" aria-live="polite"></span>
+                                        </div>
+                                        <div class="col-md-6 mb-3">
+                                            <label asp-for="ConfirmPassword" class="form-label">Confirm Password</label>
+                                            <input asp-for="ConfirmPassword" 
+                                                   class="form-control" 
+                                                   id="confirmPassword"
+                                                   aria-describedby="confirmPassword-error"
+                                                   autocomplete="new-password"
+                                                   type="password" />
+                                            <span id="confirmPassword-error" asp-validation-for="ConfirmPassword" class="text-danger small" role="alert" aria-live="polite"></span>
+                                        </div>
+                                    </div>
+                                </div>
+                            </fieldset>
+
+                                            <div class="alert alert-info mt-3 mb-0" role="status" aria-live="polite">
+                                                <i class="bi bi-info-circle me-2" aria-hidden="true"></i>
+                                                <strong>Next step:</strong> Complete your information above, then proceed with secure PayPal payment.
+                                            </div>
+                                        </div>
+                                    </div>
+                                </section>
+
+                                <!-- Shipping Method Selection Section -->
+                                <section aria-labelledby="shipping-method-section-heading" class="mt-4">
+                                    <div class="card shadow-sm">
+                                        <div class="card-body">
+                                            <h2 id="shipping-method-section-heading" class="fw-bold mb-4 h5">
+                                                <i class="bi bi-truck me-2" aria-hidden="true"></i>
+                                                Shipping Method
+                                            </h2>
+
+                                            <input type="hidden" asp-for="SelectedShippingMethodId" id="selectedShippingMethodId" />
+
+                                            <fieldset>
+                                                <legend class="sr-only">Select shipping method and delivery speed</legend>
+
+                                                @foreach (var shippingMethod in Model.AvailableShippingMethods)
+                                                {
+                                                    var isSelected = shippingMethod.PkShippingMethodId == Model.SelectedShippingMethodId;
+                                                    var deliveryText = shippingMethod.DeliveryDaysMin == shippingMethod.DeliveryDaysMax 
+                                                        ? $"{shippingMethod.DeliveryDaysMin} business day{(shippingMethod.DeliveryDaysMin == 1 ? "" : "s")}"
+                                                        : $"{shippingMethod.DeliveryDaysMin}-{shippingMethod.DeliveryDaysMax} business days";
+
+                                                    <div class="form-check shipping-option mb-3 p-3 border rounded" 
+                                                         data-shipping-id="@shippingMethod.PkShippingMethodId"
+                                                         data-base-price="@shippingMethod.BasePrice">
+                                                        <input class="form-check-input shipping-method-radio" 
+                                                               type="radio" 
+                                                               name="ShippingMethod" 
+                                                               value="@shippingMethod.PkShippingMethodId"
+                                                               id="shipping-@shippingMethod.PkShippingMethodId"
+                                                               checked="@isSelected"
+                                                               aria-describedby="shipping-@shippingMethod.PkShippingMethodId-desc" />
+
+                                                        <label class="form-check-label w-100 cursor-pointer" for="shipping-@shippingMethod.PkShippingMethodId">
+                                                            <div class="d-flex justify-content-between align-items-start">
+                                                                <div>
+                                                                    <div class="fw-semibold">@shippingMethod.Name</div>
+                                                                    <div class="text-muted small" id="shipping-@shippingMethod.PkShippingMethodId-desc">
+                                                                        @deliveryText
+                                                                        @if (!string.IsNullOrEmpty(shippingMethod.Description))
+                                                                        {
+                                                                            <span> • @shippingMethod.Description</span>
+                                                                        }
+                                                                    </div>
+                                                                </div>
+                                                                <div class="text-end">
+                                                                    <div class="fw-semibold shipping-cost" data-base-price="@shippingMethod.BasePrice">
+                                                                        @shippingMethod.BasePrice.ToString("C")
+                                                                    </div>
+                                                                    <div class="small text-success free-shipping-indicator d-none">
+                                                                        Free!
+                                                                    </div>
+                                                                </div>
+                                                            </div>
+                                                        </label>
+                                                    </div>
+                                                }
+                                            </fieldset>
+
+                                            <div class="alert alert-info mt-3 mb-0" role="status" aria-live="polite">
+                                                <i class="bi bi-info-circle me-2" aria-hidden="true"></i>
+                                                <strong>Free shipping:</strong> Standard shipping is free on orders $50 or more.
+                                            </div>
+                                        </div>
+                                    </div>
+                                </section>
+                            </div>
+
+            <!-- Order Summary and Payment Section -->
+            <div class="col-lg-5">
+                <section aria-labelledby="order-summary-heading" class="sticky-top" style="top: 2rem;">
+                    <div class="card shadow-sm">
+                        <div class="card-body">
+                            <h2 id="order-summary-heading" class="fw-bold mb-4 h5">
+                                <i class="bi bi-receipt me-2" aria-hidden="true"></i>
+                                Order Summary
+                            </h2>
+
+                            <!-- Cart Items List -->
+                            <div class="mb-3" role="region" aria-labelledby="cart-items-summary">
+                                <h3 id="cart-items-summary" class="sr-only">Items in your order</h3>
+                                <ul class="list-unstyled mb-0">
+                                    @foreach (var item in Model.Items)
+                                    {
+                                        <li class="d-flex justify-content-between align-items-start mb-2">
+                                            <div class="me-2">
+                                                <span class="fw-semibold d-block">@item.ProductName</span>
+                                                <small class="text-muted" aria-label="Quantity @item.Quantity">
+                                                    Qty: @item.Quantity
+                                                </small>
+                                            </div>
+                                            <span class="fw-semibold" aria-label="Line total @item.LineTotal.ToString("C")">
+                                                @item.LineTotal.ToString("C")
+                                            </span>
+                                        </li>
+                                    }
+                                </ul>
+                            </div>
+
+                            <hr role="separator" aria-label="Items and pricing summary separator" />
+
+                            <!-- Pricing Breakdown -->
+                            <dl class="row mb-3" role="region" aria-labelledby="pricing-breakdown">
+                                <h3 id="pricing-breakdown" class="sr-only">Order pricing breakdown</h3>
+
+                                <dt class="col-8">Subtotal (@itemCount item@(itemCount != 1 ? "s" : "")):</dt>
+                                <dd class="col-4 text-end" aria-label="Subtotal amount">
+                                    @Model.Subtotal.ToString("C")
+                                </dd>
+
+                                <dt class="col-8">Tax (12%):</dt>
+                                <dd class="col-4 text-end" aria-label="Tax amount">
+                                    @Model.Tax.ToString("C")
+                                </dd>
+
+                                <dt class="col-8 text-muted">Shipping:</dt>
+                                <dd class="col-4 text-end text-muted" aria-label="Shipping cost">
+                                    @(Model.ShippingCost == 0 ? "Free!" : Model.ShippingCost.ToString("C"))
+                                </dd>
+                            </dl>
+
+                            <hr role="separator" aria-label="Pricing breakdown and total separator" />
+
+                            <dl class="row mb-4">
+                                <dt class="col-8 fw-bold fs-5">Order Total:</dt>
+                                <dd class="col-4 text-end fw-bold fs-5" 
+                                    id="order-total" 
+                                    aria-label="Final order total"
+                                    aria-live="polite">
+                                    @Model.Total.ToString("C")
+                                </dd>
+                            </dl>
+
+                            @if (Model.ShippingCost == 0)
+                            {
+                                <div class="text-success small text-center mb-3" role="status">
+                                    <i class="bi bi-truck me-1" aria-hidden="true"></i>
+                                    <strong>Free shipping included!</strong>
+                                </div>
+                            }
+
+                            <!-- Payment Section -->
+                            <div role="region" aria-labelledby="payment-section-heading">
+                                <h3 id="payment-section-heading" class="h6 text-center mb-3 text-muted">
+                                    <i class="bi bi-shield-lock me-1" aria-hidden="true"></i>
+                                    Secure Payment with PayPal
+                                </h3>
+
+                                <!-- PayPal Button Container -->
+                                <div id="paypal-button-container" 
+                                     class="mb-3"
+                                     role="region"
+                                     aria-labelledby="paypal-payment-heading"
+                                     aria-describedby="paypal-payment-desc">
+                                    <h4 id="paypal-payment-heading" class="sr-only">PayPal Payment Button</h4>
+                                    <p id="paypal-payment-desc" class="sr-only">
+                                        Click the PayPal button below to complete your secure payment of @Model.Total.ToString("C")
+                                    </p>
+                                </div>
+
+                                <!-- Fallback button if PayPal doesn't load -->
+                                <button type="submit" 
+                                        class="btn btn-dark w-100 btn-lg mb-2" 
+                                        id="fallbackButton"
+                                        aria-describedby="fallback-button-help">
+                                    <i class="bi bi-check-circle me-2" aria-hidden="true"></i>
+                                    <span id="fallback-button-text">Complete Order - @Model.Total.ToString("C")</span>
+                                </button>
+                                <div id="fallback-button-help" class="sr-only">
+                                    Alternative checkout button if PayPal is unavailable
+                                </div>
+
+                                <div class="text-center mb-3">
+                                    <small class="text-muted">
+                                        <i class="bi bi-shield-check me-1" aria-hidden="true"></i>
+                                        Your payment is processed securely through PayPal's encrypted checkout
+                                    </small>
+                                </div>
+
+                                <a asp-controller="Cart" 
+                                   asp-action="Index" 
+                                   class="btn btn-outline-secondary w-100"
+                                   aria-label="Return to shopping cart to review or modify your order">
+                                    <i class="bi bi-arrow-left me-1" aria-hidden="true"></i>
+                                    Back to Cart
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+            </div>
+        </div>
+    </form>
+</main>
+
+@section Scripts {
+    @await Html.PartialAsync("_ValidationScriptsPartial")
+
+    <!-- ═══════════════════════════════════════════════════════════════════
+         Create Account Toggle JavaScript with Accessibility
+         ═════════════════════════════════════════════════════════════════
+         Functionality: Show/hide password fields when user toggles
+         "Create an account" checkbox. Enhanced with ARIA announcements.
+    ═══════════════════════════════════════════════════════════════════ -->
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const createAccountCheckbox = document.getElementById('createAccount');
+            const accountCreationFields = document.getElementById('account-creation-fields');
+            const passwordField = document.getElementById('password');
+            const confirmPasswordField = document.getElementById('confirmPassword');
+            const checkoutStatus = document.getElementById('checkout-status');
+
+            function announceStatusChange(message) {
+                if (checkoutStatus) {
+                    checkoutStatus.textContent = message;
+                }
+            }
+
+            if (createAccountCheckbox && accountCreationFields) {
+                createAccountCheckbox.addEventListener('change', function() {
+                    if (this.checked) {
+                        accountCreationFields.classList.remove('d-none');
+                        accountCreationFields.setAttribute('aria-hidden', 'false');
+                        passwordField?.setAttribute('required', 'required');
+                        confirmPasswordField?.setAttribute('required', 'required');
+                        announceStatusChange('Account creation fields now visible. Please enter a password.');
+                        // Focus first password field for better UX
+                        setTimeout(() => passwordField?.focus(), 100);
+                    } else {
+                        accountCreationFields.classList.add('d-none');
+                        accountCreationFields.setAttribute('aria-hidden', 'true');
+                        passwordField?.removeAttribute('required');
+                        confirmPasswordField?.removeAttribute('required');
+                        // Clear password fields when hiding
+                        if (passwordField) passwordField.value = '';
+                        if (confirmPasswordField) confirmPasswordField.value = '';
+                        announceStatusChange('Account creation fields hidden. Password not required.');
+                    }
+                });
+            }
+
+            // Focus first error on form load
+            const firstError = document.querySelector('.text-danger:not(.sr-only)');
+            if (firstError) {
+                const fieldId = firstError.getAttribute('id')?.replace('-error', '');
+                document.getElementById(fieldId)?.focus();
+            }
+        });
+    </script>
+
+    <!-- ═══════════════════════════════════════════════════════════════════
+         Shipping Method Selection and Dynamic Pricing JavaScript
+         ═════════════════════════════════════════════════════════════════
+         Functionality: When user selects a shipping method, dynamically 
+         update shipping costs, apply free shipping rules, and recalculate
+         order totals with accessibility announcements.
+    ═══════════════════════════════════════════════════════════════════ -->
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const shippingMethodRadios = document.querySelectorAll('.shipping-method-radio');
+            const selectedShippingMethodInput = document.getElementById('selectedShippingMethodId');
+            const checkoutStatus = document.getElementById('checkout-status');
+            const orderTotal = document.getElementById('order-total');
+
+            // Get initial values from the model
+            const subtotal = @Model.Subtotal.ToString("F2", System.Globalization.CultureInfo.InvariantCulture);
+            const taxRate = 0.12;
+            const freeShippingThreshold = 50.00;
+
+            function announceStatusChange(message) {
+                if (checkoutStatus) {
+                    checkoutStatus.textContent = message;
+                }
+            }
+
+            function updatePricing(selectedMethodId, basePrice) {
+                // Calculate shipping cost with free shipping rule (only applies to Standard shipping - ID 1)
+                const isStandardShipping = selectedMethodId === 1;
+                const qualifiesForFreeShipping = subtotal >= freeShippingThreshold && isStandardShipping;
+                const shippingCost = qualifiesForFreeShipping ? 0 : basePrice;
+
+                // Calculate new totals
+                const tax = subtotal * taxRate;
+                const newTotal = subtotal + tax + shippingCost;
+
+                // Update shipping cost displays
+                document.querySelectorAll('.shipping-cost').forEach(function(costElement) {
+                    const methodBasePrice = parseFloat(costElement.dataset.basePrice);
+                    const parentOption = costElement.closest('.shipping-option');
+                    const methodId = parseInt(parentOption.dataset.shippingId);
+                    const freeShippingIndicator = parentOption.querySelector('.free-shipping-indicator');
+
+                    if (methodId === selectedMethodId) {
+                        if (qualifiesForFreeShipping) {
+                            costElement.textContent = '$' + methodBasePrice.toFixed(2);
+                            costElement.classList.add('text-decoration-line-through', 'text-muted');
+                            freeShippingIndicator.classList.remove('d-none');
+                        } else {
+                            costElement.textContent = '$' + methodBasePrice.toFixed(2);
+                            costElement.classList.remove('text-decoration-line-through', 'text-muted');
+                            freeShippingIndicator.classList.add('d-none');
+                        }
+                    } else {
+                        costElement.textContent = '$' + methodBasePrice.toFixed(2);
+                        costElement.classList.remove('text-decoration-line-through', 'text-muted');
+                        freeShippingIndicator.classList.add('d-none');
+                    }
+                });
+
+                // Update pricing breakdown section
+                const shippingElement = document.querySelector('dd[aria-label="Shipping cost"]');
+                if (shippingElement) {
+                    shippingElement.textContent = shippingCost === 0 ? 'Free!' : '$' + shippingCost.toFixed(2);
+                }
+
+                // Update order total
+                if (orderTotal) {
+                    orderTotal.textContent = '$' + newTotal.toFixed(2);
+                }
+
+                // Update fallback button text
+                const fallbackButtonText = document.getElementById('fallback-button-text');
+                if (fallbackButtonText) {
+                    fallbackButtonText.textContent = `Complete Order - $${newTotal.toFixed(2)}`;
+                }
+
+                // Show/hide free shipping message
+                const freeShippingMessage = document.querySelector('.text-success');
+                if (freeShippingMessage && freeShippingMessage.textContent.includes('Free shipping')) {
+                    if (shippingCost === 0) {
+                        freeShippingMessage.classList.remove('d-none');
+                    } else {
+                        freeShippingMessage.classList.add('d-none');
+                    }
+                }
+
+                // Store new total for PayPal
+                window.currentOrderTotal = newTotal.toFixed(2);
+
+                // Announce change to screen readers
+                const selectedMethod = document.querySelector(`label[for="shipping-${selectedMethodId}"]`).textContent.trim();
+                const costText = shippingCost === 0 ? 'free' : '$' + shippingCost.toFixed(2);
+                announceStatusChange(`Shipping method updated to ${selectedMethod} (${costText}). New order total: $${newTotal.toFixed(2)}`);
+            }
+
+            // Add event listeners to shipping method radio buttons
+            shippingMethodRadios.forEach(function(radio) {
+                radio.addEventListener('change', function() {
+                    if (this.checked) {
+                        const selectedMethodId = parseInt(this.value);
+                        const basePrice = parseFloat(this.closest('.shipping-option').dataset.basePrice);
+
+                        // Update hidden input
+                        if (selectedShippingMethodInput) {
+                            selectedShippingMethodInput.value = selectedMethodId;
+                        }
+
+                        // Update pricing
+                        updatePricing(selectedMethodId, basePrice);
+                    }
+                });
+            });
+
+            // Initialize with default selection
+            const checkedRadio = document.querySelector('.shipping-method-radio:checked');
+            if (checkedRadio) {
+                const selectedMethodId = parseInt(checkedRadio.value);
+                const basePrice = parseFloat(checkedRadio.closest('.shipping-option').dataset.basePrice);
+                updatePricing(selectedMethodId, basePrice);
+            }
+        });
+    </script>
+
+    <!-- ═══════════════════════════════════════════════════════════════════
+         PayPal Integration Script (same as authenticated checkout)
+    ═══════════════════════════════════════════════════════════════════ -->
+    @if (!string.IsNullOrEmpty(paypalClientId))
+    {
+        <script src="https://www.paypal.com/sdk/js?client-id=@paypalClientId&currency=CAD"></script>
+        <script>
+            // Initialize with default total
+            window.currentOrderTotal = '@Model.Total.ToString("F2", System.Globalization.CultureInfo.InvariantCulture)';
+
+            paypal.Buttons({
+                createOrder: function(data, actions) {
+                    // Use current order total (updated by shipping selection)
+                    const dynamicTotal = window.currentOrderTotal || '@Model.Total.ToString("F2", System.Globalization.CultureInfo.InvariantCulture)';
+
+                    return actions.order.create({
+                        purchase_units: [{
+                            amount: {
+                                currency_code: "CAD",
+                                value: dynamicTotal
+                            },
+                            description: `StickIt Guest Order - @itemCount item${@itemCount != 1 ? "s" : ""}`
+                        }]
+                    });
+                },
+                onApprove: function(data, actions) {
+                    return actions.order.capture().then(function(details) {
+                        // Payment captured successfully, submit form
+                        document.getElementById('guestCheckoutForm').submit();
+                    });
+                },
+                onError: function(err) {
+                    console.error('PayPal Error:', err);
+                    alert('Payment failed. Please try again or use the fallback button.');
+                }
+            }).render('#paypal-button-container');
+
+            // Hide fallback button when PayPal loads successfully
+            document.getElementById('fallbackButton').style.display = 'none';
+        </script>
+    }
+}

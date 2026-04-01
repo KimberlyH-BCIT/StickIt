@@ -31,6 +31,9 @@ namespace ELKH.Models
         //Relationship With ProductRating
         public ICollection<ProductRatingModel>? ProductRatings { get; set; }
 
+        //Relationship With StoreReview
+        public ICollection<StoreReviewModel>? StoreReviews { get; set; }
+
         /// <summary>
         /// The user's single wishlist.
         /// Not initialised by default — EF Core populates this on load.

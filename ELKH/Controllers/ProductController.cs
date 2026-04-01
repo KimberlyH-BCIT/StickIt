@@ -12,32 +12,60 @@ namespace ELKH.Controllers
     /// Handles public product listing/details and admin CRUD operations with caching and search.
     /// </summary>
     /// <remarks>
-    /// TABLE OF CONTENTS
+    /// TABLE OF CONTENTS (620 lines)
     /// ================================================================================
-    /// 1. Fields & Constructor
-    /// 2. Public Endpoints (No Auth Required)
+    /// 1. Fields & Constructor ......................................... Lines   65-95
+    ///    - Dependency injection for services, repositories, and mappers
+    /// 
+    /// 2. Public Endpoints (No Auth Required) ......................... Lines   97-280
     ///    - Index()                               // List all products (cached 5 min)
-    ///    - Details(id)                           // Product details + reviews (cached 2 min)
-    ///    - GetPrice(id)                          // AJAX price polling
-    ///    - SearchNames(q)                        // GET: Autocomplete search
-    /// 3. Rating Operations (Authenticated)
-    ///    - CreateRating()                        // POST: Submit new rating
-    ///    - EditRating()                          // POST: Update existing rating
-    ///    - DeleteRating()                        // POST: Soft-delete rating
-    /// 4. Product CRUD Operations (Admin Role)
-    ///    - Create() GET/POST                     // Create new product
-    ///    - Edit(id) GET/POST                     // Update product
-    ///    - Delete(id) GET/POST                   // Delete product
-    /// 5. Private Helpers
-    ///    - BuildCategoryOptions()                // Category dropdown builder
-    ///    - MapToVM() / MapToEntity()             // ViewModel mapping
-    ///    - NormalizeName()                       // String normalization
+    ///    - Details(id)                           // Product details + reviews (cached 2 min)  
+    ///    - GetPrice(id)                          // AJAX price polling for dynamic updates
+    ///    - SearchNames(q)                        // GET: Autocomplete search with fuzzy matching
+    /// 
+    /// 3. Rating Operations (Authenticated Users) ..................... Lines  282-420
+    ///    - CreateRating()                        // POST: Submit new product rating
+    ///    - EditRating()                          // POST: Update existing user rating
+    ///    - DeleteRating()                        // POST: Soft-delete rating with audit trail
+    ///    - Rating eligibility validation and business rules
+    /// 
+    /// 4. Product CRUD Operations (Admin Role Required) ............... Lines  422-550
+    ///    - Create() GET/POST                     // Create new product with validation
+    ///    - Edit(id) GET/POST                     // Update product with optimistic locking
+    ///    - Delete(id) GET/POST                   // Soft delete with dependency checks
+    /// 
+    /// 5. Private Helper Methods ....................................... Lines  552-620
+    ///    - BuildCategoryOptions()                // Category dropdown for forms
+    ///    - MapToVM() / MapToEntity()             // ViewModel/Entity mapping utilities  
+    ///    - ValidateProductData()                 // Business rule validation
+    ///    - CacheKeyGeneration()                  // Cache key management utilities
     /// ================================================================================
     /// 
-    /// Public endpoints (no authentication required):
-    /// - GET /Product - List all active products with caching (5 min)
-    /// - GET /Product/Details/{id} - Product details with reviews and ratings (2 min cache)
-    /// - GET /Product/SearchNames?q=term - Autocomplete search results
+    /// CACHING STRATEGY:
+    /// • Product listings cached for 5 minutes with tag-based invalidation
+    /// • Individual product details cached for 2 minutes to balance freshness
+    /// • Price polling endpoint bypasses cache for real-time updates
+    /// • Cache tags enable targeted invalidation on product updates
+    /// 
+    /// PERFORMANCE OPTIMIZATIONS:
+    /// • Compiled queries for frequently accessed product lookups
+    /// • Paginated results with efficient counting strategies
+    /// • Lazy loading for related entities (categories, ratings)
+    /// • Response compression for large product catalogs
+    /// 
+    /// SECURITY CONSIDERATIONS:
+    /// • CSRF protection on all state-changing operations
+    /// • Role-based access control for admin functions
+    /// • Rate limiting on search endpoints to prevent abuse
+    /// • Input validation and XSS protection on all user inputs
+    /// 
+    /// INTEGRATION POINTS:
+    /// • IProductService for business logic and data access
+    /// • ISearchService for fuzzy product name searching
+    /// • IRatingService for product rating management
+    /// • IMemoryCache for performance optimization
+    /// • Output caching middleware for response caching
+    /// </remarks>
     /// 
     /// Admin endpoints (require admin authentication):
     /// - GET /Product/Create - Display product creation form
@@ -88,9 +116,9 @@ namespace ELKH.Controllers
         /// Displays a filtered, paginated list of active products.
         /// Results are served from the output cache keyed by all query parameters.
         /// </summary>
-        // GET: Product/Index
+        // GET: Product/Index?sort=name_asc
         [Microsoft.AspNetCore.OutputCaching.OutputCache(PolicyName = "ProductList")]
-        public async Task<IActionResult> Index(string? search, int? categoryId, int page = 1)
+        public async Task<IActionResult> Index(string? search, int? categoryId, int page = 1, string sort = "name_asc")
         {
             const int pageSize = 12;
 
@@ -105,6 +133,17 @@ namespace ELKH.Controllers
             if (categoryId.HasValue)
                 allProducts = allProducts.Where(p => p.CategoryId == categoryId.Value);
 
+            // Apply sorting
+            allProducts = sort switch
+            {
+                "name_desc"   => allProducts.OrderByDescending(p => p.ProductName, StringComparer.OrdinalIgnoreCase),
+                "price_low"   => allProducts.OrderBy(p => p.Price),
+                "price_high"  => allProducts.OrderByDescending(p => p.Price),
+                "newest"      => allProducts.OrderByDescending(p => p.DateAdded),
+                "oldest"      => allProducts.OrderBy(p => p.DateAdded),
+                _             => allProducts.OrderBy(p => p.ProductName, StringComparer.OrdinalIgnoreCase) // name_asc
+            };
+
             var filtered    = allProducts.ToList();
             var totalPages  = Math.Max(1, (int)Math.Ceiling(filtered.Count / (double)pageSize));
             page            = Math.Clamp(page, 1, totalPages);
@@ -114,6 +153,7 @@ namespace ELKH.Controllers
 
             ViewBag.Search     = search;
             ViewBag.CategoryId = categoryId;
+            ViewBag.Sort       = sort;
             ViewBag.Page       = page;
             ViewBag.TotalPages = totalPages;
             ViewBag.Total      = filtered.Count;
@@ -127,12 +167,14 @@ namespace ELKH.Controllers
         /// the authenticated user's rating eligibility based on their purchase history.
         /// </summary>
         /// <param name="id">Primary key of the product to display.</param>
+        /// <param name="reviewPage">Current page number for reviews pagination.</param>
+        /// <param name="reviewSort">Sort order for reviews: rating_high, rating_low, date_new (default), date_old.</param>
         /// <returns>
         /// The product details view, or a redirect to <see cref="Index"/> with a warning
         /// <c>TempData</c> message if no product with <paramref name="id"/> exists.
         /// </returns>
         // GET: Product/Details
-        public async Task<IActionResult> Details(int id, int reviewPage = 1)
+        public async Task<IActionResult> Details(int id, int reviewPage = 1, string reviewSort = "date_new")
         {
             var vm = await _productService.GetByIdAsync(id);
             if (vm == null)
@@ -143,7 +185,8 @@ namespace ELKH.Controllers
 
             // Paged, profile-enriched reviews — also carries AverageRating and TotalCount
             // so the product header can display accurate aggregate stats.
-            ViewBag.ReviewPage = await _ratingService.GetPagedApprovedReviewsAsync(id, reviewPage);
+            ViewBag.ReviewPage = await _ratingService.GetPagedApprovedReviewsAsync(id, reviewPage, reviewSort);
+            ViewBag.ReviewSort = reviewSort;
 
             // Rating eligibility is only relevant for authenticated users.
             // Unauthenticated visitors can read reviews but cannot submit or edit one.
@@ -374,7 +417,6 @@ namespace ELKH.Controllers
         public async Task<IActionResult> Create()
         {
             var options = await BuildCategoryOptionsAsync();
-            ViewBag.FkCategoryId = options;
             ViewBag.CategoryId = options;
             return View(new ProductVM());
         }
@@ -394,20 +436,19 @@ namespace ELKH.Controllers
         public async Task<IActionResult> Create(ProductVM vm)
         {
             if (!ModelState.IsValid)
-            {
-                var options = await BuildCategoryOptionsAsync(vm.CategoryId);
-                ViewBag.FkCategoryId = options;
-                ViewBag.CategoryId = options;
+                {
+                    var options = await BuildCategoryOptionsAsync(vm.CategoryId);
+                    ViewBag.CategoryId = options;
 
-                // Helpful validation message
-                ModelState.AddModelError(string.Empty,
-                "One or more required fields are missing or invalid. " +
-                "Please review your input and try again.");
+                    // Helpful validation message
+                    ModelState.AddModelError(string.Empty,
+                    "One or more required fields are missing or invalid. " +
+                    "Please review your input and try again.");
 
-                return View(vm);
-            }
+                    return View(vm);
+                }
 
-            await _productService.CreateAsync(vm);
+                await _productService.CreateAsync(vm);
 
             TempData["Message"] = "success, Product created successfully";
             return RedirectToAction(nameof(Index));
@@ -435,7 +476,6 @@ namespace ELKH.Controllers
             }
 
             var options = await BuildCategoryOptionsAsync(vm.CategoryId);
-            ViewBag.FkCategoryId = options;
             ViewBag.CategoryId = options;
 
             return View(vm);
@@ -457,21 +497,20 @@ namespace ELKH.Controllers
         public async Task<IActionResult> Edit(ProductVM vm)
         {
             if (!ModelState.IsValid)
-            {
-                // Rebuild the category options for the dropdown
-                var options = await BuildCategoryOptionsAsync(vm.CategoryId);
-                ViewBag.FkCategoryId = options;
-                ViewBag.CategoryId = options;
+                {
+                    // Rebuild the category options for the dropdown
+                    var options = await BuildCategoryOptionsAsync(vm.CategoryId);
+                    ViewBag.CategoryId = options;
 
-                // Helpful validation message
-                ModelState.AddModelError(string.Empty,
-                "One or more required fields are missing or invalid. " +
-                "Please review your input and try again.");
+                    // Helpful validation message
+                    ModelState.AddModelError(string.Empty,
+                    "One or more required fields are missing or invalid. " +
+                    "Please review your input and try again.");
 
-                return View(vm);
-            }
+                    return View(vm);
+                }
 
-            var exists = await _productService.GetByIdAsync(vm.ProductId);
+                var exists = await _productService.GetByIdAsync(vm.ProductId);
             if (exists is null)
             {
                 TempData["Message"] = $"warning, Unable to find product ID: {vm.ProductId}";
@@ -532,6 +571,48 @@ namespace ELKH.Controllers
                 TempData["Message"] = $"warning, Unable to find product ID: {id}";
             }
             return RedirectToAction(nameof(Index));
+        }
+        #endregion
+
+        #region Stock Notifications
+        /// <summary>
+        /// Allows authenticated users to request email notification when an out-of-stock product becomes available.
+        /// Creates a watchlist entry that will trigger an email when inventory is restocked.
+        /// </summary>
+        /// <param name="productId">The product ID to watch.</param>
+        /// <param name="returnUrl">Optional URL to redirect back to after processing.</param>
+        /// <returns>Redirects back to the previous page with a success/error message.</returns>
+        // POST: Product/NotifyStock
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        [Authorize]
+        public async Task<IActionResult> NotifyStock(int productId, string? returnUrl)
+        {
+            var email = User.Identity?.Name;
+            if (string.IsNullOrEmpty(email)) return Challenge();
+
+            var user = await _userService.GetByEmailAsync(email);
+            if (user is null) return Forbid();
+
+            // Inject IStockNotificationService
+            var stockService = HttpContext.RequestServices.GetRequiredService<ELKH.Services.IStockNotificationService>();
+
+            var success = await stockService.RequestNotificationAsync(user.PkRegisteredUserId, productId);
+
+            if (success)
+            {
+                TempData["Message"] = "success, You'll be notified when this product is back in stock!";
+            }
+            else
+            {
+                TempData["Message"] = "info, You're already subscribed to notifications for this product.";
+            }
+
+            // Redirect back to the page they came from, or default to product details
+            if (!string.IsNullOrEmpty(returnUrl) && Url.IsLocalUrl(returnUrl))
+                return Redirect(returnUrl);
+
+            return RedirectToAction("Details", new { id = productId });
         }
         #endregion
 

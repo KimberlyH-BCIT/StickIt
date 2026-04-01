@@ -1,0 +1,89 @@
+@*
+╔══════════════════════════════════════════════════════════════════════════════════╗
+║ Kawaii Hero Banner Partial Component                                            ║
+║ Cloud surfaces, chunky playful headings, and floating animations               ║
+╚══════════════════════════════════════════════════════════════════════════════════╝
+*@
+
+@model ELKH.ViewModels.HeroBannerVM
+
+@{
+    var title = Model?.Title ?? "Welcome to ELKH";
+    var subtitle = Model?.Subtitle ?? "Your favorite kawaii sticker store";
+    var description = Model?.Description ?? "Discover amazing stickers with soft pastels and playful designs";
+    var ctaText = Model?.CtaText ?? "Shop Now";
+    var ctaController = Model?.CtaController ?? "Product";
+    var ctaAction = Model?.CtaAction ?? "Index";
+    var showSparkles = Model?.ShowSparkles ?? true;
+    var backgroundTheme = Model?.BackgroundTheme ?? "mint"; // mint, sky, lavender
+}
+
+<section class="kawaii-hero" role="banner" aria-label="Hero section">
+    <div class="container-kawaii">
+        <div class="hero-content text-center">
+            
+            <!-- Cloud title with floating animation -->
+            <h1 class="kawaii-cloud-title display-title @(showSparkles ? "sparkle" : "")">
+                @title
+            </h1>
+            
+            <!-- Subtitle with kawaii pill styling -->
+            <div class="kawaii-subtitle">
+                @subtitle
+            </div>
+            
+            <!-- Description text -->
+            @if (!string.IsNullOrEmpty(description))
+            {
+                <p class="hero-description mt-4 mb-5">
+                    @description
+                </p>
+            }
+            
+            <!-- Call-to-action button -->
+            @if (!string.IsNullOrEmpty(ctaText))
+            {
+                <div class="hero-cta mt-4">
+                    <a asp-controller="@ctaController" asp-action="@ctaAction" 
+                       class="btn-kawaii btn-primary-kawaii btn-lg glow-pink sparkle">
+                        @ctaText
+                        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="currentColor" viewBox="0 0 16 16" aria-hidden="true" class="ms-2">
+                            <path fill-rule="evenodd" d="M1 8a.5.5 0 0 1 .5-.5h11.793l-3.147-3.146a.5.5 0 0 1 .708-.708l4 4a.5.5 0 0 1 0 .708l-4 4a.5.5 0 0 1-.708-.708L13.293 8.5H1.5A.5.5 0 0 1 1 8z"/>
+                        </svg>
+                    </a>
+                </div>
+            }
+            
+            <!-- Optional feature highlights -->
+            @if (Model?.Features?.Any() == true)
+            {
+                <div class="hero-features mt-5">
+                    <div class="row g-4 justify-content-center">
+                        @foreach (var feature in Model.Features.Take(3))
+                        {
+                            <div class="col-md-4 col-sm-6">
+                                <div class="feature-card kawaii-card surface-@backgroundTheme">
+                                    @if (!string.IsNullOrEmpty(feature.Icon))
+                                    {
+                                        <div class="feature-icon mb-3">
+                                            <i class="@feature.Icon" style="font-size: 2rem; color: var(--purple);" aria-hidden="true"></i>
+                                        </div>
+                                    }
+                                    <h3 class="feature-title h5 font-heading">@feature.Title</h3>
+                                    <p class="feature-description mb-0">@feature.Description</p>
+                                </div>
+                            </div>
+                        }
+                    </div>
+                </div>
+            }
+        </div>
+    </div>
+
+    <!-- Floating elements for extra kawaii effect -->
+    <div class="hero-floating-elements" aria-hidden="true">
+        <div class="floating-shape shape-1"></div>
+        <div class="floating-shape shape-2"></div>
+        <div class="floating-shape shape-3"></div>
+    </div>
+</section>

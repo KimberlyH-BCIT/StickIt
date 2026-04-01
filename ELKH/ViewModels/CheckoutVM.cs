@@ -1,7 +1,12 @@
 using System.ComponentModel.DataAnnotations;
+using ELKH.Models;
 
 namespace ELKH.ViewModels;
 
+/// <summary>
+/// View model for checkout process containing order information, payment details,
+/// shipping addresses, and customer data for order completion workflow.
+/// </summary>
 public class CheckoutVM
 {
     // PayPal order ID (created client-side, captured server-side)
@@ -12,6 +17,14 @@ public class CheckoutVM
 
     // Available saved addresses for the user
     public List<ContactDetailVM> SavedAddresses { get; set; } = new();
+
+    // Shipping method selection
+    [Required(ErrorMessage = "Please select a shipping method")]
+    [Display(Name = "Shipping Method")]
+    public int SelectedShippingMethodId { get; set; }
+
+    // Available shipping methods for selection
+    public List<ShippingMethodModel> AvailableShippingMethods { get; set; } = new();
 
     // Shipping info (populated from selected address or entered manually)
     [Required, Display(Name = "Full Name")]
