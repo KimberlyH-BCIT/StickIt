@@ -199,10 +199,16 @@ max_line_length = 140
 [*.{ps1,psd1,psm1}]
 indent_size = 4
 
-# Batch and shell scripts
-[*.{bat,cmd,sh}]
+# Windows batch scripts
+[*.{bat,cmd}]
 end_of_line = crlf
 
+# POSIX shell scripts
+[*.sh]
+end_of_line = lf
+
+[Dockerfile]
+end_of_line = lf
 # ═══════════════════════════════════════════════════════════════════════════════
 # Documentation-specific formatting
 # ═══════════════════════════════════════════════════════════════════════════════
