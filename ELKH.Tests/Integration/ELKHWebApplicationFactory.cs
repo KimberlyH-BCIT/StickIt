@@ -1,11 +1,12 @@
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Mvc.Testing;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Storage;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Hosting;
 using ELKH.Data;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.Extensions.Logging;
-using System.Data.Common;
 
 namespace ELKH.Tests.Integration;
 
@@ -15,6 +16,10 @@ namespace ELKH.Tests.Integration;
 /// </summary>
 public class ELKHWebApplicationFactory : WebApplicationFactory<Program>
 {
+    // Shared roots ensure the seed provider and the test server use the same InMemory store.
+    private readonly InMemoryDatabaseRoot _dbRoot = new();
+    private readonly InMemoryDatabaseRoot _imageDbRoot = new();
+
     protected override void ConfigureWebHost(IWebHostBuilder builder)
     {
         builder.ConfigureServices(services =>
@@ -32,48 +37,51 @@ public class ELKHWebApplicationFactory : WebApplicationFactory<Program>
             if (imageStoreDescriptor != null)
                 services.Remove(imageStoreDescriptor);
 
-            // Add in-memory database for testing
+            // Add in-memory databases, sharing roots so every resolved instance
+            // (including any separately built provider) hits the same backing store.
             services.AddDbContext<ApplicationDbContext>(options =>
             {
-                options.UseInMemoryDatabase("IntegrationTestDb_" + Guid.NewGuid());
+                options.UseInMemoryDatabase("IntegrationTestDb", _dbRoot);
                 options.EnableSensitiveDataLogging();
             });
 
             services.AddDbContext<ImageStoreContext>(options =>
             {
-                options.UseInMemoryDatabase("IntegrationTestImageDb_" + Guid.NewGuid());
+                options.UseInMemoryDatabase("IntegrationTestImageDb", _imageDbRoot);
                 options.EnableSensitiveDataLogging();
             });
-
-            // Build the service provider
-            var serviceProvider = services.BuildServiceProvider();
-
-            // Create scope to get database context
-            using var scope = serviceProvider.CreateScope();
-            var scopedServices = scope.ServiceProvider;
-            var db = scopedServices.GetRequiredService<ApplicationDbContext>();
-            var imageDb = scopedServices.GetRequiredService<ImageStoreContext>();
-            var userManager = scopedServices.GetRequiredService<UserManager<IdentityUser>>();
-            var roleManager = scopedServices.GetRequiredService<RoleManager<IdentityRole>>();
-
-            // Ensure the databases are created
-            db.Database.EnsureCreated();
-            imageDb.Database.EnsureCreated();
-
-            try
-            {
-                // Seed test data
-                SeedTestData(db, userManager, roleManager).GetAwaiter().GetResult();
-            }
-            catch (Exception ex)
-            {
-                // Log errors here if needed
-                var logger = scopedServices.GetRequiredService<ILogger<ELKHWebApplicationFactory>>();
-                logger.LogError(ex, "An error occurred seeding the database with test data.");
-            }
         });
 
         builder.UseEnvironment("Testing");
+    }
+
+    // Seed after the host is fully built so we use the host's own IServiceProvider,
+    // guaranteeing we write into the same InMemory store the test server will use.
+    protected override IHost CreateHost(IHostBuilder builder)
+    {
+        var host = base.CreateHost(builder);
+
+        using var scope = host.Services.CreateScope();
+        var scopedServices = scope.ServiceProvider;
+        var db = scopedServices.GetRequiredService<ApplicationDbContext>();
+        var imageDb = scopedServices.GetRequiredService<ImageStoreContext>();
+        var userManager = scopedServices.GetRequiredService<UserManager<IdentityUser>>();
+        var roleManager = scopedServices.GetRequiredService<RoleManager<IdentityRole>>();
+        var logger = scopedServices.GetRequiredService<ILogger<ELKHWebApplicationFactory>>();
+
+        db.Database.EnsureCreated();
+        imageDb.Database.EnsureCreated();
+
+        try
+        {
+            SeedTestData(db, userManager, roleManager).GetAwaiter().GetResult();
+        }
+        catch (Exception ex)
+        {
+            logger.LogError(ex, "An error occurred seeding the database with test data.");
+        }
+
+        return host;
     }
 
     /// <summary>
