@@ -229,7 +229,8 @@ public class CheckoutController : Controller
         }
         catch (Exception ex)
         {
-            return View("Error", ex);
+            _logger.LogError(ex, "Failed to determine contact ID for user {Email}", email);
+            return View("Error");
         }
 
         // ── 3. Record the order — payment is already captured so we must not

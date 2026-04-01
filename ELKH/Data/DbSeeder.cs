@@ -6,7 +6,11 @@ using System.Text;
 
 namespace ELKH.Data;
 
-public static class DbSeeder
+/// <summary>
+/// Seeds the database with demo categories and products on first run.
+/// Entirely idempotent — skipped if any products already exist.
+/// </summary>
+public static partial class DbSeeder
 {
     public static async Task SeedTestTransactionsAsync(ApplicationDbContext db)
     {
@@ -107,17 +111,21 @@ public static class DbSeeder
         Category = cat
     };
 
-    private static string Normalize(string name)
-    {
-        if (string.IsNullOrEmpty(name)) return string.Empty;
-        var s = name.Normalize(NormalizationForm.FormD);
-        var sb = new StringBuilder();
-        foreach (var ch in s)
-            if (CharUnicodeInfo.GetUnicodeCategory(ch) != UnicodeCategory.NonSpacingMark) sb.Append(ch);
-        return sb.ToString().Normalize(NormalizationForm.FormC).ToLowerInvariant();
-    }
+    // ── Admin Seeder ─────────────────────────────────────────────────────────
 
-    public static async Task SeedAdminAsync(UserManager<IdentityUser> userManager, RoleManager<IdentityRole> roleManager, IConfiguration configuration)
+/// <summary>
+/// Seeds a default Admin role and a single admin test account.
+/// Idempotent — skipped if the role or account already exist.
+///
+/// Credentials are resolved from <paramref name="configuration"/> using the keys
+/// <c>Seed:AdminEmail</c> and <c>Seed:AdminPass</c>.
+/// Set these via <c>dotnet user-secrets</c> in development and via environment
+/// variables or Azure Key Vault in production. Never commit real credentials.
+/// </summary>
+public static async Task SeedAdminAsync(
+    UserManager<IdentityUser> userManager,
+    RoleManager<IdentityRole> roleManager,
+    IConfiguration configuration)
     {
         const string adminRole = "Admin";
         foreach (var role in new[] { adminRole, "Manager", "Staff", "Customer" })
