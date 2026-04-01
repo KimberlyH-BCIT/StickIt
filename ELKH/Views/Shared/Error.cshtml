@@ -1,4 +1,4 @@
-﻿@{
+@{
     ViewData["Title"] = "Error";
     var statusCode = (int?)ViewBag.StatusCode;
     var requestId  = (string?)ViewBag.RequestId;
@@ -22,18 +22,18 @@
     <div class="text-center" style="max-width:520px">
         @if (statusCode.HasValue)
         {
-            <div class="display-1 fw-bold text-danger lh-1">@statusCode</div>
+            <div class="display-1 font-heading text-danger lh-1">@statusCode</div>
         }
         else
         {
-            <div class="display-1 fw-bold text-danger lh-1">⚠</div>
+            <div class="display-1 font-heading text-danger lh-1">⚠</div>
         }
-        <h1 class="h3 mt-3 mb-2">@heading</h1>
-        <p class="text-muted mb-4">@message</p>
-        <a href="/" class="btn btn-primary">Back to home</a>
+        <h1 class="h3 mt-3 mb-2 font-heading">@heading</h1>
+        <p class="hierarchy-secondary mb-4">@message</p>
+        <a href="/" class="btn-kawaii btn-primary-kawaii">Back to home</a>
         @if (!string.IsNullOrEmpty(requestId))
         {
-            <p class="text-muted mt-4" style="font-size:.75rem">
+            <p class="hierarchy-tertiary mt-4" style="font-size:.75rem">
                 Request ID: <code>@requestId</code>
             </p>
         }

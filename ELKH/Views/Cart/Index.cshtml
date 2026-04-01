@@ -36,7 +36,7 @@
             ActionText = User.Identity?.IsAuthenticated == true ? "Shop Stickers" : "Sign In",
             ActionController = User.Identity?.IsAuthenticated == true ? "Product" : null,
             ActionAction = User.Identity?.IsAuthenticated == true ? "Index" : null,
-            ActionButtonClass = "btn btn-dark mt-2"
+            ActionButtonClass = "btn-kawaii btn-primary-kawaii mt-2 sparkle"
         };
 
         <section aria-labelledby="empty-cart-heading">
@@ -52,7 +52,7 @@
                 <section aria-labelledby="cart-items-heading">
                     <h2 id="cart-items-heading" class="sr-only">Cart Items</h2>
 
-                    <div class="card shadow-sm">
+                    <div class="kawaii-card">
                         <div class="card-body p-0">
                             <table class="table table-borderless mb-0" 
                                    role="table"
@@ -122,7 +122,7 @@
                                                 </label>
                                                 <div class="input-group input-group-sm" style="width:100px;">
                                                     <button type="button" 
-                                                            class="btn btn-outline-secondary"
+                                                            class="btn-kawaii btn-outline-kawaii"
                                                             onclick="decrementQuantity('@item.ProductId')"
                                                             aria-label="Decrease quantity of @item.ProductName">
                                                         <i class="bi bi-dash" aria-hidden="true"></i>
@@ -133,16 +133,16 @@
                                                            value="@item.Quantity" 
                                                            min="1" 
                                                            max="99"
-                                                           class="form-control text-center" 
+                                                           class="input-kawaii text-center" 
                                                            aria-label="Quantity of @item.ProductName, current value @item.Quantity"
                                                            onchange="this.form.submit()" />
                                                     <button type="button" 
-                                                            class="btn btn-outline-secondary"
+                                                            class="btn-kawaii btn-outline-kawaii"
                                                             onclick="incrementQuantity('@item.ProductId')"
                                                             aria-label="Increase quantity of @item.ProductName">
                                                         <i class="bi bi-plus" aria-hidden="true"></i>
                                                     </button>
-                                                                                 </div>
+                                                </div>
                                                                              </form>
                                                                          </td>
                                                                          <td role="gridcell" class="text-end">
@@ -156,7 +156,7 @@
                                                                                  @Html.AntiForgeryToken()
                                                                                  <input type="hidden" name="cartId" value="@item.CartItemId" />
                                                                                  <button type="submit"
-                                                                                         class="btn btn-sm btn-outline-danger d-inline-flex align-items-center justify-content-center"
+                                                                                         class="btn-kawaii btn-outline-kawaii btn-sm d-inline-flex align-items-center justify-content-center"
                                                                                          style="width:32px;height:32px;border-radius:999px;line-height:1;"
                                                                                          aria-label="Remove @item.ProductName from cart"
                                                                                          onclick="return confirm('Remove @item.ProductName from your cart?')">
@@ -180,14 +180,14 @@
                                                         <form asp-controller="Cart" asp-action="Clear" method="post" 
                                                               aria-label="Clear all items from cart">
                                                             @Html.AntiForgeryToken()
-                                                            <button type="submit" class="btn btn-outline-danger btn-sm"
+                                                            <button type="submit" class="btn-kawaii btn-outline-kawaii btn-sm"
                                                                     aria-label="Remove all items from your cart"
                                                                     onclick="return confirm('Are you sure you want to clear your entire cart? This action cannot be undone.')">
                                                                 <i class="bi bi-trash me-1" aria-hidden="true"></i>Clear Cart
                                                             </button>
                                                         </form>
                                                         <a asp-controller="Product" asp-action="Index" 
-                                                           class="btn btn-outline-primary btn-sm"
+                                                           class="btn-kawaii btn-primary-kawaii btn-sm"
                                                            aria-label="Continue shopping for more products">
                                                             <i class="bi bi-arrow-left me-1" aria-hidden="true"></i>Continue Shopping
                                                         </a>
@@ -198,9 +198,9 @@
             <!-- Order Summary Section with Enhanced Accessibility -->
             <div class="col-lg-4">
                 <section aria-labelledby="order-summary-heading" class="sticky-top" style="top: 2rem;">
-                    <div class="card shadow-sm">
+                    <div class="kawaii-card">
                         <div class="card-body">
-                            <h2 id="order-summary-heading" class="fw-bold mb-3 h5">Order Summary</h2>
+                            <h2 id="order-summary-heading" class="font-heading mb-3 h5">Order Summary</h2>
 
                             <dl class="row mb-3">
                                 <dt class="col-sm-8 col-7">Subtotal (@totalQuantity item@(totalQuantity != 1 ? "s" : "")):</dt>
@@ -244,7 +244,7 @@
                                 @if (User.Identity?.IsAuthenticated == true)
                                 {
                                     <a asp-controller="Checkout" asp-action="Index" 
-                                       class="btn btn-dark btn-lg"
+                                       class="btn-kawaii btn-primary-kawaii btn-lg sparkle"
                                        aria-label="Proceed to secure checkout for @Model.Total.ToString("C")">
                                         <i class="bi bi-credit-card me-2" aria-hidden="true"></i>
                                         Proceed to Checkout

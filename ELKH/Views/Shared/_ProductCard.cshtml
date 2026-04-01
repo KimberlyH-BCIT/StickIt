@@ -44,16 +44,16 @@
         @if (!string.IsNullOrEmpty(Model.Thumbnail))
         {
             <img src="@Model.Thumbnail" 
-                 alt="@Model.ProductName" 
+                 alt="@Model.ProductName - @Model.CategoryName sticker@(hasDiscount ? $", {Model.DiscountPercent}% off" : "")" 
                  class="product-image"
                  loading="lazy"
                  onerror="this.src='/images/placeholder-sticker.png'" />
         }
         else
         {
-            <div class="product-placeholder">
+            <div class="product-placeholder" role="img" aria-label="No image available for @Model.ProductName">
                 <i class="bi bi-image" style="font-size: 3rem; color: var(--purple-light);" aria-hidden="true"></i>
-                <p class="text-muted mt-2 mb-0">No Image</p>
+                <p class="text-muted mt-2 mb-0" aria-hidden="true">No Image</p>
             </div>
         }
 

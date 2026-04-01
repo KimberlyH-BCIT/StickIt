@@ -12,48 +12,58 @@
             </ol>
         </nav>
 
-        <div class="card shadow-sm">
+        <div class="kawaii-card">
             <div class="card-body p-4">
-                <h2 class="fw-bold mb-4"><i class="bi bi-plus-circle me-2"></i>Add New Product</h2>
-                <form asp-action="Create" method="post">
+                <h2 class="font-heading mb-4"><i class="bi bi-plus-circle me-2" aria-hidden="true"></i>Add New Product</h2>
+                <form asp-action="Create" method="post" aria-labelledby="create-product-heading" novalidate>
+                    <h3 id="create-product-heading" class="sr-only">Product Creation Form</h3>
                     @Html.AntiForgeryToken()
-                    <div asp-validation-summary="All" class="alert alert-danger" role="alert"></div>
+                    <div asp-validation-summary="All" class="alert alert-danger" role="alert" aria-live="assertive"></div>
 
                     <div class="mb-3">
-                        <label asp-for="ProductName" class="form-label fw-semibold"></label>
-                        <input asp-for="ProductName" class="form-control" placeholder="e.g. Galaxy Cat Sticker" />
-                        <span asp-validation-for="ProductName" class="text-danger small"></span>
+                        <label asp-for="ProductName" class="form-label fw-semibold">
+                            <span class="required-indicator" aria-label="Required field">*</span> Product Name
+                        </label>
+                        <input asp-for="ProductName" class="input-kawaii" placeholder="e.g. Galaxy Cat Sticker" required aria-required="true" aria-describedby="productname-validation" />
+                        <span id="productname-validation" asp-validation-for="ProductName" class="text-danger small" role="alert" aria-live="polite"></span>
                     </div>
 
                     <div class="mb-3">
-                        <label asp-for="Description" class="form-label fw-semibold"></label>
-                        <textarea asp-for="Description" class="form-control" rows="3"
-                                  placeholder="Describe the sticker…"></textarea>
-                        <span asp-validation-for="Description" class="text-danger small"></span>
+                        <label asp-for="Description" class="form-label fw-semibold">Description</label>
+                        <textarea asp-for="Description" class="input-kawaii" rows="3"
+                                  placeholder="Describe the sticker…" aria-describedby="description-validation description-help"></textarea>
+                        <small id="description-help" class="form-text hierarchy-tertiary">Provide a detailed description of the product</small>
+                        <span id="description-validation" asp-validation-for="Description" class="text-danger small" role="alert" aria-live="polite"></span>
                     </div>
 
                     <div class="row g-3 mb-3">
                         <div class="col-md-4">
-                            <label asp-for="Price" class="form-label fw-semibold"></label>
+                            <label asp-for="Price" class="form-label fw-semibold">
+                                <span class="required-indicator" aria-label="Required field">*</span> Price
+                            </label>
                             <div class="input-group">
-                                <span class="input-group-text">$</span>
-                                <input asp-for="Price" class="form-control" type="number"
-                                       step="0.01" min="0" placeholder="0.00" />
+                                <span class="input-group-text" aria-hidden="true">$</span>
+                                <input asp-for="Price" class="input-kawaii" type="number"
+                                       step="0.01" min="0" placeholder="0.00" required aria-required="true" aria-describedby="price-validation" aria-label="Price in dollars" />
                             </div>
-                            <span asp-validation-for="Price" class="text-danger small"></span>
+                            <span id="price-validation" asp-validation-for="Price" class="text-danger small" role="alert" aria-live="polite"></span>
                         </div>
                         <div class="col-md-4">
-                            <label asp-for="StockQuantity" class="form-label fw-semibold"></label>
-                            <input asp-for="StockQuantity" class="form-control" type="number" min="0" />
-                            <span asp-validation-for="StockQuantity" class="text-danger small"></span>
+                            <label asp-for="StockQuantity" class="form-label fw-semibold">
+                                <span class="required-indicator" aria-label="Required field">*</span> Stock Quantity
+                            </label>
+                            <input asp-for="StockQuantity" class="input-kawaii" type="number" min="0" required aria-required="true" aria-describedby="stockquantity-validation" />
+                            <span id="stockquantity-validation" asp-validation-for="StockQuantity" class="text-danger small" role="alert" aria-live="polite"></span>
                         </div>
                         <div class="col-md-4">
-                            <label asp-for="CategoryId" class="form-label fw-semibold"></label>
+                            <label asp-for="CategoryId" class="form-label fw-semibold">
+                                <span class="required-indicator" aria-label="Required field">*</span> Category
+                            </label>
                             <select asp-for="CategoryId" asp-items="ViewBag.CategoryId"
-                                    class="form-select">
-                                <option value="">— Select —</option>
+                                    class="input-kawaii" required aria-required="true" aria-describedby="categoryid-validation">
+                                <option value="">— Select Category —</option>
                             </select>
-                            <span asp-validation-for="CategoryId" class="text-danger small"></span>
+                            <span id="categoryid-validation" asp-validation-for="CategoryId" class="text-danger small" role="alert" aria-live="polite"></span>
                         </div>
                     </div>
 
@@ -65,10 +75,10 @@
                     </div>
 
                     <div class="d-flex gap-2">
-                        <button type="submit" class="btn btn-success px-4">
+                        <button type="submit" class="btn-kawaii btn-primary-kawaii sparkle">
                             <i class="bi bi-check-circle me-1"></i>Save Product
                         </button>
-                        <a asp-action="Index" class="btn btn-outline-secondary">Cancel</a>
+                        <a asp-action="Index" class="btn-kawaii btn-outline-kawaii">Cancel</a>
                     </div>
                 </form>
             </div>
