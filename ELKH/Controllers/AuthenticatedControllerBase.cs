@@ -90,7 +90,7 @@ namespace ELKH.Controllers
 
         /// <summary>
         /// Set an error message in TempData following the application's convention.
-        /// Format: "danger, {message}" — matches the Bootstrap alert-danger class.
+        /// Format: "danger, {message}" - matches the Bootstrap alert-danger class.
         /// </summary>
         protected void SetErrorMessage(string message)
         {

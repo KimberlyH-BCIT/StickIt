@@ -133,9 +133,9 @@
             border: 0 !important;
         }
 
-        /* ═══════════════════════════════════════════════════════════════ */
+        /* =============================================================== */
         /* ║ Professional Polish - Smooth Transitions & Hover Effects  ║ */
-        /* ═══════════════════════════════════════════════════════════════ */
+        /* =============================================================== */
 
         /* Smooth transitions for all interactive elements */
         .btn-kawaii,
@@ -265,10 +265,10 @@
 }
 
 @*
-╔══════════════════════════════════════════════════════════════════════════════════╗
+╔==================================================================================╗
 ║ TABLE OF CONTENTS - Home/Index.cshtml                                            ║
 ║ ENHANCED WITH WCAG 2.1 AA ACCESSIBILITY FEATURES                                ║
-╠══════════════════════════════════════════════════════════════════════════════════╣
+╠==================================================================================╣
 ║ 0. Accessibility Styles & Skip Links ...................... Lines    6-70     ║
 ║    - WCAG 2.1 AA compliant CSS with focus indicators                            ║
 ║    - Skip navigation links for screen readers                                   ║
@@ -304,14 +304,14 @@
 ║    - Keyboard event handling and focus restoration                              ║
 ║    - ARIA attribute updates and error handling                                  ║
 ║    - WCAG 2.1 AA compliance features                                            ║
-╚══════════════════════════════════════════════════════════════════════════════════╝
+╚==================================================================================╝
 *@
 
 @{
-    // ═══════════════════════════════════════════════════════════════════════════════
+    // ===============================================================================
     // ║ ViewBag Data Preparation                                                    ║
     // ║ Extract and prepare data passed from HomeController for display             ║
-    // ═══════════════════════════════════════════════════════════════════════════════
+    // ===============================================================================
 
     // Store reviews for the customer testimonials section
     // Reviews come from StoreReviewService and may be null during initial load
@@ -331,9 +331,9 @@
     <p>Home page with navigation, hero section, product features, FAQ, and customer reviews</p>
 </div>
 
-<!-- ════════════════════════════════════════════════════════════════════════════════ -->
+<!-- ================================================================================ -->
 <!-- ║ Kawaii Hero Section - Primary marketing content and call-to-action          ║ -->
-<!-- ════════════════════════════════════════════════════════════════════════════════ -->
+<!-- ================================================================================ -->
 <main id="main-content">
 <header class="kawaii-hero py-5" role="banner">
     <div class="container-kawaii">
@@ -407,9 +407,9 @@
     </div>
 </header>
 
-<!-- ════════════════════════════════════════════════════════════════════════════════ -->
+<!-- ================================================================================ -->
 <!-- ║ Kawaii Feature Cards Section - Product categories and promotional content   ║ -->
-<!-- ════════════════════════════════════════════════════════════════════════════════ -->
+<!-- ================================================================================ -->
 <section id="features-section" class="container-kawaii py-5" aria-labelledby="features-heading">
     <div class="text-center mb-5">
         <h2 id="features-heading" class="font-heading" style="font-size: 2.25rem; margin-bottom: 1rem;">Premium Quality, Creative Freedom</h2>
@@ -489,9 +489,9 @@
         </div>
     </div>
 
-        <!-- ═══════════════════════════════════════════════════════════════════════════ -->
+        <!-- =========================================================================== -->
         <!-- ║ FAQ Section - Frequently Asked Questions with Bootstrap Accordion     ║ -->
-        <!-- ═══════════════════════════════════════════════════════════════════════════ -->
+        <!-- =========================================================================== -->
         <section class="mt-5 mb-5" aria-labelledby="faq-heading">
             <div class="text-center mb-4">
                 <h2 id="faq-heading" class="font-heading" style="font-size: 2rem; margin-bottom: 0.5rem;">Frequently Asked Questions</h2>
@@ -573,9 +573,9 @@
             </div>
         </section>
 
-        <!-- ═══════════════════════════════════════════════════════════════════════════ -->
+        <!-- =========================================================================== -->
         <!-- ║ Customer Reviews Section - Dynamic carousel with pagination           ║ -->
-        <!-- ═══════════════════════════════════════════════════════════════════════════ -->
+        <!-- =========================================================================== -->
         <section id="reviews-section" class="py-5" aria-labelledby="reviews-heading">
             <div class="text-center mb-5">
                 <h2 id="reviews-heading" class="font-heading" style="font-size: 2rem; margin-bottom: 0.5rem;">What Our Customers Say</h2>
@@ -584,9 +584,9 @@
 
             @if (hasReviews)
             {
-                <!-- ═══════════════════════════════════════════════════════════════════════ -->
+                <!-- ======================================================================= -->
                 <!-- ║ Review Carousel Container - Shows max 3 reviews with navigation   ║ -->
-                <!-- ═══════════════════════════════════════════════════════════════════════ -->
+                <!-- ======================================================================= -->
                 <div class="position-relative container-kawaii" role="region" aria-label="Customer reviews carousel">
                     <!-- Navigation Arrows -->
                     <button class="btn-kawaii btn-outline-kawaii rounded-circle position-absolute top-50 start-0 translate-middle-y shadow-sm" 
@@ -617,11 +617,11 @@
                             var review = reviews?[i];
                             if (review == null) continue;
 
-                            // ═══════════════════════════════════════════════════════════════════
+                            // ===================================================================
                             // ║ Alternating Card Theme Logic                                  ║
                             // ║ Even-indexed cards: Light theme with subtle green verified badge  ║
                             // ║ Odd-indexed cards:  Dark theme with warning-colored badge         ║
-                            // ═══════════════════════════════════════════════════════════════════
+                            // ===================================================================
                             var isEven = i % 2 == 0;
                             var cardClass = isEven ? "card border-0 shadow-sm h-100 rounded-4" : "card border-0 shadow-sm h-100 rounded-4 bg-dark text-white";
                             var badgeClass = isEven ? "badge" : "badge bg-warning text-dark";
@@ -729,9 +729,9 @@
             let currentStartIndex = 0;  // Current starting position in the review array
             const maxIndex = allReviews.length - 3;  // Maximum starting index (ensures 3 items always visible)
 
-            // ═══════════════════════════════════════════════════════════════════════════════
+            // ===============================================================================
             // ║ Accessibility Enhancement Functions                                       ║
-            // ═══════════════════════════════════════════════════════════════════════════════
+            // ===============================================================================
 
             // Announce changes to screen readers
             function announceToScreenReader(message) {
@@ -763,9 +763,9 @@
                     currentStartIndex >= maxIndex ? 'Next reviews (disabled)' : 'Next reviews');
             }
 
-            // ═══════════════════════════════════════════════════════════════════════════════
+            // ===============================================================================
             // ║ Navigation Event Handlers                                                 ║
-            // ═══════════════════════════════════════════════════════════════════════════════
+            // ===============================================================================
 
             document.getElementById('prevReview').addEventListener('click', function() {
                 if (currentStartIndex > 0) {
@@ -915,9 +915,9 @@
                     }
                 }
 
-                // ═══════════════════════════════════════════════════════════════════════════
+                // ===========================================================================
                 // ║ UI State Updates with Accessibility and Focus Management             ║
-                // ═══════════════════════════════════════════════════════════════════════════
+                // ===========================================================================
 
                 // Update pagination indicator to show current position
                 const currentReviewSetElem = document.getElementById('currentReviewSet');

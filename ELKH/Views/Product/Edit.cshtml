@@ -60,7 +60,7 @@
                                 <span class="required-indicator" aria-label="Required field">*</span> Category
                             </label>
                             <select asp-for="CategoryId" asp-items="ViewBag.CategoryId" class="input-kawaii" required aria-required="true" aria-describedby="categoryid-validation">
-                                <option value="">— Select Category —</option>
+                                <option value="">- Select Category -</option>
                             </select>
                             <span id="categoryid-validation" asp-validation-for="CategoryId" class="text-danger small" role="alert" aria-live="polite"></span>
                         </div>

@@ -7,9 +7,9 @@ using System.Globalization;
 
 namespace ELKH.Controllers;
 
-// ╔═══════════════════════════════════════════════════════════════════════════════════════════════╗
+// ╔===============================================================================================╗
 // ║                       ADMIN ANALYTICS CONTROLLER - TABLE OF CONTENTS                          ║
-// ╚═══════════════════════════════════════════════════════════════════════════════════════════════╝
+// ╚===============================================================================================╝
 // 
 // OVERVIEW:
 // Comprehensive business intelligence controller providing sales analytics, performance metrics,
@@ -106,9 +106,9 @@ public class AdminAnalyticsController : AdminControllerBase
 {
     #region Section 1: Controller Setup & Dependencies
 
-    // ═══════════════════════════════════════════════════════════════════
+    // ===================================================================
     // Section 1: Controller Setup & Dependencies
-    // ═══════════════════════════════════════════════════════════════════
+    // ===================================================================
 
     public AdminAnalyticsController(
         ApplicationDbContext context,
@@ -121,9 +121,9 @@ public class AdminAnalyticsController : AdminControllerBase
 
     #region Section 2: Dashboard Analytics
 
-    // ═══════════════════════════════════════════════════════════════════
+    // ===================================================================
     // Section 2: Dashboard Analytics
-    // ═══════════════════════════════════════════════════════════════════
+    // ===================================================================
 
     /// <summary>
     /// GET: AdminAnalytics/Index - Admin dashboard with key performance indicators
@@ -182,9 +182,9 @@ public class AdminAnalyticsController : AdminControllerBase
 
     #region Section 3: Sales Analytics
 
-    // ═══════════════════════════════════════════════════════════════════
+    // ===================================================================
     // Section 3: Sales Analytics
-    // ═══════════════════════════════════════════════════════════════════
+    // ===================================================================
 
     /// <summary>
     /// GET: AdminAnalytics/Sales - Comprehensive sales analytics and reporting
@@ -295,9 +295,9 @@ public class AdminAnalyticsController : AdminControllerBase
 
     #region Section 4: Product Analytics
 
-    // ═══════════════════════════════════════════════════════════════════
+    // ===================================================================
     // Section 4: Product Analytics
-    // ═══════════════════════════════════════════════════════════════════
+    // ===================================================================
 
     /// <summary>
     /// GET: AdminAnalytics/Products - Product performance analytics
@@ -339,9 +339,9 @@ public class AdminAnalyticsController : AdminControllerBase
 
     #region Section 5: Export & Reporting
 
-    // ═══════════════════════════════════════════════════════════════════
+    // ===================================================================
     // Section 5: Export & Reporting
-    // ═══════════════════════════════════════════════════════════════════
+    // ===================================================================
 
     /// <summary>
     /// GET: AdminAnalytics/ExportSalesData - Export sales data as CSV

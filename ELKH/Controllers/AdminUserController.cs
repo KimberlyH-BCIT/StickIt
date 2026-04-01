@@ -89,14 +89,14 @@ namespace ELKH.Controllers;
 /// </remarks>
 public class AdminUserController : AdminControllerBase
 {
-    private readonly IRoleRepository _roleRepo;
+    private readonly IRoleRepo _roleRepo;
     private readonly UserManager<IdentityUser> _userManager;
 
     // CA1861: Constant arrays to avoid repeated allocations
     private static readonly string[] AllRoles = { "Admin", "Manager", "Staff", "Customer" };
 
     public AdminUserController(
-        IRoleRepository roleRepo,
+        IRoleRepo roleRepo,
         ApplicationDbContext context,
         UserManager<IdentityUser> userManager,
         ILogger<AdminUserController> logger)

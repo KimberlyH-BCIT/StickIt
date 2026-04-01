@@ -147,9 +147,9 @@ namespace ELKH.Areas.Identity.Pages.Account
             ReCaptchaSiteKey = _reCaptchaOptions.SiteKey;
         }
 
-        // ══════════════════════════════════════════════════════════════════════════
+        // ==========================================================================
         // ║ Input Model & View Properties                                          ║
-        // ══════════════════════════════════════════════════════════════════════════
+        // ==========================================================================
 
         /// <summary>
         /// Form input data bound from the registration view.
@@ -297,9 +297,9 @@ namespace ELKH.Areas.Identity.Pages.Account
             ExternalLogins = (await _signInManager.GetExternalAuthenticationSchemesAsync()).ToList();
             if (ModelState.IsValid)
             {
-                // ══════════════════════════════════════════════════════════════════
+                // ==================================================================
                 // ║ PHASE 1: Create Identity Account                              ║
-                // ══════════════════════════════════════════════════════════════════
+                // ==================================================================
                 var user = CreateUser();
 
                 await _userStore.SetUserNameAsync(user, Input.Email, CancellationToken.None);
@@ -308,9 +308,9 @@ namespace ELKH.Areas.Identity.Pages.Account
 
                 if (result.Succeeded)
                 {
-                    // ══════════════════════════════════════════════════════════════
+                    // ==============================================================
                     // ║ PHASE 2: Create Application-Level User Records           ║
-                    // ══════════════════════════════════════════════════════════════
+                    // ==============================================================
 
                     // 2a. RegisteredUserModel: Links Identity user to app business logic
                     var registeredUser = new RegisteredUserModel()
@@ -348,18 +348,18 @@ namespace ELKH.Areas.Identity.Pages.Account
                     };
                     await _contactRepository.AddAndSaveAsync(contact);
 
-                    // ══════════════════════════════════════════════════════════════
+                    // ==============================================================
                     // ║ PHASE 3: Role Assignment (Placeholder)                    ║
-                    // ══════════════════════════════════════════════════════════════
+                    // ==============================================================
                     // NOTE: Customer role assignment may be handled by seeder or middleware.
                     // Uncomment below to assign role immediately:
                     // await _userManager.AddToRoleAsync(user, "Customer");
 
                     _logger.LogInformation("User created a new account with password.");
 
-                    // ══════════════════════════════════════════════════════════════
+                    // ==============================================================
                     // ║ PHASE 4: Email Confirmation                               ║
-                    // ══════════════════════════════════════════════════════════════
+                    // ==============================================================
 
                     // Generate email confirmation token and build callback URL
                     var userId = await _userManager.GetUserIdAsync(user);

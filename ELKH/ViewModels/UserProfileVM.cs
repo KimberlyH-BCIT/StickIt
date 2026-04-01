@@ -1,4 +1,4 @@
-﻿using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations;
 using Microsoft.AspNetCore.Http;
 
 namespace ELKH.ViewModels
@@ -29,7 +29,7 @@ namespace ELKH.ViewModels
     }
 
     /// <summary>
-    /// Combined view model for the profile page — wraps editable profile fields
+    /// Combined view model for the profile page - wraps editable profile fields
     /// alongside the user's read-only list of saved contact/shipping addresses.
     /// </summary>
     public class UserProfilePageVM

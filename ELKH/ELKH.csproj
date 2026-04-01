@@ -69,6 +69,7 @@
 		<Folder Include="docs\" />
 		<Folder Include="Mapping\" />
 		<Folder Include="Migrations\" />
+		<Folder Include="Models\Options\" />
 		<Folder Include="Views\Audit\" />
 		<Folder Include="wwwroot\images\" />
   </ItemGroup>

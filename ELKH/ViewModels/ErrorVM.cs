@@ -1,9 +1,9 @@
-namespace ELKH.Models
+namespace ELKH.ViewModels
 {
     /// <summary>
     /// View model for displaying error information to the user.
     /// </summary>
-    public class ErrorViewModel
+    public class ErrorVM
     {
         /// <summary>
         /// Unique request identifier for tracing errors.

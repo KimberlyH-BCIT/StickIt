@@ -31,7 +31,7 @@
                     <div class="mb-3">
                         <label asp-for="Description" class="form-label fw-semibold">Description</label>
                         <textarea asp-for="Description" class="input-kawaii" rows="3"
-                                  placeholder="Describe the sticker…" aria-describedby="description-validation description-help"></textarea>
+                                  placeholder="Describe the sticker..." aria-describedby="description-validation description-help"></textarea>
                         <small id="description-help" class="form-text hierarchy-tertiary">Provide a detailed description of the product</small>
                         <span id="description-validation" asp-validation-for="Description" class="text-danger small" role="alert" aria-live="polite"></span>
                     </div>
@@ -61,7 +61,7 @@
                             </label>
                             <select asp-for="CategoryId" asp-items="ViewBag.CategoryId"
                                     class="input-kawaii" required aria-required="true" aria-describedby="categoryid-validation">
-                                <option value="">— Select Category —</option>
+                                <option value="">- Select Category -</option>
                             </select>
                             <span id="categoryid-validation" asp-validation-for="CategoryId" class="text-danger small" role="alert" aria-live="polite"></span>
                         </div>

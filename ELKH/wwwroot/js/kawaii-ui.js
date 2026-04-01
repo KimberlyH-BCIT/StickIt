@@ -1,8 +1,8 @@
 /*
-╔══════════════════════════════════════════════════════════════════════════════════╗
+╔==================================================================================╗
 ║ KAWAII UI INTERACTIONS - Design System JavaScript                               ║
 ║ Handles visual and interactive behaviors specific to the kawaii design system  ║
-╚══════════════════════════════════════════════════════════════════════════════════╝
+╚==================================================================================╝
 
 TABLE OF CONTENTS:
 - Tab Management: Custom tab switching with accessibility support

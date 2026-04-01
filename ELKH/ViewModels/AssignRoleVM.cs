@@ -16,6 +16,6 @@ public class AssignRoleVM
     public List<RoleVM> Roles { get; set; } = [];
 
     public string? ReturnTo { get; set; }
-    public string? UserId { get; set; }   // nullable — not always known (e.g. from ListRoles)
-    public string? RoleId { get; set; }   // nullable — not always known (e.g. from AccountDetails)
+    public string? UserId { get; set; }   // nullable - not always known (e.g. from ListRoles)
+    public string? RoleId { get; set; }   // nullable - not always known (e.g. from AccountDetails)
 }

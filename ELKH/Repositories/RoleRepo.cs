@@ -9,11 +9,11 @@ namespace ELKH.Repositories
     /// Repository implementation for role management operations providing concrete data access methods
     /// for managing user roles, role assignments, and role-related CRUD operations using Entity Framework.
     /// </summary>
-    public class RoleRepository : IRoleRepository
+    public class RoleRepo : IRoleRepo
     {
         private readonly ApplicationDbContext _context;
 
-        public RoleRepository(ApplicationDbContext context)
+        public RoleRepo(ApplicationDbContext context)
         {
             _context = context;
         }

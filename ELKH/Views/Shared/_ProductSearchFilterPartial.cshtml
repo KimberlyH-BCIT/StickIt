@@ -1,10 +1,10 @@
 @model ELKH.ViewModels.ProductSearchFilterVM
 
 @*
-╔══════════════════════════════════════════════════════════════════════════════════╗
+╔==================================================================================╗
 ║ Product Search & Filter Partial View Component                                   ║
 ║ Provides reusable search input, category filter, and clear functionality        ║
-╚══════════════════════════════════════════════════════════════════════════════════╝
+╚==================================================================================╝
 *@
 
 <section aria-labelledby="search-filter-heading">
@@ -18,7 +18,7 @@
                    name="search" 
                    value="@Model.Search"
                    class="form-control" 
-                   placeholder="Search by name or description…"
+                   placeholder="Search by name or description..."
                    aria-describedby="search-help" />
             <div id="search-help" class="form-text sr-only">
                 Enter keywords to search product names and descriptions

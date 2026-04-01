@@ -208,7 +208,7 @@
                                         class="small"
                                         style="max-width: 200px; word-break: break-word;"
                                         aria-label="Reason: @(audit.Reason ?? "No reason provided")">
-                                        @(audit.Reason ?? "—")
+                                        @(audit.Reason ?? "-")
                                     </td>
 
                                     <td role="gridcell" 
@@ -223,7 +223,7 @@
                                         }
                                         else
                                         {
-                                            <text>—</text>
+                                            <text>-</text>
                                         }
                                     </td>
 
@@ -241,7 +241,7 @@
                                         }
                                         else
                                         {
-                                            <span class="text-muted small" aria-label="No additional details available">—</span>
+                                            <span class="text-muted small" aria-label="No additional details available">-</span>
                                         }
                                     </td>
                                 </tr>

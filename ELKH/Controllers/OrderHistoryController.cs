@@ -1,4 +1,4 @@
-﻿using ELKH.Repositories;
+using ELKH.Repositories;
 using ELKH.Services;
 using ELKH.ViewModels;
 using ELKH.Models; // Ensure Models is included for Enums

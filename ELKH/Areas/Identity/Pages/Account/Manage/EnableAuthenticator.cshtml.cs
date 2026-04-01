@@ -117,9 +117,9 @@ namespace ELKH.Areas.Identity.Pages.Account.Manage
             _urlEncoder = urlEncoder;
         }
 
-        // ══════════════════════════════════════════════════════════════════════════════
+        // ==============================================================================
         // ║ Page Properties                                                            ║
-        // ══════════════════════════════════════════════════════════════════════════════
+        // ==============================================================================
 
         /// <summary>
         /// User's authenticator secret key formatted in human-readable groups (e.g., "ABCD EFGH IJKL MNOP").
@@ -235,9 +235,9 @@ namespace ELKH.Areas.Identity.Pages.Account.Manage
                 return Page();
             }
 
-            // ══════════════════════════════════════════════════════════════════════════
+            // ==========================================================================
             // ║ PHASE 1: Verify TOTP Code                                             ║
-            // ══════════════════════════════════════════════════════════════════════════
+            // ==========================================================================
             // Users may enter code with spaces or hyphens (e.g., "123 456" or "123-456")
             var verificationCode = Input.Code.Replace(" ", string.Empty).Replace("-", string.Empty);
 
@@ -251,18 +251,18 @@ namespace ELKH.Areas.Identity.Pages.Account.Manage
                 return Page();
             }
 
-            // ══════════════════════════════════════════════════════════════════════════
+            // ==========================================================================
             // ║ PHASE 2: Enable 2FA                                                   ║
-            // ══════════════════════════════════════════════════════════════════════════
+            // ==========================================================================
             await _userManager.SetTwoFactorEnabledAsync(user, true);
             var userId = await _userManager.GetUserIdAsync(user);
             _logger.LogInformation("User with ID '{UserId}' has enabled 2FA with an authenticator app.", userId);
 
             StatusMessage = "Your authenticator app has been verified.";
 
-            // ══════════════════════════════════════════════════════════════════════════
+            // ==========================================================================
             // ║ PHASE 3: Generate Recovery Codes (if needed)                         ║
-            // ══════════════════════════════════════════════════════════════════════════
+            // ==========================================================================
             // If user has no recovery codes, generate 10 new ones
             if (await _userManager.CountRecoveryCodesAsync(user) == 0)
             {

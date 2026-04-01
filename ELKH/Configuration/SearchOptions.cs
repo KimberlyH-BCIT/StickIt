@@ -12,6 +12,11 @@ namespace ELKH.Configuration
         public FuzzyOptions Fuzzy { get; set; } = new FuzzyOptions();
 
         /// <summary>
+        /// Reindexing service configuration options
+        /// </summary>
+        public ReindexOptions Reindex { get; set; } = new ReindexOptions();
+
+        /// <summary>
         /// Fuzzy search algorithm configuration for tuning performance and quality.
         /// </summary>
         /// <remarks>
@@ -74,6 +79,56 @@ namespace ELKH.Configuration
             /// 30 = very lenient, 50 = moderate, 70 = strict
             /// </remarks>
             public int RankingThreshold { get; set; } = 30;
+        }
+
+        /// <summary>
+        /// Configuration options for the fuzzy search reindexing service.
+        /// Controls timeout, retry behavior, and performance settings.
+        /// </summary>
+        public class ReindexOptions
+        {
+            /// <summary>
+            /// Database operation timeout in seconds.
+            /// Default: 300 seconds (5 minutes)
+            /// </summary>
+            public int DatabaseTimeoutSeconds { get; set; } = 300;
+
+            /// <summary>
+            /// Maximum number of retry attempts for failed operations.
+            /// Default: 3
+            /// </summary>
+            public int MaxRetryAttempts { get; set; } = 3;
+
+            /// <summary>
+            /// Initial delay between retry attempts in seconds.
+            /// Default: 5 seconds
+            /// </summary>
+            public int RetryDelaySeconds { get; set; } = 5;
+
+            /// <summary>
+            /// Whether to use exponential backoff for retry delays.
+            /// Default: true
+            /// </summary>
+            public bool UseExponentialBackoff { get; set; } = true;
+
+            /// <summary>
+            /// Maximum delay between retries in seconds when using exponential backoff.
+            /// Default: 60 seconds
+            /// </summary>
+            public int MaxRetryDelaySeconds { get; set; } = 60;
+
+            /// <summary>
+            /// Batch size for inserting fuzzy suggestions to avoid large transactions.
+            /// Default: 1000
+            /// </summary>
+            public int BatchSize { get; set; } = 1000;
+
+            /// <summary>
+            /// Interval between reindex operations in minutes.
+            /// This can also be overridden by Search:ReindexIntervalMinutes in configuration.
+            /// Default: 360 minutes (6 hours)
+            /// </summary>
+            public int IntervalMinutes { get; set; } = 360;
         }
     }
 }

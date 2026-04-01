@@ -1,6 +1,6 @@
-/* ═══════════════════════════════════════════════════════════════════════════════════════ */
+/* ======================================================================================= */
 /* ║ SCOPED LAYOUT STYLES - INTEGRATED WITH KAWAII THEME                                  ║ */
-/* ═══════════════════════════════════════════════════════════════════════════════════════ */
+/* ======================================================================================= */
 /*
  * This file contains scoped styles for _Layout.cshtml that integrate with the kawaii theme.
  * All color values use CSS variables from kawaii-theme.css for consistency.
@@ -66,19 +66,19 @@ a:hover {
   font-size: .9rem;
 }
 
-/* Centered search wrapper — grows up to 560px, shrinks on mobile */
+/* Centered search wrapper - grows up to 560px, shrinks on mobile */
 .header-search-wrap {
   width: 100%;
   max-width: 560px;
 }
 
-/* Nav strip — single row, hamburger + evenly-spaced links */
+/* Nav strip - single row, hamburger + evenly-spaced links */
 .header-nav {
   padding-top: .25rem;
   padding-bottom: .25rem;
 }
 
-/* Hamburger button — uses kawaii theme colors */
+/* Hamburger button - uses kawaii theme colors */
 .nav-hamburger {
   display: inline-flex;
   align-items: center;

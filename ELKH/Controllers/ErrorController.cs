@@ -15,7 +15,7 @@ namespace ELKH.Controllers;
 public class ErrorController(ILogger<ErrorController> logger) : Controller
 {
     /// <summary>
-    /// GET /Error  — renders the generic error page.
+    /// GET /Error  - renders the generic error page.
     /// Logs the originating exception (if any) at Error level.
     /// Never exposes stack traces or internal messages to the client.
     /// </summary>
@@ -39,7 +39,7 @@ public class ErrorController(ILogger<ErrorController> logger) : Controller
     }
 
     /// <summary>
-    /// GET /Error/{statusCode} — renders a status-code-specific error page
+    /// GET /Error/{statusCode} - renders a status-code-specific error page
     /// (404 Not Found, 403 Forbidden, etc.).
     /// </summary>
     [Route("/Error/{statusCode:int}")]

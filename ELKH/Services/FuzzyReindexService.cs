@@ -6,8 +6,9 @@ using ELKH.Data;
 using Microsoft.EntityFrameworkCore;
 using System.Linq;
 using System;
-// using ELKH.Utils; (fallback helper removed)
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Options;
+using ELKH.Configuration;
 
 namespace ELKH.Services
 {
@@ -61,6 +62,7 @@ namespace ELKH.Services
     {
         private readonly IServiceProvider _services;
         private readonly ILogger<FuzzyReindexService> _logger;
+        private readonly SearchOptions.ReindexOptions _options;
         private TimeSpan _interval = TimeSpan.FromHours(6);
 
         // ┌──────────────────────────────────────────────────────────────────────┐
@@ -87,14 +89,78 @@ namespace ELKH.Services
         /// Application configuration; reads <c>Search:ReindexIntervalMinutes</c> to override
         /// the default 6-hour periodic interval. Useful for testing or high-frequency updates.
         /// </param>
-        public FuzzyReindexService(IServiceProvider services, ILogger<FuzzyReindexService> logger, Microsoft.Extensions.Configuration.IConfiguration configuration)
+        public FuzzyReindexService(IServiceProvider services, ILogger<FuzzyReindexService> logger, Microsoft.Extensions.Configuration.IConfiguration configuration, IOptions<SearchOptions> searchOptions)
         {
             _services = services;
             _logger = logger;
+            _options = searchOptions.Value.Reindex;
 
-            // ── Configuration: Allow override of reindex interval ──────────────────
-            var minutes = configuration.GetValue<int?>("Search:ReindexIntervalMinutes");
-            if (minutes.HasValue && minutes.Value > 0) _interval = TimeSpan.FromMinutes(minutes.Value);
+            // ── Configuration: Prioritize new structured config, fallback to legacy ──────
+            // Priority: 1) Search:Reindex:IntervalMinutes, 2) Search:ReindexIntervalMinutes (legacy), 3) Default from options
+            var minutes = _options.IntervalMinutes;
+            var legacyMinutes = configuration.GetValue<int?>("Search:ReindexIntervalMinutes");
+            if (legacyMinutes.HasValue && legacyMinutes.Value > 0) 
+            {
+                minutes = legacyMinutes.Value;
+                _logger.LogWarning("Using legacy Search:ReindexIntervalMinutes setting. Consider migrating to Search:Reindex:IntervalMinutes.");
+            }
+            if (minutes > 0) _interval = TimeSpan.FromMinutes(minutes);
+        }
+
+        #endregion
+
+        #region Retry Logic
+
+        /// <summary>
+        /// Executes an operation with retry logic and exponential backoff.
+        /// </summary>
+        /// <param name="operation">The operation to execute</param>
+        /// <param name="operationName">Name of the operation for logging</param>
+        /// <param name="cancellationToken">Cancellation token</param>
+        /// <returns>Task representing the operation</returns>
+        private async Task ExecuteWithRetryAsync(Func<Task> operation, string operationName, CancellationToken cancellationToken)
+        {
+            var attempt = 0;
+            var delay = TimeSpan.FromSeconds(_options.RetryDelaySeconds);
+
+            while (attempt <= _options.MaxRetryAttempts)
+            {
+                try
+                {
+                    await operation();
+                    return; // Success, exit retry loop
+                }
+                catch (Exception ex) when (attempt < _options.MaxRetryAttempts && !cancellationToken.IsCancellationRequested)
+                {
+                    attempt++;
+
+                    _logger.LogWarning(ex, "{OperationName} failed on attempt {Attempt}/{MaxAttempts}. Retrying in {Delay} seconds.",
+                        operationName, attempt, _options.MaxRetryAttempts, delay.TotalSeconds);
+
+                    try
+                    {
+                        await Task.Delay(delay, cancellationToken);
+                    }
+                    catch (TaskCanceledException)
+                    {
+                        _logger.LogInformation("{OperationName} was cancelled during retry delay", operationName);
+                        throw;
+                    }
+
+                    // Calculate next delay with exponential backoff
+                    if (_options.UseExponentialBackoff)
+                    {
+                        delay = TimeSpan.FromSeconds(Math.Min(
+                            delay.TotalSeconds * 2, 
+                            _options.MaxRetryDelaySeconds));
+                    }
+                }
+                catch (Exception ex)
+                {
+                    _logger.LogError(ex, "{OperationName} failed after {Attempts} attempts", operationName, attempt);
+                    throw;
+                }
+            }
         }
 
         #endregion
@@ -121,15 +187,24 @@ namespace ELKH.Services
         /// </remarks>
         protected override async Task ExecuteAsync(CancellationToken stoppingToken)
         {
+            _logger.LogInformation("FuzzyReindexService starting up with interval: {Interval} minutes", _interval.TotalMinutes);
+
             // ── Startup Reindex ────────────────────────────────────────────────────
             // Run once immediately on application startup to ensure search index is current.
             try
             {
+                _logger.LogInformation("Executing initial reindex on startup");
                 await ReindexOnce(stoppingToken);
+                _logger.LogInformation("Initial reindex completed successfully");
+            }
+            catch (TaskCanceledException) when (stoppingToken.IsCancellationRequested)
+            {
+                _logger.LogInformation("Initial reindex was cancelled due to application shutdown");
+                return;
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Initial fuzzy reindex failed");
+                _logger.LogError(ex, "Initial fuzzy reindex failed. Service will continue with periodic reindexing.");
             }
 
             // ── Periodic Reindex Loop ──────────────────────────────────────────────
@@ -138,19 +213,31 @@ namespace ELKH.Services
             {
                 try
                 {
+                    _logger.LogDebug("Waiting {Interval} minutes until next reindex", _interval.TotalMinutes);
                     await Task.Delay(_interval, stoppingToken);
+
+                    _logger.LogInformation("Starting periodic reindex");
                     await ReindexOnce(stoppingToken);
+                    _logger.LogInformation("Periodic reindex completed successfully");
                 }
-                catch (TaskCanceledException) 
-                { 
-                    // Expected when application is shutting down - exit gracefully.
+                catch (TaskCanceledException) when (stoppingToken.IsCancellationRequested)
+                {
+                    _logger.LogInformation("Periodic reindex cancelled due to application shutdown");
+                    break; // Expected when application is shutting down - exit gracefully.
+                }
+                catch (OperationCanceledException) when (stoppingToken.IsCancellationRequested)
+                {
+                    _logger.LogInformation("Periodic reindex cancelled due to application shutdown");
+                    break; // Handle both TaskCanceledException and OperationCanceledException
                 }
                 catch (Exception ex)
                 {
-                    _logger.LogError(ex, "Periodic fuzzy reindex failed");
+                    _logger.LogError(ex, "Periodic fuzzy reindex failed. Will retry on next interval.");
                     // Continue running despite errors - next iteration may succeed.
                 }
             }
+
+            _logger.LogInformation("FuzzyReindexService stopped");
         }
 
         #endregion
@@ -187,16 +274,44 @@ namespace ELKH.Services
         /// </remarks>
         public async Task ReindexOnce(CancellationToken cancellationToken = default)
         {
-            // ── Scoped DbContext Creation ──────────────────────────────────────────
-            // Create a new scope to get a fresh DbContext (background services are singletons).
-            using var scope = _services.CreateScope();
-            var db = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
-
             DateTime start = DateTime.UtcNow;
 
-            // ╔══════════════════════════════════════════════════════════════════════╗
-            // ║ PHASE 1: FTS5 Virtual Table Rebuild                                  ║
-            // ╚══════════════════════════════════════════════════════════════════════╝
+            await ExecuteWithRetryAsync(async () =>
+            {
+                // ── Scoped DbContext Creation ──────────────────────────────────────────
+                // Create a new scope to get a fresh DbContext (background services are singletons).
+                using var scope = _services.CreateScope();
+                var db = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
+
+                // Configure database timeout
+                db.Database.SetCommandTimeout(TimeSpan.FromSeconds(_options.DatabaseTimeoutSeconds));
+
+                // ╔======================================================================╗
+                // ║ PHASE 1: FTS5 Virtual Table Rebuild                                  ║
+                // ╚======================================================================╝
+                await ExecuteFTS5RebuildAsync(db, cancellationToken);
+
+                // ╔======================================================================╗
+                // ║ PHASE 2: Precomputed Fuzzy Suggestions Rebuild                       ║
+                // ╚======================================================================╝
+                await ExecuteFuzzySuggestionsRebuildAsync(db, cancellationToken);
+
+                // ── Update Thread-Safe Metrics ─────────────────────────────────────
+                lock (_metricsLock)
+                {
+                    _lastRun = DateTime.UtcNow;
+                    _lastDuration = _lastRun.Value - start;
+                    _runCount++;
+                }
+
+            }, "ReindexOnce", cancellationToken);
+        }
+
+        /// <summary>
+        /// Executes the FTS5 virtual table rebuild operation.
+        /// </summary>
+        private async Task ExecuteFTS5RebuildAsync(ApplicationDbContext db, CancellationToken cancellationToken)
+        {
             try
             {
                 // ── Create FTS5 Virtual Table (Idempotent) ─────────────────────────
@@ -213,61 +328,75 @@ SELECT PkProductId, Name, PkProductId FROM Products
 WHERE PkProductId NOT IN (SELECT rowid FROM ProductFTS);
 ";
                 await db.Database.ExecuteSqlRawAsync(sql, cancellationToken);
+
+                _logger.LogInformation("FTS5 virtual table rebuild completed successfully");
             }
             catch (Microsoft.Data.Sqlite.SqliteException sqlEx)
             {
                 // SQLite-specific errors (e.g., FTS5 module issues, table corruption)
                 _logger.LogError(sqlEx, "SQLite error while ensuring ProductFTS contents");
+                throw;
             }
             catch (Exception ex)
             {
                 _logger.LogError(ex, "Failed to ensure ProductFTS contents");
+                throw;
             }
+        }
 
-            // ╔══════════════════════════════════════════════════════════════════════╗
-            // ║ PHASE 2: Precomputed Fuzzy Suggestions Rebuild                       ║
-            // ╚══════════════════════════════════════════════════════════════════════╝
-            // Precompute fuzzy suggestion records with normalized names for fast autocomplete.
-            // The DELETE + INSERT is wrapped in a transaction so search requests never see
-            // an empty FuzzySuggestions table during the rebuild.
+        /// <summary>
+        /// Executes the fuzzy suggestions rebuild operation with batching.
+        /// </summary>
+        private async Task ExecuteFuzzySuggestionsRebuildAsync(ApplicationDbContext db, CancellationToken cancellationToken)
+        {
+            // ── Query All Products with Metadata ───────────────────────────────
+            var suggestions = await db.Products
+                .Select(p => new ELKH.Models.FuzzySuggestionModel
+                {
+                    PkProductId    = p.PkProductId,
+                    Name           = p.Name,
+                    NameNormalized = p.Name.ToLowerInvariant(), // For case-insensitive prefix matching
+                    Price          = p.Price,
+                    Thumbnail      = p.ProductImage!.Select(pi => pi.ProductImageURL).FirstOrDefault() ?? string.Empty,
+                    CreatedAt      = DateTime.UtcNow
+                })
+                .ToListAsync(cancellationToken);
+
+            _logger.LogInformation("Queried {Count} products for fuzzy suggestions rebuild", suggestions.Count);
+
+            // ── Atomic Replacement with Transaction and Batching ────────────────
+            using var tx = await db.Database.BeginTransactionAsync(cancellationToken);
+
             try
             {
-                // ── Query All Products with Metadata ───────────────────────────────
-                var suggestions = await db.Products
-                    .Select(p => new ELKH.Models.FuzzySuggestionModel
-                    {
-                        PkProductId    = p.PkProductId,
-                        Name           = p.Name,
-                        NameNormalized = p.Name.ToLowerInvariant(), // For case-insensitive prefix matching
-                        Price          = p.Price,
-                        Thumbnail      = p.ProductImage!.Select(pi => pi.ProductImageURL).FirstOrDefault() ?? string.Empty,
-                        CreatedAt      = DateTime.UtcNow
-                    })
-                    .ToListAsync(cancellationToken);
-
-                // ── Atomic Replacement with Transaction ────────────────────────────
-                // Transaction ensures search never sees empty table between DELETE and INSERT.
-                using var tx = await db.Database.BeginTransactionAsync(cancellationToken);
-
+                // Clear existing suggestions
                 await db.Database.ExecuteSqlRawAsync("DELETE FROM FuzzySuggestions", cancellationToken);
-                db.FuzzySuggestions.AddRange(suggestions);
-                await db.SaveChangesAsync(cancellationToken);
+
+                // Insert new suggestions in batches to avoid large transaction blocks
+                var totalInserted = 0;
+                for (int i = 0; i < suggestions.Count; i += _options.BatchSize)
+                {
+                    cancellationToken.ThrowIfCancellationRequested();
+
+                    var batch = suggestions.Skip(i).Take(_options.BatchSize).ToList();
+                    db.FuzzySuggestions.AddRange(batch);
+                    await db.SaveChangesAsync(cancellationToken);
+
+                    totalInserted += batch.Count;
+                    _logger.LogDebug("Inserted batch {BatchNumber}: {BatchSize} suggestions ({TotalInserted}/{TotalCount})", 
+                        (i / _options.BatchSize) + 1, batch.Count, totalInserted, suggestions.Count);
+                }
 
                 await tx.CommitAsync(cancellationToken);
 
-                _logger.LogInformation("Fuzzy suggestions reindexed: {Count}", suggestions.Count);
-
-                // ── Update Thread-Safe Metrics ─────────────────────────────────────
-                lock (_metricsLock)
-                {
-                    _lastRun      = DateTime.UtcNow;
-                    _lastDuration = _lastRun.Value - start;
-                    _runCount++;
-                }
+                _logger.LogInformation("Fuzzy suggestions reindexed successfully: {Count} suggestions inserted in {BatchCount} batches", 
+                    suggestions.Count, Math.Ceiling((double)suggestions.Count / _options.BatchSize));
             }
-            catch (Exception ex)
+            catch (Exception)
             {
-                _logger.LogError(ex, "Failed to precompute fuzzy suggestions");
+                await tx.RollbackAsync(cancellationToken);
+                _logger.LogError("Fuzzy suggestions rebuild transaction rolled back due to error");
+                throw;
             }
         }
 

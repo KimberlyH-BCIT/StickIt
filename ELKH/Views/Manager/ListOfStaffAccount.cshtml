@@ -115,20 +115,20 @@
                                 </td>
 
                                 <td class="fw-semibold">
-                                    @(string.IsNullOrEmpty(u.FirstName) ? "—" : u.FirstName)
+                                    @(string.IsNullOrEmpty(u.FirstName) ? "-" : u.FirstName)
                                     @(string.IsNullOrEmpty(u.LastName) ? "" : " " + u.LastName)
                                 </td>
 
                                 <td class="text-muted">@u.Email</td>
 
                                 <td class="text-muted">
-                                    @(string.IsNullOrEmpty(u.PhoneNumber) ? "—" : u.PhoneNumber)
+                                    @(string.IsNullOrEmpty(u.PhoneNumber) ? "-" : u.PhoneNumber)
                                 </td>
 
                                 <td class="text-muted">
                                     @(ViewBag.Provinces != null && ViewBag.Provinces.ContainsKey(u.Id)
                                         ? ViewBag.Provinces[u.Id]
-                                        : "—")
+                                        : "-")
                                 </td>
 
                                 <!-- MULTIPLE ROLES -->

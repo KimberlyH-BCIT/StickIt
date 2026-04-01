@@ -453,13 +453,13 @@ namespace ELKH.Services;
 
                 if (rating == null)
                 {
-                    // No rating exists for this order item — the user may submit one.
+                    // No rating exists for this order item - the user may submit one.
                     eligibleItems.Add(new ViewModels.EligibleOrderItemVM { Id = oi.PkOrderItemId, Label = oi.Order!.CreatedAt.ToString("g", CultureInfo.InvariantCulture) });
                 }
                 else if (rating.IsDeleted && rating.DeletedAt.HasValue
                       && (DateTime.UtcNow - rating.DeletedAt.Value).TotalHours >= 24)
                 {
-                    // The previous rating was deleted more than 24 hours ago — the cooldown
+                    // The previous rating was deleted more than 24 hours ago - the cooldown
                     // has expired, so this order item becomes eligible again.
                     eligibleItems.Add(new ViewModels.EligibleOrderItemVM { Id = oi.PkOrderItemId, Label = oi.Order!.CreatedAt.ToString("g", CultureInfo.InvariantCulture) });
                 }

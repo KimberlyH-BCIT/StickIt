@@ -171,7 +171,7 @@ WHERE PkProductId NOT IN (SELECT rowid FROM ProductFTS);
             }
             catch (Exception ex)
             {
-                // Audit write failure must never block the reindex — log and continue.
+                // Audit write failure must never block the reindex - log and continue.
                 logger.LogWarning(ex, "Failed to persist ReindexFTS audit entry");
             }
         }
@@ -220,7 +220,7 @@ WHERE PkProductId NOT IN (SELECT rowid FROM ProductFTS);
             foreach (var ch in s)
             {
                 var uc = System.Globalization.CharUnicodeInfo.GetUnicodeCategory(ch);
-                // NonSpacingMark characters are the separated diacritics — drop them.
+                // NonSpacingMark characters are the separated diacritics - drop them.
                 if (uc != System.Globalization.UnicodeCategory.NonSpacingMark)
                     sb.Append(ch);
             }

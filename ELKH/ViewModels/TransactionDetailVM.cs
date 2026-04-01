@@ -1,4 +1,4 @@
-﻿namespace ELKH.ViewModels
+namespace ELKH.ViewModels
 {
     public class TransactionDetailVM
     {

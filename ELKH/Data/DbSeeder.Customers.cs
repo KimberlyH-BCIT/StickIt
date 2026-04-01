@@ -118,7 +118,7 @@ public static partial class DbSeeder
     /// <summary>
     /// Seeds 50 demo customer accounts with realistic profiles, contact details,
     /// order histories, wishlists, and product reviews.
-    /// Fully idempotent—skipped if any @home.com users already exist.
+    /// Fully idempotent-skipped if any @home.com users already exist.
     /// </summary>
     /// <param name="db">Database context for creating customer-related entities.</param>
     /// <param name="userManager">ASP.NET Core Identity UserManager for creating customer accounts.</param>
@@ -170,10 +170,10 @@ public static partial class DbSeeder
 
         var rng = GetRandom();
 
-        // ══════════════════════════════════════════════════════════════════════
+        // ======================================================================
         // ║ Data Pools for Realistic Customer Generation                       ║
         // ║ Predefined arrays for names, locations, and review content.        ║
-        // ══════════════════════════════════════════════════════════════════════
+        // ======================================================================
 
         string[] firstNames =
         [
@@ -227,20 +227,20 @@ public static partial class DbSeeder
             "Poplar","Cherry","Larch","Fir","Sycamore","Hazel","Beech","Alder","Rowan","Hawthorn"
         ];
 
-        // ══════════════════════════════════════════════════════════════════════
+        // ======================================================================
         // ║ Review Content Pool for Product Ratings                            ║
         // ║ Range from 5-star excellent to 1-star poor with realistic text.    ║
-        // ══════════════════════════════════════════════════════════════════════
+        // ======================================================================
         string[] reviewTexts = GetReviewTextPool();
 
         // Weighted star ratings: realistic e-commerce distribution
         // 50% 5-star, 25% 4-star, 15% 3-star, 7% 2-star, 3% 1-star
         int[] starPool = [5,5,5,5,5,5,5,5,5,5, 4,4,4,4,4, 3,3,3, 2,2, 1];
 
-        // ══════════════════════════════════════════════════════════════════════
+        // ======================================================================
         // ║ Generate 50 Demo Customers                                         ║
         // ║ Create complete customer profiles with orders and reviews.         ║
-        // ══════════════════════════════════════════════════════════════════════
+        // ======================================================================
 
         for (int i = 0; i < 50; i++)
         {
@@ -267,7 +267,7 @@ public static partial class DbSeeder
             db.RegisteredUsers.Add(registeredUser);
             await db.SaveChangesAsync();
 
-            // 3. UserProfileModel — placeholder avatar
+            // 3. UserProfileModel - placeholder avatar
             db.UserProfiles.Add(new UserProfileModel
             {
                 PkEmail        = email,
@@ -284,7 +284,7 @@ public static partial class DbSeeder
             await CreateCustomerWishlistAsync(db, registeredUser, products, rng);
 
             // 6. Orders with items, transactions, and reviews
-            await CreateCustomerOrdersAsync(db, registeredUser, products, starPool, reviewTexts, rng);
+            await CreateCustomerOrdersAsync(db, userManager, registeredUser, products, starPool, reviewTexts, rng);
 
             await db.SaveChangesAsync();
         }
@@ -365,6 +365,7 @@ public static partial class DbSeeder
     /// </summary>
     private static async Task CreateCustomerOrdersAsync(
         ApplicationDbContext db,
+        UserManager<IdentityUser> userManager,
         RegisteredUserModel registeredUser,
         List<ProductModel> products,
         int[] starPool,
@@ -443,7 +444,7 @@ public static partial class DbSeeder
             // Review for one item from delivered/shipped orders (~66% chance per order)
             if (orderStatus is OrderStatus.Shipped && rng.Next(3) > 0)
             {
-                await CreateProductReviewAsync(db, registeredUser, orderItems, starPool, reviewTexts, orderDate, rng);
+                await CreateProductReviewAsync(db, userManager, registeredUser, orderItems, starPool, reviewTexts, orderDate, rng);
             }
         }
     }
@@ -453,6 +454,7 @@ public static partial class DbSeeder
     /// </summary>
     private static async Task CreateProductReviewAsync(
         ApplicationDbContext db,
+        UserManager<IdentityUser> userManager,
         RegisteredUserModel registeredUser,
         List<OrderItemModel> orderItems,
         int[] starPool,
@@ -472,6 +474,10 @@ public static partial class DbSeeder
 
         if (!alreadyRated)
         {
+            // Look up the Identity UserId by email
+            var identityUser = await userManager.FindByEmailAsync(registeredUser.Email);
+            if (identityUser == null) return;
+
             db.ProductRatings.Add(new ProductRatingModel
             {
                 FkProductId        = ratedItem.FkProductId,
@@ -481,7 +487,8 @@ public static partial class DbSeeder
                 Description        = reviewText,
                 RatedTime          = reviewDate,
                 Approved           = true,
-                IsFlagged          = false
+                IsFlagged          = false,
+                UserId             = identityUser.Id
             });
             await db.SaveChangesAsync();
         }
@@ -506,7 +513,7 @@ public static partial class DbSeeder
         "Sharp print quality and the colours really pop. Professional-grade.",
         "Exactly what I was looking for. Great addition to my planner collection.",
         "The holographic effect is stunning in direct light! Eye-catching design.",
-        "Waterproof as advertised — survived a full wash cycle without damage.",
+        "Waterproof as advertised - survived a full wash cycle without damage.",
         "Beautiful design. Sticks perfectly and looks fantastic on my car window.",
         "Perfect size and amazing detail. This exceeded my expectations completely.",
         "Love the texture and finish. Feels premium and looks professional.",

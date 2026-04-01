@@ -73,7 +73,7 @@ public static partial class DbSeeder
     /// <summary>
     /// Seeds the database with featured store reviews from verified buyers.
     /// These are the testimonials displayed on the homepage carousel.
-    /// Fully idempotent—skipped if any store reviews already exist.
+    /// Fully idempotent-skipped if any store reviews already exist.
     /// </summary>
     /// <param name="db">Database context for creating store reviews.</param>
     /// <param name="userManager">ASP.NET Core Identity UserManager for creating reviewer accounts.</param>
@@ -96,18 +96,18 @@ public static partial class DbSeeder
     /// </remarks>
     public static async Task SeedStoreReviewsAsync(ApplicationDbContext db, UserManager<IdentityUser> userManager)
     {
-        // ══════════════════════════════════════════════════════════════════════
+        // ======================================================================
         // ║ Idempotency Check - Skip if reviews already exist                  ║
-        // ══════════════════════════════════════════════════════════════════════
+        // ======================================================================
         if (await db.StoreReviews.AnyAsync())
         {
             return; // Reviews already seeded
         }
 
-        // ══════════════════════════════════════════════════════════════════════
+        // ======================================================================
         // ║ Featured Store Review Data                                          ║
         // ║ Testimonials for homepage carousel display                         ║
-        // ══════════════════════════════════════════════════════════════════════
+        // ======================================================================
         var reviewData = new[]
         {
             new
@@ -142,9 +142,9 @@ public static partial class DbSeeder
             }
         };
 
-        // ══════════════════════════════════════════════════════════════════════
+        // ======================================================================
         // ║ Create Reviewer Accounts and Store Reviews                         ║
-        // ══════════════════════════════════════════════════════════════════════
+        // ======================================================================
         const string defaultPassword = "StoreReview@2025!";
 
         foreach (var reviewerData in reviewData)

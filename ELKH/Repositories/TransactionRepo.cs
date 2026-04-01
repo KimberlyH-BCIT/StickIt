@@ -1,4 +1,4 @@
-﻿using ELKH.Data;
+using ELKH.Data;
 using ELKH.ViewModels;
 using Microsoft.EntityFrameworkCore;
 

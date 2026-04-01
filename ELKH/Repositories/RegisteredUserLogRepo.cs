@@ -1,4 +1,4 @@
-﻿using ELKH.Data;
+using ELKH.Data;
 using ELKH.Models;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;

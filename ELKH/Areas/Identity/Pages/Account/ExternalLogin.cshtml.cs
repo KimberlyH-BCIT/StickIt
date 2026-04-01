@@ -117,9 +117,9 @@ namespace ELKH.Areas.Identity.Pages.Account
             _emailSender = emailSender;
         }
 
-        // ══════════════════════════════════════════════════════════════════════════════
+        // ==============================================================================
         // ║ Page Properties                                                            ║
-        // ══════════════════════════════════════════════════════════════════════════════
+        // ==============================================================================
 
         /// <summary>
         /// Form input data bound from the email confirmation view.
@@ -231,18 +231,18 @@ namespace ELKH.Areas.Identity.Pages.Account
         {
             returnUrl = returnUrl ?? Url.Content("~/");
 
-            // ══════════════════════════════════════════════════════════════════════════
+            // ==========================================================================
             // ║ PHASE 1: Error Handling                                                ║
-            // ══════════════════════════════════════════════════════════════════════════
+            // ==========================================================================
             if (remoteError != null)
             {
                 ErrorMessage = $"Error from external provider: {remoteError}";
                 return RedirectToPage("./Login", new { ReturnUrl = returnUrl });
             }
 
-            // ══════════════════════════════════════════════════════════════════════════
+            // ==========================================================================
             // ║ PHASE 2: Retrieve OAuth Data                                           ║
-            // ══════════════════════════════════════════════════════════════════════════
+            // ==========================================================================
             var info = await _signInManager.GetExternalLoginInfoAsync();
             if (info == null)
             {
@@ -250,9 +250,9 @@ namespace ELKH.Areas.Identity.Pages.Account
                 return RedirectToPage("./Login", new { ReturnUrl = returnUrl });
             }
 
-            // ══════════════════════════════════════════════════════════════════════════
+            // ==========================================================================
             // ║ PHASE 3: Attempt Sign-In (Existing User)                               ║
-            // ══════════════════════════════════════════════════════════════════════════
+            // ==========================================================================
             // Try signing in with this external login provider if user already has linked account.
             // TwoFactor bypassed since external provider already authenticated the user.
             var result = await _signInManager.ExternalLoginSignInAsync(info.LoginProvider, info.ProviderKey, isPersistent: false, bypassTwoFactor: true);
@@ -270,9 +270,9 @@ namespace ELKH.Areas.Identity.Pages.Account
             }
             else
             {
-                // ══════════════════════════════════════════════════════════════════════
+                // ======================================================================
                 // ║ PHASE 4: Prompt for Account Creation (New User)                   ║
-                // ══════════════════════════════════════════════════════════════════════
+                // ======================================================================
                 // User doesn't have an account - show email confirmation form.
                 // Pre-fill email from OAuth provider's email claim if available.
                 ReturnUrl = returnUrl;
@@ -320,9 +320,9 @@ namespace ELKH.Areas.Identity.Pages.Account
         {
             returnUrl = returnUrl ?? Url.Content("~/");
 
-            // ══════════════════════════════════════════════════════════════════════════
+            // ==========================================================================
             // ║ Retrieve External Login Info                                           ║
-            // ══════════════════════════════════════════════════════════════════════════
+            // ==========================================================================
             var info = await _signInManager.GetExternalLoginInfoAsync();
             if (info == null)
             {
@@ -332,9 +332,9 @@ namespace ELKH.Areas.Identity.Pages.Account
 
             if (ModelState.IsValid)
             {
-                // ══════════════════════════════════════════════════════════════════════
+                // ======================================================================
                 // ║ Create New Identity User                                           ║
-                // ══════════════════════════════════════════════════════════════════════
+                // ======================================================================
                 var user = CreateUser();
 
                 await _userStore.SetUserNameAsync(user, Input.Email, CancellationToken.None);
@@ -343,17 +343,17 @@ namespace ELKH.Areas.Identity.Pages.Account
                 var result = await _userManager.CreateAsync(user);
                 if (result.Succeeded)
                 {
-                    // ══════════════════════════════════════════════════════════════════
+                    // ==================================================================
                     // ║ Link External Login to New User                                ║
-                    // ══════════════════════════════════════════════════════════════════
+                    // ==================================================================
                     result = await _userManager.AddLoginAsync(user, info);
                     if (result.Succeeded)
                     {
                         _logger.LogInformation("User created an account using {Name} provider.", info.LoginProvider);
 
-                        // ══════════════════════════════════════════════════════════════
+                        // ==============================================================
                         // ║ Send Email Confirmation                                    ║
-                        // ══════════════════════════════════════════════════════════════
+                        // ==============================================================
                         var userId = await _userManager.GetUserIdAsync(user);
                         var code = await _userManager.GenerateEmailConfirmationTokenAsync(user);
                         code = WebEncoders.Base64UrlEncode(Encoding.UTF8.GetBytes(code));
@@ -366,9 +366,9 @@ namespace ELKH.Areas.Identity.Pages.Account
                         await _emailSender.SendEmailAsync(Input.Email, "Confirm your email",
                             $"Please confirm your account by <a href='{HtmlEncoder.Default.Encode(callbackUrl)}'>clicking here</a>.");
 
-                        // ══════════════════════════════════════════════════════════════
+                        // ==============================================================
                         // ║ Conditional Sign-In or Confirmation Redirect               ║
-                        // ══════════════════════════════════════════════════════════════
+                        // ==============================================================
                         if (_userManager.Options.SignIn.RequireConfirmedAccount)
                         {
                             return RedirectToPage("./RegisterConfirmation", new { Email = Input.Email });

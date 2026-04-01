@@ -73,7 +73,7 @@ public static partial class DbSeeder
 
     /// <summary>
     /// Seeds default Admin, Manager, Staff, and Customer roles with corresponding test accounts.
-    /// Fully idempotent—skipped if roles or accounts already exist.
+    /// Fully idempotent-skipped if roles or accounts already exist.
     /// </summary>
     /// <param name="userManager">ASP.NET Core Identity UserManager for account creation.</param>
     /// <param name="roleManager">ASP.NET Core Identity RoleManager for role creation.</param>
@@ -117,10 +117,10 @@ public static partial class DbSeeder
         const string staffRole    = "Staff";
         const string customerRole = "Customer";
 
-        // ══════════════════════════════════════════════════════════════════════
+        // ======================================================================
         // ║ Load Credentials from Configuration                                ║
         // ║ Fallback to weak defaults only for local development.              ║
-        // ══════════════════════════════════════════════════════════════════════
+        // ======================================================================
         // Read from user-secrets / environment variables.
         // IsNullOrWhiteSpace guards against empty-string values in appsettings.json,
         // which would bypass the ?? operator and create credential-less accounts.
@@ -139,10 +139,10 @@ public static partial class DbSeeder
         var staffPass  = configuration["Seed:StaffPass"];
         if (string.IsNullOrWhiteSpace(staffPass))  staffPass  = "Staff@2025!";
 
-        // ══════════════════════════════════════════════════════════════════════
+        // ======================================================================
         // ║ Ensure Roles Exist                                                 ║
         // ║ Create all four roles regardless of whether users exist.           ║
-        // ══════════════════════════════════════════════════════════════════════
+        // ======================================================================
         string[] allRoles = { adminRole, managerRole, staffRole, customerRole };
         foreach (var role in allRoles)
         {
@@ -150,10 +150,10 @@ public static partial class DbSeeder
                 await roleManager.CreateAsync(new IdentityRole(role));
         }
 
-        // ══════════════════════════════════════════════════════════════════════
+        // ======================================================================
         // ║ Seed Administrative Accounts                                       ║
         // ║ Create admin, manager, and staff accounts with proper roles.       ║
-        // ══════════════════════════════════════════════════════════════════════
+        // ======================================================================
 
         // ── Seed Admin Account ───────────────────────────────────────────────
         var admin = await userManager.FindByEmailAsync(adminEmail);
@@ -170,7 +170,7 @@ public static partial class DbSeeder
             if (!result.Succeeded) return;
         }
 
-        // Always verify the role assignment — covers the case where the user
+        // Always verify the role assignment - covers the case where the user
         // was created on a previous run but role assignment failed.
         if (!await userManager.IsInRoleAsync(admin, adminRole))
             await userManager.AddToRoleAsync(admin, adminRole);

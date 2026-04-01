@@ -6,9 +6,9 @@ using Microsoft.AspNetCore.Mvc;
 
 namespace ELKH.Controllers;
 
-// ╔═══════════════════════════════════════════════════════════════════════════════════════════════╗
+// ╔===============================================================================================╗
 // ║                           USER REVIEW CONTROLLER - TABLE OF CONTENTS                         ║
-// ╚═══════════════════════════════════════════════════════════════════════════════════════════════╝
+// ╚===============================================================================================╝
 // 
 // OVERVIEW:
 // Comprehensive user review and rating management controller handling both product ratings
@@ -85,9 +85,9 @@ public class UserReviewController : UserControllerBase
 {
     #region Section 1: Controller Setup & Dependencies
 
-    // ═══════════════════════════════════════════════════════════════════
+    // ===================================================================
     // Section 1: Controller Setup & Dependencies
-    // ═══════════════════════════════════════════════════════════════════
+    // ===================================================================
 
     private readonly IRatingService _ratingService;
     private readonly IStoreReviewService _storeReviewService;
@@ -110,9 +110,9 @@ public class UserReviewController : UserControllerBase
 
     #region Section 2: Product Ratings & Reviews
 
-    // ═══════════════════════════════════════════════════════════════════
+    // ===================================================================
     // Section 2: Product Ratings & Reviews
-    // ═══════════════════════════════════════════════════════════════════
+    // ===================================================================
 
     /// <summary>
     /// GET: UserReview/MyRatings - Display user's product ratings and reviews
@@ -250,9 +250,9 @@ public class UserReviewController : UserControllerBase
 
     #region Section 3: Store Reviews & Testimonials
 
-    // ═══════════════════════════════════════════════════════════════════
+    // ===================================================================
     // Section 3: Store Reviews & Testimonials
-    // ═══════════════════════════════════════════════════════════════════
+    // ===================================================================
 
     /// <summary>
     /// GET: UserReview/StoreReview - Display store review form
@@ -277,7 +277,7 @@ public class UserReviewController : UserControllerBase
         // Check verified buyer status
         var isVerified = await _storeReviewService.IsVerifiedBuyerAsync(userId.Value);
 
-        var vm = new StoreReviewViewModel
+        var vm = new StoreReviewVM
         {
             ExistingReview = existingReview,
             ReviewId = existingReview?.PkStoreReviewId,
@@ -297,7 +297,7 @@ public class UserReviewController : UserControllerBase
     /// <returns>Redirect to home with success message or form with validation errors</returns>
     [HttpPost]
     [ValidateAntiForgeryToken]
-    public async Task<IActionResult> StoreReview(StoreReviewViewModel vm)
+    public async Task<IActionResult> StoreReview(StoreReviewVM vm)
     {
         var userId = await GetCurrentUserIdAsync();
         if (userId is null)

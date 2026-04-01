@@ -430,14 +430,14 @@
                                                     @section Scripts {
                                                         @await Html.PartialAsync("_ValidationScriptsPartial")
 
-                                                        <!-- ═══════════════════════════════════════════════════════════════════
+                                                        <!-- ===================================================================
                                                              Enhanced Address Selector JavaScript with Accessibility
-                                                             ═════════════════════════════════════════════════════════════════
+                                                             =================================================================
                                                              Functionality: When user selects a saved address from dropdown,
                                                              auto-populate the shipping address form fields with that address.
                                                              When "Enter new address" is selected, clear all fields.
                                                              Enhanced with ARIA announcements and keyboard navigation.
-                                                        ═══════════════════════════════════════════════════════════════════ -->
+                                                        =================================================================== -->
                                                         <script>
                                                             document.addEventListener('DOMContentLoaded', function() {
                                                                 const addressSelector = document.getElementById('addressSelector');
@@ -549,13 +549,13 @@
                                                                     });
                                                                 </script>
 
-                                                                <!-- ═══════════════════════════════════════════════════════════════════
+                                                                <!-- ===================================================================
                                                                      Shipping Method Selection and Dynamic Pricing JavaScript
-                                                                     ═════════════════════════════════════════════════════════════════
+                                                                     =================================================================
                                                                      Functionality: When user selects a shipping method, dynamically 
                                                                      update shipping costs, apply free shipping rules, and recalculate
                                                                      order totals with accessibility announcements.
-                                                                ═══════════════════════════════════════════════════════════════════ -->
+                                                                =================================================================== -->
                                                                 <script>
                                                                     document.addEventListener('DOMContentLoaded', function() {
                                                                         const shippingMethodRadios = document.querySelectorAll('.shipping-method-radio');
@@ -680,9 +680,9 @@
                                                             <!-- PayPal SDK -->
                                                             <script src="https://www.paypal.com/sdk/js?client-id=@paypalClientId&currency=CAD&disable-funding=paylater"></script>
 
-                                                            <!-- ═══════════════════════════════════════════════════════════════════
+                                                            <!-- ===================================================================
                                                                  Enhanced PayPal Integration with Accessibility
-                                                                 ═════════════════════════════════════════════════════════════════
+                                                                 =================================================================
                                                                  Client-side PayPal checkout flow with comprehensive accessibility:
 
                                                                  1. Render accessible PayPal button with ARIA labels
@@ -694,7 +694,7 @@
 
                                                                  This approach provides full accessibility while maintaining
                                                                  client-side payment processing for better user experience.
-                                                            ═══════════════════════════════════════════════════════════════════ -->
+                                                            =================================================================== -->
                                                             <script>
                                                                 (function () {
                                                                     const form = document.getElementById("checkoutForm");

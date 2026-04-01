@@ -67,7 +67,7 @@ namespace ELKH.Repositories
             }
         }
 
-        // ── Write (staging only — no immediate save) ──────────────────────────
+        // ── Write (staging only - no immediate save) ──────────────────────────
 
         /// <summary>Stage a new entity for insertion (does not save).</summary>
         public virtual void Add(TEntity entity) => Context.Set<TEntity>().Add(entity);
@@ -82,7 +82,7 @@ namespace ELKH.Repositories
 
         /// <summary>
         /// Add and immediately persist an entity.
-        /// Uses <c>Add</c> (not <c>AddAsync</c>) — the async overload is only beneficial
+        /// Uses <c>Add</c> (not <c>AddAsync</c>) - the async overload is only beneficial
         /// for HiLo key generation, not the default auto-increment strategy.
         /// </summary>
         public virtual async Task<bool> AddAndSaveAsync(TEntity entity)
@@ -127,7 +127,7 @@ namespace ELKH.Repositories
                 var entity = await GetByIdAsync(id);
                 if (entity is null)
                 {
-                    Logger.LogWarning("Cannot delete {EntityType} with ID {Id} — not found", typeof(TEntity).Name, id);
+                    Logger.LogWarning("Cannot delete {EntityType} with ID {Id} - not found", typeof(TEntity).Name, id);
                     return false;
                 }
 

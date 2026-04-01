@@ -268,7 +268,7 @@ namespace ELKH.Controllers
             return File(profile.AvatarData, profile.AvatarMimeType);
         }
 
-        // GET: User/Avatar/{id} — serves any registered user's avatar without requiring auth.
+        // GET: User/Avatar/{id} - serves any registered user's avatar without requiring auth.
         // Keyed by RegisteredUser PK (integer) to avoid exposing email addresses in URLs.
         [HttpGet]
         [AllowAnonymous]
@@ -745,7 +745,7 @@ namespace ELKH.Controllers
             // Check verified buyer status
             var isVerified = await _storeReviewService.IsVerifiedBuyerAsync(userId.Value);
 
-            var vm = new StoreReviewViewModel
+            var vm = new StoreReviewVM
             {
                 ExistingReview = existingReview,
                 ReviewId = existingReview?.PkStoreReviewId,
@@ -761,7 +761,7 @@ namespace ELKH.Controllers
         // POST: User/LeaveReview - Submit or update review
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> LeaveReview(StoreReviewViewModel vm)
+        public async Task<IActionResult> LeaveReview(StoreReviewVM vm)
         {
             var userId = await GetCurrentUserIdAsync();
             if (userId is null)

@@ -11,7 +11,7 @@ public static partial class DbSeeder
 {
     /// <summary>
     /// Seeds the database with default shipping methods and delivery options.
-    /// Entirely idempotent—skipped if any shipping methods already exist.
+    /// Entirely idempotent-skipped if any shipping methods already exist.
     /// </summary>
     /// <param name="db">Database context for inserting shipping methods.</param>
     /// <remarks>
@@ -43,11 +43,11 @@ public static partial class DbSeeder
 
         /* Original implementation commented out until ShippingMethodModel is created
 
-        // ══════════════════════════════════════════════════════════════════════
+        // ======================================================================
         // ║ Shipping Method Configuration                                       ║
         // ║ Three tiers: Standard (slow/cheap), Express (balanced), Priority   ║
         // ║ DisplayOrder controls UI sort order (lowest number appears first). ║
-        // ══════════════════════════════════════════════════════════════════════
+        // ======================================================================
 
         var shippingMethods = new List<ShippingMethodModel>
         {

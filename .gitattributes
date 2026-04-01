@@ -9,52 +9,52 @@
 * text=auto
 
 # =====================================================================
-# Source Code Files
+# Source Code Files (UTF-8 encoding enforced)
 # =====================================================================
-*.cs text diff=csharp
-*.csx text diff=csharp
-*.vb text
-*.fs text
-*.fsx text
-*.fsi text
+*.cs text diff=csharp working-tree-encoding=UTF-8
+*.csx text diff=csharp working-tree-encoding=UTF-8
+*.vb text working-tree-encoding=UTF-8
+*.fs text working-tree-encoding=UTF-8
+*.fsx text working-tree-encoding=UTF-8
+*.fsi text working-tree-encoding=UTF-8
 
 # =====================================================================
-# Web Files
+# Web Files (UTF-8 encoding enforced for international content)
 # =====================================================================
-*.html text diff=html
-*.htm text diff=html
-*.cshtml text diff=html
-*.razor text diff=html
-*.css text diff=css
-*.scss text diff=css
-*.sass text diff=css
-*.less text diff=css
-*.js text
-*.ts text
-*.tsx text
-*.jsx text
-*.json text
-*.xml text
-*.yml text
-*.yaml text
+*.html text diff=html working-tree-encoding=UTF-8
+*.htm text diff=html working-tree-encoding=UTF-8
+*.cshtml text diff=html working-tree-encoding=UTF-8
+*.razor text diff=html working-tree-encoding=UTF-8
+*.css text diff=css working-tree-encoding=UTF-8
+*.scss text diff=css working-tree-encoding=UTF-8
+*.sass text diff=css working-tree-encoding=UTF-8
+*.less text diff=css working-tree-encoding=UTF-8
+*.js text working-tree-encoding=UTF-8
+*.ts text working-tree-encoding=UTF-8
+*.tsx text working-tree-encoding=UTF-8
+*.jsx text working-tree-encoding=UTF-8
+*.json text working-tree-encoding=UTF-8
+*.xml text working-tree-encoding=UTF-8
+*.yml text working-tree-encoding=UTF-8
+*.yaml text working-tree-encoding=UTF-8
 
 # =====================================================================
-# Configuration Files
+# Configuration Files (UTF-8 for better international support)
 # =====================================================================
-*.config text
-*.conf text
-*.ini text
-*.cfg text
-*.properties text
-*.settings text
+*.config text working-tree-encoding=UTF-8
+*.conf text working-tree-encoding=UTF-8
+*.ini text working-tree-encoding=UTF-8
+*.cfg text working-tree-encoding=UTF-8
+*.properties text working-tree-encoding=UTF-8
+*.settings text working-tree-encoding=UTF-8
 
 # =====================================================================
-# Documentation
+# Documentation (UTF-8 for international documentation)
 # =====================================================================
-*.md text diff=markdown
-*.txt text
-*.rtf text
-*.rst text
+*.md text diff=markdown working-tree-encoding=UTF-8
+*.txt text working-tree-encoding=UTF-8
+*.rtf text working-tree-encoding=UTF-8
+*.rst text working-tree-encoding=UTF-8
 
 # =====================================================================
 # Project Files (union merge for better collaboration)
@@ -185,3 +185,33 @@ readme.txt text
 #*.PDF   diff=astextplain
 #*.rtf   diff=astextplain
 #*.RTF   diff=astextplain
+
+# =====================================================================
+# ELKH Project Encoding Standards (Added for encoding consistency)
+# =====================================================================
+# This section enforces UTF-8 encoding for all text files to prevent
+# encoding issues discovered in 2026 encoding audit.
+# 
+# Key benefits:
+# - Prevents smart quotes and Unicode character issues
+# - Ensures consistent team collaboration across different systems
+# - Maintains proper handling of international content
+#
+# IMPORTANT: Team members should configure their editors to:
+# 1. Use UTF-8 encoding by default
+# 2. Show invisible characters to detect encoding issues
+# 3. Replace smart quotes with ASCII quotes automatically
+# 4. Replace Unicode box drawing characters with ASCII equivalents
+#
+# Reference: See encoding-issues-report.md for complete analysis
+# Automated fix available: run fix-encoding-issues.ps1 for bulk corrections
+# =====================================================================
+
+# Ensure all PowerShell scripts use UTF-8 with BOM for better Windows compatibility
+*.ps1 text eol=crlf working-tree-encoding=UTF-8
+
+# Special handling for appsettings files (critical for ELKH project)
+appsettings*.json text working-tree-encoding=UTF-8
+
+# Ensure seeding files maintain UTF-8 encoding
+*Seeder*.cs text diff=csharp working-tree-encoding=UTF-8
