@@ -119,15 +119,33 @@
     -->
     <link href="https://fonts.googleapis.com/css2?family=Sniglet:wght@400;800&family=Nunito:wght@300;400;600;700;800&display=swap" rel="stylesheet" preload>
 
+    @* ═══════════════════════════════════════════════════════════════════════════════ *@
+    @* ║ CSS Loading Order - Optimized Cascade Priority                              ║ *@
+    @* ═══════════════════════════════════════════════════════════════════════════════ *@
+    @* 
+        Loading Order (Low to High Priority):
+        1. Bootstrap - Foundation framework styles
+        2. site.css - Base site utilities and accessibility
+        3. ELKH.styles.css - Scoped CSS from Razor components (includes _Layout.cshtml.css)
+        4. kawaii-theme.css - FINAL authority on design system (loaded LAST to override)
+
+        WHY THIS ORDER:
+        - Bootstrap provides base components
+        - site.css adds site-wide utilities
+        - ELKH.styles.css (scoped) now uses kawaii CSS variables (no conflicts)
+        - kawaii-theme.css defines those variables and has final say
+    *@
+
     <link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.min.css" />
     <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
-    <link rel="stylesheet" href="~/css/kawaii-theme.css" asp-append-version="true" />
     <link rel="stylesheet" href="~/ELKH.styles.css" asp-append-version="true" />
+    <link rel="stylesheet" href="~/css/kawaii-theme.css" asp-append-version="true" />
 
     <!-- Global Accessibility Styles -->
     <style>
         /* ═══════════════════════════════════════════════════════════════════════════ */
         /* ║ GLOBAL ACCESSIBILITY STYLES - WCAG 2.1 AA COMPLIANCE                   ║ */
+        /* ║ Now using kawaii theme CSS variables for consistent styling            ║ */
         /* ═══════════════════════════════════════════════════════════════════════════ */
 
         /* Skip links for keyboard navigation */
@@ -141,33 +159,34 @@
         .skip-links a {
             position: absolute;
             top: 0;
-            background: #000;
-            color: #fff;
+            background: var(--ink, #4A3B5C);
+            color: var(--white, #fff);
             padding: 8px 16px;
             text-decoration: none;
-            border-radius: 0 0 4px 4px;
-            font-weight: bold;
-            transition: top 0.3s;
+            border-radius: var(--radius-xs, 6px);
+            font-weight: var(--font-weight-bold, 700);
+            transition: top var(--transition-med, 0.3s);
         }
 
         .skip-links a:focus,
         .skip-links a:active {
             top: 0;
             position: relative;
+            background: var(--purple, #7B5FB6);
         }
 
-        /* Enhanced focus indicators */
+        /* Enhanced focus indicators using kawaii theme */
         *:focus,
         *:focus-visible {
-            outline: 2px solid #0066cc !important;
+            outline: 2px solid var(--purple, #7B5FB6) !important;
             outline-offset: 2px !important;
         }
 
         .btn:focus,
         .form-control:focus,
         .form-select:focus {
-            border-color: #0066cc !important;
-            box-shadow: 0 0 0 0.25rem rgba(0, 102, 204, 0.25) !important;
+            border-color: var(--purple, #7B5FB6) !important;
+            box-shadow: 0 0 0 0.25rem var(--surface-lavender, rgba(228, 193, 249, 0.30)) !important;
         }
 
         /* High contrast mode support */
@@ -211,7 +230,7 @@
             }
         }
 
-        /* Reduced motion support */
+        /* Reduced motion support - already in site.css but critical for inline */
         @@media (prefers-reduced-motion: reduce) {
             *, *::before, *::after {
                 animation-duration: 0.01ms !important;
