@@ -189,8 +189,8 @@ namespace ELKH.Extensions
                 // 'unsafe-inline' for style-src is required by Bootstrap/inline styles and inline scripts.
                 // In development, allow localhost connections for Browser Link and hot reload tools.
                 var connectSrc = env.IsDevelopment() 
-                    ? "'self' ws://localhost:* http://localhost:* https://api-m.paypal.com https://api-m.sandbox.paypal.com https://www.google.com https://fonts.googleapis.com"
-                    : "'self' https://api-m.paypal.com https://api-m.sandbox.paypal.com https://www.google.com https://fonts.googleapis.com";
+                    ? "'self' ws://localhost:* http://localhost:* https://api-m.paypal.com https://api-m.sandbox.paypal.com https://www.google.com https://fonts.googleapis.com https://fonts.gstatic.com"
+                    : "'self' https://api-m.paypal.com https://api-m.sandbox.paypal.com https://www.google.com https://fonts.googleapis.com https://fonts.gstatic.com";
 
                 context.Response.Headers["Content-Security-Policy"] =
                     "default-src 'self'; " +
