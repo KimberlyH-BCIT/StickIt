@@ -902,6 +902,9 @@ label, input, button:not(.btn-kawaii), select, textarea,
     position: relative;
     transition: all var(--transition-med) var(--ease-bounce);
     backdrop-filter: blur(8px);
+    display: flex;
+    flex-direction: column;
+    min-height: 520px;
 }
 
 .product-card-kawaii:hover {
