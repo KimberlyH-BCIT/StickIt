@@ -2,11 +2,27 @@
     ViewData["Title"] = "Checkout";
 }
 
-<h2>Checkout</h2>
+<div class="container-kawaii">
+    <header class="kawaii-hero">
+        <h1 class="kawaii-cloud-title font-heading">
+            <i class="bi bi-credit-card-2-front me-2" aria-hidden="true"></i>
+            Checkout
+        </h1>
+    </header>
 
-<p>Total: <strong><span class="price" data-price="@ViewBag.Total">@((ViewBag.Total ?? 0).ToString("C"))</span></strong></p>
+    <section class="kawaii-card text-center">
+        <p class="hierarchy-primary mb-4">
+            Total: <strong class="accent-pink display-title">
+                <span class="price" data-price="@ViewBag.Total">@((ViewBag.Total ?? 0).ToString("C"))</span>
+            </strong>
+        </p>
 
-<form asp-action="PlaceOrder" method="post">
-    @Html.AntiForgeryToken()
-    <button class="btn btn-success">Place Order</button>
-</form>
+        <form asp-action="PlaceOrder" method="post">
+            @Html.AntiForgeryToken()
+            <button class="btn-kawaii btn-primary-kawaii sparkle">
+                <i class="bi bi-cart-check me-2" aria-hidden="true"></i>
+                Place Order
+            </button>
+        </form>
+    </section>
+</div>

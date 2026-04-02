@@ -1,4 +1,4 @@
-﻿using ELKH.Models;
+using ELKH.Models;
 using ELKH.ViewModels;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Authorization;
@@ -183,7 +183,7 @@ namespace ELKH.Controllers
                 return RedirectToAction(nameof(Index));
             }
 
-            // Paged, profile-enriched reviews — also carries AverageRating and TotalCount
+            // Paged, profile-enriched reviews - also carries AverageRating and TotalCount
             // so the product header can display accurate aggregate stats.
             ViewBag.ReviewPage = await _ratingService.GetPagedApprovedReviewsAsync(id, reviewPage, reviewSort);
             ViewBag.ReviewSort = reviewSort;
@@ -203,7 +203,7 @@ namespace ELKH.Controllers
 
                     if (eligibility.ExistingRating != null)
                     {
-                        // The user has already rated this product — populate ViewBag so the
+                        // The user has already rated this product - populate ViewBag so the
                         // view renders the edit/delete controls instead of the submission form.
                         ViewBag.UserRating       = eligibility.ExistingRating;
                         ViewBag.UserAlreadyRated = true;
@@ -380,7 +380,7 @@ namespace ELKH.Controllers
         /// <param name="q">Partial search term entered by the user.</param>
         /// <returns>
         /// A JSON array where each element contains <c>id</c>, <c>name</c>, <c>price</c>,
-        /// <c>thumbnail</c>, and <c>matches</c> — an array of <c>{ start, length }</c> ranges
+        /// <c>thumbnail</c>, and <c>matches</c> - an array of <c>{ start, length }</c> ranges
         /// that the client uses to highlight the matched characters in the suggestion text.
         /// Returns an empty array if <paramref name="q"/> is null or whitespace.
         /// </returns>

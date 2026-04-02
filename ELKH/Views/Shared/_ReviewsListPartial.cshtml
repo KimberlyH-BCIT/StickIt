@@ -4,10 +4,10 @@
 @inject SignInManager<IdentityUser> SignInManager
 
 <div>
-    <h4>Customer Reviews</h4>
+    <h4 class="font-heading">Customer Reviews</h4>
     @if (!Model.Any())
     {
-        <p>No reviews yet.</p>
+        <p class="hierarchy-secondary">No reviews yet.</p>
     }
     else
     {
@@ -18,21 +18,24 @@
                 // show only to moderators/admins
                 if (SignInManager.IsSignedIn(User) && (User.IsInRole("Moderator") || User.IsInRole("Admin")))
                 {
-                    <div class="border p-2 mb-2 bg-light">
-                        <strong>Rating: @r.Rating / 5</strong>
-                        <p>@r.Description</p>
-                        <small class="text-muted">@r.RatedTime.ToLocalTime().ToString("g")</small>
-                        <div class="mt-2">
+                    <div class="kawaii-card surface-butter p-3 mb-3">
+                        <div class="d-flex align-items-center gap-2 mb-2">
+                            <strong class="font-heading">Rating: @r.Rating / 5</strong>
+                            <partial name="_Badge" model="@(new ELKH.ViewModels.BadgeVM { Text = "Pending", Type = "hot" })" />
+                        </div>
+                        <p class="hierarchy-secondary">@r.Description</p>
+                        <small class="hierarchy-tertiary">@r.RatedTime.ToLocalTime().ToString("g")</small>
+                        <div class="mt-2 d-flex gap-2">
                             <form asp-controller="Rating" asp-action="Approve" method="post" class="d-inline">
                                 @Html.AntiForgeryToken()
                                 <input type="hidden" name="ratingId" value="@r.PkRatingId" />
-                                <button class="btn btn-sm btn-success">Approve</button>
+                                <button class="btn-kawaii btn-primary-kawaii btn-sm">Approve</button>
                             </form>
-                            <form asp-controller="Rating" asp-action="Flag" method="post" class="d-inline ms-2">
+                            <form asp-controller="Rating" asp-action="Flag" method="post" class="d-inline">
                                 @Html.AntiForgeryToken()
                                 <input type="hidden" name="ratingId" value="@r.PkRatingId" />
                                 <input type="hidden" name="note" value="Flagged by moderator" />
-                                <button class="btn btn-sm btn-warning">Flag</button>
+                                <button class="btn-kawaii btn-secondary-kawaii btn-sm">Flag</button>
                             </form>
                         </div>
                     </div>
@@ -40,13 +43,15 @@
             }
             else
             {
-                <div class="border p-2 mb-2">
-                    <strong>Rating: @r.Rating / 5</strong>
-                    <p>@r.Description</p>
-                    <small class="text-muted">@r.RatedTime.ToLocalTime().ToString("g")</small>
+                <div class="kawaii-card p-3 mb-3">
+                    <strong class="font-heading">Rating: @r.Rating / 5</strong>
+                    <p class="hierarchy-secondary">@r.Description</p>
+                    <small class="hierarchy-tertiary">@r.RatedTime.ToLocalTime().ToString("g")</small>
                     @if (r.IsFlagged)
                     {
-                        <div class="mt-1 text-warning">This review has been flagged for moderation.</div>
+                        <div class="mt-2">
+                            <partial name="_Badge" model="@(new ELKH.ViewModels.BadgeVM { Text = "Flagged for moderation", Type = "sale" })" />
+                        </div>
                     }
                 </div>
             }

@@ -6,9 +6,9 @@ using System.Globalization;
 
 namespace ELKH.Controllers.V1;
 
-// ╔═══════════════════════════════════════════════════════════════════════════════════════════════╗
+// ╔===============================================================================================╗
 // ║                        PRODUCT API CONTROLLER - TABLE OF CONTENTS                            ║
-// ╚═══════════════════════════════════════════════════════════════════════════════════════════════╝
+// ╚===============================================================================================╝
 // 
 // OVERVIEW:
 // RESTful API controller providing comprehensive product catalog functionality with support
@@ -106,9 +106,9 @@ public class ProductApiController : ControllerBase
 {
     #region Section 1: Controller Setup & Dependencies
 
-    // ═══════════════════════════════════════════════════════════════════
+    // ===================================================================
     // Section 1: Controller Setup & Dependencies
-    // ═══════════════════════════════════════════════════════════════════
+    // ===================================================================
 
     private readonly IProductService _productService;
     private readonly ISearchService _searchService;
@@ -128,9 +128,9 @@ public class ProductApiController : ControllerBase
 
     #region Section 2: Product Catalog Operations
 
-    // ═══════════════════════════════════════════════════════════════════
+    // ===================================================================
     // Section 2: Product Catalog Operations
-    // ═══════════════════════════════════════════════════════════════════
+    // ===================================================================
 
     /// <summary>
     /// Get all products with optional filtering and pagination
@@ -240,9 +240,9 @@ public class ProductApiController : ControllerBase
 
     #region Section 3: Single Product Operations
 
-    // ═══════════════════════════════════════════════════════════════════
+    // ===================================================================
     // Section 3: Single Product Operations
-    // ═══════════════════════════════════════════════════════════════════
+    // ===================================================================
 
     /// <summary>
     /// Get a specific product by ID
@@ -308,9 +308,9 @@ public class ProductApiController : ControllerBase
 
     #region Section 4: Search & Discovery Services
 
-    // ═══════════════════════════════════════════════════════════════════
+    // ===================================================================
     // Section 4: Search & Discovery Services
-    // ═══════════════════════════════════════════════════════════════════
+    // ===================================================================
 
     /// <summary>
     /// Search products with suggestions
@@ -366,9 +366,9 @@ public class ProductApiController : ControllerBase
 
     #region Section 5: Inventory & Availability Management
 
-    // ═══════════════════════════════════════════════════════════════════
+    // ===================================================================
     // Section 5: Inventory & Availability Management
-    // ═══════════════════════════════════════════════════════════════════
+    // ===================================================================
 
     /// <summary>
     /// Check product availability and stock status

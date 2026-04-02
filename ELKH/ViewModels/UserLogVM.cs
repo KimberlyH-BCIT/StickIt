@@ -1,7 +1,7 @@
 namespace ELKH.ViewModels
 {
     /// <summary>
-    /// View model for displaying a user log entry — either a login/logout session
+    /// View model for displaying a user log entry - either a login/logout session
     /// or a user-initiated activity event (profile/address change).
     /// When <see cref="IsActivity"/> is true the session fields are not meaningful.
     /// </summary>

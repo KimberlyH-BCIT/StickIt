@@ -4,9 +4,9 @@ using Microsoft.ApplicationInsights.Extensibility;
 
 namespace ELKH.Telemetry;
 
-// ╔═══════════════════════════════════════════════════════════════════════════════════════════════╗
+// ╔===============================================================================================╗
 // ║                   PERFORMANCE ENRICHMENT PROCESSOR - TABLE OF CONTENTS                       ║
-// ╚═══════════════════════════════════════════════════════════════════════════════════════════════╝
+// ╚===============================================================================================╝
 // 
 // OVERVIEW:
 // Application Insights telemetry processor to enrich telemetry data with additional performance
@@ -101,9 +101,9 @@ public class PerformanceEnrichmentProcessor : ITelemetryProcessor
 {
     #region Section 1: Processor Setup & Pipeline Integration
 
-    // ═══════════════════════════════════════════════════════════════════
+    // ===================================================================
     // Section 1: Processor Setup & Pipeline Integration
-    // ═══════════════════════════════════════════════════════════════════
+    // ===================================================================
 
     private readonly ITelemetryProcessor _next;
 
@@ -136,9 +136,9 @@ public class PerformanceEnrichmentProcessor : ITelemetryProcessor
 
     #region Section 2: Request Telemetry Enrichment
 
-    // ═══════════════════════════════════════════════════════════════════
+    // ===================================================================
     // Section 2: Request Telemetry Enrichment
-    // ═══════════════════════════════════════════════════════════════════
+    // ===================================================================
 
     private void EnrichRequestTelemetry(RequestTelemetry request)
     {
@@ -207,9 +207,9 @@ public class PerformanceEnrichmentProcessor : ITelemetryProcessor
 
     #region Section 3: Dependency Telemetry Enrichment
 
-    // ═══════════════════════════════════════════════════════════════════
+    // ===================================================================
     // Section 3: Dependency Telemetry Enrichment
-    // ═══════════════════════════════════════════════════════════════════
+    // ===================================================================
 
     private void EnrichDependencyTelemetry(DependencyTelemetry dependency)
     {
@@ -259,9 +259,9 @@ public class PerformanceEnrichmentProcessor : ITelemetryProcessor
 
     #region Section 4: Event Telemetry Enrichment
 
-    // ═══════════════════════════════════════════════════════════════════
+    // ===================================================================
     // Section 4: Event Telemetry Enrichment
-    // ═══════════════════════════════════════════════════════════════════
+    // ===================================================================
 
     private void EnrichEventTelemetry(EventTelemetry eventTelemetry)
     {

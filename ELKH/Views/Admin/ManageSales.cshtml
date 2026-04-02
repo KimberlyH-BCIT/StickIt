@@ -274,7 +274,7 @@
     const yAxis = { beginAtZero: true, ticks: { callback: v => '$' + v.toLocaleString() } };
     const noLegend = { legend: { display: false } };
 
-    // Daily — bar by hour
+    // Daily - bar by hour
     new Chart(document.getElementById('dailyChart'), {
         type: 'bar',
         data: {
@@ -286,7 +286,7 @@
         options: { responsive: true, plugins: noLegend, scales: { y: yAxis } }
     });
 
-    // Weekly — bar
+    // Weekly - bar
     new Chart(document.getElementById('weeklyChart'), {
         type: 'bar',
         data: {
@@ -298,7 +298,7 @@
         options: { responsive: true, plugins: noLegend, scales: { y: yAxis } }
     });
 
-    // Monthly — line
+    // Monthly - line
     new Chart(document.getElementById('monthlyChart'), {
         type: 'line',
         data: {
@@ -311,7 +311,7 @@
         options: { responsive: true, plugins: noLegend, scales: { y: yAxis } }
     });
 
-    // Yearly — bar
+    // Yearly - bar
     new Chart(document.getElementById('yearlyChart'), {
         type: 'bar',
         data: {
@@ -323,7 +323,7 @@
         options: { responsive: true, plugins: noLegend, scales: { y: yAxis } }
     });
 
-    // Top Products — horizontal bar
+    // Top Products - horizontal bar
     new Chart(document.getElementById('topProductsChart'), {
         type: 'bar',
         data: {

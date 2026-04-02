@@ -168,9 +168,9 @@ public class ImageValidationService
     {
         var result = new ImageValidationResult();
 
-        // ═══════════════════════════════════════════════════════════════════
+        // ===================================================================
         // Check 1: File existence and size
-        // ═══════════════════════════════════════════════════════════════════
+        // ===================================================================
         if (file == null || file.Length == 0)
         {
             result.Errors.Add("No file was uploaded.");
@@ -183,9 +183,9 @@ public class ImageValidationService
             return result;
         }
 
-        // ═══════════════════════════════════════════════════════════════════
+        // ===================================================================
         // Check 2: File extension validation
-        // ═══════════════════════════════════════════════════════════════════
+        // ===================================================================
         var extension = Path.GetExtension(file.FileName).ToLowerInvariant();
         if (string.IsNullOrEmpty(extension) || !AllowedExtensions.Contains(extension))
         {
@@ -193,19 +193,19 @@ public class ImageValidationService
             return result;
         }
 
-        // ═══════════════════════════════════════════════════════════════════
+        // ===================================================================
         // Check 3: MIME type validation
-        // ═══════════════════════════════════════════════════════════════════
+        // ===================================================================
         if (!AllowedMimeTypes.Contains(file.ContentType))
         {
             result.Errors.Add($"Content type '{file.ContentType}' is not allowed for images.");
             return result;
         }
 
-        // ═══════════════════════════════════════════════════════════════════
+        // ===================================================================
         // Check 4: Magic byte validation (file signature)
         // This prevents malicious executables disguised with image extensions
-        // ═══════════════════════════════════════════════════════════════════
+        // ===================================================================
         try
         {
             using var stream = file.OpenReadStream();
@@ -229,10 +229,10 @@ public class ImageValidationService
             // Reset stream position for subsequent processing
             stream.Position = 0;
 
-            // ═══════════════════════════════════════════════════════════════
+            // ===============================================================
             // Check 5: Image dimension validation
             // Prevents memory exhaustion attacks from extremely large images
-            // ═══════════════════════════════════════════════════════════════
+            // ===============================================================
             try
             {
                 using var image = await Image.LoadAsync(stream);
@@ -260,9 +260,9 @@ public class ImageValidationService
             return result;
         }
 
-        // ═══════════════════════════════════════════════════════════════════
+        // ===================================================================
         // Check 6: Filename validation and sanitization
-        // ═══════════════════════════════════════════════════════════════════
+        // ===================================================================
         var fileName = Path.GetFileNameWithoutExtension(file.FileName);
         if (fileName.Length > MaxFileNameLength)
         {

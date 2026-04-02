@@ -86,7 +86,7 @@ namespace ELKH.Controllers
         public async Task<IActionResult> Index(int page = 1, int pageSize = 50)
         {
             // Start with the full AuditEntryModel set as a composable IQueryable.
-            // Filters are appended as deferred WHERE clauses — no query is sent to the
+            // Filters are appended as deferred WHERE clauses - no query is sent to the
             // database until ToListAsync() or CountAsync() is called further below.
             var q = _db.AuditEntries.AsQueryable();
             var req = Request.Query;

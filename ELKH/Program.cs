@@ -124,7 +124,7 @@ builder.Services.AddVersionedApiExplorer(setup =>
 
 // ASP.NET Core Identity with email confirmation requirement.
 // Users must confirm their email before they can sign in.
-// AddRoles<IdentityRole>() is required for [Authorize(Roles = "...")] to function —
+// AddRoles<IdentityRole>() is required for [Authorize(Roles = "...")] to function -
 // without it, role claims are never populated and role-based access always fails.
 builder.Services.AddIdentity<IdentityUser, IdentityRole>(options =>
     {
@@ -215,9 +215,7 @@ builder.Services.AddRateLimitingPolicies();
 builder.Services.AddApplicationOptions(builder.Configuration);
 
 // -- Payment and security services
-builder.Services.Configure<PayPalOptions>(builder.Configuration.GetSection("PayPal"));
 builder.Services.AddHttpClient<IPayPalService, PayPalService>();
-builder.Services.Configure<ReCaptchaOptions>(builder.Configuration.GetSection("ReCaptcha"));
 builder.Services.AddHttpClient<IReCaptchaService, ReCaptchaService>();
 
 // Register repositories whose callers inject the concrete type or interface not covered by AddRepositories()
@@ -226,29 +224,11 @@ builder.Services.AddScoped<ICartRepo, CartRepo>();
 // All service registrations are grouped by functionality in extension methods.
 // See Extensions/ServiceCollectionExtensions.cs for implementation details.
 builder.Services.AddBackgroundServices();  // FuzzyReindexService, FuzzyHelperService
-builder.Services.AddApplicationServices(); // UserService, SearchService, RatingService, ModerationService, ProductService, CartService
+builder.Services.AddApplicationServices(); // All application services including image optimization, logging, guest cart
 builder.Services.AddEmailServices();       // SmtpEmailSender, EmailSenderAdapter, IEmailSender
 builder.Services.AddRepositories();        // All repository implementations with base class inheritance
 
-// -- Image Optimization Services
-builder.Services.AddScoped<IImageOptimizationService, ImageOptimizationService>();
-
-// -- Enhanced Logging Services
-builder.Services.AddScoped<IStructuredLoggingService, StructuredLoggingService>();
 builder.Services.AddHttpContextAccessor(); // Required for CorrelationId access and session-based cart
-
-// -- Guest Checkout Services
-builder.Services.AddScoped<IGuestCartService, GuestCartService>();
-
-// -- Additional Repositories (not covered by AddRepositories extension)
-builder.Services.AddScoped<IRoleRepository, RoleRepository>();
-builder.Services.AddScoped<OrderHistoryManagementRepo>();
-builder.Services.AddScoped<InventoryRepo>();
-builder.Services.AddScoped<RegisteredUserLogRepo>();
-builder.Services.AddScoped<RegisteredUserProfileRepo>();
-builder.Services.AddScoped<ContactDetailRepo>();
-builder.Services.AddScoped<TransactionRepo>();
-builder.Services.AddScoped<OrderHistoryStaffRepo>();
 
 // -- Mapping
 // NOTE: AutoMapper 16.x removed DI extension support and changed the API significantly.
@@ -267,12 +247,12 @@ builder.Services.AddScoped<OrderHistoryStaffRepo>();
 // =====================================================================
 var app = builder.Build();
 
-// ═══════════════════════════════════════════════════════════════════════
+// =======================================================================
 // CONFIGURATION VALIDATION
 // Validate all required secrets and configuration at startup to fail fast
 // before any HTTP requests are processed. In Development, logs warnings.
 // In Production, throws exception and aborts startup.
-// ═══════════════════════════════════════════════════════════════════════
+// =======================================================================
 using (var scope = app.Services.CreateScope())
 {
     var validator = new ConfigurationValidator(
@@ -339,10 +319,10 @@ app.UseApplicationEndpoints();
 // =====================================================================
 // Migrations: controlled by Database:ApplyMigrationsOnStartup (defaults true
 // in Development, false elsewhere). Database:AllowMigrationInProduction must
-// ALSO be true before migrations run outside Development — the double-guard
+// ALSO be true before migrations run outside Development - the double-guard
 // prevents accidental schema changes on a shared production database.
 //
-// Seeding: fully idempotent — each seeder checks for existing data and
+// Seeding: fully idempotent - each seeder checks for existing data and
 // returns immediately when the database is already populated.
 // ... after app.Build() and middleware ...
 

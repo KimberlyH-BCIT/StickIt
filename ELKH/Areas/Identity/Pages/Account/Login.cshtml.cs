@@ -1,4 +1,4 @@
-﻿// Licensed to the .NET Foundation under one or more agreements.
+// Licensed to the .NET Foundation under one or more agreements.
 // The .NET Foundation licenses this file to you under the MIT license.
 #nullable disable
 
@@ -123,9 +123,9 @@ namespace ELKH.Areas.Identity.Pages.Account
             ReCaptchaSiteKey = _reCaptchaOptions.SiteKey;
         }
 
-        // ══════════════════════════════════════════════════════════════════════════════
+        // ==============================================================================
         // ║ Page Properties                                                            ║
-        // ══════════════════════════════════════════════════════════════════════════════
+        // ==============================================================================
 
         /// <summary>
         /// Form input data bound from the login view.
@@ -263,9 +263,9 @@ namespace ELKH.Areas.Identity.Pages.Account
         [Microsoft.AspNetCore.RateLimiting.EnableRateLimiting(Auth)]
         public async Task<IActionResult> OnPostAsync(string returnUrl = null)
         {
-            // ══════════════════════════════════════════════════════════════════════════
+            // ==========================================================================
             // ║ PHASE 1: reCAPTCHA Validation                                          ║
-            // ══════════════════════════════════════════════════════════════════════════
+            // ==========================================================================
             var token = Request.Form["g-recaptcha-response"].ToString();
             var ok = await _reCaptcha.VerifyAsync(token, HttpContext.Connection.RemoteIpAddress?.ToString());
 
@@ -281,9 +281,9 @@ namespace ELKH.Areas.Identity.Pages.Account
 
             if (ModelState.IsValid)
             {
-                // ══════════════════════════════════════════════════════════════════════
+                // ======================================================================
                 // ║ PHASE 2: Password Sign-In Attempt                                    ║
-                // ══════════════════════════════════════════════════════════════════════
+                // ======================================================================
                 // NOTE: lockoutOnFailure is currently false. Consider enabling for production
                 // to prevent brute-force attacks (set to true).
                 var result = await _signInManager.PasswordSignInAsync(
@@ -294,9 +294,9 @@ namespace ELKH.Areas.Identity.Pages.Account
 
                 if (result.Succeeded)
                 {
-                    // ══════════════════════════════════════════════════════════════════
+                    // ==================================================================
                     // ║ PHASE 3: Role-Based Redirect                                      ║
-                    // ══════════════════════════════════════════════════════════════════
+                    // ==================================================================
                     // Check user roles in priority order: Admin > Manager > Staff > Customer
                     var user = await _userManager.FindByEmailAsync(Input.Email);
 
@@ -324,9 +324,9 @@ namespace ELKH.Areas.Identity.Pages.Account
                     return RedirectToAction("Index", "User", new { area = "" });
                 }
 
-                // ══════════════════════════════════════════════════════════════════════
+                // ======================================================================
                 // ║ Special Cases: 2FA and Lockout                                       ║
-                // ══════════════════════════════════════════════════════════════════════
+                // ======================================================================
                 if (result.RequiresTwoFactor)
                 {
                     return RedirectToPage("./LoginWith2fa", new { ReturnUrl = returnUrl, RememberMe = Input.RememberMe });

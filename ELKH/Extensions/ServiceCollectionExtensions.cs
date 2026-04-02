@@ -43,6 +43,8 @@ namespace ELKH.Extensions
             services.Configure<ELKH.Configuration.SearchOptions>(configuration.GetSection("Search"));
             services.Configure<ELKH.Configuration.EmailOptions>(configuration.GetSection("Email"));
             services.Configure<ELKH.Configuration.ModerationOptions>(configuration.GetSection("Moderation"));
+            services.Configure<ELKH.Configuration.PayPalOptions>(configuration.GetSection("PayPal"));
+            services.Configure<ELKH.Configuration.ReCaptchaOptions>(configuration.GetSection("ReCaptcha"));
 
             return services;
         }
@@ -66,6 +68,9 @@ namespace ELKH.Extensions
             services.AddScoped<StockNotificationEmailService>(); // Email notifications for restocked items
             services.AddScoped<IProductMapper, ProductMapper>(); // Manual mapping instead of AutoMapper
             services.AddScoped<ImageValidationService>(); // Secure image upload validation
+            services.AddScoped<IImageOptimizationService, ImageOptimizationService>(); // Image optimization services
+            services.AddScoped<IStructuredLoggingService, StructuredLoggingService>(); // Enhanced logging
+            services.AddScoped<IGuestCartService, GuestCartService>(); // Guest checkout services
 
             return services;
         }
@@ -75,7 +80,7 @@ namespace ELKH.Extensions
         /// </summary>
         public static IServiceCollection AddRepositories(this IServiceCollection services)
         {
-            services.AddScoped<IRoleRepository, RoleRepository>();
+            services.AddScoped<IRoleRepo, RoleRepo>();
             services.AddScoped<IOrderManagementRepo, OrderManagementRepo>();
             services.AddScoped<IRegisteredUserLogRepo, RegisteredUserLogRepo>();
             services.AddScoped<IRegisteredUserProfileRepo, RegisteredUserProfileRepo>();
@@ -84,6 +89,15 @@ namespace ELKH.Extensions
             services.AddScoped<IInventoryRepo, InventoryRepo>();
             services.AddScoped<IOrderRepo, OrderRepo>();
             services.AddScoped<ITransactionRepo, TransactionRepo>();
+
+            // Concrete repositories that don't have interfaces yet
+            services.AddScoped<OrderHistoryManagementRepo>();
+            services.AddScoped<InventoryRepo>();
+            services.AddScoped<RegisteredUserLogRepo>();
+            services.AddScoped<RegisteredUserProfileRepo>();
+            services.AddScoped<ContactDetailRepo>();
+            services.AddScoped<TransactionRepo>();
+            services.AddScoped<OrderHistoryStaffRepo>();
 
             return services;
         }
@@ -139,7 +153,7 @@ namespace ELKH.Extensions
             {
                 options.RejectionStatusCode = StatusCodes.Status429TooManyRequests;
 
-                // Strict: 5 attempts per 60 s — protects login and registration.
+                // Strict: 5 attempts per 60 s - protects login and registration.
                 options.AddFixedWindowLimiter(RateLimitPolicies.Auth, o =>
                 {
                     o.PermitLimit      = 5;
@@ -167,7 +181,7 @@ namespace ELKH.Extensions
                     o.QueueLimit          = 0;
                 });
 
-                // Admin operations: 10 requests per 60 s — protects resource-intensive admin actions.
+                // Admin operations: 10 requests per 60 s - protects resource-intensive admin actions.
                 // Includes: ReindexFTS, ClearCache, bulk operations
                 options.AddFixedWindowLimiter(RateLimitPolicies.Admin, o =>
                 {
@@ -177,7 +191,7 @@ namespace ELKH.Extensions
                     o.QueueLimit       = 0;
                 });
 
-                // Cart operations: 20 requests per 60 s — prevents inventory enumeration attacks.
+                // Cart operations: 20 requests per 60 s - prevents inventory enumeration attacks.
                 // Includes: AddToCart, Update, Remove
                 options.AddFixedWindowLimiter(RateLimitPolicies.Cart, o =>
                 {

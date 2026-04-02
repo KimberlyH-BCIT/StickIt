@@ -14,10 +14,10 @@ public class OrderEmailService : IOrderEmailService
     /// <inheritdoc />
     public Task SendOrderConfirmationAsync(string customerEmail, string customerFirstName, int orderId)
     {
-        var subject = $"Order #{orderId} confirmed — thanks for your purchase! 🎉";
+        var subject = $"Order #{orderId} confirmed - thanks for your purchase! 🎉";
         var body = $"""
             <p>Hi {customerFirstName},</p>
-            <p>We've received your order and payment — <strong>Order #{orderId}</strong> is now being prepared.</p>
+            <p>We've received your order and payment - <strong>Order #{orderId}</strong> is now being prepared.</p>
             <p>We'll email you again once your stickers ship.</p>
             <p>Thanks for shopping with ELKH!</p>
             """;
@@ -30,7 +30,7 @@ public class OrderEmailService : IOrderEmailService
         var subject = $"Your order #{orderId} has shipped! 📦";
         var body = $"""
             <p>Hi {customerFirstName},</p>
-            <p>Great news — <strong>Order #{orderId}</strong> has been shipped and is on its way to you.</p>
+            <p>Great news - <strong>Order #{orderId}</strong> has been shipped and is on its way to you.</p>
             <p>You'll get another email once it's delivered.</p>
             <p>Thanks for shopping with ELKH! 🎉</p>
             """;
@@ -43,7 +43,7 @@ public class OrderEmailService : IOrderEmailService
         var subject = $"Your order #{orderId} has been delivered! 🎉";
         var body = $"""
             <p>Hi {customerFirstName},</p>
-            <p><strong>Order #{orderId}</strong> has been delivered — we hope you love your stickers!</p>
+            <p><strong>Order #{orderId}</strong> has been delivered - we hope you love your stickers!</p>
             <p>Got a minute? Head to your order history to leave a review and help other shoppers.</p>
             <p>Thanks for shopping with ELKH!</p>
             """;

@@ -1,4 +1,4 @@
-﻿using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations;
 
 namespace ELKH.Models
 {
@@ -34,7 +34,7 @@ namespace ELKH.Models
         /// <summary>
         /// Direct skip-navigation to products in this wishlist, resolved through
         /// <see cref="WishListItemModel"/>. Configured via <c>UsingEntity</c> in
-        /// <c>OnModelCreating</c> — no schema changes required.
+        /// <c>OnModelCreating</c> - no schema changes required.
         /// </summary>
         public ICollection<ProductModel> Products { get; set; } = new List<ProductModel>();
     }

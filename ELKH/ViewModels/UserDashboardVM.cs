@@ -6,7 +6,7 @@ namespace ELKH.ViewModels
         /// <summary>User's profile information.</summary>
         public UserProfileVM? Profile { get; set; }
 
-        /// <summary>Total wishlist items (always unfiltered) — used for the header badge.</summary>
+        /// <summary>Total wishlist items (always unfiltered) - used for the header badge.</summary>
         public int WishlistCount { get; set; }
 
         /// <summary>Paginated active orders section (initial page 1 load).</summary>
@@ -50,7 +50,7 @@ namespace ELKH.ViewModels
         public string CurrentSort { get; set; } = "date_desc";
     }
 
-    /// <summary>Paginated order section result — shared by active orders and order history.</summary>
+    /// <summary>Paginated order section result - shared by active orders and order history.</summary>
     public class OrderSectionVM
     {
         public List<DashboardOrderVM> Items { get; set; } = [];

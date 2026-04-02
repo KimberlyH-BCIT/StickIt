@@ -7,7 +7,7 @@ namespace ELKH.ViewModels
     /// View model for store review submission and editing.
     /// Used on the /User/LeaveReview page to display form and handle submissions.
     /// </summary>
-    public class StoreReviewViewModel
+    public class StoreReviewVM
     {
         /// <summary>
         /// Existing review if user has already submitted one (for editing).

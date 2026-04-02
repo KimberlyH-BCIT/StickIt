@@ -132,14 +132,143 @@
             white-space: nowrap !important;
             border: 0 !important;
         }
+
+        /* =============================================================== */
+        /* ║ Professional Polish - Smooth Transitions & Hover Effects  ║ */
+        /* =============================================================== */
+
+        /* Smooth transitions for all interactive elements */
+        .btn-kawaii,
+        .kawaii-card,
+        article,
+        .accordion-button {
+            transition: all 0.3s ease;
+        }
+
+        /* Feature card hover effects */
+        .kawaii-card article:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12) !important;
+        }
+
+        /* Button hover enhancements */
+        .btn-kawaii:hover:not(:disabled) {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+        }
+
+        .btn-kawaii:active:not(:disabled) {
+            transform: translateY(0);
+        }
+
+        /* Review card hover effects */
+        .review-card article:hover {
+            transform: translateY(-3px) !important;
+            box-shadow: 0 12px 28px rgba(0, 0, 0, 0.15) !important;
+        }
+
+        /* Image hover effects */
+        .kawaii-image-container img {
+            transition: transform 0.3s ease;
+        }
+
+        .kawaii-card:hover .kawaii-image-container img {
+            transform: scale(1.05);
+        }
+
+        /* Carousel navigation hover */
+        #prevReview:hover:not(:disabled),
+        #nextReview:hover:not(:disabled) {
+            transform: scale(1.1);
+            box-shadow: 0 6px 16px rgba(0, 0, 0, 0.15);
+        }
+
+        /* Smooth accordion transitions */
+        .accordion-collapse {
+            transition: height 0.35s ease;
+        }
+
+        .accordion-button {
+            transition: background-color 0.2s ease, box-shadow 0.2s ease;
+        }
+
+        .accordion-button:hover:not(.collapsed) {
+            background-color: rgba(169, 222, 249, 0.08);
+        }
+
+        /* Hero section animations */
+        .kawaii-cloud-title {
+            animation: fadeInUp 0.6s ease-out;
+        }
+
+        .kawaii-subtitle {
+            animation: fadeInUp 0.6s ease-out 0.1s both;
+        }
+
+        .btn-kawaii.btn-lg {
+            animation: fadeInUp 0.6s ease-out 0.2s both;
+        }
+
+        @@keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        /* Stagger animation for feature cards */
+        article {
+            animation: fadeInUp 0.5s ease-out both;
+        }
+
+        .col-lg-4:nth-child(1) article {
+            animation-delay: 0.1s;
+        }
+
+        .col-lg-4:nth-child(2) article {
+            animation-delay: 0.2s;
+        }
+
+        .col-lg-4:nth-child(3) article {
+            animation-delay: 0.3s;
+        }
+
+        /* Professional spacing improvements */
+        section {
+            scroll-margin-top: 2rem;
+        }
+
+        /* Better visual hierarchy with spacing */
+        .container-kawaii {
+            padding-left: 1.5rem;
+            padding-right: 1.5rem;
+        }
+
+        @@media (min-width: 768px) {
+            .container-kawaii {
+                padding-left: 2rem;
+                padding-right: 2rem;
+            }
+        }
+
+        @@media (min-width: 1200px) {
+            .container-kawaii {
+                padding-left: 3rem;
+                padding-right: 3rem;
+            }
+        }
     </style>
 }
 
 @*
-╔══════════════════════════════════════════════════════════════════════════════════╗
+╔==================================================================================╗
 ║ TABLE OF CONTENTS - Home/Index.cshtml                                            ║
 ║ ENHANCED WITH WCAG 2.1 AA ACCESSIBILITY FEATURES                                ║
-╠══════════════════════════════════════════════════════════════════════════════════╣
+╠==================================================================================╣
 ║ 0. Accessibility Styles & Skip Links ...................... Lines    6-70     ║
 ║    - WCAG 2.1 AA compliant CSS with focus indicators                            ║
 ║    - Skip navigation links for screen readers                                   ║
@@ -175,14 +304,14 @@
 ║    - Keyboard event handling and focus restoration                              ║
 ║    - ARIA attribute updates and error handling                                  ║
 ║    - WCAG 2.1 AA compliance features                                            ║
-╚══════════════════════════════════════════════════════════════════════════════════╝
+╚==================================================================================╝
 *@
 
 @{
-    // ═══════════════════════════════════════════════════════════════════════════════
+    // ===============================================================================
     // ║ ViewBag Data Preparation                                                    ║
     // ║ Extract and prepare data passed from HomeController for display             ║
-    // ═══════════════════════════════════════════════════════════════════════════════
+    // ===============================================================================
 
     // Store reviews for the customer testimonials section
     // Reviews come from StoreReviewService and may be null during initial load
@@ -202,68 +331,74 @@
     <p>Home page with navigation, hero section, product features, FAQ, and customer reviews</p>
 </div>
 
-<!-- ════════════════════════════════════════════════════════════════════════════════ -->
+<!-- ================================================================================ -->
 <!-- ║ Kawaii Hero Section - Primary marketing content and call-to-action          ║ -->
-<!-- ════════════════════════════════════════════════════════════════════════════════ -->
+<!-- ================================================================================ -->
 <main id="main-content">
-<header class="kawaii-hero" role="banner">
+<header class="kawaii-hero py-5" role="banner">
     <div class="container-kawaii">
         <div class="text-center">
-            <div class="kawaii-cloud-title display-title sparkle">
+            <div class="kawaii-cloud-title display-title sparkle mb-3">
                 <i class="bi bi-heart-fill me-3" aria-hidden="true" style="color: var(--pink);"></i>
                 Premium Stickers for You
             </div>
 
-            <div class="kawaii-subtitle mb-4">
+            <div class="kawaii-subtitle mb-5" style="font-size: 1.125rem; max-width: 600px; margin-left: auto; margin-right: auto;">
                 Express delivery, premium materials, and clean cuts.<br>
                 Get an instant quote and shop our ready-made designs.
             </div>
 
-            <div class="d-flex flex-wrap justify-content-center gap-3 mb-4">
+            <div class="d-flex flex-wrap justify-content-center gap-3 mb-5">
                 <a asp-controller="Product" asp-action="Index" 
-                   class="btn-kawaii btn-primary-kawaii btn-lg"
+                   class="btn-kawaii btn-primary-kawaii btn-lg px-5 py-3"
+                   style="font-size: 1.125rem; font-weight: 600;"
                    aria-label="Browse new arrivals - View the latest sticker products">
                     ✨ New Arrivals
                 </a>
                 <a asp-controller="Product" asp-action="Index" 
-                   class="btn-kawaii btn-secondary-kawaii btn-lg"
+                   class="btn-kawaii btn-secondary-kawaii btn-lg px-5 py-3"
+                   style="font-size: 1.125rem; font-weight: 600;"
                    aria-label="Browse all sticker products in our catalog">
                     All Products <i class="bi bi-arrow-right ms-1" aria-hidden="true"></i>
                 </a>
             </div>
 
-            <div class="kawaii-card surface-mint d-inline-block px-4 py-3">
-                <div class="d-flex flex-wrap justify-content-center gap-4" role="list" aria-label="Product features">
-                    <div role="listitem" class="hierarchy-secondary">
-                        <i class="bi bi-truck me-2" style="color: var(--purple);" aria-hidden="true"></i>Fast delivery
+            <div class="kawaii-card surface-mint d-inline-block px-5 py-4 shadow-sm">
+                <div class="d-flex flex-wrap justify-content-center gap-4" role="list" aria-label="Product features" style="font-size: 1rem;">
+                    <div role="listitem" class="hierarchy-secondary d-flex align-items-center">
+                        <i class="bi bi-truck me-2" style="color: var(--purple); font-size: 1.25rem;" aria-hidden="true"></i>
+                        <span style="font-weight: 500;">Fast delivery</span>
                     </div>
-                    <div role="listitem" class="hierarchy-secondary">
-                        <i class="bi bi-stars me-2" style="color: var(--purple);" aria-hidden="true"></i>Premium finish
+                    <div role="listitem" class="hierarchy-secondary d-flex align-items-center">
+                        <i class="bi bi-stars me-2" style="color: var(--purple); font-size: 1.25rem;" aria-hidden="true"></i>
+                        <span style="font-weight: 500;">Premium finish</span>
                     </div>
-                    <div role="listitem" class="hierarchy-secondary">
-                        <i class="bi bi-shield-check me-2" style="color: var(--purple);" aria-hidden="true"></i>Secure checkout
+                    <div role="listitem" class="hierarchy-secondary d-flex align-items-center">
+                        <i class="bi bi-shield-check me-2" style="color: var(--purple); font-size: 1.25rem;" aria-hidden="true"></i>
+                        <span style="font-weight: 500;">Secure checkout</span>
                     </div>
                 </div>
             </div>
 
             <!-- Trending product showcase -->
-            <div class="mt-5">
-                <div class="kawaii-card surface-butter d-inline-block p-4">
+            <div class="mt-5 mb-4">
+                <div class="kawaii-card surface-butter d-inline-block p-4 shadow-sm" style="max-width: 350px;">
                     <div class="d-flex align-items-center justify-content-between mb-3">
-                        <span class="font-heading">Trending 🔥</span>
-                        <span class="kawaii-badge badge-warning">Hot</span>
+                        <span class="font-heading" style="font-size: 1.25rem;">Trending 🔥</span>
+                        <span class="kawaii-badge badge-warning px-3 py-1" style="font-size: 0.875rem; font-weight: 600;">Hot</span>
                     </div>
-                    <div class="rounded-4 overflow-hidden" style="max-width: 300px;">
+                    <div class="rounded-4 overflow-hidden shadow-sm">
                         <img src="~/Images/StickIt_Logo.jpg"
                              asp-append-version="true"
                              alt="StickIt company logo featuring our signature branding - representative of our trending sticker collection"
                              class="w-100"
-                             style="height:200px; object-fit:cover;" />
+                             style="height:220px; object-fit:cover;" />
                     </div>
                     <div class="mt-3">
-                        <div class="hierarchy-secondary small">Browse the full catalog</div>
+                        <div class="hierarchy-secondary" style="font-size: 0.9375rem; margin-bottom: 0.75rem;">Browse the full catalog</div>
                         <a asp-controller="Product" asp-action="Index" 
-                           class="btn-kawaii btn-secondary-kawaii mt-2"
+                           class="btn-kawaii btn-secondary-kawaii mt-2 px-4 py-2"
+                           style="font-weight: 500;"
                            aria-label="Shop now - Browse all sticker products">Shop now</a>
                     </div>
                 </div>
@@ -272,88 +407,99 @@
     </div>
 </header>
 
-<!-- ════════════════════════════════════════════════════════════════════════════════ -->
+<!-- ================================================================================ -->
 <!-- ║ Kawaii Feature Cards Section - Product categories and promotional content   ║ -->
-<!-- ════════════════════════════════════════════════════════════════════════════════ -->
+<!-- ================================================================================ -->
 <section id="features-section" class="container-kawaii py-5" aria-labelledby="features-heading">
     <div class="text-center mb-5">
-        <h2 id="features-heading" class="font-heading">Premium Quality, Creative Freedom</h2>
-        <p class="hierarchy-secondary">High-quality materials, clean cuts, and designs that stand out.</p>
+        <h2 id="features-heading" class="font-heading" style="font-size: 2.25rem; margin-bottom: 1rem;">Premium Quality, Creative Freedom</h2>
+        <p class="hierarchy-secondary" style="font-size: 1.125rem; max-width: 600px; margin-left: auto; margin-right: auto;">High-quality materials, clean cuts, and designs that stand out.</p>
     </div>
 
     <div class="row g-4">
-        <div class="col-lg-6">
-            <article class="kawaii-card surface-lavender h-100 p-4">
-                <div class="kawaii-image-container rounded-3 overflow-hidden mb-3">
+        <div class="col-lg-4 col-md-6">
+            <article class="kawaii-card surface-lavender h-100 p-4 shadow-sm d-flex flex-column">
+                <div class="kawaii-image-container rounded-3 overflow-hidden mb-3 shadow-sm">
                     <img src="~/Images/StickIt_Logo.jpg"
                          asp-append-version="true"
                          alt="Sample pack preview showing StickIt logo design"
                          class="w-100"
-                         style="height:190px; object-fit:cover;" />
+                         style="height:200px; object-fit:cover;" />
                 </div>
-                <h3 class="font-heading">Sample Packs</h3>
-                <p class="hierarchy-secondary small mb-3">
+                <h3 class="font-heading mb-2" style="font-size: 1.5rem;">Sample Packs</h3>
+                <p class="hierarchy-secondary mb-3" style="font-size: 0.9375rem; flex-grow: 1;">
                     <i class="bi bi-droplet me-1" style="color: var(--purple);" aria-hidden="true"></i>Waterproof •
                     <i class="bi bi-shield me-1" style="color: var(--purple);" aria-hidden="true"></i>Durable •
                     <i class="bi bi-star me-1" style="color: var(--purple);" aria-hidden="true"></i>Scratch-resistant
                 </p>
-                <a asp-controller="Product" asp-action="Index" 
-                   class="btn-kawaii btn-outline-kawaii"
-                   aria-label="Shop sample pack stickers - Waterproof and durable options">Shop stickers</a>
+                <div class="mt-auto">
+                    <a asp-controller="Product" asp-action="Index" 
+                       class="btn-kawaii btn-outline-kawaii w-100 py-2"
+                       style="font-weight: 500;"
+                       aria-label="Shop sample pack stickers - Waterproof and durable options">Shop stickers</a>
+                </div>
             </article>
         </div>
 
-        <div class="col-lg-6">
-            <article class="kawaii-card surface-mint h-100 p-4">
-                <div class="kawaii-image-container rounded-3 overflow-hidden mb-3">
+        <div class="col-lg-4 col-md-6">
+            <article class="kawaii-card surface-mint h-100 p-4 shadow-sm d-flex flex-column">
+                <div class="kawaii-image-container rounded-3 overflow-hidden mb-3 shadow-sm">
                     <img src="~/Images/StickIt_Logo.jpg"
                          asp-append-version="true"
                          alt="Die-cut stickers preview showing StickIt logo design"
                          class="w-100"
-                         style="height:190px; object-fit:cover;" />
+                         style="height:200px; object-fit:cover;" />
                 </div>
-                <h3 class="font-heading">Die-Cut Stickers</h3>
-                <p class="hierarchy-secondary small mb-3">
+                <h3 class="font-heading mb-2" style="font-size: 1.5rem;">Die-Cut Stickers</h3>
+                <p class="hierarchy-secondary mb-3" style="font-size: 0.9375rem; flex-grow: 1;">
                     <i class="bi bi-scissors me-1" style="color: var(--purple);" aria-hidden="true"></i>Any shape •
                     <i class="bi bi-gem me-1" style="color: var(--purple);" aria-hidden="true"></i>Premium finish
                 </p>
-                <a asp-controller="Product" asp-action="Index" 
-                   class="btn-kawaii btn-outline-kawaii"
-                   aria-label="Shop die-cut stickers - Custom shapes with premium finish">Shop stickers</a>
+                <div class="mt-auto">
+                    <a asp-controller="Product" asp-action="Index" 
+                       class="btn-kawaii btn-outline-kawaii w-100 py-2"
+                       style="font-weight: 500;"
+                       aria-label="Shop die-cut stickers - Custom shapes with premium finish">Shop stickers</a>
+                </div>
             </article>
         </div>
 
-        <div class="col-lg-6">
-            <article class="kawaii-card surface-sky h-100 p-4">
-                <div class="kawaii-image-container rounded-3 overflow-hidden mb-3">
+        <div class="col-lg-4 col-md-6">
+            <article class="kawaii-card surface-sky h-100 p-4 shadow-sm d-flex flex-column">
+                <div class="kawaii-image-container rounded-3 overflow-hidden mb-3 shadow-sm">
                     <img src="~/Images/StickIt_Logo.jpg"
                          asp-append-version="true"
                          alt="Premium quality stickers preview showing StickIt logo design"
                          class="w-100"
-                         style="height:190px; object-fit:cover;" />
+                         style="height:200px; object-fit:cover;" />
                 </div>
-                <h3 class="font-heading">Premium Quality</h3>
-                <p class="hierarchy-secondary small mb-3">
+                <h3 class="font-heading mb-2" style="font-size: 1.5rem;">Premium Quality</h3>
+                <p class="hierarchy-secondary mb-3" style="font-size: 0.9375rem; flex-grow: 1;">
                     <i class="bi bi-droplet me-1" style="color: var(--purple);" aria-hidden="true"></i>Waterproof •
                     <i class="bi bi-shield me-1" style="color: var(--purple);" aria-hidden="true"></i>Durable •
                     <i class="bi bi-star me-1" style="color: var(--purple);" aria-hidden="true"></i>Scratch-resistant
                 </p>
-                <a asp-controller="Product" asp-action="Index" 
-                   class="btn-kawaii btn-outline-kawaii"
-                   aria-label="Shop premium quality stickers - Waterproof and durable options">Shop stickers</a>
+                <div class="mt-auto">
+                    <a asp-controller="Product" asp-action="Index" 
+                       class="btn-kawaii btn-outline-kawaii w-100 py-2"
+                       style="font-weight: 500;"
+                       aria-label="Shop premium quality stickers - Waterproof and durable options">Shop stickers</a>
+                </div>
             </article>
         </div>
     </div>
 
-        <!-- ═══════════════════════════════════════════════════════════════════════════ -->
+        <!-- =========================================================================== -->
         <!-- ║ FAQ Section - Frequently Asked Questions with Bootstrap Accordion     ║ -->
-        <!-- ═══════════════════════════════════════════════════════════════════════════ -->
-        <section class="mt-5" aria-labelledby="faq-heading">
-            <h2 id="faq-heading" class="fw-bold mb-1">FAQ</h2>
-            <p class="text-muted">Quick answers to common questions</p>
+        <!-- =========================================================================== -->
+        <section class="mt-5 mb-5" aria-labelledby="faq-heading">
+            <div class="text-center mb-4">
+                <h2 id="faq-heading" class="font-heading" style="font-size: 2rem; margin-bottom: 0.5rem;">Frequently Asked Questions</h2>
+                <p class="hierarchy-tertiary" style="font-size: 1rem;">Quick answers to common questions</p>
+            </div>
 
-            <div class="accordion mt-3" id="faqAccordion" role="tablist" aria-label="Frequently Asked Questions">
-                <div class="accordion-item">
+            <div class="accordion mt-3" id="faqAccordion" role="tablist" aria-label="Frequently Asked Questions" style="max-width: 800px; margin-left: auto; margin-right: auto;">
+                <div class="accordion-item mb-2 border-0 shadow-sm rounded-3 overflow-hidden">
                     <h3 class="accordion-header" id="q1">
                         <button class="accordion-button" 
                                 type="button" 
@@ -361,7 +507,8 @@
                                 data-bs-target="#a1"
                                 aria-expanded="true"
                                 aria-controls="a1"
-                                role="tab">
+                                role="tab"
+                                style="font-size: 1.0625rem; font-weight: 600; padding: 1.25rem 1.5rem;">
                             How long does delivery take?
                         </button>
                     </h3>
@@ -370,11 +517,11 @@
                          data-bs-parent="#faqAccordion"
                          role="tabpanel"
                          aria-labelledby="q1">
-                        <div class="accordion-body text-muted">Most orders ship quickly once confirmed.</div>
+                        <div class="accordion-body hierarchy-secondary" style="padding: 1.25rem 1.5rem; font-size: 1rem;">Most orders ship quickly once confirmed.</div>
                     </div>
                 </div>
 
-                <div class="accordion-item">
+                <div class="accordion-item mb-2 border-0 shadow-sm rounded-3 overflow-hidden">
                     <h3 class="accordion-header" id="q2">
                         <button class="accordion-button collapsed" 
                                 type="button" 
@@ -382,7 +529,8 @@
                                 data-bs-target="#a2"
                                 aria-expanded="false"
                                 aria-controls="a2"
-                                role="tab">
+                                role="tab"
+                                style="font-size: 1.0625rem; font-weight: 600; padding: 1.25rem 1.5rem;">
                             Can I refund my order?
                         </button>
                     </h3>
@@ -391,14 +539,17 @@
                          data-bs-parent="#faqAccordion"
                          role="tabpanel"
                          aria-labelledby="q2">
-                        <div class="accordion-body text-muted">No. This is a non-refundable purchase.</div>
-                        <a asp-controller="Order" asp-action="History" 
-                           class="btn btn-sm btn-outline-dark mt-2"
-                           aria-label="View my order history">My Orders</a>
+                        <div class="accordion-body hierarchy-secondary" style="padding: 1.25rem 1.5rem; font-size: 1rem;">
+                            <p class="mb-3">No. This is a non-refundable purchase.</p>
+                            <a asp-controller="Order" asp-action="History" 
+                               class="btn-kawaii btn-outline-kawaii btn-sm px-3 py-2"
+                               style="font-weight: 500;"
+                               aria-label="View my order history">My Orders</a>
+                        </div>
                     </div>
                 </div>
 
-                <div class="accordion-item">
+                <div class="accordion-item mb-2 border-0 shadow-sm rounded-3 overflow-hidden">
                     <h3 class="accordion-header" id="q3">
                         <button class="accordion-button collapsed" 
                                 type="button" 
@@ -406,7 +557,8 @@
                                 data-bs-target="#a3"
                                 aria-expanded="false"
                                 aria-controls="a3"
-                                role="tab">
+                                role="tab"
+                                style="font-size: 1.0625rem; font-weight: 600; padding: 1.25rem 1.5rem;">
                             What materials do you offer?
                         </button>
                     </h3>
@@ -415,29 +567,31 @@
                          data-bs-parent="#faqAccordion"
                          role="tabpanel"
                          aria-labelledby="q3">
-                        <div class="accordion-body text-muted">Stickers, labels, sheets and more.</div>
+                        <div class="accordion-body hierarchy-secondary" style="padding: 1.25rem 1.5rem; font-size: 1rem;">Stickers, labels, sheets and more.</div>
                     </div>
                 </div>
             </div>
         </section>
 
-        <!-- ═══════════════════════════════════════════════════════════════════════════ -->
+        <!-- =========================================================================== -->
         <!-- ║ Customer Reviews Section - Dynamic carousel with pagination           ║ -->
-        <!-- ═══════════════════════════════════════════════════════════════════════════ -->
+        <!-- =========================================================================== -->
         <section id="reviews-section" class="py-5" aria-labelledby="reviews-heading">
-            <h2 id="reviews-heading" class="fw-bold mb-1 text-center">What our beloved Customers Say!</h2>
-            <p class="text-muted text-center mb-4">Real words from real sticker lovers.</p>
+            <div class="text-center mb-5">
+                <h2 id="reviews-heading" class="font-heading" style="font-size: 2rem; margin-bottom: 0.5rem;">What Our Customers Say</h2>
+                <p class="hierarchy-tertiary" style="font-size: 1.0625rem;">Real words from real sticker lovers.</p>
+            </div>
 
             @if (hasReviews)
             {
-                <!-- ═══════════════════════════════════════════════════════════════════════ -->
+                <!-- ======================================================================= -->
                 <!-- ║ Review Carousel Container - Shows max 3 reviews with navigation   ║ -->
-                <!-- ═══════════════════════════════════════════════════════════════════════ -->
-                <div class="position-relative" role="region" aria-label="Customer reviews carousel">
+                <!-- ======================================================================= -->
+                <div class="position-relative container-kawaii" role="region" aria-label="Customer reviews carousel">
                     <!-- Navigation Arrows -->
-                    <button class="btn btn-light border rounded-circle position-absolute top-50 start-0 translate-middle-y" 
+                    <button class="btn-kawaii btn-outline-kawaii rounded-circle position-absolute top-50 start-0 translate-middle-y shadow-sm" 
                             id="prevReview" 
-                            style="width: 50px; height: 50px; z-index: 10; margin-left: -25px;"
+                            style="width: 55px; height: 55px; z-index: 10; margin-left: -27px; font-size: 1.25rem;"
                             aria-label="Previous reviews"
                             title="Previous review"
                             role="button"
@@ -445,9 +599,9 @@
                         <i class="bi bi-chevron-left fw-bold" aria-hidden="true"></i>
                         <span class="visually-hidden">Previous</span>
                     </button>
-                    <button class="btn btn-light border rounded-circle position-absolute top-50 end-0 translate-middle-y" 
+                    <button class="btn-kawaii btn-outline-kawaii rounded-circle position-absolute top-50 end-0 translate-middle-y shadow-sm" 
                             id="nextReview" 
-                            style="width: 50px; height: 50px; z-index: 10; margin-right: -25px;"
+                            style="width: 55px; height: 55px; z-index: 10; margin-right: -27px; font-size: 1.25rem;"
                             aria-label="Next reviews"
                             title="Next review"
                             role="button"
@@ -463,11 +617,11 @@
                             var review = reviews?[i];
                             if (review == null) continue;
 
-                            // ═══════════════════════════════════════════════════════════════════
+                            // ===================================================================
                             // ║ Alternating Card Theme Logic                                  ║
                             // ║ Even-indexed cards: Light theme with subtle green verified badge  ║
                             // ║ Odd-indexed cards:  Dark theme with warning-colored badge         ║
-                            // ═══════════════════════════════════════════════════════════════════
+                            // ===================================================================
                             var isEven = i % 2 == 0;
                             var cardClass = isEven ? "card border-0 shadow-sm h-100 rounded-4" : "card border-0 shadow-sm h-100 rounded-4 bg-dark text-white";
                             var badgeClass = isEven ? "badge" : "badge bg-warning text-dark";
@@ -476,18 +630,18 @@
                             var bgClass = isEven ? "bg-light" : "bg-secondary";
 
                             <div class="col-md-4 review-card" data-index="@i" role="article" tabindex="0">
-                                <article class="@cardClass">
+                                <article class="@cardClass" style="transition: transform 0.2s ease;">
                                     <div class="card-body p-4">
                                         <div class="d-flex align-items-center justify-content-between mb-3">
                                             @if (review.IsVerifiedBuyer)
                                             {
-                                                <span class="@badgeClass" style="@badgeStyle" aria-label="Verified buyer">Verified buyer</span>
+                                                <span class="@badgeClass px-3 py-1" style="@badgeStyle; font-size: 0.875rem; font-weight: 500; border-radius: 12px;" aria-label="Verified buyer">✓ Verified buyer</span>
                                             }
                                             else
                                             {
                                                 <span></span>
                                             }
-                                            <div class="text-warning" role="img" aria-label="@review.Rating out of 5 stars">
+                                            <div class="text-warning" role="img" aria-label="@review.Rating out of 5 stars" style="font-size: 1.125rem;">
                                                 @for (int s = 0; s < review.Rating; s++)
                                                 {
                                                     <span aria-hidden="true">★</span>
@@ -497,20 +651,20 @@
                                         </div>
                                         @if (!string.IsNullOrEmpty(review.Title))
                                         {
-                                            <h3 class="fw-bold mb-2 h6">@review.Title</h3>
+                                            <h3 class="fw-bold mb-2 h6" style="font-size: 1.125rem;">@review.Title</h3>
                                         }
-                                        <p class="@textClass mb-4" style="min-height: 100px;">
+                                        <p class="@textClass mb-4" style="min-height: 100px; font-size: 0.9375rem; line-height: 1.6;">
                                             @review.Description
                                         </p>
                                         <div class="d-flex align-items-center gap-2">
                                             <div class="rounded-circle @bgClass d-flex align-items-center justify-content-center" 
-                                                 style="width:40px;height:40px;"
+                                                 style="width:45px;height:45px; flex-shrink: 0;"
                                                  role="img" 
                                                  aria-label="User avatar for @(review.RegisteredUser?.Email?.Split('@').FirstOrDefault() ?? "Anonymous")">
-                                                <span class="fw-bold" aria-hidden="true">@(review.RegisteredUser?.Email?.FirstOrDefault().ToString().ToUpper() ?? "?")</span>
+                                                <span class="fw-bold" style="font-size: 1.125rem;" aria-hidden="true">@(review.RegisteredUser?.Email?.FirstOrDefault().ToString().ToUpper() ?? "?")</span>
                                             </div>
                                             <div>
-                                                <div class="fw-semibold">@(review.RegisteredUser?.Email?.Split('@').FirstOrDefault() ?? "Anonymous")</div>
+                                                <div class="fw-semibold" style="font-size: 0.9375rem;">@(review.RegisteredUser?.Email?.Split('@').FirstOrDefault() ?? "Anonymous")</div>
                                                 <time class="@textClass small" datetime="@review.CreatedAt.ToString("yyyy-MM-dd")">@review.CreatedAt.ToString("MMM dd, yyyy")</time>
                                             </div>
                                         </div>
@@ -540,11 +694,12 @@
                 </div>
             }
 
-            <div class="text-center mt-4">
+            <div class="text-center mt-5">
                 <a asp-controller="User" asp-action="LeaveReview" 
-                   class="btn btn-warning btn-lg px-4"
+                   class="btn btn-warning btn-lg px-5 py-3 shadow-sm"
+                   style="font-size: 1.125rem; font-weight: 600; border-radius: 12px;"
                    aria-label="Leave your review - Share your experience with our products">
-                    <i class="bi bi-pencil-square me-2" aria-hidden="true"></i>Leave your review
+                    <i class="bi bi-pencil-square me-2" aria-hidden="true"></i>Leave Your Review
                 </a>
             </div>
         </section>
@@ -574,9 +729,9 @@
             let currentStartIndex = 0;  // Current starting position in the review array
             const maxIndex = allReviews.length - 3;  // Maximum starting index (ensures 3 items always visible)
 
-            // ═══════════════════════════════════════════════════════════════════════════════
+            // ===============================================================================
             // ║ Accessibility Enhancement Functions                                       ║
-            // ═══════════════════════════════════════════════════════════════════════════════
+            // ===============================================================================
 
             // Announce changes to screen readers
             function announceToScreenReader(message) {
@@ -608,9 +763,9 @@
                     currentStartIndex >= maxIndex ? 'Next reviews (disabled)' : 'Next reviews');
             }
 
-            // ═══════════════════════════════════════════════════════════════════════════════
+            // ===============================================================================
             // ║ Navigation Event Handlers                                                 ║
-            // ═══════════════════════════════════════════════════════════════════════════════
+            // ===============================================================================
 
             document.getElementById('prevReview').addEventListener('click', function() {
                 if (currentStartIndex > 0) {
@@ -760,9 +915,9 @@
                     }
                 }
 
-                // ═══════════════════════════════════════════════════════════════════════════
+                // ===========================================================================
                 // ║ UI State Updates with Accessibility and Focus Management             ║
-                // ═══════════════════════════════════════════════════════════════════════════
+                // ===========================================================================
 
                 // Update pagination indicator to show current position
                 const currentReviewSetElem = document.getElementById('currentReviewSet');

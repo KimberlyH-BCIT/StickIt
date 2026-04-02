@@ -68,9 +68,9 @@ public static partial class DbSeeder
     {
         return new List<ProductModel>
         {
-            // ══════════════════════════════════════════════════════════════
+            // ==============================================================
             // CANADIAN (40 products)
-            // ══════════════════════════════════════════════════════════════
+            // ==============================================================
             P("Maple Leaf Pride Sticker", "Classic red maple leaf design celebrating Canadian heritage.", 2.49m, 0, 250, canadian, "canadian,maple,leaf,patriotic", isBestSeller: true),
             P("Eh Canada Sticker", "Friendly 'Eh?' text design with Canadian flag colors.", 1.99m, 10, 180, canadian, "canadian,eh,funny,text", isTrending: true),
             P("Hockey Night Sticker", "Hockey stick and puck in red and white.", 2.99m, 0, 200, canadian, "canadian,hockey,sports,winter", isBestSeller: true),
@@ -112,9 +112,9 @@ public static partial class DbSeeder
             P("Ketchup Chips Sticker", "Iconic Canadian chip flavor bag.", 2.49m, 0, 175, canadian, "canadian,chips,ketchup,snack"),
             P("Rocky Mountains Sticker", "Alberta Rocky Mountain peaks.", 4.49m, 0, 85, canadian, "canadian,rockies,mountains,alberta"),
 
-            // ══════════════════════════════════════════════════════════════
+            // ==============================================================
             // CHRISTMAS (43 products)
-            // ══════════════════════════════════════════════════════════════
+            // ==============================================================
             P("Santa Claus Face Sticker", "Jolly Santa with rosy cheeks and white beard.", 2.99m, 0, 300, christmas, "christmas,santa,holiday,festive", isBestSeller: true, isTrending: true),
             P("Christmas Tree Sticker", "Decorated evergreen tree with star topper.", 2.49m, 15, 250, christmas, "christmas,tree,ornament,festive", isBestSeller: true),
             P("Snowflake Crystal Sticker", "Intricate six-pointed snowflake design.", 1.99m, 0, 280, christmas, "christmas,snowflake,winter,snow", isTrending: true),
@@ -159,9 +159,9 @@ public static partial class DbSeeder
             P("Christmas Kitten Sticker", "Kitten playing with ornament.", 2.49m, 0, 265, christmas, "christmas,kitten,cat,cute"),
             P("Peace on Earth Sticker", "Dove with olive branch and text.", 2.99m, 0, 240, christmas, "christmas,peace,dove,message"),
 
-            // ══════════════════════════════════════════════════════════════
+            // ==============================================================
             // CUTE ANIMALS (50 products)
-            // ══════════════════════════════════════════════════════════════
+            // ==============================================================
             P("Kawaii Panda Sticker", "Adorable panda munching bamboo.", 2.49m, 0, 280, animals, "cute,panda,kawaii,animal"),
             P("Baby Elephant Sticker", "Little elephant with big ears.", 2.99m, 15, 250, animals, "cute,elephant,baby,animal"),
             P("Chibi Cat Sticker", "Super deformed cat with big eyes.", 1.99m, 0, 320, animals, "cute,cat,chibi,kawaii"),
@@ -213,9 +213,9 @@ public static partial class DbSeeder
             P("Puffin Sticker", "Colorful puffin bird with fish.", 3.49m, 0, 205, animals, "cute,puffin,bird,colorful"),
             P("Sugar Glider Sticker", "Tiny sugar glider gliding.", 2.99m, 15, 230, animals, "cute,sugar-glider,gliding,small"),
 
-            // ══════════════════════════════════════════════════════════════
+            // ==============================================================
             // EASTER (35 products)
-            // ══════════════════════════════════════════════════════════════
+            // ==============================================================
             P("Easter Bunny Sticker", "White bunny with basket of eggs.", 2.99m, 0, 200, easter, "easter,bunny,rabbit,eggs"),
             P("Decorated Egg Sticker", "Colorfully painted Easter egg.", 1.99m, 15, 250, easter, "easter,egg,painted,decorated"),
             P("Chick Hatching Sticker", "Baby chick breaking out of egg.", 2.49m, 0, 220, easter, "easter,chick,hatching,baby"),
@@ -252,9 +252,9 @@ public static partial class DbSeeder
             P("Easter Prayer Sticker", "Praying hands with cross.", 2.99m, 0, 165, easter, "easter,prayer,hands,religious"),
             P("Bunny Love Sticker", "Two bunnies touching noses.", 2.49m, 0, 210, easter, "easter,bunny,love,couple"),
 
-            // ══════════════════════════════════════════════════════════════
+            // ==============================================================
             // FOOD (53 products)
-            // ══════════════════════════════════════════════════════════════
+            // ==============================================================
             P("Pizza Slice Sticker", "Cheesy pepperoni pizza slice.", 2.49m, 0, 280, food, "food,pizza,cheese,italian"),
             P("Sushi Roll Sticker", "California roll with chopsticks.", 2.99m, 15, 250, food, "food,sushi,japanese,roll"),
             P("Avocado Half Sticker", "Cute avocado with pit heart.", 2.49m, 0, 270, food, "food,avocado,healthy,cute"),
@@ -309,9 +309,9 @@ public static partial class DbSeeder
             P("Cake Slice Sticker", "Slice of layered birthday cake.", 3.49m, 10, 0, food, "food,cake,dessert,birthday"),
             P("Mushroom Sticker", "Brown mushroom fungi.", 2.49m, 0, 235, food, "food,mushroom,vegetable,fungi"),
 
-            // ══════════════════════════════════════════════════════════════
+            // ==============================================================
             // HALLOWEEN (68 products)
-            // ══════════════════════════════════════════════════════════════
+            // ==============================================================
             P("Jack O'Lantern Sticker", "Carved pumpkin with scary face.", 2.99m, 0, 350, halloween, "halloween,pumpkin,jack-o-lantern,carved"),
             P("Ghost Boo Sticker", "Cute white ghost saying boo.", 2.49m, 15, 320, halloween, "halloween,ghost,boo,spooky"),
             P("Black Cat Sticker", "Black cat with arched back.", 2.49m, 0, 330, halloween, "halloween,black-cat,cat,spooky"),
@@ -381,9 +381,9 @@ public static partial class DbSeeder
             P("Shadow Figure Sticker", "Dark shadowy silhouette.", 2.99m, 0, 255, halloween, "halloween,shadow,figure,dark"),
             P("Plague Doctor Sticker", "Medieval plague doctor mask.", 3.49m, 20, 0, halloween, "halloween,plague-doctor,mask,medieval"),
 
-            // ══════════════════════════════════════════════════════════════
+            // ==============================================================
             // LUNAR NEW YEAR (39 products)
-            // ══════════════════════════════════════════════════════════════
+            // ==============================================================
             P("Red Envelope Sticker", "Lucky red money envelope.", 2.49m, 0, 220, lunarNY, "lunar-new-year,red-envelope,money,lucky"),
             P("Dragon Dance Sticker", "Traditional Chinese dragon.", 3.99m, 15, 180, lunarNY, "lunar-new-year,dragon,dance,chinese"),
             P("Firecracker Sticker", "Red firecrackers exploding.", 2.99m, 0, 200, lunarNY, "lunar-new-year,firecracker,explosion,celebration"),
@@ -424,9 +424,9 @@ public static partial class DbSeeder
             P("Incense Sticks Sticker", "Burning incense sticks.", 2.99m, 15, 165, lunarNY, "lunar-new-year,incense,burning,tradition"),
             P("Blessing Circle Sticker", "Circular blessing design.", 2.49m, 0, 190, lunarNY, "lunar-new-year,blessing,circle,design"),
 
-            // ══════════════════════════════════════════════════════════════
+            // ==============================================================
             // NATURE & FLORAL (24 products)
-            // ══════════════════════════════════════════════════════════════
+            // ==============================================================
             P("Rose Red Sticker", "Classic red rose bloom.", 2.99m, 0, 200, nature, "nature,rose,flower,red"),
             P("Sunflower Sticker", "Bright yellow sunflower.", 2.49m, 15, 220, nature, "nature,sunflower,yellow,flower"),
             P("Lavender Sprig Sticker", "Purple lavender stems.", 2.99m, 0, 190, nature, "nature,lavender,purple,flower"),
@@ -452,9 +452,9 @@ public static partial class DbSeeder
             P("Pine Cone Sticker", "Pinecone from evergreen.", 2.49m, 10, 185, nature, "nature,pinecone,pine,cone"),
             P("Palm Leaf Sticker", "Tropical palm frond.", 2.99m, 0, 180, nature, "nature,palm,leaf,tropical"),
 
-            // ══════════════════════════════════════════════════════════════
+            // ==============================================================
             // NEW YEARS EVE (30 products)
-            // ══════════════════════════════════════════════════════════════
+            // ==============================================================
             P("Champagne Toast Sticker", "Two champagne glasses clinking.", 2.99m, 0, 220, newYear, "new-year,champagne,toast,celebrate"),
             P("Fireworks Burst Sticker", "Colorful fireworks explosion.", 2.49m, 15, 240, newYear, "new-year,fireworks,burst,celebration"),
             P("Midnight Clock Sticker", "Clock striking midnight.", 2.99m, 0, 210, newYear, "new-year,clock,midnight,countdown"),
@@ -486,9 +486,9 @@ public static partial class DbSeeder
             P("Kiss at Midnight Sticker", "Couple kissing at midnight.", 2.99m, 10, 195, newYear, "new-year,kiss,midnight,couple"),
             P("New Beginnings Sticker", "Sunrise with text.", 2.49m, 0, 215, newYear, "new-year,beginnings,sunrise,fresh-start"),
 
-            // ══════════════════════════════════════════════════════════════
+            // ==============================================================
             // THANKSGIVING (23 products)
-            // ══════════════════════════════════════════════════════════════
+            // ==============================================================
             P("Roast Turkey Sticker", "Golden roasted turkey.", 3.99m, 0, 180, thanks, "thanksgiving,turkey,roast,dinner"),
             P("Pumpkin Pie Sticker", "Slice of pumpkin pie.", 2.99m, 15, 200, thanks, "thanksgiving,pie,pumpkin,dessert"),
             P("Cornucopia Sticker", "Horn of plenty with harvest.", 3.49m, 0, 170, thanks, "thanksgiving,cornucopia,harvest,plenty"),
@@ -513,9 +513,9 @@ public static partial class DbSeeder
             P("Family Gathering Sticker", "Family around dinner table.", 3.99m, 0, 150, thanks, "thanksgiving,family,gathering,together"),
             P("Pecan Pie Sticker", "Slice of pecan pie.", 2.99m, 10, 175, thanks, "thanksgiving,pie,pecan,dessert"),
 
-            // ══════════════════════════════════════════════════════════════
+            // ==============================================================
             // MISCELLANEOUS (11 products)
-            // ══════════════════════════════════════════════════════════════
+            // ==============================================================
             P("Rainbow Pride Sticker", "Colorful rainbow pride arc.", 2.49m, 0, 240, misc, "miscellaneous,rainbow,pride,lgbtq"),
             P("Retro Sunset Sticker", "80s style sunset stripes.", 2.99m, 15, 220, misc, "miscellaneous,retro,sunset,80s"),
             P("Peace Sign Sticker", "Hand peace sign symbol.", 2.49m, 0, 235, misc, "miscellaneous,peace,sign,hand"),

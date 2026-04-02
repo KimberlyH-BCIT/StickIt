@@ -1,5 +1,12 @@
-﻿/* Please see documentation at https://learn.microsoft.com/aspnet/core/client-side/bundling-and-minification
-for details on configuring this project to bundle and minify static web assets. */
+/* ======================================================================================= */
+/* ║ SCOPED LAYOUT STYLES - INTEGRATED WITH KAWAII THEME                                  ║ */
+/* ======================================================================================= */
+/*
+ * This file contains scoped styles for _Layout.cshtml that integrate with the kawaii theme.
+ * All color values use CSS variables from kawaii-theme.css for consistency.
+ * 
+ * IMPORTANT: Avoid hardcoded colors - use kawaii theme variables instead.
+ */
 
 a.navbar-brand {
   white-space: normal;
@@ -7,27 +14,44 @@ a.navbar-brand {
   word-break: break-all;
 }
 
+/* Links use kawaii theme colors */
 a {
-  color: #0077cc;
+  color: var(--purple, #7B5FB6);
+  transition: color var(--transition-fast, 0.15s ease);
 }
 
+a:hover {
+  color: var(--purple-dark, #6A4FA3);
+}
+
+/* Primary buttons use kawaii theme */
 .btn-primary {
-  color: #fff;
-  background-color: #1b6ec2;
-  border-color: #1861ac;
+  color: var(--white, #fff);
+  background-color: var(--pink, #F694C1);
+  border-color: var(--pink, #F694C1);
+  border-radius: var(--radius-sm, 12px);
+  transition: all var(--transition-med, 0.25s ease);
 }
 
-.nav-pills .nav-link.active, .nav-pills .show > .nav-link {
-  color: #fff;
-  background-color: #1b6ec2;
-  border-color: #1861ac;
+.btn-primary:hover {
+  background-color: var(--purple, #7B5FB6);
+  border-color: var(--purple, #7B5FB6);
+}
+
+/* Nav pills use kawaii theme */
+.nav-pills .nav-link.active, 
+.nav-pills .show > .nav-link {
+  color: var(--white, #fff);
+  background-color: var(--purple, #7B5FB6);
+  border-color: var(--purple, #7B5FB6);
+  border-radius: var(--radius-sm, 12px);
 }
 
 .border-top {
-  border-top: 1px solid #e5e5e5;
+  border-top: 1px solid var(--outline, #E2DEF0);
 }
 .border-bottom {
-  border-bottom: 1px solid #e5e5e5;
+  border-bottom: 1px solid var(--outline, #E2DEF0);
 }
 
 /* ── Site header ────────────────────────────────────────────────────── */
@@ -42,19 +66,19 @@ a {
   font-size: .9rem;
 }
 
-/* Centered search wrapper — grows up to 560px, shrinks on mobile */
+/* Centered search wrapper - grows up to 560px, shrinks on mobile */
 .header-search-wrap {
   width: 100%;
   max-width: 560px;
 }
 
-/* Nav strip — single row, hamburger + evenly-spaced links */
+/* Nav strip - single row, hamburger + evenly-spaced links */
 .header-nav {
   padding-top: .25rem;
   padding-bottom: .25rem;
 }
 
-/* Hamburger button — always visible, far left of nav strip */
+/* Hamburger button - uses kawaii theme colors */
 .nav-hamburger {
   display: inline-flex;
   align-items: center;
@@ -62,17 +86,18 @@ a {
   background: none;
   border: none;
   padding: .25rem .35rem;
-  border-radius: .375rem;
-  color: #444;
+  border-radius: var(--radius-xs, 6px);
+  color: var(--ink, #4A3B5C);
   cursor: pointer;
   line-height: 1;
-  transition: color .15s ease, background-color .15s ease;
+  transition: color var(--transition-fast, .15s ease), 
+              background-color var(--transition-fast, .15s ease);
 }
 
 .nav-hamburger:hover,
 .nav-hamburger:focus {
-  color: #1b6ec2;
-  background-color: #f0f4ff;
+  color: var(--purple, #7B5FB6);
+  background-color: var(--surface-lavender, rgba(228, 193, 249, 0.30));
   outline: none;
 }
 
@@ -82,26 +107,28 @@ a {
   white-space: nowrap;
 }
 
-/* Offcanvas sidebar nav items */
+/* Offcanvas sidebar nav items use kawaii theme */
 #navOffcanvas .nav-link:hover,
 #navOffcanvas .nav-link:focus {
-  background-color: #f0f4ff;
-  color: #1b6ec2;
+  background-color: var(--surface-lavender, rgba(228, 193, 249, 0.30));
+  color: var(--purple, #7B5FB6);
+  border-radius: var(--radius-xs, 6px);
 }
 
 /* ── Cart icon ──────────────────────────────────────────────────────── */
 .cart-icon-link {
-  color: #444;
+  color: var(--ink, #4A3B5C);
   text-decoration: none;
   padding: .25rem .35rem;
-  border-radius: .375rem;
-  transition: color .15s ease, background-color .15s ease;
+  border-radius: var(--radius-xs, 6px);
+  transition: color var(--transition-fast, .15s ease), 
+              background-color var(--transition-fast, .15s ease);
 }
 
 .cart-icon-link:hover,
 .cart-icon-link:focus {
-  color: #1b6ec2;
-  background-color: #f0f4ff;
+  color: var(--purple, #7B5FB6);
+  background-color: var(--surface-lavender, rgba(228, 193, 249, 0.30));
   outline: none;
 }
 
@@ -112,23 +139,32 @@ a {
   min-width: 18px;
   height: 18px;
   padding: 0 4px;
-  border-radius: 9px;
-  background: #dc3545;
-  color: #fff;
+  border-radius: var(--radius-pill, 999px);
+  background: var(--pink, #F694C1);
+  color: var(--white, #fff);
   font-size: .65rem;
-  font-weight: 700;
+  font-weight: var(--font-weight-bold, 700);
   line-height: 18px;
   text-align: center;
   pointer-events: none;
 }
 
 .box-shadow {
-  box-shadow: 0 .25rem .75rem rgba(0, 0, 0, .05);
+  box-shadow: var(--shadow-soft, 0 8px 24px rgba(169, 222, 249, 0.12));
 }
 
 button.accept-policy {
   font-size: 1rem;
   line-height: inherit;
+  background-color: var(--pink, #F694C1);
+  border-color: var(--pink, #F694C1);
+  border-radius: var(--radius-sm, 12px);
+  transition: all var(--transition-med, 0.25s ease);
+}
+
+button.accept-policy:hover {
+  background-color: var(--purple, #7B5FB6);
+  border-color: var(--purple, #7B5FB6);
 }
 
 .footer {

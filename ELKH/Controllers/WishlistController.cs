@@ -1,4 +1,4 @@
-﻿using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Mvc;
 using ELKH.Services;
 using System.Threading.Tasks;
 
@@ -25,7 +25,7 @@ namespace ELKH.Controllers
         /// <summary>
         /// POST: /Wishlist/AddAjax
         /// Adds a product to the wishlist and returns a JSON result consumed by <c>site.js</c>.
-        /// Used by the optimistic-UI wishlist button — the page is not reloaded.
+        /// Used by the optimistic-UI wishlist button - the page is not reloaded.
         /// </summary>
         [HttpPost]
         [ValidateAntiForgeryToken]
@@ -41,7 +41,7 @@ namespace ELKH.Controllers
         /// <summary>
         /// POST: /Wishlist/RemoveAjax
         /// Removes a product from the wishlist and returns a JSON result consumed by <c>site.js</c>.
-        /// Used by the optimistic-UI wishlist button — the page is not reloaded.
+        /// Used by the optimistic-UI wishlist button - the page is not reloaded.
         /// </summary>
         [HttpPost]
         [ValidateAntiForgeryToken]

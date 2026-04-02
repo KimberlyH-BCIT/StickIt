@@ -5,9 +5,9 @@ using System.Text;
 
 namespace ELKH.Data;
 
-// ╔═══════════════════════════════════════════════════════════════════════════════════════════════╗
+// ╔===============================================================================================╗
 // ║                         DATABASE SEEDER BASE - TABLE OF CONTENTS                             ║
-// ╚═══════════════════════════════════════════════════════════════════════════════════════════════╝
+// ╚===============================================================================================╝
 // 
 // OVERVIEW:
 // Base class for database seeding operations providing common utilities and orchestration
@@ -101,9 +101,9 @@ public static partial class DbSeeder
 {
     #region Section 1: Shared Utilities & Common Infrastructure
 
-    // ═══════════════════════════════════════════════════════════════════
+    // ===================================================================
     // Section 1: Shared Utilities & Common Infrastructure
-    // ═══════════════════════════════════════════════════════════════════
+    // ===================================================================
 
     /// <summary>
     /// Random number generator with fixed seed for reproducible seeding results.
@@ -115,9 +115,9 @@ public static partial class DbSeeder
 
     #region Section 2: Product Factory & Data Generation
 
-    // ═══════════════════════════════════════════════════════════════════
+    // ===================================================================
     // Section 2: Product Factory & Data Generation
-    // ═══════════════════════════════════════════════════════════════════
+    // ===================================================================
 
     /// <summary>
     /// Shorthand factory method for creating a seed <see cref="ProductModel"/>.
@@ -188,9 +188,9 @@ public static partial class DbSeeder
 
     #region Section 3: String Normalization & Search Optimization
 
-    // ═══════════════════════════════════════════════════════════════════
+    // ===================================================================
     // Section 3: String Normalization & Search Optimization
-    // ═══════════════════════════════════════════════════════════════════
+    // ===================================================================
 
     /// <summary>
     /// Returns a lowercase, diacritic-free copy of <paramref name="name"/> for use as
@@ -224,9 +224,9 @@ public static partial class DbSeeder
 
     #region Section 4: Main Orchestration & Error Handling
 
-    // ═══════════════════════════════════════════════════════════════════
+    // ===================================================================
     // Section 4: Main Orchestration & Error Handling
-    // ═══════════════════════════════════════════════════════════════════
+    // ===================================================================
 
     /// <summary>
     /// Main entry point for database seeding. Orchestrates all seeding operations

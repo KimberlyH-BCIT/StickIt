@@ -503,12 +503,12 @@
 @section Scripts {
     @await Html.PartialAsync("_ValidationScriptsPartial")
 
-    <!-- ═══════════════════════════════════════════════════════════════════
+    <!-- ===================================================================
          Create Account Toggle JavaScript with Accessibility
-         ═════════════════════════════════════════════════════════════════
+         =================================================================
          Functionality: Show/hide password fields when user toggles
          "Create an account" checkbox. Enhanced with ARIA announcements.
-    ═══════════════════════════════════════════════════════════════════ -->
+    =================================================================== -->
     <script>
         document.addEventListener('DOMContentLoaded', function() {
             const createAccountCheckbox = document.getElementById('createAccount');
@@ -555,13 +555,13 @@
         });
     </script>
 
-    <!-- ═══════════════════════════════════════════════════════════════════
+    <!-- ===================================================================
          Shipping Method Selection and Dynamic Pricing JavaScript
-         ═════════════════════════════════════════════════════════════════
+         =================================================================
          Functionality: When user selects a shipping method, dynamically 
          update shipping costs, apply free shipping rules, and recalculate
          order totals with accessibility announcements.
-    ═══════════════════════════════════════════════════════════════════ -->
+    =================================================================== -->
     <script>
         document.addEventListener('DOMContentLoaded', function() {
             const shippingMethodRadios = document.querySelectorAll('.shipping-method-radio');
@@ -678,9 +678,9 @@
         });
     </script>
 
-    <!-- ═══════════════════════════════════════════════════════════════════
+    <!-- ===================================================================
          PayPal Integration Script (same as authenticated checkout)
-    ═══════════════════════════════════════════════════════════════════ -->
+    =================================================================== -->
     @if (!string.IsNullOrEmpty(paypalClientId))
     {
         <script src="https://www.paypal.com/sdk/js?client-id=@paypalClientId&currency=CAD"></script>

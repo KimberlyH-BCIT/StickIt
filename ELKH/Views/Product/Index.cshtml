@@ -1,19 +1,19 @@
 @model IEnumerable<ELKH.ViewModels.ProductVM>
 
 @*
-╔══════════════════════════════════════════════════════════════════════════════════╗
+╔==================================================================================╗
 ║ Product Index View - Optimized with Reusable Partial Components                ║
 ║ Uses partial views for better maintainability and code reuse                    ║
-╚══════════════════════════════════════════════════════════════════════════════════╝
+╚==================================================================================╝
 *@
 
 @{
     ViewData["Title"] = "Products - Browse Our Sticker Collection";
 
-    // ═══════════════════════════════════════════════════════════════════════════════
+    // ===============================================================================
     // ║ ViewBag Data Extraction and Processing                                     ║
     // ║ Extract pagination, search, and filtering parameters from controller       ║
-    // ═══════════════════════════════════════════════════════════════════════════════
+    // ===============================================================================
 
     var products   = Model.ToList();
     var page       = ViewBag.Page       as int? ?? 1;
@@ -48,11 +48,11 @@
     };
 }
 
-<!-- ════════════════════════════════════════════════════════════════════════════════ -->
+<!-- ================================================================================ -->
 <!-- ║ Page Header & Search Results Display with Enhanced Accessibility           ║ -->
-<!-- ════════════════════════════════════════════════════════════════════════════════ -->
+<!-- ================================================================================ -->
 
-<header class="kawaii-hero" role="banner">
+<section class="kawaii-hero" aria-labelledby="products-heading">
     <!-- Skip Links for Keyboard Navigation -->
     <nav class="skip-links sr-only-focusable" aria-label="Skip navigation">
         <a href="#product-search-input" class="skip-link btn-kawaii btn-secondary-kawaii">Skip to search</a>
@@ -62,13 +62,13 @@
 
     <div class="container-kawaii">
         <div class="text-center">
-            <div class="kawaii-cloud-title display-title sparkle">
+            <h1 id="products-heading" class="kawaii-cloud-title display-title sparkle">
                 <i class="bi bi-grid me-3" aria-hidden="true" style="color: var(--butter);"></i>
                 Products
-            </div>
-            <div class="kawaii-subtitle">
+            </h1>
+            <p class="kawaii-subtitle">
                 Browse our amazing collection of stickers!
-            </div>
+            </p>
 
             @if (!string.IsNullOrWhiteSpace(search) || categoryId.HasValue)
             {
@@ -93,11 +93,11 @@
             }
         </div>
     </div>
-</header>
+</section>
 
-@* ══════════════════════════════════════════════════════════════════════════════════ *@
+@* ================================================================================== *@
 @* ║ Search Results Information Banner                                              ║ *@
-@* ══════════════════════════════════════════════════════════════════════════════════ *@
+@* ================================================================================== *@
 @if (!string.IsNullOrWhiteSpace(search))
 {
     var searchAlertVM = new ELKH.ViewModels.AlertBannerVM
@@ -114,9 +114,9 @@
     </div>
 }
 
-<!-- ════════════════════════════════════════════════════════════════════════════════ -->
+<!-- ================================================================================ -->
 <!-- ║ CSS Styles - Product Card Accessibility & Hover Animations                 ║ -->
-<!-- ════════════════════════════════════════════════════════════════════════════════ -->
+<!-- ================================================================================ -->
 <style>
     /* Product card hover effects for enhanced user interaction feedback */
     .product-card {

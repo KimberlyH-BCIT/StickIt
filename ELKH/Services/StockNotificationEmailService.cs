@@ -9,9 +9,9 @@ using Microsoft.Extensions.Logging;
 
 namespace ELKH.Services
 {
-    // ╔═══════════════════════════════════════════════════════════════════════════════════════════════╗
+    // ╔===============================================================================================╗
     // ║                   STOCK NOTIFICATION EMAIL SERVICE - TABLE OF CONTENTS                       ║
-    // ╚═══════════════════════════════════════════════════════════════════════════════════════════════╝
+    // ╚===============================================================================================╝
     // 
     // OVERVIEW:
     // Service responsible for sending back-in-stock notification emails to waiting customers,
@@ -111,9 +111,9 @@ namespace ELKH.Services
     {
         #region Section 1: Service Setup & Dependencies
 
-        // ═══════════════════════════════════════════════════════════════════
+        // ===================================================================
         // Section 1: Service Setup & Dependencies
-        // ═══════════════════════════════════════════════════════════════════
+        // ===================================================================
 
         private readonly IServiceScopeFactory _scopeFactory;
         private readonly ILogger<StockNotificationEmailService> _logger;
@@ -130,9 +130,9 @@ namespace ELKH.Services
 
         #region Section 2: Notification Processing Logic
 
-        // ═══════════════════════════════════════════════════════════════════
+        // ===================================================================
         // Section 2: Notification Processing Logic
-        // ═══════════════════════════════════════════════════════════════════
+        // ===================================================================
 
         /// <summary>
         /// Processes all pending notifications for a product that is now back in stock.
@@ -191,9 +191,9 @@ namespace ELKH.Services
                 {
                     #region Section 3: Email Generation & Delivery
 
-                    // ═══════════════════════════════════════════════════════════════════
+                    // ===================================================================
                     // Section 3: Email Generation & Delivery
-                    // ═══════════════════════════════════════════════════════════════════
+                    // ===================================================================
 
                     try
                     {
@@ -262,9 +262,9 @@ namespace ELKH.Services
 
                         #region Section 4: Notification State Management
 
-                        // ═══════════════════════════════════════════════════════════════════
+                        // ===================================================================
                         // Section 4: Notification State Management
-                        // ═══════════════════════════════════════════════════════════════════
+                        // ===================================================================
 
                         // Mark notification as sent
                         notification.NotificationSent = true;
@@ -277,9 +277,9 @@ namespace ELKH.Services
                     }
                     #region Section 5: Error Handling & Resilience
 
-                    // ═══════════════════════════════════════════════════════════════════
+                    // ===================================================================
                     // Section 5: Error Handling & Resilience
-                    // ═══════════════════════════════════════════════════════════════════
+                    // ===================================================================
 
                     catch (Exception ex)
                     {

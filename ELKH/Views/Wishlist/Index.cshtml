@@ -98,19 +98,24 @@ else
             </button>
         </div>
 
-        <div class="row g-3" 
+        <div class="row g-4" 
              role="list" 
              aria-label="Wishlist products grid with @Model.Count() items">
             @foreach (var item in Model)
             {
                 var p = item.Product;
-                <div class="col-md-6 col-lg-4" role="listitem">
-                    <article class="card h-100 shadow-sm wishlist-item" 
+                <div class="col-lg-3 col-md-4 col-sm-6" role="listitem">
+                    <article class="product-card-kawaii kawaii-card glow-on-hover h-100" 
                              aria-labelledby="product-title-@p.PkProductId"
                              data-product-id="@p.PkProductId">
 
+                        <!-- Product badges -->
+                        <div class="product-badges">
+                            <partial name="_Badge" model="@(new ELKH.ViewModels.BadgeVM { Text = "❤ Wishlist", Type = "hot" })" />
+                        </div>
+
                         <!-- Product Image Section -->
-                        <div class="card-img-top-container position-relative" style="height: 200px; overflow: hidden;">
+                        <div class="product-media">
                             @{
                                 var firstImage = p.ProductImage?.FirstOrDefault();
                                 var imageUrl = firstImage?.ProductImageURL ?? "";
@@ -118,85 +123,77 @@ else
                             @if (!string.IsNullOrEmpty(imageUrl))
                             {
                                 <img src="@imageUrl" 
-                                     alt="@p.Name - Product image" 
-                                     class="card-img-top w-100 h-100"
-                                     style="object-fit: cover;"
-                                     loading="lazy" />
+                                     alt="@p.Name product image" 
+                                     class="product-image"
+                                     loading="lazy"
+                                     onerror="this.src='/images/placeholder-sticker.png'" />
                             }
                             else
                             {
-                                <div class="d-flex align-items-center justify-content-center h-100 bg-light">
-                                    <i class="bi bi-image text-muted" style="font-size: 3rem;" aria-hidden="true"></i>
-                                    <span class="sr-only">No image available for @p.Name</span>
+                                <div class="product-placeholder">
+                                    <i class="bi bi-image" style="font-size: 3rem; color: var(--purple-light);" aria-hidden="true"></i>
+                                    <p class="text-muted mt-2 mb-0">No Image</p>
                                 </div>
                             }
-
-                            <!-- Heart Icon Overlay -->
-                            <div class="position-absolute top-0 end-0 p-2">
-                                <span class="badge bg-danger" aria-label="Product is in your wishlist">
-                                    <i class="bi bi-heart-fill" aria-hidden="true"></i>
-                                </span>
-                            </div>
                         </div>
 
-                        <div class="card-body d-flex flex-column">
-                            <header class="mb-3">
-                                <h3 class="card-title mb-2 h5" id="product-title-@p.PkProductId">
-                                    <a href="@Url.Action("Details", "Product", new { id = p.PkProductId })" 
-                                       class="text-decoration-none"
-                                       aria-label="View details for @p.Name">
-                                        @p.Name
-                                    </a>
-                                </h3>
-                                <p class="card-text text-muted small mb-2">@p.Description</p>
-                            </header>
+                        <!-- Product Details -->
+                        <div class="product-info">
+                            <h3 class="product-title font-heading" id="product-title-@p.PkProductId">
+                                <a asp-controller="Product" asp-action="Details" asp-route-id="@p.PkProductId" 
+                                   class="text-decoration-none text-purple"
+                                   aria-label="View details for @p.Name">
+                                    @p.Name
+                                </a>
+                            </h3>
 
-                            <!-- Price Information -->
-                            <div class="price-section mb-3" role="group" aria-labelledby="price-info-@p.PkProductId">
-                                <div id="price-info-@p.PkProductId" class="sr-only">Price information</div>
-                                <p class="card-text mb-0">
-                                    <strong class="text-success fs-6" aria-label="Price @p.Price.ToString("C")">
-                                        @p.Price.ToString("C")
-                                    </strong>
+                            <!-- Description -->
+                            @if (!string.IsNullOrEmpty(p.Description))
+                            {
+                                <p class="product-description text-muted">
+                                    @(p.Description.Length > 100 ? p.Description.Substring(0, 100) + "..." : p.Description)
                                 </p>
+                            }
+
+                            <!-- Price -->
+                            <div class="product-price mb-3">
+                                <span class="current-price font-heading">@p.Price.ToString("C")</span>
                             </div>
 
                             <!-- Date Added -->
-                            <div class="date-added mb-3">
-                                <p class="card-text small text-muted mb-0" 
-                                   aria-label="Added to wishlist on @item.DateAdded.ToLocalTime().ToString("MMMM d, yyyy")">
+                            <div class="mb-3">
+                                <small class="text-muted">
                                     <i class="bi bi-calendar-plus me-1" aria-hidden="true"></i>
                                     Added @item.DateAdded.ToLocalTime().ToString("MMM d, yyyy")
-                                </p>
+                                </small>
                             </div>
+                        </div>
 
-                            <!-- Actions -->
-                            <div class="card-actions mt-auto d-flex flex-column gap-2">
-                                <!-- View Product Button -->
-                                <a href="@Url.Action("Details", "Product", new { id = p.PkProductId })" 
-                                   class="btn btn-primary btn-sm"
-                                   aria-label="View details and purchase @p.Name">
-                                    <i class="bi bi-eye me-1" aria-hidden="true"></i>
-                                    View Product
-                                </a>
+                        <!-- Product actions -->
+                        <div class="product-actions">
+                            <a asp-controller="Product" asp-action="Details" asp-route-id="@p.PkProductId" 
+                               class="btn-kawaii btn-primary-kawaii w-100"
+                               aria-label="View details and purchase @p.Name">
+                                <i class="bi bi-eye me-2" aria-hidden="true"></i>
+                                View Product
+                            </a>
 
-                                <!-- Remove from Wishlist -->
-                                <form method="post" 
-                                      asp-action="RemoveAjax" 
-                                      class="remove-from-wishlist-form" 
-                                      data-product-id="@p.PkProductId"
-                                      aria-label="Remove @p.Name from wishlist">
-                                    @Html.AntiForgeryToken()
-                                    <input type="hidden" name="productId" value="@p.PkProductId" />
-                                    <button type="submit" 
-                                            class="btn btn-outline-danger btn-sm w-100 remove-from-wishlist-button"
-                                            aria-label="Remove @p.Name from your wishlist"
-                                            data-product-name="@p.Name">
-                                        <i class="bi bi-heart-break me-1" aria-hidden="true"></i>
-                                        Remove from Wishlist
-                                    </button>
-                                </form>
-                            </div>
+                            <!-- Remove from Wishlist -->
+                            <form method="post" 
+                                  asp-action="RemoveAjax" 
+                                  class="remove-from-wishlist-form mt-2" 
+                                  data-product-id="@p.PkProductId"
+                                  aria-label="Remove @p.Name from wishlist">
+                                @Html.AntiForgeryToken()
+                                <input type="hidden" name="productId" value="@p.PkProductId" />
+                                <button type="submit" 
+                                        class="btn-kawaii btn-outline-kawaii w-100 remove-from-wishlist-button"
+                                        aria-label="Remove @p.Name from your wishlist"
+                                        data-product-name="@p.Name">
+                                    <i class="bi bi-heart-break me-2" aria-hidden="true"></i>
+                                    Remove from Wishlist
+                                </button>
+                            </form>
                         </div>
                     </article>
                 </div>

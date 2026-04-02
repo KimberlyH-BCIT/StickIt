@@ -1,7 +1,7 @@
 @*
-╔══════════════════════════════════════════════════════════════════════════════════╗
+╔==================================================================================╗
 ║ TABLE OF CONTENTS - _Layout.cshtml (Clean Version)                              ║
-╠══════════════════════════════════════════════════════════════════════════════════╣
+╠==================================================================================╣
 ║ 1. HTML Document Head ...................................... Lines   34-105    ║
 ║    - Meta tags, CSRF token generation, PWA manifest                             ║
 ║    - Google Fonts integration for Kawaii theme                                  ║
@@ -37,7 +37,7 @@
 ║ • CSRF protection with meta token for AJAX operations                           ║
 ║ • Responsive design with mobile-first navigation                                ║
 ║ • Performance optimization with lazy loading and caching                        ║
-╚══════════════════════════════════════════════════════════════════════════════════╝
+╚==================================================================================╝
 *@
 
 <!DOCTYPE html>
@@ -51,10 +51,10 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     @{
-        // ═══════════════════════════════════════════════════════════════════════════════
+        // ===============================================================================
         // ║ CSRF Token Generation for Client-Side AJAX Operations                      ║
         // ║ Generates antiforgery token for secure AJAX requests                       ║
-        // ═══════════════════════════════════════════════════════════════════════════════
+        // ===============================================================================
 
         // Generate and store a per-request antiforgery token. The token is written into
         // a <meta> tag so client-side JavaScript can read it and attach it as the
@@ -64,16 +64,16 @@
     }
     <meta name="csrf-token" content="@csrfToken" />
 
-    @* ═══════════════════════════════════════════════════════════════════════════════ *@
+    @* =============================================================================== *@
     @* ║ PWA (Progressive Web App) Configuration                                      ║ *@
-    @* ═══════════════════════════════════════════════════════════════════════════════ *@
+    @* =============================================================================== *@
 
     <!-- PWA Manifest -->
     <link rel="manifest" href="~/manifest.json" />
 
     <!-- Theme and Display Configuration -->
     <meta name="theme-color" content="#6f42c1" />
-    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="mobile-web-app-capable" content="yes" />
     <meta name="apple-mobile-web-app-status-bar-style" content="default" />
     <meta name="apple-mobile-web-app-title" content="ELKH" />
     <meta name="msapplication-TileColor" content="#6f42c1" />
@@ -104,9 +104,9 @@
     <title>@ViewData["Title"] - ELKH</title>
     <script type="importmap"></script>
 
-    @* ═══════════════════════════════════════════════════════════════════════════════ *@
+    @* =============================================================================== *@
     @* ║ Google Fonts for Kawaii Theme - Optimized Loading                          ║ *@
-    @* ═══════════════════════════════════════════════════════════════════════════════ *@
+    @* =============================================================================== *@
 
     <!-- Preload critical fonts -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -119,16 +119,34 @@
     -->
     <link href="https://fonts.googleapis.com/css2?family=Sniglet:wght@400;800&family=Nunito:wght@300;400;600;700;800&display=swap" rel="stylesheet" preload>
 
+    @* =============================================================================== *@
+    @* ║ CSS Loading Order - Optimized Cascade Priority                              ║ *@
+    @* =============================================================================== *@
+    @* 
+        Loading Order (Low to High Priority):
+        1. Bootstrap - Foundation framework styles
+        2. site.css - Base site utilities and accessibility
+        3. ELKH.styles.css - Scoped CSS from Razor components (includes _Layout.cshtml.css)
+        4. kawaii-theme.css - FINAL authority on design system (loaded LAST to override)
+
+        WHY THIS ORDER:
+        - Bootstrap provides base components
+        - site.css adds site-wide utilities
+        - ELKH.styles.css (scoped) now uses kawaii CSS variables (no conflicts)
+        - kawaii-theme.css defines those variables and has final say
+    *@
+
     <link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.min.css" />
     <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
-    <link rel="stylesheet" href="~/css/kawaii-theme.css" asp-append-version="true" />
     <link rel="stylesheet" href="~/ELKH.styles.css" asp-append-version="true" />
+    <link rel="stylesheet" href="~/css/kawaii-theme.css" asp-append-version="true" />
 
     <!-- Global Accessibility Styles -->
     <style>
-        /* ═══════════════════════════════════════════════════════════════════════════ */
+        /* =========================================================================== */
         /* ║ GLOBAL ACCESSIBILITY STYLES - WCAG 2.1 AA COMPLIANCE                   ║ */
-        /* ═══════════════════════════════════════════════════════════════════════════ */
+        /* ║ Now using kawaii theme CSS variables for consistent styling            ║ */
+        /* =========================================================================== */
 
         /* Skip links for keyboard navigation */
         .skip-links {
@@ -141,33 +159,34 @@
         .skip-links a {
             position: absolute;
             top: 0;
-            background: #000;
-            color: #fff;
+            background: var(--ink, #4A3B5C);
+            color: var(--white, #fff);
             padding: 8px 16px;
             text-decoration: none;
-            border-radius: 0 0 4px 4px;
-            font-weight: bold;
-            transition: top 0.3s;
+            border-radius: var(--radius-xs, 6px);
+            font-weight: var(--font-weight-bold, 700);
+            transition: top var(--transition-med, 0.3s);
         }
 
         .skip-links a:focus,
         .skip-links a:active {
             top: 0;
             position: relative;
+            background: var(--purple, #7B5FB6);
         }
 
-        /* Enhanced focus indicators */
+        /* Enhanced focus indicators using kawaii theme */
         *:focus,
         *:focus-visible {
-            outline: 2px solid #0066cc !important;
+            outline: 2px solid var(--purple, #7B5FB6) !important;
             outline-offset: 2px !important;
         }
 
         .btn:focus,
         .form-control:focus,
         .form-select:focus {
-            border-color: #0066cc !important;
-            box-shadow: 0 0 0 0.25rem rgba(0, 102, 204, 0.25) !important;
+            border-color: var(--purple, #7B5FB6) !important;
+            box-shadow: 0 0 0 0.25rem var(--surface-lavender, rgba(228, 193, 249, 0.30)) !important;
         }
 
         /* High contrast mode support */
@@ -211,7 +230,7 @@
             }
         }
 
-        /* Reduced motion support */
+        /* Reduced motion support - already in site.css but critical for inline */
         @@media (prefers-reduced-motion: reduce) {
             *, *::before, *::after {
                 animation-duration: 0.01ms !important;
@@ -259,9 +278,9 @@
         }
     </style>
 
-    @* ═══════════════════════════════════════════════════════════════════════════════ *@
+    @* =============================================================================== *@
     @* ║ Page-specific styles injection point                                        ║ *@
-    @* ═══════════════════════════════════════════════════════════════════════════════ *@
+    @* =============================================================================== *@
     @await RenderSectionAsync("Styles", required: false)
 </head>
 
@@ -331,17 +350,17 @@
             }
         }
         
-        <!-- ═══════════════════════════════════════════════════════════════════════════ -->
+        <!-- =========================================================================== -->
         <!-- ║ Main Content Area - Dynamic page content injection point              ║ -->
-        <!-- ═══════════════════════════════════════════════════════════════════════════ -->
+        <!-- =========================================================================== -->
         <main role="main" class="pb-3" id="main-content">
             @RenderBody()
         </main>
     </div>
 
-    <!-- ════════════════════════════════════════════════════════════════════════════════ -->
+    <!-- ================================================================================ -->
     <!-- ║ Site Footer - Company information, legal links, and contact details       ║ -->
-    <!-- ════════════════════════════════════════════════════════════════════════════════ -->
+    <!-- ================================================================================ -->
     <footer style="background:#111;" role="contentinfo" id="site-footer">
         <div class="container py-5 text-white-50 small">
             <div class="row g-4">
@@ -470,27 +489,27 @@
         </div>
     </div>
 
-    <!-- ════════════════════════════════════════════════════════════════════════════════ -->
+    <!-- ================================================================================ -->
     <!-- ║ Scripts Section - Framework and application JavaScript loading             ║ -->
-    <!-- ════════════════════════════════════════════════════════════════════════════════ -->
+    <!-- ================================================================================ -->
     <script src="~/lib/jquery/dist/jquery.min.js"></script>
     <script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
     <script src="~/js/site.js" asp-append-version="true"></script>
     <script src="~/js/cart-ajax.js" asp-append-version="true"></script>
 
-    @* ═══════════════════════════════════════════════════════════════════════════════ *@
+    @* =============================================================================== *@
     @* ║ Kawaii UI Components                                                         ║ *@
-    @* ═══════════════════════════════════════════════════════════════════════════════ *@
+    @* =============================================================================== *@
     <script src="~/js/kawaii-ui.js" asp-append-version="true"></script>
 
-    @* ═══════════════════════════════════════════════════════════════════════════════ *@
+    @* =============================================================================== *@
     @* ║ Image Optimization & Lazy Loading                                           ║ *@
-    @* ═══════════════════════════════════════════════════════════════════════════════ *@
+    @* =============================================================================== *@
     <script src="~/js/lazy-loading.js" asp-append-version="true"></script>
 
-    @* ═══════════════════════════════════════════════════════════════════════════════ *@
+    @* =============================================================================== *@
     @* ║ Progressive Web App (PWA) Service Worker Registration                       ║ *@
-    @* ═══════════════════════════════════════════════════════════════════════════════ *@
+    @* =============================================================================== *@
     <script>
         // PWA Service Worker Registration
         if ('serviceWorker' in navigator) {

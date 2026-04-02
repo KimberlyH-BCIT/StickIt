@@ -1,25 +1,33 @@
-/* ═══════════════════════════════════════════════════════════════════════════════════════ */
+/* ======================================================================================= */
 /* ║ SITE-SPECIFIC STYLES - NON-DESIGN-SYSTEM UTILITIES                                  ║ */
-/* ═══════════════════════════════════════════════════════════════════════════════════════ */
+/* ======================================================================================= */
 /*
  * This file contains site-specific styles that are not part of the kawaii design system.
  * For design system components, use kawaii-theme.css instead.
  * 
+ * COORDINATION WITH KAWAII THEME:
+ * - This file loads BEFORE kawaii-theme.css in _Layout.cshtml
+ * - Use CSS variables from kawaii-theme.css when possible (e.g., var(--font-body))
+ * - Avoid hardcoded colors - kawaii-theme.css has final authority on colors
+ * - Scoped CSS (_Layout.cshtml.css) now uses kawaii variables for consistency
+ * 
  * WHAT BELONGS HERE:
  * - Base HTML/body layout styles
  * - Responsive font sizing
- * - Admin/backend specific overrides
+ * - Admin/backend specific overrides (intentionally Bootstrap-styled)
  * - Legacy compatibility styles
+ * - Core accessibility utilities (skip links, screen reader, reduced motion)
  * 
  * WHAT DOESN'T BELONG HERE:
  * - Component styles (use kawaii-theme.css)
  * - Design system variables (use kawaii-theme.css)
  * - Customer-facing UI components (use kawaii-theme.css)
+ * - Hardcoded theme colors (use kawaii CSS variables instead)
  */
 
-/* ═══════════════════════════════════════════════════════════════════════════════════════ */
+/* ======================================================================================= */
 /* ║ RESPONSIVE BASE SETTINGS                                                             ║ */
-/* ═══════════════════════════════════════════════════════════════════════════════════════ */
+/* ======================================================================================= */
 
 html {
     font-size: 14px;
@@ -41,9 +49,9 @@ body {
     font-family: var(--font-body);
 }
 
-/* ═══════════════════════════════════════════════════════════════════════════════════════ */
+/* ======================================================================================= */
 /* ║ ADMIN/BACKEND COMPATIBILITY STYLES                                                   ║ */
-/* ═══════════════════════════════════════════════════════════════════════════════════════ */
+/* ======================================================================================= */
 
 /* Admin pages should maintain Bootstrap styling */
 .admin-page .btn,
@@ -61,9 +69,9 @@ body {
     border: 1px solid #ced4da;
 }
 
-/* ═══════════════════════════════════════════════════════════════════════════════════════ */
+/* ======================================================================================= */
 /* ║ ACCESSIBILITY ENHANCEMENTS                                                           ║ */
-/* ═══════════════════════════════════════════════════════════════════════════════════════ */
+/* ======================================================================================= */
 
 /* Skip links - always available regardless of design system */
 .skip-link {
@@ -115,9 +123,9 @@ body {
     }
 }
 
-/* ═══════════════════════════════════════════════════════════════════════════════════════ */
+/* ======================================================================================= */
 /* ║ PRINT STYLES                                                                         ║ */
-/* ═══════════════════════════════════════════════════════════════════════════════════════ */
+/* ======================================================================================= */
 
 @media print {
     .skip-links,
@@ -134,9 +142,9 @@ body {
     }
 }
 
-/* ═══════════════════════════════════════════════════════════════════════════════════════ */
+/* ======================================================================================= */
 /* ║ LEGACY SUPPORT (TO BE REMOVED IN FUTURE VERSIONS)                                   ║ */
-/* ═══════════════════════════════════════════════════════════════════════════════════════ */
+/* ======================================================================================= */
 
 /* Temporary: Support for any missed Bootstrap overrides */
 .legacy-bootstrap-compat {
@@ -144,6 +152,6 @@ body {
     /* TODO: Remove once all components are converted */
 }
 
-/* ═══════════════════════════════════════════════════════════════════════════════════════ */
+/* ======================================================================================= */
 /* ║ END OF SITE-SPECIFIC STYLES                                                          ║ */
-/* ═══════════════════════════════════════════════════════════════════════════════════════ */
+/* ======================================================================================= */

@@ -1,8 +1,8 @@
-﻿/*
-╔══════════════════════════════════════════════════════════════════════════════════╗
+/*
+╔==================================================================================╗
 ║ CORE APPLICATION JAVASCRIPT - Data & Business Logic                             ║
 ║ Handles AJAX operations, data processing, and core application functionality   ║
-╚══════════════════════════════════════════════════════════════════════════════════╝
+╚==================================================================================╝
 
 TABLE OF CONTENTS:
 - Entry Points & Initialization: DOMContentLoaded event handlers
@@ -27,18 +27,18 @@ SECURITY & ACCESSIBILITY:
 // Please see documentation at https://learn.microsoft.com/aspnet/core/client-side/bundling-and-minification
 // for details on configuring this project to bundle and minify static web assets.
 
-// ═══════════════════════════════════════════════════════════════════════════════
+// ===============================================================================
 // ║ Entry Points & Initialization                                              ║
 // ║ Core application features initialized when DOM is ready                    ║
-// ═══════════════════════════════════════════════════════════════════════════════
+// ===============================================================================
 document.addEventListener('DOMContentLoaded', initWishlistAjax);
 document.addEventListener('DOMContentLoaded', initProductAutocomplete);
 document.addEventListener('DOMContentLoaded', initProductCardNavigation);
 
-// ═══════════════════════════════════════════════════════════════════════════════
+// ===============================================================================
 // ║ Utility Helper Functions                                                   ║
 // ║ Reusable functions for security, UI feedback, and DOM manipulation        ║
-// ═══════════════════════════════════════════════════════════════════════════════
+// ===============================================================================
 
 /**
  * Escapes the five HTML special characters to prevent XSS when inserting
@@ -73,17 +73,17 @@ function showTempMessage(level, text) {
     setTimeout(() => { alert.classList.remove('show'); alert.classList.add('hide'); alert.remove(); }, 5000);
 }
 
-// ═══════════════════════════════════════════════════════════════════════════════
+// ===============================================================================
 // ║ Product Search Autocomplete                                                ║
 // ║ Intelligent search with debounced requests and accessibility support      ║
-// ═══════════════════════════════════════════════════════════════════════════════
+// ===============================================================================
 
 function initProductAutocomplete() {
     const input = document.getElementById('productNameInput');
     if (!input) return;
     const box = document.getElementById('productNameSuggestions');
 
-    // Debounce timer — reset on every keystroke so the fetch fires only after
+    // Debounce timer - reset on every keystroke so the fetch fires only after
     // the user pauses typing (250 ms), avoiding a request per character.
     let debounceTimer = null;
 
@@ -344,10 +344,10 @@ function initProductAutocomplete() {
     }
 }
 
-// ═══════════════════════════════════════════════════════════════════════════════
+// ===============================================================================
 // ║ Wishlist AJAX Operations                                                   ║
 // ║ Dynamic wishlist management with server synchronization                   ║
-// ═══════════════════════════════════════════════════════════════════════════════
+// ===============================================================================
 
 /**
  * Updates the wishlist count displayed in the navbar link.

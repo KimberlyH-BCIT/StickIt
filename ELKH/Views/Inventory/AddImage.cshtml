@@ -1,25 +1,40 @@
-﻿@model ELKH.Models.ImageModel
+@model ELKH.Models.ImageModel
 
-@{  ViewData["Title"] = "Home Page"; }
-<h1 class="display-4">Upload Your Image</h1>
-<p class="lead">Please select an image file you wish to upload.</p>
-<hr class="my-4">
+@{  ViewData["Title"] = "Upload Image"; }
 
-<form asp-action="AddImage" method="post" enctype="multipart/form-data">
-    <input type="hidden" name="productId" value="@ViewBag.ProductId" />
-    <div class="form-group">
-        <label for="file" class="btn btn-info">
-            Choose image
-        </label>
-        <input type="file" class="form-control-file" id="file" 
-            name="file" accept="image/*" style="display:none;" 
-            onchange="previewImage();" />
-        <img id="preview" src="#" alt="Image Preview"
-             style="max-width: 400px; max-height: 400px;
-             margin-top: 10px; display:none;" />
+<div class="container py-4">
+    <header class="kawaii-hero text-center mb-4">
+        <h1 class="kawaii-cloud-title font-heading">Upload Your Image</h1>
+        <p class="hierarchy-secondary">Please select an image file you wish to upload.</p>
+    </header>
+
+    <div class="row justify-content-center">
+        <div class="col-lg-6">
+            <div class="kawaii-card">
+                <div class="card-body p-4">
+                    <form asp-action="AddImage" method="post" enctype="multipart/form-data">
+                        <input type="hidden" name="productId" value="@ViewBag.ProductId" />
+                        <div class="mb-4">
+                            <label for="file" class="btn-kawaii btn-primary-kawaii">
+                                📸 Choose image
+                            </label>
+                            <input type="file" class="form-control-file" id="file" 
+                                name="file" accept="image/*" style="display:none;" 
+                                onchange="previewImage();" />
+                            <img id="preview" src="#" alt="Image Preview"
+                                 class="rounded-3 mt-3"
+                                 style="max-width: 100%; max-height: 400px; display:none;" />
+                        </div>
+                        <div class="d-flex gap-2">
+                            <button type="submit" class="btn-kawaii btn-primary-kawaii sparkle">Upload Image</button>
+                            <a asp-action="ProductImages" asp-route-id="@ViewBag.ProductId" class="btn-kawaii btn-outline-kawaii">Cancel</a>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
     </div>
-    <button type="submit" class="btn btn-primary">Upload Image</button>
-</form>
+</div>
 
 
 

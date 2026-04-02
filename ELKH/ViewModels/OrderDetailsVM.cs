@@ -1,4 +1,4 @@
-﻿using ELKH.ViewModels;
+using ELKH.ViewModels;
 
 public class OrderDetailsVM
 {

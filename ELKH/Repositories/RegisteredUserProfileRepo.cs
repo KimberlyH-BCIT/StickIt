@@ -1,4 +1,4 @@
-﻿using ELKH.Data;
+using ELKH.Data;
 using ELKH.Models;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
@@ -27,7 +27,7 @@ public class RegisteredUserProfileRepo : RepositoryBase<UserProfileModel, string
         if (!exists)
             return await base.AddAndSaveAsync(profile);
 
-        Logger.LogWarning("UserProfile NOT added — a profile already exists for: {Email}", profile.PkEmail);
+        Logger.LogWarning("UserProfile NOT added - a profile already exists for: {Email}", profile.PkEmail);
         return false;
     }
 

@@ -1,4 +1,4 @@
-﻿@model List<InventoryVM>
+@model List<InventoryVM>
 
 @{
     ViewData["Title"] = "Inventory Management - Product Stock & Details | Admin Panel";
@@ -34,9 +34,9 @@
 
     <!-- Inventory Management Table -->
     <section aria-labelledby="inventory-table-heading">
-        <div class="card shadow-sm border-0">
+        <div class="kawaii-card">
             <div class="card-header bg-white py-3">
-                <h2 id="inventory-table-heading" class="fw-bold mb-0 h5">
+                <h2 id="inventory-table-heading" class="font-heading mb-0 h5">
                     <i class="bi bi-table me-2" aria-hidden="true"></i>Product Inventory Overview
                 </h2>
             </div>
@@ -98,30 +98,24 @@
 
                                         <!-- Quantity Column -->
                                         <td role="gridcell" class="text-center">
-                                            <span class="badge @(product.Quantity <= 5 ? "bg-danger" : product.Quantity <= 20 ? "bg-warning text-dark" : "bg-success") fs-6"
-                                                  aria-label="Current stock: @product.Quantity units@(product.Quantity <= 5 ? " - Low stock warning" : "")">
-                                                @product.Quantity
-                                                @if (product.Quantity <= 5)
-                                                {
-                                                    <i class="bi bi-exclamation-triangle ms-1" aria-hidden="true"></i>
-                                                }
-                                            </span>
+                                            @{
+                                                var badgeType = product.Quantity <= 5 ? "sale" : product.Quantity <= 20 ? "hot" : "best";
+                                                var badgeText = product.Quantity.ToString();
+                                                if (product.Quantity <= 5) { badgeText += " ⚠️"; }
+                                            }
+                                            <partial name="_Badge" model="@(new ELKH.ViewModels.BadgeVM { Text = badgeText, Type = badgeType })" />
                                         </td>
 
                                         <!-- Active Status Column -->
                                         <td role="gridcell" class="text-center">
-                                            <span class="badge @(product.IsActive ? "bg-success" : "bg-secondary") fs-6"
-                                                  role="status"
-                                                  aria-label="Product status: @(product.IsActive ? "Active and available for purchase" : "Inactive and not available")">
-                                                @if (product.IsActive)
+                                            @{
+                                                var statusBadge = new ELKH.ViewModels.BadgeVM
                                                 {
-                                                    <text><i class="bi bi-check-circle me-1" aria-hidden="true"></i>Active</text>
-                                                }
-                                                else
-                                                {
-                                                    <text><i class="bi bi-x-circle me-1" aria-hidden="true"></i>Inactive</text>
-                                                }
-                                            </span>
+                                                    Text = product.IsActive ? "✔ Active" : "❌ Inactive",
+                                                    Type = product.IsActive ? "best" : "default"
+                                                };
+                                            }
+                                            <partial name="_Badge" model="@statusBadge" />
                                         </td>
 
                                         <!-- Edit Product Column -->
@@ -129,7 +123,7 @@
                                             <a asp-controller="Product" 
                                                asp-action="Edit" 
                                                asp-route-id="@product.PkProductId"
-                                               class="btn btn-sm btn-outline-primary rounded-pill"
+                                               class="btn-kawaii btn-primary-kawaii btn-sm radius-pill"
                                                aria-label="Edit product details for @product.ProductName">
                                                 <i class="bi bi-pencil me-1" aria-hidden="true"></i>Edit Details
                                             </a>
@@ -140,7 +134,7 @@
                                             <a asp-controller="Inventory" 
                                                asp-action="ProductImages" 
                                                asp-route-id="@product.PkProductId"
-                                               class="btn btn-sm btn-outline-info rounded-pill"
+                                               class="btn-kawaii btn-secondary-kawaii btn-sm radius-pill"
                                                aria-label="Manage images for @product.ProductName">
                                                 <i class="bi bi-images me-1" aria-hidden="true"></i>Manage Images
                                             </a>
@@ -150,7 +144,7 @@
                                         <td role="gridcell" class="text-center">
                                             <div class="d-flex flex-column align-items-center gap-2">
                                                 <button type="button" 
-                                                        class="btn btn-sm btn-outline-warning rounded-pill editQuantityToggle"
+                                                        class="btn-kawaii btn-secondary-kawaii btn-sm radius-pill editQuantityToggle"
                                                         data-product-id="@product.PkProductId"
                                                         aria-expanded="false"
                                                         aria-controls="quantity-form-@product.PkProductId"
@@ -184,22 +178,22 @@
                                                                    value="@product.Quantity" 
                                                                    min="0"
                                                                    max="9999"
-                                                                   class="form-control form-control-sm"
+                                                                   class="input-kawaii"
                                                                    aria-describedby="quantity-help-@product.PkProductId"
                                                                    required />
-                                                            <small id="quantity-help-@product.PkProductId" class="form-text text-muted">
+                                                            <small id="quantity-help-@product.PkProductId" class="hierarchy-tertiary">
                                                                 Current: @product.Quantity units
                                                             </small>
                                                         </div>
 
                                                         <div class="d-flex gap-2">
                                                             <button type="submit" 
-                                                                    class="btn btn-success btn-sm"
+                                                                    class="btn-kawaii btn-primary-kawaii btn-sm"
                                                                     aria-label="Save new quantity for @product.ProductName">
                                                                 <i class="bi bi-check me-1" aria-hidden="true"></i>Update
                                                             </button>
                                                             <button type="button" 
-                                                                    class="btn btn-secondary btn-sm cancelQuantityEdit"
+                                                                    class="btn-kawaii btn-outline-kawaii btn-sm cancelQuantityEdit"
                                                                     data-product-id="@product.PkProductId"
                                                                     aria-label="Cancel quantity update for @product.ProductName">
                                                                 <i class="bi bi-x me-1" aria-hidden="true"></i>Cancel
@@ -223,7 +217,7 @@
                             <h3 class="h5 text-muted">No Products in Inventory</h3>
                             <p class="text-muted">There are currently no products to manage.</p>
                             <a asp-controller="Product" asp-action="Create" 
-                               class="btn btn-primary rounded-pill"
+                               class="btn-kawaii btn-primary-kawaii radius-pill"
                                aria-label="Add first product to inventory">
                                 <i class="bi bi-plus-circle me-1" aria-hidden="true"></i>Add Product
                             </a>

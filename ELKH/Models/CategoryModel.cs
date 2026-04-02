@@ -1,4 +1,4 @@
-﻿using System.ComponentModel;
+using System.ComponentModel;
 using System.ComponentModel.DataAnnotations;
 
 namespace ELKH.Models
@@ -21,11 +21,9 @@ namespace ELKH.Models
         [DisplayName("Category Name")]
         public string CategoryName { get; set; } = string.Empty;
 
-        //Products list
-        public ICollection<ProductModel>? Products { get; set; }
         /// <summary>
         /// Collection of products in this category.
         /// </summary>
-        public ICollection<ProductModel> Product { get; set; } = new List<ProductModel>();
+        public ICollection<ProductModel> Products { get; set; } = new List<ProductModel>();
     }
 }

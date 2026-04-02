@@ -5,55 +5,73 @@
 <div class="container my-5">
     <div class="row justify-content-center">
         <div class="col-lg-8">
-            <h1 class="mb-4">@ViewData["Title"]</h1>
-            
-            <div class="card shadow-sm mb-4">
+            <header class="text-center mb-5">
+                <h1 class="kawaii-cloud-title font-heading">@ViewData["Title"]</h1>
+                <p class="hierarchy-secondary">We'd love to hear from you!</p>
+            </header>
+
+            <div class="kawaii-card surface-lavender mb-4">
                 <div class="card-body p-4">
-                    <h5 class="card-title mb-3">Get in Touch</h5>
-                    <p class="card-text">Have questions or need assistance? We're here to help!</p>
-                    
+                    <h2 class="font-heading mb-3">Get in Touch</h2>
+                    <p class="hierarchy-secondary">Have questions or need assistance? We're here to help!</p>
+
                     <div class="row g-4 mt-3">
                         <div class="col-md-6">
-                            <h6><i class="bi bi-envelope me-2"></i>Email</h6>
-                            <p class="text-muted">support@stickit.dev</p>
+                            <h6 class="font-heading"><i class="bi bi-envelope me-2" style="color: var(--purple);" aria-hidden="true"></i>Email</h6>
+                            <p class="hierarchy-tertiary">support@stickit.dev</p>
                         </div>
                         <div class="col-md-6">
-                            <h6><i class="bi bi-telephone me-2"></i>Phone</h6>
-                            <p class="text-muted">1-800-STICKER</p>
+                            <h6 class="font-heading"><i class="bi bi-telephone me-2" style="color: var(--purple);" aria-hidden="true"></i>Phone</h6>
+                            <p class="hierarchy-tertiary">1-800-STICKER</p>
                         </div>
                         <div class="col-md-6">
-                            <h6><i class="bi bi-clock me-2"></i>Business Hours</h6>
-                            <p class="text-muted">Monday - Friday: 9:00 AM - 5:00 PM EST</p>
+                            <h6 class="font-heading"><i class="bi bi-clock me-2" style="color: var(--purple);" aria-hidden="true"></i>Business Hours</h6>
+                            <p class="hierarchy-tertiary">Monday - Friday: 9:00 AM - 5:00 PM EST</p>
                         </div>
                         <div class="col-md-6">
-                            <h6><i class="bi bi-geo-alt me-2"></i>Address</h6>
-                            <p class="text-muted">123 Sticker Street<br/>Toronto, ON M5V 3A8</p>
+                            <h6 class="font-heading"><i class="bi bi-geo-alt me-2" style="color: var(--purple);" aria-hidden="true"></i>Address</h6>
+                            <p class="hierarchy-tertiary">123 Sticker Street<br/>Toronto, ON M5V 3A8</p>
                         </div>
                     </div>
                 </div>
             </div>
 
-            <div class="card shadow-sm">
+            <div class="kawaii-card">
                 <div class="card-body p-4">
-                    <h5 class="card-title mb-3">Send us a message</h5>
-                    <form>
+                    <h2 id="contact-form-heading" class="font-heading mb-3">Send us a message</h2>
+                    <form aria-labelledby="contact-form-heading" novalidate>
                         <div class="mb-3">
-                            <label for="contactName" class="form-label">Name</label>
-                            <input type="text" class="form-control" id="contactName" required>
+                            <label for="contactName" class="form-label fw-semibold">
+                                <span class="required-indicator" aria-label="Required field">*</span> Name
+                            </label>
+                            <input type="text" class="input-kawaii" id="contactName" required aria-required="true" aria-describedby="name-help" autocomplete="name">
+                            <small id="name-help" class="form-text hierarchy-tertiary">Enter your full name</small>
                         </div>
                         <div class="mb-3">
-                            <label for="contactEmail" class="form-label">Email</label>
-                            <input type="email" class="form-control" id="contactEmail" required>
+                            <label for="contactEmail" class="form-label fw-semibold">
+                                <span class="required-indicator" aria-label="Required field">*</span> Email
+                            </label>
+                            <input type="email" class="input-kawaii" id="contactEmail" required aria-required="true" aria-describedby="email-help" autocomplete="email" inputmode="email">
+                            <small id="email-help" class="form-text hierarchy-tertiary">We'll reply to this address</small>
                         </div>
                         <div class="mb-3">
-                            <label for="contactSubject" class="form-label">Subject</label>
-                            <input type="text" class="form-control" id="contactSubject" required>
+                            <label for="contactSubject" class="form-label fw-semibold">
+                                <span class="required-indicator" aria-label="Required field">*</span> Subject
+                            </label>
+                            <input type="text" class="input-kawaii" id="contactSubject" required aria-required="true" aria-describedby="subject-help">
+                            <small id="subject-help" class="form-text hierarchy-tertiary">Brief description of your inquiry</small>
                         </div>
                         <div class="mb-3">
-                            <label for="contactMessage" class="form-label">Message</label>
-                            <textarea class="form-control" id="contactMessage" rows="5" required></textarea>
+                            <label for="contactMessage" class="form-label fw-semibold">
+                                <span class="required-indicator" aria-label="Required field">*</span> Message
+                            </label>
+                            <textarea class="input-kawaii" id="contactMessage" rows="5" required aria-required="true" aria-describedby="message-help"></textarea>
+                            <small id="message-help" class="form-text hierarchy-tertiary">Detailed message (minimum 10 characters)</small>
                         </div>
-                        <button type="submit" class="btn btn-primary">Send Message</button>
+                        <button type="submit" class="btn-kawaii btn-primary-kawaii sparkle" aria-describedby="contact-submit-help">
+                            <i class="bi bi-send me-1" aria-hidden="true"></i>Send Message
+                        </button>
+                        <small id="contact-submit-help" class="form-text hierarchy-tertiary d-block mt-2">We typically respond within 24-48 hours</small>
                     </form>
                 </div>
             </div>

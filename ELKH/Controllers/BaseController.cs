@@ -40,12 +40,12 @@ public class BaseController : Controller
 
     public override async Task OnActionExecutionAsync(ActionExecutingContext context, ActionExecutionDelegate next)
     {
-        // Inject cart count — only applies to registered customers.
+        // Inject cart count - only applies to registered customers.
         // Admin/staff accounts have no RegisteredUserModel entry, so the lookup
         // may return null; in that case we simply skip setting the cart count.
         if (User.Identity?.IsAuthenticated == true)
         {
-            // Read email directly from claims — avoids an extra UserManager round-trip on every request.
+            // Read email directly from claims - avoids an extra UserManager round-trip on every request.
             var email = User.FindFirstValue(ClaimTypes.Email)
                      ?? User.FindFirstValue(ClaimTypes.Name);
 

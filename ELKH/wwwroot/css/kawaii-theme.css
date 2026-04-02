@@ -1,16 +1,16 @@
-/* ═══════════════════════════════════════════════════════════════════════════════════════ */
+/* ======================================================================================= */
 /* ║ KAWAII THEME SYSTEM - LAYERED DESIGN APPROACH                                        ║ */
-/* ═══════════════════════════════════════════════════════════════════════════════════════ */
+/* ======================================================================================= */
 /*
- * LAYER 1 — FOUNDATION: Base variables, typography, backgrounds, core components
- * LAYER 2 — SHOP COMPONENTS: Navbar, search, tabs, badges, product cards
- * LAYER 3 — POLISH: Sparkles, cloud effects, micro-interactions, success states
+ * LAYER 1 - FOUNDATION: Base variables, typography, backgrounds, core components
+ * LAYER 2 - SHOP COMPONENTS: Navbar, search, tabs, badges, product cards
+ * LAYER 3 - POLISH: Sparkles, cloud effects, micro-interactions, success states
  */
 
 :root {
-    /* ═══════════════════════════════════════════════════════════════════════════ */
+    /* =========================================================================== */
     /* ║ LAYER 1 FOUNDATION - REFINED COLOR SYSTEM & DESIGN TOKENS              ║ */
-    /* ═══════════════════════════════════════════════════════════════════════════ */
+    /* =========================================================================== */
     /*
      * REFINED Color Usage Guidelines (Hierarchy-Focused):
      * 
@@ -118,9 +118,9 @@
     --ease-bounce: cubic-bezier(0.68, -0.55, 0.265, 1.55);
 }
 
-/* ═══════════════════════════════════════════════════════════════════════════════ */
+/* =============================================================================== */
 /* ║ LAYER 1 FOUNDATION - BASE RESETS & GLOBAL STYLES                          ║ */
-/* ═══════════════════════════════════════════════════════════════════════════════ */
+/* =============================================================================== */
 
 *,
 *::before,
@@ -141,9 +141,17 @@ body {
     color: var(--ink);
     background:
         radial-gradient(circle at top left, rgba(255,255,255,0.75) 0%, rgba(255,255,255,0) 22%),
-        linear-gradient(180deg, var(--mint) 0%, var(--surface-sky) 30%, var(--surface-lavender) 70%, rgba(253, 242, 248, 0.8) 100%);
+        linear-gradient(180deg, 
+            var(--mint) 0%, 
+            var(--surface-sky) 25%, 
+            rgba(211, 255, 228, 0.5) 45%,
+            var(--surface-lavender) 65%, 
+            rgba(228, 193, 249, 0.6) 80%,
+            rgba(253, 242, 248, 0.8) 100%
+        );
     min-height: 100vh;
     overflow-x: hidden;
+    position: relative;
 }
 
 /* Subtle floating cloud overlay - Foundation Layer */
@@ -163,6 +171,27 @@ body::before {
     animation: float-clouds 60s linear infinite;
 }
 
+/* Soft gradient overlay to blend sections smoothly */
+body::after {
+    content: "";
+    position: fixed;
+    inset: 0;
+    pointer-events: none;
+    opacity: 0.4;
+    background: linear-gradient(180deg,
+        transparent 0%,
+        rgba(255, 255, 255, 0.05) 10%,
+        transparent 20%,
+        rgba(255, 255, 255, 0.03) 35%,
+        transparent 45%,
+        rgba(255, 255, 255, 0.05) 60%,
+        transparent 75%,
+        rgba(255, 255, 255, 0.08) 90%,
+        transparent 100%
+    );
+    z-index: -1;
+}
+
 @keyframes float-clouds {
     0% { transform: translateX(-100px); }
     100% { transform: translateX(100px); }
@@ -172,11 +201,13 @@ body::before {
     width: min(100% - var(--spacing-lg), var(--container-width));
     margin-inline: auto;
     padding-block: var(--spacing-xl) var(--spacing-2xl);
+    position: relative;
+    transition: padding var(--transition-med);
 }
 
-/* ═══════════════════════════════════════════════════════════════════════════════ */
+/* =============================================================================== */
 /* ║ LAYER 1 FOUNDATION - STRICT TYPOGRAPHY HIERARCHY                           ║ */
-/* ═══════════════════════════════════════════════════════════════════════════════ */
+/* =============================================================================== */
 
 /* 🎯 SNIGLET - HEADINGS ONLY (Chunky & Playful) */
 h1, h2, h3, h4, h5, h6, 
@@ -289,9 +320,9 @@ label, input, button:not(.btn-kawaii), select, textarea,
     font-family: var(--font-body) !important;  /* Force Nunito */
 }
 
-/* ═══════════════════════════════════════════════════════════════════════════════ */
+/* =============================================================================== */
 /* ║ LAYER 1 FOUNDATION - BUTTON SYSTEM                                         ║ */
-/* ═══════════════════════════════════════════════════════════════════════════════ */
+/* =============================================================================== */
 
 .btn-kawaii {
     appearance: none;
@@ -425,13 +456,13 @@ label, input, button:not(.btn-kawaii), select, textarea,
     padding: var(--spacing-sm) var(--spacing-md);
 }
 
-/* ═══════════════════════════════════════════════════════════════════════════════ */
+/* =============================================================================== */
 /* ║ LAYER 1 FOUNDATION - CARD & PANEL SYSTEM                                  ║ */
-/* ═══════════════════════════════════════════════════════════════════════════════ */
+/* =============================================================================== */
 
-/* ═══════════════════════════════════════════════════════════════════════════════ */
+/* =============================================================================== */
 /* ║ LAYER 1 FOUNDATION - REFINED CARD & PANEL SYSTEM                          ║ */
-/* ═══════════════════════════════════════════════════════════════════════════════ */
+/* =============================================================================== */
 
 .kawaii-card {
     background: var(--surface);
@@ -456,6 +487,7 @@ label, input, button:not(.btn-kawaii), select, textarea,
     box-shadow: var(--shadow-soft);
     padding: var(--spacing-lg);
     backdrop-filter: blur(8px);
+    transition: background var(--transition-med), border-color var(--transition-fast), box-shadow var(--transition-med);
 }
 
 /* Small cards for compact content */
@@ -472,25 +504,34 @@ label, input, button:not(.btn-kawaii), select, textarea,
     box-shadow: var(--shadow-float);
 }
 
-/* Surface variations with refined colors */
+/* Surface variations with refined colors and smooth transitions */
 .surface-mint {
     background: linear-gradient(180deg, rgba(211, 255, 228, 0.6) 0%, rgba(211, 255, 228, 0.3) 100%);
     border: 2px solid rgba(211, 255, 228, 0.8);
+    transition: background var(--transition-med), border-color var(--transition-fast);
 }
 
 .surface-sky {
     background: linear-gradient(180deg, rgba(169, 222, 249, 0.5) 0%, rgba(169, 222, 249, 0.2) 100%);
     border: 2px solid var(--outline-sky);
+    transition: background var(--transition-med), border-color var(--transition-fast);
 }
 
 .surface-lavender {
     background: linear-gradient(180deg, rgba(228, 193, 249, 0.5) 0%, rgba(228, 193, 249, 0.2) 100%);
     border: 2px solid var(--outline-lavender);
+    transition: background var(--transition-med), border-color var(--transition-fast);
 }
 
-/* ═══════════════════════════════════════════════════════════════════════════════ */
+.surface-butter {
+    background: linear-gradient(180deg, rgba(242, 230, 163, 0.5) 0%, rgba(242, 230, 163, 0.2) 100%);
+    border: 2px solid var(--outline-butter);
+    transition: background var(--transition-med), border-color var(--transition-fast);
+}
+
+/* =============================================================================== */
 /* ║ LAYER 1 FOUNDATION - FORM CONTROLS                                         ║ */
-/* ═══════════════════════════════════════════════════════════════════════════════ */
+/* =============================================================================== */
 
 .input-kawaii,
 .select-kawaii,
@@ -533,15 +574,15 @@ label, input, button:not(.btn-kawaii), select, textarea,
     border-radius: var(--radius-sm);
 }
 
-/* ═══════════════════════════════════════════════════════════════════════════════ */
+/* =============================================================================== */
 /* ║ LAYER 2 SHOP COMPONENTS - NAVIGATION SYSTEM                                ║ */
-/* ═══════════════════════════════════════════════════════════════════════════════ */
+/* =============================================================================== */
 
 .kawaii-header {
-    background: linear-gradient(180deg, var(--surface-strong) 0%, rgba(255,255,255,0.98) 100%);
-    backdrop-filter: blur(16px);
-    border-bottom: 3px solid var(--outline);
-    box-shadow: 0 4px 20px rgba(169, 222, 249, 0.25);
+    background: #ffffff;
+    backdrop-filter: blur(8px);
+    border-bottom: 1px solid rgba(0, 0, 0, 0.08);
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
     position: sticky;
     top: 0;
     z-index: 100;
@@ -549,12 +590,26 @@ label, input, button:not(.btn-kawaii), select, textarea,
 
 .kawaii-brand {
     font-family: var(--font-heading);
-    font-weight: var(--font-weight-black);
+    font-weight: var(--font-weight-bold);
     color: var(--purple);
     text-decoration: none;
-    font-size: var(--font-size-3xl);
-    text-shadow: 2px 2px 6px rgba(255,255,255,0.9);
+    font-size: var(--font-size-xl);
     transition: all var(--transition-fast);
+    display: inline-flex;
+    align-items: center;
+}
+
+/* Logo image styling - professional with subtle kawaii touches */
+.kawaii-brand .logo-image {
+    height: 120px;
+    width: auto;
+    transition: all var(--transition-med);
+    filter: drop-shadow(0 1px 2px rgba(0, 0, 0, 0.1));
+}
+
+.kawaii-brand:hover .logo-image {
+    transform: scale(1.02);
+    filter: drop-shadow(0 2px 4px rgba(169, 222, 249, 0.3));
 }
 
 .kawaii-brand:hover,
@@ -645,9 +700,9 @@ label, input, button:not(.btn-kawaii), select, textarea,
     }
 }
 
-/* ═══════════════════════════════════════════════════════════════════════════════ */
+/* =============================================================================== */
 /* ║ LAYER 2 SHOP COMPONENTS - SEARCH SYSTEM                                    ║ */
-/* ═══════════════════════════════════════════════════════════════════════════════ */
+/* =============================================================================== */
 
 .search-kawaii {
     position: relative;
@@ -711,9 +766,9 @@ label, input, button:not(.btn-kawaii), select, textarea,
     border-bottom-color: transparent;
 }
 
-/* ═══════════════════════════════════════════════════════════════════════════════ */
+/* =============================================================================== */
 /* ║ LAYER 2 SHOP COMPONENTS - TABS & FILTER SYSTEM                             ║ */
-/* ═══════════════════════════════════════════════════════════════════════════════ */
+/* =============================================================================== */
 
 .tab-row,
 .filter-row {
@@ -770,9 +825,9 @@ label, input, button:not(.btn-kawaii), select, textarea,
     border-color: var(--outline-lavender);
 }
 
-/* ═══════════════════════════════════════════════════════════════════════════════ */
+/* =============================================================================== */
 /* ║ LAYER 2 SHOP COMPONENTS - BADGE SYSTEM                                     ║ */
-/* ═══════════════════════════════════════════════════════════════════════════════ */
+/* =============================================================================== */
 
 .badge-kawaii {
     display: inline-flex;
@@ -832,9 +887,9 @@ label, input, button:not(.btn-kawaii), select, textarea,
     }
 }
 
-/* ═══════════════════════════════════════════════════════════════════════════════ */
+/* =============================================================================== */
 /* ║ LAYER 2 SHOP COMPONENTS - PRODUCT CARDS                                    ║ */
-/* ═══════════════════════════════════════════════════════════════════════════════ */
+/* =============================================================================== */
 
 .product-card-kawaii {
     max-width: 320px;
@@ -866,6 +921,7 @@ label, input, button:not(.btn-kawaii), select, textarea,
     border: 2px solid rgba(246, 235, 199, 0.8);
     overflow: hidden;
     position: relative;
+    transition: background var(--transition-med), border-color var(--transition-fast);
 }
 
 .product-card-kawaii .product-media::before {
@@ -909,9 +965,9 @@ label, input, button:not(.btn-kawaii), select, textarea,
     gap: var(--spacing-sm);
 }
 
-/* ═══════════════════════════════════════════════════════════════════════════════ */
+/* =============================================================================== */
 /* ║ LAYER 3 POLISH - CLOUD HERO EFFECTS                                        ║ */
-/* ═══════════════════════════════════════════════════════════════════════════════ */
+/* =============================================================================== */
 
 .kawaii-hero {
     position: relative;
@@ -930,6 +986,7 @@ label, input, button:not(.btn-kawaii), select, textarea,
     position: relative;
     backdrop-filter: blur(12px);
     animation: float-gentle 4s ease-in-out infinite;
+    transition: background var(--transition-med), border-color var(--transition-fast);
 }
 
 .kawaii-cloud-title::before,
@@ -976,9 +1033,9 @@ label, input, button:not(.btn-kawaii), select, textarea,
     50% { transform: translateY(-8px); }
 }
 
-/* ═══════════════════════════════════════════════════════════════════════════════ */
+/* =============================================================================== */
 /* ║ ENHANCED BADGE SYSTEM - Strategic Colors & Varied Radius                   ║ */
-/* ═══════════════════════════════════════════════════════════════════════════════ */
+/* =============================================================================== */
 
 .badge-kawaii {
     display: inline-flex;
@@ -1221,9 +1278,9 @@ button.badge-kawaii:hover,
     100% { transform: translateX(calc(100vw + 200px)) rotate(360deg); }
 }
 
-/* ═══════════════════════════════════════════════════════════════════════════════ */
+/* =============================================================================== */
 /* ║ LAYER 3 POLISH - MICRO-FEEDBACK & SUCCESS STATES                           ║ */
-/* ═══════════════════════════════════════════════════════════════════════════════ */
+/* =============================================================================== */
 
 /* "Added to Cart" success state */
 .btn-kawaii.is-added {
@@ -1282,9 +1339,9 @@ button.badge-kawaii:hover,
     box-shadow: var(--shadow-hover), 0 0 20px rgba(211, 255, 228, 0.4);
 }
 
-/* ═══════════════════════════════════════════════════════════════════════════════ */
+/* =============================================================================== */
 /* ║ UTILITY CLASSES & RESPONSIVE DESIGN                                         ║ */
-/* ═══════════════════════════════════════════════════════════════════════════════ */
+/* =============================================================================== */
 
 /* Grid system */
 .kawaii-grid {
@@ -1324,25 +1381,30 @@ button.badge-kawaii:hover,
         --spacing-xl: 1.5rem;
         --spacing-2xl: 2rem;
     }
-    
+
     .kawaii-grid.two,
     .kawaii-grid.three,
     .kawaii-grid.four {
         grid-template-columns: 1fr;
     }
-    
+
     .kawaii-nav-link {
         padding: var(--spacing-sm) var(--spacing-md);
         font-size: var(--font-size-sm);
     }
-    
+
     .kawaii-cloud-title {
         padding: var(--spacing-md) var(--spacing-lg);
     }
-    
+
     .tab-row,
     .filter-row {
         gap: var(--spacing-sm);
+    }
+
+    /* Responsive logo sizing for tablets */
+    .kawaii-brand .logo-image {
+        height: 100px;
     }
 }
 
@@ -1350,19 +1412,24 @@ button.badge-kawaii:hover,
     .kawaii-brand {
         font-size: var(--font-size-2xl);
     }
-    
+
+    /* Responsive logo sizing for mobile */
+    .kawaii-brand .logo-image {
+        height: 80px;
+    }
+
     .product-card-kawaii {
         max-width: 100%;
     }
-    
+
     .search-kawaii input {
         padding: var(--spacing-sm) 3rem var(--spacing-sm) var(--spacing-md);
     }
 }
 
-/* ═══════════════════════════════════════════════════════════════════════════════ */
+/* =============================================================================== */
 /* ║ ACCESSIBILITY & MOTION PREFERENCES                                          ║ */
-/* ═══════════════════════════════════════════════════════════════════════════════ */
+/* =============================================================================== */
 
 @media (prefers-reduced-motion: reduce) {
     *,
@@ -1397,9 +1464,9 @@ button.badge-kawaii:hover,
     border: 0 !important;
 }
 
-/* ═══════════════════════════════════════════════════════════════════════════════ */
+/* =============================================================================== */
 /* ║ RESPONSIVE DESIGN & ACCESSIBILITY ENHANCEMENTS                             ║ */
-/* ═══════════════════════════════════════════════════════════════════════════════ */
+/* =============================================================================== */
 
 /* Mobile responsive typography */
 @media (max-width: 768px) {
@@ -1514,9 +1581,9 @@ button.badge-kawaii:hover,
     }
 }
 
-/* ═══════════════════════════════════════════════════════════════════════════════ */
+/* =============================================================================== */
 /* ║ FINAL POLISH - UTILITY CLASSES & KAWAII MAGIC ✨                           ║ */
-/* ═══════════════════════════════════════════════════════════════════════════════ */
+/* =============================================================================== */
 
 /* Intentional radius utilities for varied design */
 .radius-xs { border-radius: var(--radius-xs); }
@@ -1611,16 +1678,104 @@ a:focus-visible {
     color: var(--ink);
 }
 
-/* ═══════════════════════════════════════════════════════════════════════════════════════ */
+/* ======================================================================================= */
+/* ║ SECTION BACKGROUND BLENDING UTILITIES                                                 ║ */
+/* ======================================================================================= */
+
+/* Smooth section separators with gradient blending */
+.section-blend-top {
+    position: relative;
+    padding-top: var(--spacing-2xl);
+}
+
+.section-blend-top::before {
+    content: "";
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 60px;
+    background: linear-gradient(180deg, 
+        rgba(255, 255, 255, 0.3) 0%, 
+        transparent 100%
+    );
+    pointer-events: none;
+}
+
+.section-blend-bottom {
+    position: relative;
+    padding-bottom: var(--spacing-2xl);
+}
+
+.section-blend-bottom::after {
+    content: "";
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    height: 60px;
+    background: linear-gradient(0deg, 
+        rgba(255, 255, 255, 0.3) 0%, 
+        transparent 100%
+    );
+    pointer-events: none;
+}
+
+/* Content sections with smooth backgrounds */
+section {
+    transition: background var(--transition-slow), padding var(--transition-med);
+}
+
+/* Hero sections with gentle gradient backgrounds */
+.hero-section {
+    background: linear-gradient(180deg,
+        rgba(211, 255, 228, 0.2) 0%,
+        rgba(169, 222, 249, 0.15) 50%,
+        transparent 100%
+    );
+    padding: var(--spacing-2xl) 0;
+    margin-bottom: var(--spacing-xl);
+    transition: background var(--transition-slow);
+}
+
+/* Feature sections with subtle backgrounds */
+.feature-section {
+    background: linear-gradient(180deg,
+        transparent 0%,
+        rgba(228, 193, 249, 0.1) 50%,
+        transparent 100%
+    );
+    padding: var(--spacing-xl) 0;
+    transition: background var(--transition-slow);
+}
+
+/* Product sections with minimal background */
+.product-section {
+    background: linear-gradient(180deg,
+        rgba(255, 255, 255, 0.05) 0%,
+        transparent 25%,
+        transparent 75%,
+        rgba(255, 255, 255, 0.05) 100%
+    );
+    padding: var(--spacing-lg) 0;
+    transition: background var(--transition-slow);
+}
+
+/* ======================================================================================= */
 /* ║ PROMOTIONAL PAGE STYLES - Special styling for promotions/deals                        ║ */
-/* ═══════════════════════════════════════════════════════════════════════════════════════ */
+/* ======================================================================================= */
 
 /* Promotional Header Styles */
 .promotions-header {
-    background: linear-gradient(135deg, #fff5f5 0%, #fee2e2 100%);
+    background: linear-gradient(135deg, 
+        #fff5f5 0%, 
+        rgba(254, 242, 242, 0.9) 50%,
+        #fee2e2 100%
+    );
     padding: 2rem 0;
     margin: -1rem -15px 2rem -15px;
     border-radius: 0 0 1rem 1rem;
+    transition: background var(--transition-med);
 }
 
 .text-gradient {

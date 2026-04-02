@@ -8,9 +8,9 @@ using Microsoft.EntityFrameworkCore;
 
 namespace ELKH.Controllers
 {
-    // ╔═══════════════════════════════════════════════════════════════════════════════════════════════╗
+    // ╔===============================================================================================╗
     // ║                       INVENTORY CONTROLLER - TABLE OF CONTENTS                               ║
-    // ╚═══════════════════════════════════════════════════════════════════════════════════════════════╝
+    // ╚===============================================================================================╝
     // 
     // OVERVIEW:
     // Administrative inventory management controller providing stock level monitoring, quantity 
@@ -101,9 +101,9 @@ public class InventoryController : Controller
 {
     #region Section 1: Controller Setup & Dependencies
 
-    // ═══════════════════════════════════════════════════════════════════
+    // ===================================================================
     // Section 1: Controller Setup & Dependencies
-    // ═══════════════════════════════════════════════════════════════════
+    // ===================================================================
 
     private readonly IInventoryRepo _inventoryRepo;
     private readonly ELKH.Services.ImageValidationService _imageValidator;
@@ -126,9 +126,9 @@ public class InventoryController : Controller
 
     #region Section 2: Inventory Display & Listing
 
-    // ═══════════════════════════════════════════════════════════════════
+    // ===================================================================
     // Section 2: Inventory Display & Listing
-    // ═══════════════════════════════════════════════════════════════════
+    // ===================================================================
 
 
 public async Task<IActionResult> Index()
@@ -142,9 +142,9 @@ public async Task<IActionResult> Index()
 
         #region Section 3: Stock Quantity Management
 
-        // ═══════════════════════════════════════════════════════════════════
+        // ===================================================================
         // Section 3: Stock Quantity Management
-        // ═══════════════════════════════════════════════════════════════════
+        // ===================================================================
 
 [HttpPost]
         [ValidateAntiForgeryToken]
@@ -216,9 +216,9 @@ public async Task<IActionResult> Index()
 
         #region Section 4: Product Image Management
 
-        // ═══════════════════════════════════════════════════════════════════
+        // ===================================================================
         // Section 4: Product Image Management
-        // ═══════════════════════════════════════════════════════════════════
+        // ===================================================================
 
         //Pass
         public async Task<IActionResult> ProductImages(int Id)
@@ -265,7 +265,7 @@ public async Task<IActionResult> AddImage(int productId)
                 return View("AddImage");
             }
 
-            // ═══════════════════════════════════════════════════════════════
+            // ===============================================================
             // SECURITY: Multi-layer image validation
             // Validates file through:
             // - Magic byte verification (prevents disguised executables)
@@ -273,7 +273,7 @@ public async Task<IActionResult> AddImage(int productId)
             // - Image dimension limits (prevents memory exhaustion)
             // - File size limits (enforced at middleware level + validation)
             // - Filename sanitization (prevents path traversal)
-            // ═══════════════════════════════════════════════════════════════
+            // ===============================================================
             var validationResult = await _imageValidator.ValidateImageAsync(file);
 
             if (!validationResult.IsValid)

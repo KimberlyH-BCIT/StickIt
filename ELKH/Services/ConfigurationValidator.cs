@@ -124,9 +124,9 @@ public class ConfigurationValidator
     {
         var errors = new List<string>();
 
-        // ═══════════════════════════════════════════════════════════════════
+        // ===================================================================
         // PayPal Configuration Validation
-        // ═══════════════════════════════════════════════════════════════════
+        // ===================================================================
         if (string.IsNullOrWhiteSpace(_payPalOptions.ClientId))
         {
             errors.Add("PayPal:ClientId is not configured. Set via user-secrets or environment variable.");
@@ -146,9 +146,9 @@ public class ConfigurationValidator
             errors.Add($"PayPal:Environment is '{_payPalOptions.Environment}' but must be 'sandbox' or 'live'.");
         }
 
-        // ═══════════════════════════════════════════════════════════════════
+        // ===================================================================
         // ReCaptcha Configuration Validation
-        // ═══════════════════════════════════════════════════════════════════
+        // ===================================================================
         if (string.IsNullOrWhiteSpace(_reCaptchaOptions.SiteKey))
         {
             errors.Add("ReCaptcha:SiteKey is not configured. Register at https://www.google.com/recaptcha/admin");
@@ -159,9 +159,9 @@ public class ConfigurationValidator
             errors.Add("ReCaptcha:SecretKey is not configured. Register at https://www.google.com/recaptcha/admin");
         }
 
-        // ═══════════════════════════════════════════════════════════════════
+        // ===================================================================
         // Email Configuration Validation
-        // ═══════════════════════════════════════════════════════════════════
+        // ===================================================================
         // Email is only required in non-Development environments
         // (Development uses FileEmailSender which writes to disk)
         if (!_env.IsDevelopment())
@@ -192,9 +192,9 @@ public class ConfigurationValidator
             }
         }
 
-        // ═══════════════════════════════════════════════════════════════════
+        // ===================================================================
         // Admin Seed Configuration Validation
-        // ═══════════════════════════════════════════════════════════════════
+        // ===================================================================
         var adminEmail = _configuration["Seed:AdminEmail"];
         var adminPass = _configuration["Seed:AdminPass"];
 
@@ -212,9 +212,9 @@ public class ConfigurationValidator
             errors.Add("Seed:AdminPass must be at least 8 characters long.");
         }
 
-        // ═══════════════════════════════════════════════════════════════════
+        // ===================================================================
         // Error Handling: Fail Fast or Warn
-        // ═══════════════════════════════════════════════════════════════════
+        // ===================================================================
         if (errors.Count > 0)
         {
             var errorMessage = string.Join(Environment.NewLine, errors);

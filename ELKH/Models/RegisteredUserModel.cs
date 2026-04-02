@@ -1,4 +1,4 @@
-﻿using System.ComponentModel;
+using System.ComponentModel;
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 
@@ -36,7 +36,7 @@ namespace ELKH.Models
 
         /// <summary>
         /// The user's single wishlist.
-        /// Not initialised by default — EF Core populates this on load.
+        /// Not initialised by default - EF Core populates this on load.
         /// Eagerly instantiating navigation properties can trigger recursive
         /// construction and cause a stack overflow.
         /// </summary>

@@ -1,7 +1,7 @@
 namespace ELKH.Services;
     /// <summary>
     /// Handles all wishlist mutations and queries.
-    /// WishlistController delegates entirely to this service — no EF access in the controller.
+    /// WishlistController delegates entirely to this service - no EF access in the controller.
     /// </summary>
     /// <param name="db">EF Core context for wishlist and item mutations.</param>
     /// <param name="userService">User lookup service (cached) for resolving the acting user.</param>

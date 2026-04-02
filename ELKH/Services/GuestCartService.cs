@@ -8,9 +8,9 @@ using System.Text.Json;
 
 namespace ELKH.Services
 {
-    // ╔═══════════════════════════════════════════════════════════════════════════════════════════════╗
+    // ╔===============================================================================================╗
     // ║                         GUEST CART SERVICE - TABLE OF CONTENTS                               ║
-    // ╚═══════════════════════════════════════════════════════════════════════════════════════════════╝
+    // ╚===============================================================================================╝
     // 
     // OVERVIEW:
     // Session-based shopping cart management for anonymous users, providing full cart functionality
@@ -114,9 +114,9 @@ namespace ELKH.Services
     {
         #region Section 1: Service Setup & Dependencies
 
-        // ═══════════════════════════════════════════════════════════════════
+        // ===================================================================
         // Section 1: Service Setup & Dependencies
-        // ═══════════════════════════════════════════════════════════════════
+        // ===================================================================
 
         private readonly ApplicationDbContext _db;
         private readonly IHttpContextAccessor _httpContextAccessor;
@@ -143,9 +143,9 @@ namespace ELKH.Services
 
         #region Section 2: Cart Item Management
 
-        // ═══════════════════════════════════════════════════════════════════
+        // ===================================================================
         // Section 2: Cart Item Management
-        // ═══════════════════════════════════════════════════════════════════
+        // ===================================================================
 
         /// <summary>
         /// Adds a product to the guest's session cart
@@ -252,9 +252,9 @@ namespace ELKH.Services
 
         #region Section 3: Cart Retrieval & Display
 
-        // ═══════════════════════════════════════════════════════════════════
+        // ===================================================================
         // Section 3: Cart Retrieval & Display
-        // ═══════════════════════════════════════════════════════════════════
+        // ===================================================================
 
         /// <summary>
         /// Gets the guest's cart items with full product details
@@ -315,9 +315,9 @@ namespace ELKH.Services
 
         #region Section 4: User Authentication Migration
 
-        // ═══════════════════════════════════════════════════════════════════
+        // ===================================================================
         // Section 4: User Authentication Migration
-        // ═══════════════════════════════════════════════════════════════════
+        // ===================================================================
 
         /// <summary>
         /// Migrates guest cart to authenticated user's cart when they log in
@@ -351,9 +351,9 @@ namespace ELKH.Services
 
         #region Section 5: Session Storage Management
 
-        // ═══════════════════════════════════════════════════════════════════
+        // ===================================================================
         // Section 5: Session Storage Management
-        // ═══════════════════════════════════════════════════════════════════
+        // ===================================================================
 
         /// <summary>
         /// Retrieves cart from session storage
@@ -377,6 +377,7 @@ namespace ELKH.Services
         }
 
         /// <summary>
+        /// <summary>
         /// Saves cart to session storage
         /// </summary>
         private void SaveCartToSession(List<SessionCartItem> cart)
@@ -397,26 +398,4 @@ namespace ELKH.Services
 
         #endregion
     }
-
-    #region Section 6: Service Interface Definition
-
-    // ═══════════════════════════════════════════════════════════════════
-    // Section 6: Service Interface Definition
-    // ═══════════════════════════════════════════════════════════════════
-
-    /// <summary>
-    /// Interface for guest cart service operations
-    /// </summary>
-    public interface IGuestCartService
-    {
-        Task AddToCartAsync(int productId, int quantity);
-        Task UpdateQuantityAsync(int productId, int newQuantity);
-        Task RemoveFromCartAsync(int productId);
-        Task ClearCartAsync();
-        Task<List<CartItemVM>> GetCartItemsAsync();
-        Task<int> GetCartCountAsync();
-        Task MigrateToUserCartAsync(string userEmail, ICartService cartService);
-    }
-
-    #endregion
 }

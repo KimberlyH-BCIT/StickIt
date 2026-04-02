@@ -8,7 +8,7 @@ namespace ELKH.ViewModels
         /// <summary>Primary key of this rating record.</summary>
         public int RatingId { get; set; }
 
-        /// <summary>Primary key of the product this rating belongs to — used to build the detail link.</summary>
+        /// <summary>Primary key of the product this rating belongs to - used to build the detail link.</summary>
         public int ProductId { get; set; }
 
         /// <summary>Display name of the rated product.</summary>
@@ -34,7 +34,7 @@ namespace ELKH.ViewModels
     }
 
     /// <summary>
-    /// View model for the "My Ratings" page — the full sorted list plus the active sort key.
+    /// View model for the "My Ratings" page - the full sorted list plus the active sort key.
     /// </summary>
     public class MyRatingsVM
     {

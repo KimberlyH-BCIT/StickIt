@@ -22,12 +22,12 @@
                 </div>
                 <nav aria-label="View mode navigation" class="d-flex gap-2 flex-wrap">
                     <a asp-controller="Staff" asp-action="Index"
-                       class="btn btn-sm btn-outline-secondary rounded-pill px-3"
+                       class="btn-kawaii btn-secondary-kawaii btn-sm radius-pill"
                        aria-label="Switch to Staff view mode">
                         <span aria-hidden="true">🧑‍💼</span> View as Staff
                     </a>
                     <a asp-controller="Home" asp-action="Index"
-                       class="btn btn-sm btn-outline-secondary rounded-pill px-3"
+                       class="btn-kawaii btn-secondary-kawaii btn-sm radius-pill"
                        aria-label="Switch to Customer view mode">
                         <span aria-hidden="true">🛒</span> View as Customer
                     </a>
@@ -50,12 +50,12 @@
                    role="button"
                    aria-labelledby="total-products-label"
                    aria-describedby="total-products-desc">
-                    <article class="card border-0 shadow-sm rounded-4 h-100 kpi-card"
+                    <article class="kawaii-card kawaii-card-sm h-100 kpi-card glow-on-hover"
                              aria-labelledby="total-products-label">
-                        <div class="card-body d-flex flex-column align-items-center justify-content-center p-3 text-center">
+                        <div class="d-flex flex-column align-items-center justify-content-center p-3 text-center">
                             <span style="font-size:1.6rem;" aria-hidden="true">📦</span>
-                            <h3 class="fw-bold mb-0 mt-1 h4" id="total-products-label">@ViewBag.TotalProducts</h3>
-                            <p class="text-muted small mb-0" id="total-products-desc">All Products</p>
+                            <h3 class="font-heading text-purple mb-0 mt-1 h4" id="total-products-label">@ViewBag.TotalProducts</h3>
+                            <p class="hierarchy-tertiary small mb-0" id="total-products-desc">All Products</p>
                         </div>
                     </article>
                 </a>
@@ -69,12 +69,12 @@
                    role="button"
                    aria-labelledby="active-products-label"
                    aria-describedby="active-products-desc">
-                    <article class="card border-0 shadow-sm rounded-4 h-100 kpi-card border-success-subtle"
+                    <article class="kawaii-card kawaii-card-sm surface-mint h-100 kpi-card glow-on-hover"
                              aria-labelledby="active-products-label">
-                        <div class="card-body d-flex flex-column align-items-center justify-content-center p-3 text-center">
+                        <div class="d-flex flex-column align-items-center justify-content-center p-3 text-center">
                             <span style="font-size:1.6rem;" aria-hidden="true">✅</span>
-                            <h3 class="fw-bold mb-0 mt-1 text-success h4" id="active-products-label">@ViewBag.ActiveProducts</h3>
-                            <p class="text-muted small mb-0" id="active-products-desc">Active Products</p>
+                            <h3 class="font-heading mb-0 mt-1 h4" style="color: #28a745;" id="active-products-label">@ViewBag.ActiveProducts</h3>
+                            <p class="hierarchy-tertiary small mb-0" id="active-products-desc">Active Products</p>
                         </div>
                     </article>
                 </a>
@@ -88,12 +88,12 @@
                    role="button"
                    aria-labelledby="inactive-products-label"
                    aria-describedby="inactive-products-desc">
-                    <article class="card border-0 shadow-sm rounded-4 h-100 kpi-card"
+                    <article class="kawaii-card kawaii-card-sm h-100 kpi-card glow-on-hover"
                              aria-labelledby="inactive-products-label">
-                        <div class="card-body d-flex flex-column align-items-center justify-content-center p-3 text-center">
+                        <div class="d-flex flex-column align-items-center justify-content-center p-3 text-center">
                             <span style="font-size:1.6rem;" aria-hidden="true">⛔</span>
-                            <h3 class="fw-bold mb-0 mt-1 text-secondary h4" id="inactive-products-label">@ViewBag.InactiveProducts</h3>
-                            <p class="text-muted small mb-0" id="inactive-products-desc">Inactive Products</p>
+                            <h3 class="font-heading mb-0 mt-1 h4" style="color: #6c757d;" id="inactive-products-label">@ViewBag.InactiveProducts</h3>
+                            <p class="hierarchy-tertiary small mb-0" id="inactive-products-desc">Inactive Products</p>
                         </div>
                     </article>
                 </a>
@@ -107,13 +107,13 @@
                    role="button"
                    aria-labelledby="stocked-label"
                    aria-describedby="stocked-desc">
-                    <article class="card border-0 shadow-sm rounded-4 h-100 kpi-card"
+                    <article class="kawaii-card kawaii-card-sm surface-mint h-100 kpi-card glow-on-hover"
                              aria-labelledby="stocked-label">
-                        <div class="card-body d-flex flex-column align-items-center justify-content-center p-3 text-center">
+                        <div class="d-flex flex-column align-items-center justify-content-center p-3 text-center">
                             <span style="font-size:1.6rem;" aria-hidden="true">🟢</span>
-                            <h3 class="fw-bold mb-0 mt-1 text-success h4" id="stocked-label">@ViewBag.StockUpCount</h3>
-                            <p class="text-muted small mb-0" id="stocked-desc">Well Stocked</p>
-                            <p class="mb-0" style="font-size:.65rem;color:#9ca3af;" aria-label="More than 20 units in stock">&gt; 20 units</p>
+                            <h3 class="font-heading mb-0 mt-1 h4" style="color: #28a745;" id="stocked-label">@ViewBag.StockUpCount</h3>
+                            <p class="hierarchy-tertiary small mb-0" id="stocked-desc">Well Stocked</p>
+                            <p class="mb-0 hierarchy-tertiary" style="font-size:.65rem;" aria-label="More than 20 units in stock">&gt; 20 units</p>
                         </div>
                     </article>
                 </a>
@@ -127,13 +127,13 @@
                    role="button"
                    aria-labelledby="low-stock-label"
                    aria-describedby="low-stock-desc">
-                    <article class="card border-0 shadow-sm rounded-4 h-100 kpi-card"
+                    <article class="kawaii-card kawaii-card-sm surface-butter h-100 kpi-card glow-on-hover"
                              aria-labelledby="low-stock-label">
-                        <div class="card-body d-flex flex-column align-items-center justify-content-center p-3 text-center">
+                        <div class="d-flex flex-column align-items-center justify-content-center p-3 text-center">
                             <span style="font-size:1.6rem;" aria-hidden="true">🔴</span>
-                            <h3 class="fw-bold mb-0 mt-1 text-danger h4" id="low-stock-label">@ViewBag.LowStockCount</h3>
-                            <p class="text-muted small mb-0" id="low-stock-desc">Low Stock</p>
-                            <p class="mb-0" style="font-size:.65rem;color:#9ca3af;" aria-label="5 units or fewer in stock">≤ 5 units</p>
+                            <h3 class="font-heading mb-0 mt-1 h4" style="color: #dc3545;" id="low-stock-label">@ViewBag.LowStockCount</h3>
+                            <p class="hierarchy-tertiary small mb-0" id="low-stock-desc">Low Stock</p>
+                            <p class="mb-0 hierarchy-tertiary" style="font-size:.65rem;" aria-label="5 units or fewer in stock">≤ 5 units</p>
                         </div>
                     </article>
                 </a>
@@ -146,7 +146,7 @@
                    role="button"
                    aria-labelledby="weekly-orders-label"
                    aria-describedby="weekly-orders-desc">
-                    <article class="card border-0 shadow-sm rounded-4 h-100 kpi-card"
+                    <article class="kawaii-card kawaii-card-sm surface-sky h-100 kpi-card glow-on-hover"
                              aria-labelledby="weekly-orders-label">
                         <div class="card-body d-flex flex-column align-items-center justify-content-center p-3 text-center">
                             <span style="font-size:1.6rem;" aria-hidden="true">📅</span>

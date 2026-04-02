@@ -7,9 +7,9 @@ using Microsoft.AspNetCore.Mvc;
 
 namespace ELKH.Configuration;
 
-// ╔═══════════════════════════════════════════════════════════════════════════════════════════════╗
+// ╔===============================================================================================╗
 // ║                             SWAGGER CONFIGURATION - TABLE OF CONTENTS                        ║
-// ╚═══════════════════════════════════════════════════════════════════════════════════════════════╝
+// ╚===============================================================================================╝
 // 
 // OVERVIEW:
 // Comprehensive Swagger/OpenAPI configuration for ELKH e-commerce platform providing
@@ -70,9 +70,9 @@ public static class SwaggerConfiguration
 {
     #region Section 1: Main Configuration & Service Registration
 
-    // ═══════════════════════════════════════════════════════════════════
+    // ===================================================================
     // Section 1: Main Configuration & Service Registration
-    // ═══════════════════════════════════════════════════════════════════
+    // ===================================================================
 
     /// <summary>
     /// Configure Swagger/OpenAPI services with versioning support.
@@ -183,9 +183,9 @@ public static class SwaggerConfiguration
 
     #region Section 3: Swagger UI Configuration
 
-    // ═══════════════════════════════════════════════════════════════════
+    // ===================================================================
     // Section 3: Swagger UI Configuration  
-    // ═══════════════════════════════════════════════════════════════════
+    // ===================================================================
 
     /// <summary>
     /// Use Swagger UI with versioning support.
@@ -239,9 +239,9 @@ public static class SwaggerConfiguration
 
     #region Section 2: API Documentation & Metadata Helper Methods
 
-    // ═══════════════════════════════════════════════════════════════════
+    // ===================================================================
     // Section 2: API Documentation & Metadata Helper Methods
-    // ═══════════════════════════════════════════════════════════════════
+    // ===================================================================
 
     private static string GetVersionDescription(ApiVersionDescription description)
     {
@@ -261,9 +261,9 @@ public static class SwaggerConfiguration
 
 #region Section 4: Operation Filtering & Enhancement
 
-// ═══════════════════════════════════════════════════════════════════
+// ===================================================================
 // Section 4: Operation Filtering & Enhancement
-// ═══════════════════════════════════════════════════════════════════
+// ===================================================================
 
 /// <summary>
 /// Operation filter to add custom metadata to Swagger operations.
@@ -430,9 +430,9 @@ public class SwaggerSchemaFilter : ISchemaFilter
 
 #region Section 5: Document-Level Filters
 
-// ═══════════════════════════════════════════════════════════════════
+// ===================================================================
 // Section 5: Document-Level Filters
-// ═══════════════════════════════════════════════════════════════════
+// ===================================================================
 
 /// <summary>
 /// Document filter to add additional API information.
@@ -476,9 +476,9 @@ public class SwaggerDocumentFilter : IDocumentFilter
 
 #region Section 6: API Versioning Integration
 
-// ═══════════════════════════════════════════════════════════════════
+// ===================================================================
 // Section 6: API Versioning Integration
-// ═══════════════════════════════════════════════════════════════════
+// ===================================================================
 
 /// <summary>
 /// Operation filter to handle API versioning in Swagger.
