@@ -314,6 +314,11 @@ namespace ELKH.Services
         {
             try
             {
+                // ── Check if Products table exists ─────────────────────────────────
+                // The Products table might not exist yet if migrations haven't run.
+                // We'll try to query it and catch the "no such table" exception.
+                var productExists = await db.Products.AnyAsync(cancellationToken);
+
                 // ── Create FTS5 Virtual Table (Idempotent) ─────────────────────────
                 // Using FTS5 with the product Name and an unindexed PkProductId column.
                 // The rowid is set to PkProductId for consistent references.
@@ -331,9 +336,15 @@ WHERE PkProductId NOT IN (SELECT rowid FROM ProductFTS);
 
                 _logger.LogInformation("FTS5 virtual table rebuild completed successfully");
             }
+            catch (Microsoft.Data.Sqlite.SqliteException sqlEx) when (sqlEx.Message.Contains("no such table"))
+            {
+                // Products table doesn't exist yet - migrations haven't run
+                _logger.LogWarning("Products table does not exist yet. Skipping FTS5 rebuild until database is migrated.");
+                return;
+            }
             catch (Microsoft.Data.Sqlite.SqliteException sqlEx)
             {
-                // SQLite-specific errors (e.g., FTS5 module issues, table corruption)
+                // Other SQLite-specific errors (e.g., FTS5 module issues, table corruption)
                 _logger.LogError(sqlEx, "SQLite error while ensuring ProductFTS contents");
                 throw;
             }
@@ -349,54 +360,63 @@ WHERE PkProductId NOT IN (SELECT rowid FROM ProductFTS);
         /// </summary>
         private async Task ExecuteFuzzySuggestionsRebuildAsync(ApplicationDbContext db, CancellationToken cancellationToken)
         {
-            // ── Query All Products with Metadata ───────────────────────────────
-            var suggestions = await db.Products
-                .Select(p => new ELKH.Models.FuzzySuggestionModel
-                {
-                    PkProductId    = p.PkProductId,
-                    Name           = p.Name,
-                    NameNormalized = p.Name.ToLowerInvariant(), // For case-insensitive prefix matching
-                    Price          = p.Price,
-                    Thumbnail      = p.ProductImage!.Select(pi => pi.ProductImageURL).FirstOrDefault() ?? string.Empty,
-                    CreatedAt      = DateTime.UtcNow
-                })
-                .ToListAsync(cancellationToken);
-
-            _logger.LogInformation("Queried {Count} products for fuzzy suggestions rebuild", suggestions.Count);
-
-            // ── Atomic Replacement with Transaction and Batching ────────────────
-            using var tx = await db.Database.BeginTransactionAsync(cancellationToken);
-
             try
             {
-                // Clear existing suggestions
-                await db.Database.ExecuteSqlRawAsync("DELETE FROM FuzzySuggestions", cancellationToken);
+                // ── Query All Products with Metadata ───────────────────────────────
+                var suggestions = await db.Products
+                    .Select(p => new ELKH.Models.FuzzySuggestionModel
+                    {
+                        PkProductId    = p.PkProductId,
+                        Name           = p.Name,
+                        NameNormalized = p.Name.ToLowerInvariant(), // For case-insensitive prefix matching
+                        Price          = p.Price,
+                        Thumbnail      = p.ProductImage!.Select(pi => pi.ProductImageURL).FirstOrDefault() ?? string.Empty,
+                        CreatedAt      = DateTime.UtcNow
+                    })
+                    .ToListAsync(cancellationToken);
 
-                // Insert new suggestions in batches to avoid large transaction blocks
-                var totalInserted = 0;
-                for (int i = 0; i < suggestions.Count; i += _options.BatchSize)
+                _logger.LogInformation("Queried {Count} products for fuzzy suggestions rebuild", suggestions.Count);
+
+                // ── Atomic Replacement with Transaction and Batching ────────────────
+                using var tx = await db.Database.BeginTransactionAsync(cancellationToken);
+
+                try
                 {
-                    cancellationToken.ThrowIfCancellationRequested();
+                    // Clear existing suggestions
+                    await db.Database.ExecuteSqlRawAsync("DELETE FROM FuzzySuggestions", cancellationToken);
 
-                    var batch = suggestions.Skip(i).Take(_options.BatchSize).ToList();
-                    db.FuzzySuggestions.AddRange(batch);
-                    await db.SaveChangesAsync(cancellationToken);
+                    // Insert new suggestions in batches to avoid large transaction blocks
+                    var totalInserted = 0;
+                    for (int i = 0; i < suggestions.Count; i += _options.BatchSize)
+                    {
+                        cancellationToken.ThrowIfCancellationRequested();
 
-                    totalInserted += batch.Count;
-                    _logger.LogDebug("Inserted batch {BatchNumber}: {BatchSize} suggestions ({TotalInserted}/{TotalCount})", 
-                        (i / _options.BatchSize) + 1, batch.Count, totalInserted, suggestions.Count);
+                        var batch = suggestions.Skip(i).Take(_options.BatchSize).ToList();
+                        db.FuzzySuggestions.AddRange(batch);
+                        await db.SaveChangesAsync(cancellationToken);
+
+                        totalInserted += batch.Count;
+                        _logger.LogDebug("Inserted batch {BatchNumber}: {BatchSize} suggestions ({TotalInserted}/{TotalCount})", 
+                            (i / _options.BatchSize) + 1, batch.Count, totalInserted, suggestions.Count);
+                    }
+
+                    await tx.CommitAsync(cancellationToken);
+
+                    _logger.LogInformation("Fuzzy suggestions reindexed successfully: {Count} suggestions inserted in {BatchCount} batches", 
+                        suggestions.Count, Math.Ceiling((double)suggestions.Count / _options.BatchSize));
                 }
-
-                await tx.CommitAsync(cancellationToken);
-
-                _logger.LogInformation("Fuzzy suggestions reindexed successfully: {Count} suggestions inserted in {BatchCount} batches", 
-                    suggestions.Count, Math.Ceiling((double)suggestions.Count / _options.BatchSize));
+                catch (Exception)
+                {
+                    await tx.RollbackAsync(cancellationToken);
+                    _logger.LogError("Fuzzy suggestions rebuild transaction rolled back due to error");
+                    throw;
+                }
             }
-            catch (Exception)
+            catch (Microsoft.Data.Sqlite.SqliteException sqlEx) when (sqlEx.Message.Contains("no such table"))
             {
-                await tx.RollbackAsync(cancellationToken);
-                _logger.LogError("Fuzzy suggestions rebuild transaction rolled back due to error");
-                throw;
+                // Products table doesn't exist yet - migrations haven't run
+                _logger.LogWarning("Products table does not exist yet. Skipping fuzzy suggestions rebuild until database is migrated.");
+                return;
             }
         }
 
