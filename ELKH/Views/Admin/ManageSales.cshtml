@@ -302,99 +302,23 @@
         </div>
 
     </div>
-
 </div>
 
-<script>
-    document.addEventListener("DOMContentLoaded", function() {
-        // 1. Data Parsing
-        const dailyLabels = @Html.Raw(jsDailyLabels);
-        const dailySales = @Html.Raw(jsDailySales);
-        const weeklyLabels = @Html.Raw(jsWeeklyLabels);
-        const weeklySales = @Html.Raw(jsWeeklySales);
-        const monthlyLabels = @Html.Raw(jsMonthlyLabels);
-        const monthlySales = @Html.Raw(jsMonthlySales);
-        const yearlyLabels = @Html.Raw(jsYearlyLabels);
-        const yearlySales = @Html.Raw(jsYearlySales);
-        const topNames = @Html.Raw(topNames);
-        const topUnits = @Html.Raw(topUnits);
-
-        // 2. Shared Options
-        const yAxisConfig = {
-            beginAtZero: true,
-            ticks: { callback: (v) => '$' + v.toLocaleString() }
-        };
-
-        // 3. Initialize Charts
-        new Chart(document.getElementById('dailyChart'), {
-            type: 'bar',
-            data: {
-                labels: dailyLabels,
-                datasets: [{
-                    label: 'Sales ($)', data: dailySales,
-                    backgroundColor: 'rgba(6,182,212,0.7)', borderRadius: 5
-                }]
-            },
-            options: { responsive: true, plugins: { legend: { display: false } }, scales: { y: yAxisConfig } }
-        });
-
-        new Chart(document.getElementById('weeklyChart'), {
-            type: 'bar',
-            data: {
-                labels: weeklyLabels,
-                datasets: [{
-                    label: 'Sales ($)', data: weeklySales,
-                    backgroundColor: 'rgba(99,102,241,0.7)', borderRadius: 5
-                }]
-            },
-            options: { responsive: true, plugins: { legend: { display: false } }, scales: { y: yAxisConfig } }
-        });
-
-        new Chart(document.getElementById('monthlyChart'), {
-            type: 'line',
-            data: {
-                labels: monthlyLabels,
-                datasets: [{
-                    label: 'Sales ($)', data: monthlySales,
-                    fill: true, backgroundColor: 'rgba(34,197,94,0.1)',
-                    borderColor: 'rgba(34,197,94,1)', tension: 0.4
-                }]
-            },
-            options: { responsive: true, plugins: { legend: { display: false } }, scales: { y: yAxisConfig } }
-        });
-
-        new Chart(document.getElementById('yearlyChart'), {
-            type: 'bar',
-            data: {
-                labels: yearlyLabels,
-                datasets: [{
-                    label: 'Sales ($)', data: yearlySales,
-                    backgroundColor: 'rgba(249,115,22,0.7)', borderRadius: 5
-                }]
-            },
-            options: { responsive: true, plugins: { legend: { display: false } }, scales: { y: yAxisConfig } }
-        });
-
-        new Chart(document.getElementById('topProductsChart'), {
-            type: 'bar',
-            data: {
-                labels: topNames,
-                datasets: [{
-                    label: 'Units Sold', data: topUnits,
-                    backgroundColor: ['#fbbf24', '#6366f1', '#22c55e', '#ef4444', '#14b8a6'],
-                    borderRadius: 6
-                }]
-            },
-            options: {
-                indexAxis: 'y',
-                responsive: true,
-                plugins: { legend: { display: false } },
-                scales: { x: { beginAtZero: true } }
-            }
-        });
-    });
-</script>
 @section Scripts {
+    <script src="~/js/chart.js"></script>
     <script src="~/js/sales-charts.js"></script>
 }
-}
+<script>
+    window.chartData = {
+        dailyLabels: @Html.Raw(jsDailyLabels),
+        dailySales: @Html.Raw(jsDailySales),
+        weeklyLabels: @Html.Raw(jsWeeklyLabels),
+        weeklySales: @Html.Raw(jsWeeklySales),
+        monthlyLabels: @Html.Raw(jsMonthlyLabels),
+        monthlySales: @Html.Raw(jsMonthlySales),
+        yearlyLabels: @Html.Raw(jsYearlyLabels),
+        yearlySales: @Html.Raw(jsYearlySales),
+        topNames: @Html.Raw(topNames),
+        topUnits: @Html.Raw(topUnits)
+        };
+</script>

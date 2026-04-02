@@ -231,81 +231,106 @@ namespace ELKH.Controllers
         /*============================== Manage Sales ==============================*/
         public async Task<IActionResult> ManageSales()
         {
-            var now = DateTime.UtcNow;
+            // ✅ FIX 1: Use local time instead of UTC
+            var now = DateTime.Now;
+
             var todayStart = now.Date;
             var weekStart = now.AddDays(-6).Date;
             var monthStart = new DateTime(now.Year, now.Month, 1);
             var yearStart = new DateTime(now.Year, 1, 1);
             var fiveYrStart = now.AddYears(-4).Date;
 
-            // Load enough history for all buckets in one round-trip
             var allTransactions = await _context.Transactions
                 .Where(t => t.TransactionDate >= fiveYrStart)
                 .Select(t => new { t.TransactionDate, t.Amount })
                 .ToListAsync();
 
-            // ── Bucket helpers ────────────────────────────────────────
-            var todayTx = allTransactions.Where(t => t.TransactionDate.Date == todayStart).ToList();
-            var weeklyTx = allTransactions.Where(t => t.TransactionDate.Date >= weekStart).ToList();
-            var monthlyTx = allTransactions.Where(t => t.TransactionDate >= monthStart).ToList();
-            var yearlyTx = allTransactions.Where(t => t.TransactionDate >= yearStart).ToList();
+            // ✅ FIX 2: Replace .Date comparison with range
+            var todayTx = allTransactions
+                .Where(t => t.TransactionDate >= todayStart && t.TransactionDate < todayStart.AddDays(1))
+                .ToList();
 
-            // ── Summary cards ─────────────────────────────────────────
+            var weeklyTx = allTransactions
+                .Where(t => t.TransactionDate >= weekStart && t.TransactionDate <= now)
+                .ToList();
+
+            var monthlyTx = allTransactions
+                .Where(t => t.TransactionDate >= monthStart)
+                .ToList();
+
+            var yearlyTx = allTransactions
+                .Where(t => t.TransactionDate >= yearStart)
+                .ToList();
+
             decimal dailyGross = todayTx.Any() ? todayTx.Sum(t => t.Amount) : 0m;
             decimal weeklyGross = weeklyTx.Any() ? weeklyTx.Sum(t => t.Amount) : 0m;
             decimal monthlyGross = monthlyTx.Any() ? monthlyTx.Sum(t => t.Amount) : 0m;
             decimal yearlyGross = yearlyTx.Any() ? yearlyTx.Sum(t => t.Amount) : 0m;
 
-            // ── Daily chart: today by hour ────────────────────────────
+            // ── Daily chart ──
             var dailyLabels = new List<string>();
             var dailySalesData = new List<decimal>();
+
             for (int h = 0; h < 24; h++)
             {
-                var hour = todayStart.AddHours(h);
-                dailyLabels.Add(hour.ToString("HH:00"));
+                var hourStart = todayStart.AddHours(h);
+                var hourEnd = hourStart.AddHours(1);
+
+                dailyLabels.Add(hourStart.ToString("HH:00"));
+
                 dailySalesData.Add(todayTx
-                    .Where(t => t.TransactionDate.Hour == h)
+                    .Where(t => t.TransactionDate >= hourStart && t.TransactionDate < hourEnd)
                     .Sum(t => (decimal?)t.Amount) ?? 0m);
             }
 
-            // ── Weekly chart: last 7 days ─────────────────────────────
+            // ── Weekly chart ──
             var weeklyLabels = new List<string>();
             var weeklySalesData = new List<decimal>();
+
             for (int d = 6; d >= 0; d--)
             {
-                var day = now.AddDays(-d).Date;
-                weeklyLabels.Add(day.ToString("ddd dd"));
+                var dayStart = now.AddDays(-d).Date;
+                var dayEnd = dayStart.AddDays(1);
+
+                weeklyLabels.Add(dayStart.ToString("ddd dd"));
+
                 weeklySalesData.Add(allTransactions
-                    .Where(t => t.TransactionDate.Date == day)
+                    .Where(t => t.TransactionDate >= dayStart && t.TransactionDate < dayEnd)
                     .Sum(t => (decimal?)t.Amount) ?? 0m);
             }
 
-            // ── Monthly chart: last 12 months ────────────────────────
+            // ── Monthly chart ── (unchanged logic, just safe)
             var monthlyLabels = new List<string>();
             var monthlySalesData = new List<decimal>();
+
             for (int m = 11; m >= 0; m--)
             {
                 var month = now.AddMonths(-m);
+
                 monthlyLabels.Add(month.ToString("MMM yyyy"));
+
                 monthlySalesData.Add(allTransactions
-                    .Where(t => t.TransactionDate.Year == month.Year
-                             && t.TransactionDate.Month == month.Month)
+                    .Where(t => t.TransactionDate.Year == month.Year &&
+                                t.TransactionDate.Month == month.Month)
                     .Sum(t => (decimal?)t.Amount) ?? 0m);
             }
 
-            // ── Yearly chart: last 5 years ────────────────────────────
+            // ── Yearly chart ──
             var yearlyLabels = new List<string>();
             var yearlySalesData = new List<decimal>();
+
             for (int y = 4; y >= 0; y--)
             {
                 int yr = now.AddYears(-y).Year;
+
                 yearlyLabels.Add(yr.ToString());
+
                 yearlySalesData.Add(allTransactions
                     .Where(t => t.TransactionDate.Year == yr)
                     .Sum(t => (decimal?)t.Amount) ?? 0m);
             }
 
-            // ── Top 5 products ────────────────────────────────────────
+            // ── Top Products (UNCHANGED) ──
             var orderItems = await _context.OrderItems
                 .Include(oi => oi.Product)
                 .Select(oi => new

@@ -195,6 +195,9 @@ await using (var seedScope = app.Services.CreateAsyncScope())
 
         await DbSeeder.SeedTestTransactionsAsync(db);
 
+        var imageDb2 = sp.GetRequiredService<ImageStoreContext>();
+        await DbSeeder.SeedProductImagesAsync(db, imageDb2, app.Environment.WebRootPath);
+
         app.Logger.LogInformation("Seeding completed successfully.");
     }
     catch (Exception ex)
