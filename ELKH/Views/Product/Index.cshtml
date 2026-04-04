@@ -16,9 +16,8 @@
     // ===============================================================================
 
     var products   = Model.ToList();
-    var page       = ViewBag.Page       as int? ?? 1;
-    var totalPages = ViewBag.TotalPages as int? ?? 1;
     var total      = ViewBag.Total      as int? ?? products.Count;
+    var hasMore    = ViewBag.HasMore    as bool? ?? false;
     var search     = ViewBag.Search     as string;
     var categoryId = ViewBag.CategoryId as int?;
     var currentSort = ViewBag.Sort as string ?? "name_asc";
@@ -39,14 +38,7 @@
         CurrentSort = currentSort
     };
 
-    var paginationVM = new ELKH.ViewModels.PaginationVM
-    {
-        CurrentPage = page,
-        TotalPages = totalPages,
-        Search = search,
-        CategoryId = categoryId
-    };
-}
+    }
 
 <!-- ================================================================================ -->
 <!-- ║ Page Header & Search Results Display with Enhanced Accessibility           ║ -->
@@ -57,7 +49,6 @@
     <nav class="skip-links sr-only-focusable" aria-label="Skip navigation">
         <a href="#product-search-input" class="skip-link btn-kawaii btn-secondary-kawaii">Skip to search</a>
         <a href="#productGrid" class="skip-link btn-kawaii btn-secondary-kawaii">Skip to products</a>
-        <a href="#pagination" class="skip-link btn-kawaii btn-secondary-kawaii">Skip to pagination</a>
     </nav>
 
     <div class="container-kawaii">
@@ -217,7 +208,7 @@
             <div class="mb-2 mb-md-0">
                 <h2 class="font-heading">
                     <i class="bi bi-collection me-2" style="color: var(--purple);" aria-hidden="true"></i>
-                    Showing @products.Count of @total products
+                    Showing <span id="header-shown-count">@products.Count</span> of @total products
                 </h2>
             </div>
             <div>
@@ -240,7 +231,7 @@
                      id="results-announcement">
                     <p class="hierarchy-secondary mb-0" id="results-count">
                         <i class="bi bi-check-circle me-2" style="color: var(--purple);" aria-hidden="true"></i>
-                        <strong>@products.Count</strong> of <strong>@total</strong> product@(total != 1 ? "s" : "") found
+                        <strong id="shown-count">@products.Count</strong> of <strong>@total</strong> product@(total != 1 ? "s" : "") found
                         @if (!string.IsNullOrWhiteSpace(search)) { 
                             <span> matching <em>&ldquo;@search&rdquo;</em></span> 
                         }
@@ -297,17 +288,86 @@ else
                 }
             </div>
 
-            @* ── Kawaii Pagination ───────────────────────────── *@
-            @if (totalPages > 1)
+            @* ── Show More Button ─────────────────────────── *@
+            @if (hasMore)
             {
-                <section class="container-kawaii mt-5" id="pagination" aria-label="Pagination">
-                    <div class="kawaii-card text-center">
-                        <nav aria-label="Product pagination">
-                            @await Html.PartialAsync("_PaginationPartial", paginationVM)
-                        </nav>
-                    </div>
+                <section class="container-kawaii mt-5 text-center" id="show-more-section">
+                    <button type="button"
+                            id="showMoreBtn"
+                            class="btn-kawaii btn-primary-kawaii radius-pill px-5 py-3 glow-on-hover"
+                            data-offset="@products.Count"
+                            data-total="@total"
+                            data-search="@(search ?? "")"
+                            data-category-id="@(categoryId?.ToString() ?? "")"
+                            data-sort="@currentSort"
+                            aria-label="Show more products">
+                        <i class="bi bi-plus-circle me-2" aria-hidden="true"></i>
+                        Show More
+                        <span class="ms-2 small opacity-75">(@products.Count of @total)</span>
+                    </button>
                 </section>
             }
         </section>
     </main>
+}
+
+@section Scripts {
+<script>
+(function () {
+    const btn = document.getElementById('showMoreBtn');
+    if (!btn) return;
+
+    const grid = document.getElementById('productGrid');
+    let offset = parseInt(btn.dataset.offset, 10);
+    const total = parseInt(btn.dataset.total, 10);
+    const search = btn.dataset.search;
+    const categoryId = btn.dataset.categoryId;
+    const sort = btn.dataset.sort;
+
+    btn.addEventListener('click', async function () {
+        btn.disabled = true;
+        const originalHtml = btn.innerHTML;
+        btn.innerHTML = '<span class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>Loading...';
+
+        try {
+            const params = new URLSearchParams();
+            if (search) params.set('search', search);
+            if (categoryId) params.set('categoryId', categoryId);
+            params.set('sort', sort);
+            params.set('offset', offset);
+
+            const response = await fetch('/Product/LoadMore?' + params);
+            if (!response.ok) throw new Error('Failed to load products');
+
+            const html = await response.text();
+            if (!html.trim()) {
+                btn.closest('#show-more-section').remove();
+                return;
+            }
+
+            grid.insertAdjacentHTML('beforeend', html);
+
+            const shown = grid.querySelectorAll('[role="gridcell"]').length;
+            offset = shown;
+
+            const shownCountEl = document.getElementById('shown-count');
+            const headerCountEl = document.getElementById('header-shown-count');
+            if (shownCountEl) shownCountEl.textContent = shown;
+            if (headerCountEl) headerCountEl.textContent = shown;
+            grid.setAttribute('aria-label', 'Product grid with ' + shown + ' items displayed');
+
+            if (shown >= total) {
+                btn.closest('#show-more-section').remove();
+            } else {
+                btn.disabled = false;
+                btn.innerHTML = '<i class="bi bi-plus-circle me-2" aria-hidden="true"></i>Show More <span class="ms-2 small opacity-75">(' + shown + ' of ' + total + ')</span>';
+            }
+        } catch (e) {
+            btn.disabled = false;
+            btn.innerHTML = '<i class="bi bi-exclamation-circle me-2" aria-hidden="true"></i>Error loading. Try again.';
+            setTimeout(function() { btn.innerHTML = originalHtml; }, 3000);
+        }
+    });
+})();
+</script>
 }

@@ -118,7 +118,7 @@ namespace ELKH.Controllers
         /// </summary>
         // GET: Product/Index?sort=name_asc
         [Microsoft.AspNetCore.OutputCaching.OutputCache(PolicyName = "ProductList")]
-        public async Task<IActionResult> Index(string? search, int? categoryId, int page = 1, string sort = "name_asc")
+        public async Task<IActionResult> Index(string? search, int? categoryId, string sort = "name_asc")
         {
             const int pageSize = 12;
 
@@ -145,21 +145,53 @@ namespace ELKH.Controllers
             };
 
             var filtered    = allProducts.ToList();
-            var totalPages  = Math.Max(1, (int)Math.Ceiling(filtered.Count / (double)pageSize));
-            page            = Math.Clamp(page, 1, totalPages);
-            var pageItems   = filtered.Skip((page - 1) * pageSize).Take(pageSize).ToList();
+            var pageItems   = filtered.Take(pageSize).ToList();
 
             var categories  = await _productService.GetCategoriesAsync();
 
             ViewBag.Search     = search;
             ViewBag.CategoryId = categoryId;
             ViewBag.Sort       = sort;
-            ViewBag.Page       = page;
-            ViewBag.TotalPages = totalPages;
             ViewBag.Total      = filtered.Count;
+            ViewBag.HasMore    = filtered.Count > pageSize;
             ViewBag.Categories = new SelectList(categories, "PkCategoryId", "CategoryName", categoryId);
 
             return View(pageItems);
+        }
+
+        /// <summary>
+        /// Returns the next batch of product cards for the "Show More" button via AJAX.
+        /// </summary>
+        [HttpGet]
+        [Microsoft.AspNetCore.OutputCaching.OutputCache(PolicyName = "ProductList")]
+        public async Task<IActionResult> LoadMore(string? search, int? categoryId, string sort = "name_asc", int offset = 12)
+        {
+            const int batchSize = 12;
+
+            var allProducts = (await _productService.GetAllAsync()).AsEnumerable();
+
+            if (!string.IsNullOrWhiteSpace(search))
+                allProducts = allProducts.Where(p =>
+                    p.ProductName.Contains(search, StringComparison.OrdinalIgnoreCase) ||
+                    p.Description.Contains(search, StringComparison.OrdinalIgnoreCase));
+
+            if (categoryId.HasValue)
+                allProducts = allProducts.Where(p => p.CategoryId == categoryId.Value);
+
+            allProducts = sort switch
+            {
+                "name_desc"   => allProducts.OrderByDescending(p => p.ProductName, StringComparer.OrdinalIgnoreCase),
+                "price_low"   => allProducts.OrderBy(p => p.Price),
+                "price_high"  => allProducts.OrderByDescending(p => p.Price),
+                "newest"      => allProducts.OrderByDescending(p => p.DateAdded),
+                "oldest"      => allProducts.OrderBy(p => p.DateAdded),
+                _             => allProducts.OrderBy(p => p.ProductName, StringComparer.OrdinalIgnoreCase)
+            };
+
+            var filtered = allProducts.ToList();
+            var batch    = filtered.Skip(offset).Take(batchSize).ToList();
+
+            return PartialView("_ProductCardBatch", batch);
         }
 
         /// <summary>
