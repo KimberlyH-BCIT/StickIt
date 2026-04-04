@@ -1,4 +1,6 @@
+using ELKH.Models;
 using Microsoft.AspNetCore.Identity;
+using Microsoft.EntityFrameworkCore;
 
 namespace ELKH.Data;
 
@@ -108,9 +110,11 @@ public static partial class DbSeeder
     /// </list>
     /// </remarks>
     public static async Task SeedUsersAndRolesAsync(
+        ApplicationDbContext db,
         UserManager<IdentityUser> userManager,
         RoleManager<IdentityRole> roleManager,
-        IConfiguration configuration)
+        IConfiguration configuration,
+        string wwwRootPath)
     {
         const string adminRole    = "Admin";
         const string managerRole  = "Manager";
@@ -175,6 +179,9 @@ public static partial class DbSeeder
         if (!await userManager.IsInRoleAsync(admin, adminRole))
             await userManager.AddToRoleAsync(admin, adminRole);
 
+        // Create app-level records so admin can use all features (cart, wishlist, profile, etc.)
+        await EnsureAppUserRecordsAsync(db, admin, adminEmail, "Admin", "User", wwwRootPath);
+
         // ── Seed Manager Account ─────────────────────────────────────────────
         var manager = await userManager.FindByEmailAsync(managerEmail);
 
@@ -195,6 +202,9 @@ public static partial class DbSeeder
             await userManager.AddToRoleAsync(manager, managerRole);
         }
 
+        // Create app-level records so manager can use all features
+        await EnsureAppUserRecordsAsync(db, manager, managerEmail, "Manager", "User", wwwRootPath);
+
         // ── Seed Staff Account ───────────────────────────────────────────────
         var staff = await userManager.FindByEmailAsync(staffEmail);
 
@@ -214,6 +224,72 @@ public static partial class DbSeeder
         {
             await userManager.AddToRoleAsync(staff, staffRole);
         }
+
+        // Create app-level records so staff can use all features
+        await EnsureAppUserRecordsAsync(db, staff, staffEmail, "Staff", "User", wwwRootPath);
+    }
+
+    /// <summary>
+    /// Ensures a RegisteredUserModel, UserProfileModel, and ContactDetailModel exist
+    /// for the given Identity user. Idempotent — skips creation if records already exist.
+    /// </summary>
+    private static async Task EnsureAppUserRecordsAsync(
+        ApplicationDbContext db,
+        IdentityUser identityUser,
+        string email,
+        string firstName,
+        string lastName,
+        string wwwRootPath)
+    {
+        // RegisteredUserModel
+        var registeredUser = await db.RegisteredUsers
+            .FirstOrDefaultAsync(r => r.Email == email);
+
+        if (registeredUser is null)
+        {
+            registeredUser = new RegisteredUserModel { Email = email };
+            db.RegisteredUsers.Add(registeredUser);
+            await db.SaveChangesAsync();
+        }
+
+        // UserProfileModel
+        if (!await db.UserProfiles.AnyAsync(p => p.PkEmail == email))
+        {
+            var avatarPath = Path.Combine(wwwRootPath, "images", "placeholder.png");
+            byte[]? avatarBytes = File.Exists(avatarPath)
+                ? await File.ReadAllBytesAsync(avatarPath)
+                : null;
+
+            db.UserProfiles.Add(new UserProfileModel
+            {
+                PkEmail        = email,
+                FirstName      = firstName,
+                LastName       = lastName,
+                AvatarData     = avatarBytes,
+                AvatarMimeType = avatarBytes is not null ? "image/png" : null
+            });
+        }
+
+        // ContactDetailModel (default shipping address)
+        if (!await db.ContactDetails.AnyAsync(c => c.FkRegisteredUserId == registeredUser.PkRegisteredUserId))
+        {
+            db.ContactDetails.Add(new ContactDetailModel
+            {
+                FirstName          = firstName,
+                LastName           = lastName,
+                PhoneNumber        = "(416) 555-0100",
+                Street             = "100 Queen St W",
+                City               = "Toronto",
+                Province           = "Ontario",
+                PostCode           = "M5H 2N2",
+                Country            = "Canada",
+                IsDefault          = true,
+                FkRegisteredUserId = registeredUser.PkRegisteredUserId,
+                UserId             = identityUser.Id
+            });
+        }
+
+        await db.SaveChangesAsync();
     }
 
     #endregion

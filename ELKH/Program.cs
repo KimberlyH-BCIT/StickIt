@@ -370,7 +370,7 @@ if (runSeeders)
         {
             await DbSeeder.SeedProductsAsync(db);
             await DbSeeder.SeedShippingMethodsAsync(db); // Seed shipping options
-            await DbSeeder.SeedUsersAndRolesAsync(userManager, roleManager, app.Configuration);
+            await DbSeeder.SeedUsersAndRolesAsync(db, userManager, roleManager, app.Configuration, app.Environment.WebRootPath);
             await DbSeeder.SeedCustomersAndOrdersAsync(db, userManager, app.Environment.WebRootPath);
             await DbSeeder.SeedStoreReviewsAsync(db, userManager); // Seed featured homepage reviews
             await DbSeeder.SeedTestTransactionsAsync(db);

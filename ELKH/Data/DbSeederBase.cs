@@ -143,11 +143,12 @@ public static partial class DbSeeder
         DiscountPercent  = discountPercent,
         StockQuantity    = stock,
         IsActive         = true,
+        DateAdded        = GenerateRandomDate(),
+        IsBestSeller     = isBestSeller,
+        IsTrending       = isTrending,
         FkCategoryId     = category.PkCategoryId,
         Category         = category,
         Tags             = tags
-        // NOTE: DateAdded, IsBestSeller, and IsTrending properties removed 
-        // as they don't exist in the current ProductModel schema
     };
 
     /// <summary>
@@ -257,7 +258,7 @@ public static partial class DbSeeder
             await SeedProductsAsync(db);
             
             // Step 2: Administrative users and roles
-            await SeedUsersAndRolesAsync(userManager, roleManager, configuration);
+            await SeedUsersAndRolesAsync(db, userManager, roleManager, configuration, wwwRootPath);
             
             // Step 3: Demo customers with orders and contact details
             await SeedCustomersAndOrdersAsync(db, userManager, wwwRootPath);
