@@ -347,6 +347,68 @@ namespace ELKH.Controllers
             return View(vm);
         }
 
+        /// <summary>
+        /// Soft-deletes a product by setting IsDeleted = true.
+        /// The product remains in the database but is hidden from active listings.
+        /// </summary>
+        /// <param name="id">Product ID to soft-delete</param>
+        /// <returns>Redirects back to ProductDetails</returns>
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> DeleteProduct(int id)
+        {
+            var product = await _context.Products.FindAsync(id);
+            if (product == null) return NotFound();
+
+            product.IsDeleted = true;
+            product.IsActive = false;
+            await _context.SaveChangesAsync();
+
+            TempData["Success"] = $"'{product.Name}' has been soft-deleted.";
+            return RedirectToAction("ListOfProducts");
+        }
+
+        /// <summary>
+        /// Restores a soft-deleted product by setting IsDeleted = false.
+        /// </summary>
+        /// <param name="id">Product ID to restore</param>
+        /// <returns>Redirects back to DeletedProducts list</returns>
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> RestoreProduct(int id)
+        {
+            var product = await _context.Products.FindAsync(id);
+            if (product == null) return NotFound();
+
+            product.IsDeleted = false;
+            await _context.SaveChangesAsync();
+
+            TempData["Restored"] = $"'{product.Name}' has been restored.";
+            return RedirectToAction("DeletedProducts");
+        }
+
+        /// <summary>
+        /// Displays all soft-deleted products for potential restoration.
+        /// </summary>
+        /// <returns>View with list of deleted products</returns>
+        public async Task<IActionResult> DeletedProducts()
+        {
+            var deletedProducts = await _context.Products
+                .Where(p => p.IsDeleted)
+                .Include(p => p.Category)
+                .OrderBy(p => p.Name)
+                .Select(p => new ProductVM
+                {
+                    ProductId = p.PkProductId,
+                    ProductName = p.Name,
+                    Price = p.Price,
+                    IsDeleted = true
+                })
+                .ToListAsync();
+
+            return View(deletedProducts);
+        }
+
         #endregion
         #region Transaction Management
 
@@ -399,6 +461,55 @@ namespace ELKH.Controllers
             ViewBag.Search = search;
 
             return View(transactions);
+        }
+
+        /// <summary>
+        /// Displays detailed information for a specific transaction including order items.
+        /// </summary>
+        /// <param name="id">Transaction ID to display</param>
+        /// <returns>View with transaction details and associated order items</returns>
+        public async Task<IActionResult> TransactionDetail(int id)
+        {
+            var transaction = await _context.Transactions
+                .Include(t => t.Order)
+                    .ThenInclude(o => o.RegisteredUser)
+                .Include(t => t.Order)
+                    .ThenInclude(o => o.OrderItems)
+                        .ThenInclude(oi => oi.Product)
+                            .ThenInclude(p => p.Category)
+                .Include(t => t.Order)
+                    .ThenInclude(o => o.OrderItems)
+                        .ThenInclude(oi => oi.Product)
+                            .ThenInclude(p => p.ProductImage)
+                .FirstOrDefaultAsync(t => t.PkTransactionId == id);
+
+            if (transaction == null) return NotFound();
+
+            var order = transaction.Order;
+
+            var vm = new TransactionDetailVM
+            {
+                TransactionId = transaction.PkTransactionId,
+                OrderId = transaction.FkOrderId,
+                TransactionStatus = transaction.TransactionStatus,
+                Amount = transaction.Amount,
+                DeliveryFee = transaction.DeliveryFee,
+                TransactionDate = transaction.TransactionDate,
+                CustomerName = order?.RegisteredUser?.Email ?? "Unknown",
+                CustomerEmail = order?.RegisteredUser?.Email ?? "Unknown",
+                Items = order?.OrderItems?.Select(oi => new TransactionItemVM
+                {
+                    ProductId = oi.FkProductId,
+                    ProductName = oi.Product?.Name ?? "Unknown Product",
+                    CategoryName = oi.Product?.Category?.CategoryName ?? "",
+                    UnitPrice = oi.UnitPrice,
+                    DiscountPercent = oi.Product?.DiscountPercent ?? 0,
+                    Quantity = oi.Quantity,
+                    Thumbnail = oi.Product?.ProductImage?.FirstOrDefault()?.ProductImageURL ?? ""
+                }).ToList() ?? new List<TransactionItemVM>()
+            };
+
+            return View(vm);
         }
 
         #endregion
