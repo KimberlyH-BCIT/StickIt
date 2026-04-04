@@ -50,6 +50,7 @@ public class CheckoutController : Controller
     private readonly IGuestCartService _guestCartService;
     private readonly IConfiguration _configuration;
     private readonly IShippingService _shippingService;
+    private readonly ILogger<CheckoutController> _logger;
 
     public CheckoutController(
         ApplicationDbContext db,
@@ -58,7 +59,8 @@ public class CheckoutController : Controller
         ICartService cartService,
         IGuestCartService guestCartService,
         IConfiguration configuration,
-        IShippingService shippingService)
+        IShippingService shippingService,
+        ILogger<CheckoutController> logger)
     {
         _db = db;
         _cartRepo = cartRepo;
@@ -67,6 +69,7 @@ public class CheckoutController : Controller
         _guestCartService = guestCartService;
         _configuration = configuration;
         _shippingService = shippingService;
+        _logger = logger;
     }
 
     [Authorize]
@@ -240,89 +243,108 @@ public class CheckoutController : Controller
         }
 
         // ===================================================================
-        // STEP 5: Create or retrieve contact detail (shipping address)
-        // Supports both saved addresses and new address entry
+        // STEP 5-8: Create order in a transaction to ensure atomicity
+        // All database operations wrapped in transaction for data consistency
         // ===================================================================
-        // Create or update contact detail
-        ContactDetailModel? contact = null;
-        if (vm.SelectedContactId.HasValue && vm.SelectedContactId.Value > 0)
+        await using var transaction = await _db.Database.BeginTransactionAsync();
+        try
         {
-            contact = await _contactRepo.GetByIdAsync(vm.SelectedContactId.Value);
-        }
-
-        if (contact == null)
-        {
-            // Create new contact
-            // Split full name into first/last (simple split on first space)
-            var names = (vm.FullName ?? "").Split(' ', 2);
-            contact = new ContactDetailModel
+            // ===================================================================
+            // STEP 5: Create or retrieve contact detail (shipping address)
+            // Supports both saved addresses and new address entry
+            // ===================================================================
+            // Create or update contact detail
+            ContactDetailModel? contact = null;
+            if (vm.SelectedContactId.HasValue && vm.SelectedContactId.Value > 0)
             {
-                FkRegisteredUserId = regUser.PkRegisteredUserId,
-                FirstName = names.Length > 0 ? names[0] : "",
-                LastName = names.Length > 1 ? names[1] : "",
-                PhoneNumber = vm.PhoneNumber ?? "",
-                Street = vm.Street ?? "",
-                City = vm.City ?? "",
-                Province = vm.Province ?? "",
-                PostCode = vm.PostalCode ?? "",
-                Country = vm.Country ?? "Canada",
-                IsDefault = false
-            };
-            _db.ContactDetails.Add(contact);
-            await _db.SaveChangesAsync();
-        }
-
-        // ===================================================================
-        // STEP 6: Create order record with shipping information
-        // OrderStatus set to "Paid" because PayPal already captured payment
-        // ===================================================================
-        // Create order
-        var order = new OrderModel
-        {
-            FkContactId = contact.PkContactId,
-            FkRegisteredUserId = regUser.PkRegisteredUserId,
-            OrderStatus = OrderStatus.Paid, // Since PayPal was already captured client-side
-            TotalAmount = total,
-            CreatedAt = DateTime.UtcNow,
-            DeliveryStatus = DeliveryStatus.Pending,
-            FkShippingMethodId = vm.SelectedShippingMethodId,
-            ShippingMethodName = shippingMethod.Name,
-            ShippingCost = shipping
-        };
-        _db.Orders.Add(order);
-        await _db.SaveChangesAsync();
-
-        // ===================================================================
-        // STEP 7: Create order items and decrement inventory
-        // ===================================================================
-        // Create order items and decrement inventory
-        foreach (var cartItem in cartItems)
-        {
-            var orderItem = new OrderItemModel
-            {
-                FkOrderId = order.PkOrderId,
-                FkProductId = cartItem.FkProductID,
-                Quantity = cartItem.Quantity,
-                UnitPrice = cartItem.Product?.GetEffectivePrice() ?? 0m
-            };
-            _db.OrderItems.Add(orderItem);
-
-            // Decrement inventory
-            if (cartItem.Product != null)
-            {
-                cartItem.Product.StockQuantity = (cartItem.Product.StockQuantity ?? 0) - cartItem.Quantity;
+                contact = await _contactRepo.GetByIdAsync(vm.SelectedContactId.Value);
             }
+
+            if (contact == null)
+            {
+                // Create new contact
+                // Split full name into first/last (simple split on first space)
+                var names = (vm.FullName ?? "").Split(' ', 2);
+                contact = new ContactDetailModel
+                {
+                    FkRegisteredUserId = regUser.PkRegisteredUserId,
+                    FirstName = names.Length > 0 ? names[0] : "",
+                    LastName = names.Length > 1 ? names[1] : "",
+                    PhoneNumber = vm.PhoneNumber ?? "",
+                    Street = vm.Street ?? "",
+                    City = vm.City ?? "",
+                    Province = vm.Province ?? "",
+                    PostCode = vm.PostalCode ?? "",
+                    Country = vm.Country ?? "Canada",
+                    IsDefault = false
+                };
+                _db.ContactDetails.Add(contact);
+                await _db.SaveChangesAsync();
+            }
+
+            // ===================================================================
+            // STEP 6: Create order record with shipping information
+            // OrderStatus set to "Paid" because PayPal already captured payment
+            // ===================================================================
+            // Create order
+            var order = new OrderModel
+            {
+                FkContactId = contact.PkContactId,
+                FkRegisteredUserId = regUser.PkRegisteredUserId,
+                OrderStatus = OrderStatus.Paid, // Since PayPal was already captured client-side
+                TotalAmount = total,
+                CreatedAt = DateTime.UtcNow,
+                DeliveryStatus = DeliveryStatus.Pending,
+                FkShippingMethodId = vm.SelectedShippingMethodId,
+                ShippingMethodName = shippingMethod.Name,
+                ShippingCost = shipping
+            };
+            _db.Orders.Add(order);
+            await _db.SaveChangesAsync();
+
+            // ===================================================================
+            // STEP 7: Create order items and decrement inventory
+            // ===================================================================
+            // Create order items and decrement inventory
+            foreach (var cartItem in cartItems)
+            {
+                var orderItem = new OrderItemModel
+                {
+                    FkOrderId = order.PkOrderId,
+                    FkProductId = cartItem.FkProductID,
+                    Quantity = cartItem.Quantity,
+                    UnitPrice = cartItem.Product?.GetEffectivePrice() ?? 0m
+                };
+                _db.OrderItems.Add(orderItem);
+
+                // Decrement inventory
+                if (cartItem.Product != null)
+                {
+                    cartItem.Product.StockQuantity = (cartItem.Product.StockQuantity ?? 0) - cartItem.Quantity;
+                }
+            }
+
+            // ===================================================================
+            // STEP 8: Clear cart and commit transaction
+            // ===================================================================
+            // Clear cart
+            _db.Carts.RemoveRange(cartItems);
+            await _db.SaveChangesAsync();
+
+            // Commit transaction - all changes are now permanent
+            await transaction.CommitAsync();
+
+            TempData["Message"] = "success,Order placed successfully!";
+            return RedirectToAction("Details", "Order", new { id = order.PkOrderId });
         }
-
-        // ===================================================================
-        // STEP 8: Clear cart and redirect to order confirmation
-        // ===================================================================
-        // Clear cart
-        _db.Carts.RemoveRange(cartItems);
-        await _db.SaveChangesAsync();
-
-        TempData["Message"] = "success,Order placed successfully!";
-        return RedirectToAction("Details", "Order", new { id = order.PkOrderId });
+        catch (Exception ex)
+        {
+            // Rollback transaction on any error to maintain data consistency
+            await transaction.RollbackAsync();
+            _logger.LogError(ex, "Failed to process order for user {Email}", email);
+            TempData["Message"] = "error,An error occurred while processing your order. Please try again.";
+            return RedirectToAction("Index");
+        }
     }
 
     #region Guest Checkout
