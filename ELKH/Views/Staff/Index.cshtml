@@ -197,11 +197,13 @@
                                     <div class="d-flex gap-2">
 
                                         <!-- MARK READ -->
-                                        <a asp-action="MarkMessageAsRead"
-                                               asp-route-id="@msg.Id"
-                                               class="btn-kawaii btn-secondary-kawaii btn-sm radius-pill">
-                                            ✔ Read
-                                        </a>
+                                        <form asp-action="MarkMessageAsRead" method="post" class="d-inline">
+                                            <input type="hidden" name="id" value="@msg.Id" />
+                                            <button type="submit"
+                                                    class="btn-kawaii btn-secondary-kawaii btn-sm radius-pill">
+                                                ✔ Read
+                                            </button>
+                                        </form>
 
                                         <!-- REPLY BUTTON -->
                                         <button class="btn-kawaii btn-primary-kawaii btn-sm radius-pill"

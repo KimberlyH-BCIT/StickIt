@@ -66,16 +66,20 @@
 	</ItemGroup>
 
 	<ItemGroup>
-		<Folder Include="docs\" />
-		<Folder Include="Mapping\" />
-		<Folder Include="Migrations\" />
 		<Folder Include="Models\Options\" />
 		<Folder Include="Views\Audit\" />
-		<Folder Include="wwwroot\images\" />
   </ItemGroup>
   <!-- Exclude e2e and tests folders from the .NET build (Playwright/TS files) -->
   <ItemGroup>
+    <Compile Remove="docs\**" />
+    <Compile Remove="Mapping\**" />
+    <Content Remove="docs\**" />
+    <Content Remove="Mapping\**" />
+    <EmbeddedResource Remove="docs\**" />
+    <EmbeddedResource Remove="Mapping\**" />
+    <None Remove="docs\**" />
     <None Remove="e2e\**\*" />
+    <None Remove="Mapping\**" />
     <None Remove="tests\**\*" />
   </ItemGroup>
 

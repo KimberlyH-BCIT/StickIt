@@ -77,12 +77,12 @@ namespace ELKH.Controllers
     // • Error logging without sensitive data exposure
 
     /// <summary>
-    /// Admin controller for inventory management: listing products, adjusting stock
-    /// quantities, and managing product images.
+    /// Inventory management controller accessible to Admin, Manager, and Staff roles:
+    /// listing products, adjusting stock quantities, and managing product images.
     /// </summary>
     /// <remarks>
-    /// <para><strong>Administrative Access Only</strong></para>
-    /// This controller requires Admin role authorization for all operations.
+    /// <para><strong>Multi-Role Administrative Access</strong></para>
+    /// This controller requires Admin, Manager, or Staff role authorization for all operations.
     /// 
     /// <para><strong>Core Features:</strong></para>
     /// <list type="bullet">
@@ -96,7 +96,7 @@ namespace ELKH.Controllers
     /// When products are restocked from out-of-stock status, the system automatically
     /// processes customer notifications with a 24-hour cooldown period to prevent spam.
     /// </remarks>
-[Authorize(Roles = "Admin")]
+[Authorize(Roles = "Admin,Manager,Staff")]
 public class InventoryController : Controller
 {
     #region Section 1: Controller Setup & Dependencies
