@@ -1,4 +1,5 @@
 using ELKH.Data;
+using ELKH.Models;
 using ELKH.ViewModels;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
@@ -8,79 +9,7 @@ using System.Globalization;
 
 namespace ELKH.Controllers
 {
-    /// <summary>
-    /// Manager controller for operational oversight and product/order management.
-    /// Accessible to users with Admin or Manager roles.
-    /// </summary>
-    /// <remarks>
-    /// TABLE OF CONTENTS (421 lines)
-    /// ================================================================================
-    /// 1. Constructor & Dependencies ................................... Lines   49-60
-    ///    - ApplicationDbContext, UserManager injection for data access
-    /// 
-    /// 2. Operational Dashboard ........................................ Lines   62-120
-    ///    - Index()                              // KPIs and statistics overview with real-time metrics
-    ///    - GetDashboardMetrics()                // AJAX: Live dashboard data updates
-    ///    - Performance analytics and operational health indicators
-    /// 
-    /// 3. Product Management & Oversight ............................... Lines  122-280
-    ///    - ListOfProducts()                     // Paginated product list with advanced filtering
-    ///    - ToggleActive()                       // Enable/disable products without full CRUD
-    ///    - ProductDetails()                     // Detailed product view with ratings and analytics
-    ///    - UpdateProductStock()                 // Inventory management and stock adjustments
-    ///    - ProductPerformanceReport()           // Sales and performance analytics
-    /// 
-    /// 4. Transaction & Order Management .............................. Lines  282-350
-    ///    - ListAllTransactions()                // Paginated transaction list with status filtering
-    ///    - TransactionDetails()                 // Individual transaction analysis
-    ///    - OrderStatusManagement()              // Order workflow and status updates
-    ///    - PaymentReconciliation()              // Payment tracking and reconciliation
-    /// 
-    /// 5. Staff & User Management ..................................... Lines  352-400
-    ///    - ListOfStaffAccount()                 // Staff/Manager/Admin user list with role filtering
-    ///    - StaffActivityReport()                // User activity and performance tracking
-    ///    - UserRoleOverview()                   // Role distribution and access analysis
-    /// 
-    /// 6. Reports & Analytics .......................................... Lines  402-421
-    ///    - GenerateOperationalReports()         // Comprehensive business intelligence reports
-    ///    - ExportTransactionData()              // Data export capabilities for analysis
-    /// ================================================================================
-    ///
-    /// ROLE-BASED ACCESS CONTROL:
-    /// • Requires Admin OR Manager role for all endpoints ([Authorize(Roles = "Admin,Manager")])
-    /// • Staff accounts can be viewed and monitored but not modified
-    /// • Product activation/deactivation allowed without full CRUD permissions
-    /// • Operational oversight without sensitive administrative functions
-    /// • Audit logging for all management actions and decisions
-    /// 
-    /// OPERATIONAL MANAGEMENT SCOPE:
-    /// • Real-time dashboard with KPIs (products, stock, orders, staff activity)
-    /// • Product portfolio management with performance analytics
-    /// • Transaction monitoring and payment reconciliation
-    /// • Staff activity oversight and performance tracking
-    /// • Inventory management and stock level optimization
-    /// 
-    /// BUSINESS INTELLIGENCE FEATURES:
-    /// • Advanced filtering and search capabilities across all data views
-    /// • Real-time metrics and performance indicators
-    /// • Comprehensive reporting and analytics dashboard
-    /// • Data export capabilities for external analysis
-    /// • Trend analysis and operational insights
-    /// 
-    /// PERFORMANCE OPTIMIZATIONS:
-    /// • Efficient pagination for large datasets (products, transactions, users)
-    /// • Cached dashboard metrics with automatic refresh intervals
-    /// • Optimized queries with proper indexing for reporting functions
-    /// • Lazy loading for detailed views and analytics
-    /// 
-    /// INTEGRATION POINTS:
-    /// • ApplicationDbContext for comprehensive data access
-    /// • UserManager for staff and role management operations
-    /// • Product service integration for inventory operations
-    /// • Order service coordination for transaction management
-    /// • Reporting services for business intelligence and analytics
-    /// • Audit logging for compliance and operational tracking
-    /// </remarks>
+
     [Authorize(Roles = "Admin,Manager")]
     public class ManagerController : Controller
     {
@@ -88,14 +17,13 @@ namespace ELKH.Controllers
 
         private readonly ApplicationDbContext _context;
         private readonly UserManager<IdentityUser> _userManager;
+        private readonly RoleManager<IdentityRole> _roleManager;
 
-        // CA1861: Constant arrays to avoid repeated allocations
-        private static readonly string[] StaffRoles = { "Manager", "Staff", "Admin" };
-
-        public ManagerController(ApplicationDbContext context, UserManager<IdentityUser> userManager)
+        public ManagerController(ApplicationDbContext context, UserManager<IdentityUser> userManager, RoleManager<IdentityRole> roleManager)
         {
             _context = context;
             _userManager = userManager;
+            _roleManager = roleManager;
         }
 
         #endregion
@@ -122,83 +50,113 @@ namespace ELKH.Controllers
             var weekAgo = now.AddDays(-7);
             var monthAgo = now.AddDays(-30);
 
-            // Product statistics
-            ViewBag.TotalProducts = await _context.Products.CountAsync();
-            ViewBag.ActiveProducts = await _context.Products.CountAsync(p => p.IsActive);
-            ViewBag.InactiveProducts = await _context.Products.CountAsync(p => !p.IsActive);
+            ViewBag.TotalProducts = await _context.Products.CountAsync(p => !p.IsDeleted);
+            ViewBag.ActiveProducts = await _context.Products.CountAsync(p => p.IsActive && !p.IsDeleted);
+            ViewBag.InactiveProducts = await _context.Products.CountAsync(p => !p.IsActive && !p.IsDeleted);
+            ViewBag.DeletedCount = await _context.Products.CountAsync(p => p.IsDeleted);
+            ViewBag.StockUpCount     = await _context.Products.CountAsync(p => p.StockQuantity > 20);
+            ViewBag.StockDownCount   = await _context.Products.CountAsync(p => p.StockQuantity <= 20);
+            ViewBag.LowStockCount    = await _context.Products.CountAsync(p => p.StockQuantity <= 5);
+            ViewBag.WeeklyOrders     = await _context.Orders.CountAsync(o => o.CreatedAt >= weekAgo);
+            ViewBag.MonthlyOrders    = await _context.Orders.CountAsync(o => o.CreatedAt >= monthAgo);
+            ViewBag.TotalStaff       = (await _userManager.GetUsersInRoleAsync("Staff")).Count
+                                     + (await _userManager.GetUsersInRoleAsync("Manager")).Count;
+            ViewBag.ViewAs = "Manager";
 
-            // Stock health indicators (thresholds: 5 = critical, 20 = low)
-            ViewBag.StockUpCount = await _context.Products.CountAsync(p => p.StockQuantity > 20);
-            ViewBag.StockDownCount = await _context.Products.CountAsync(p => p.StockQuantity <= 20);
-            ViewBag.LowStockCount = await _context.Products.CountAsync(p => p.StockQuantity <= 5);
+            // ================= MESSAGES =================
 
-            // Order activity metrics
-            ViewBag.WeeklyOrders = await _context.Orders.CountAsync(o => o.CreatedAt >= weekAgo);
-            ViewBag.MonthlyOrders = await _context.Orders.CountAsync(o => o.CreatedAt >= monthAgo);
+            // Recent messages (last 5)
+            ViewBag.RecentMessages = await _context.StaffMessages
+                .OrderByDescending(m => m.SentAt)
+                .Take(5)
+                .Select(m => new
+                {
+                    m.Id,
+                    m.Title,
+                    m.Body,
+                    m.SentAt,
+                    m.SentBy,
+                    ReplyCount = m.Replies.Count
+                })
+                .ToListAsync();
 
-            // Staff headcount (Manager + Staff roles combined)
-            ViewBag.TotalStaff = (await _userManager.GetUsersInRoleAsync("Staff")).Count
-                               + (await _userManager.GetUsersInRoleAsync("Manager")).Count;
-
+            // Replies grouped by message
+            ViewBag.MessageReplies = await _context.MessageReplies
+                .OrderByDescending(r => r.RepliedAt)
+                .Select(r => new
+                {
+                    r.MessageId,
+                    Body = r.ReplyText,
+                    r.RepliedBy,
+                    r.RepliedAt
+                })
+               .ToListAsync();
             return View();
         }
+        // ================= MESSAGES =================
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> SendStaffMessage(string MessageTitle, string MessageBody)
+        {
+            var message = new StaffMessageModel
+            {
+                Title = MessageTitle,
+                Body = MessageBody,
+                SentAt = DateTime.UtcNow,
+                SentBy = User.Identity.Name
+            };
 
-        #endregion
+            _context.StaffMessages.Add(message);
+            await _context.SaveChangesAsync();
 
-        #region Product Management
+            TempData["MessageSent"] = "Message sent successfully!";
+            return RedirectToAction("Index");
+        }
 
-        /// <summary>
-        /// Displays paginated product list with filtering capabilities.
-        /// </summary>
-        /// <param name="search">Search term for product name or category</param>
-        /// <param name="stockFilter">Stock level filter: "low" (≤5), "medium" (6-20), "stocked" (>20)</param>
-        /// <param name="activeFilter">Active status filter: "active", "inactive", or null (all)</param>
-        /// <param name="page">Page number for pagination (default: 1)</param>
-        /// <returns>View with paginated and filtered product list</returns>
-        /// <remarks>
-        /// FILTERING LOGIC:
-        /// - Search: Case-sensitive Contains() on Name or Category.CategoryName
-        /// - Stock filters:
-        ///   * "low": Critical stock (≤5 units) - immediate attention required
-        ///   * "medium": Low stock (6-20 units) - reorder soon
-        ///   * "stocked": Well-stocked (>20 units) - no action needed
-        /// - Active filter: Product availability status
-        ///
-        /// PAGINATION:
-        /// - Page size: 8 products per page
-        /// - Sorted by StockQuantity (ascending) - critical items first
-        /// - Filter parameters preserved in ViewBag for form persistence
-        ///
-        /// PERFORMANCE:
-        /// - Includes Category and ProductImage to avoid N+1 queries
-        /// - Count executed before pagination for accurate page calculation
-        /// </remarks>
-        public async Task<IActionResult> ListOfProducts(
-            string search,
-            string stockFilter,
-            string activeFilter,
-            int page = 1)
+        // ================= MESSAGES Reply=================
+        [HttpPost]
+        public async Task<IActionResult> ReplyMessage(int MessageId, string ReplyText)
+        {
+            var reply = new MessageReplyModel
+            {
+                MessageId = MessageId,
+                ReplyText = ReplyText,
+                RepliedBy = User.Identity.Name,
+                RepliedAt = DateTime.UtcNow
+            };
+
+            _context.MessageReplies.Add(reply);
+            await _context.SaveChangesAsync();
+
+            return RedirectToAction("Index");
+        }
+
+        // ================= LIST PRODUCTS =================//
+        [HttpGet]
+        public async Task<IActionResult> ListOfProducts(string search, string stockFilter, string activeFilter, string categoryFilter, int page = 1)
         {
             int pageSize = 8;
 
-            // Build filtered query with eager loading
             var query = _context.Products
                 .Include(p => p.Category)
                 .Include(p => p.ProductImage)
+                .Where(p => !p.IsDeleted) 
                 .AsQueryable();
 
             // Apply search filter (product name or category name)
             if (!string.IsNullOrEmpty(search))
-                query = query.Where(p => p.Name.Contains(search) ||
-                                         (p.Category != null && p.Category.CategoryName.Contains(search)));
+            {
+                query = query.Where(p =>
+                    p.Name.Contains(search) ||
+                    (p.Category != null && p.Category.CategoryName.Contains(search))
+                );
+            }
 
             // Apply stock level filter
             if (stockFilter == "low")
-                query = query.Where(p => p.StockQuantity <= 5);
-            else if (stockFilter == "medium")
-                query = query.Where(p => p.StockQuantity > 5 && p.StockQuantity <= 20);
+                query = query.Where(p => p.StockQuantity <= 20);
             else if (stockFilter == "stocked")
-                query = query.Where(p => p.StockQuantity > 20);
+                query = query.Where(p => p.StockQuantity >= 21);
 
             // Apply active status filter
             if (activeFilter == "active")
@@ -206,12 +164,17 @@ namespace ELKH.Controllers
             else if (activeFilter == "inactive")
                 query = query.Where(p => !p.IsActive);
 
-            // Get total count before pagination
+            if (!string.IsNullOrEmpty(categoryFilter))
+            {
+                int catId = int.Parse(categoryFilter);
+                query = query.Where(p => p.FkCategoryId == catId);
+            }
+
             int total = await query.CountAsync();
 
             // Execute paginated query ordered by stock quantity (critical items first)
             var rawProducts = await query
-                .OrderBy(p => p.StockQuantity)
+                .OrderByDescending(p => p.PkProductId)
                 .Skip((page - 1) * pageSize)
                 .Take(pageSize)
                 .ToListAsync();
@@ -231,7 +194,6 @@ namespace ELKH.Controllers
                 Thumbnail = p.ProductImage?.FirstOrDefault()?.ProductImageURL ?? ""
             }).ToList();
 
-            // Set pagination and filter context in ViewBag
             ViewBag.CurrentPage = page;
             ViewBag.TotalPages = (int)Math.Ceiling((double)total / pageSize);
             ViewBag.Search = search;
@@ -329,12 +291,12 @@ namespace ELKH.Controllers
                 Description = p.Description,
                 Price = p.Price,
                 DiscountPercent = p.DiscountPercent,
-                StockQuantity = p.StockQuantity,
-                IsActive = p.IsActive,
-                CategoryId = p.FkCategoryId,
-                CategoryName = p.Category?.CategoryName ?? "",
-                Thumbnail = p.ProductImage?.FirstOrDefault()?.ProductImageURL ?? "",
-                AverageRating = avgRating
+                StockQuantity   = (int)p.StockQuantity,
+                IsActive        = p.IsActive,
+                CategoryId      = p.FkCategoryId,
+                CategoryName    = p.Category?.CategoryName ?? "",
+                Thumbnail       = p.ProductImage?.FirstOrDefault()?.ProductImageURL ?? "",
+                AverageRating   = avgRating
             };
 
             // Pass approved ratings to view (newest first)
@@ -346,35 +308,81 @@ namespace ELKH.Controllers
 
             return View(vm);
         }
+        //=================DELETE PRODUCTS=================
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> DeleteProduct(int id)
+        {
+            var product = await _context.Products.FindAsync(id);
 
-        #endregion
-        #region Transaction Management
+            if (product == null)
+                return NotFound();
 
-        /// <summary>
-        /// Displays paginated list of all transactions with optional search filtering.
-        /// </summary>
-        /// <param name="search">Search term for transaction status</param>
-        /// <param name="page">Page number for pagination (default: 1)</param>
-        /// <returns>View with paginated transaction list</returns>
-        /// <remarks>
-        /// PAGINATION:
-        /// - Page size: 10 transactions per page
-        /// - Sorted by TransactionDate descending (newest first)
-        ///
-        /// FILTERING:
-        /// - Search filters by TransactionStatus (e.g., "Paid", "Pending", "Failed")
-        /// - Case-sensitive Contains() match
-        ///
-        /// Used by managers to monitor payment processing and order financial status.
-        /// </remarks>
+            product.IsDeleted = true;
+
+            await _context.SaveChangesAsync();
+
+            TempData["Deleted"] = "Product deleted successfully.";
+
+            return RedirectToAction("ListOfProducts");
+        }
+
+        //=================LIST OF DELETEd PRODUCTS=================
+        public async Task<IActionResult> DeletedProducts()
+        {
+            var deleted = await _context.Products
+                .Include(p => p.Category)
+                .Include(p => p.ProductImage)
+                .Where(p => p.IsDeleted)
+                .OrderByDescending(p => p.PkProductId)
+                .ToListAsync();
+
+            var vm = deleted.Select(p => new ProductVM
+            {
+                ProductId = p.PkProductId,
+                ProductName = p.Name,
+                Price = p.Price,
+                CategoryName = p.Category?.CategoryName ?? "",
+                Thumbnail = p.ProductImage?.FirstOrDefault()?.ProductImageURL ?? ""
+            }).ToList();
+
+            return View("~/Views/Manager/DeletedProducts.cshtml", vm);
+        }
+        // ================= Restore product =================
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> RestoreProduct(int id)
+        {
+            var product = await _context.Products.FindAsync(id);
+
+            if (product != null)
+            {
+                product.IsDeleted = false;
+                await _context.SaveChangesAsync();
+
+                TempData["Restored"] = "Product restored successfully.";
+            }
+
+            return RedirectToAction("DeletedProducts");
+        }
+
+        // ================= TRANSACTIONS =================
         public async Task<IActionResult> ListAllTransactions(string search, int page = 1)
         {
             int pageSize = 10;
-            var query = _context.Transactions.AsQueryable();
 
-            // Apply status search filter
+            var query = _context.Transactions
+                .Include(t => t.Order)
+                .AsQueryable();
+
             if (!string.IsNullOrEmpty(search))
-                query = query.Where(t => t.TransactionStatus.Contains(search));
+            {
+                search = search.ToLower();
+
+                query = query.Where(t =>
+                    t.TransactionStatus.ToLower().Contains(search)
+                );
+            }
 
             int total = await query.CountAsync();
 
@@ -401,77 +409,112 @@ namespace ELKH.Controllers
             return View(transactions);
         }
 
-        #endregion
-        #region Staff Management
+        // ================= TRANSACTION DETAILS =================
 
-        /// <summary>
-        /// Displays list of staff accounts (Manager, Staff, Admin roles) with optional search.
-        /// </summary>
-        /// <param name="search">Search term for email or role name</param>
-        /// <returns>View with filtered staff account list</returns>
-        /// <remarks>
-        /// ROLE FILTERING:
-        /// - Includes users with Manager, Staff, or Admin roles
-        /// - Multi-role users included if they have at least one staff role
-        /// - Customer accounts automatically excluded
-        ///
-        /// SEARCH FUNCTIONALITY:
-        /// - Case-insensitive search on email address
-        /// - Case-insensitive search on role names
-        /// - Uses in-memory filtering after role retrieval
-        ///
-        /// PERFORMANCE NOTE:
-        /// This method has an N+1 query pattern (one query per user for roles).
-        /// Acceptable for staff lists (typically <100 users) but would need
-        /// optimization for larger deployments. Consider caching or custom query
-        /// if staff count exceeds 500.
-        ///
-        /// Used by managers to view staff roster and verify role assignments.
-        /// </remarks>
-        public async Task<IActionResult> ListOfStaffAccount(string search)
+        public async Task<IActionResult> TransactionDetail(int id)
         {
-            // Optimized approach: Get all users and their roles in bulk to avoid N+1 queries
+            var transaction = await _context.Transactions
+                .Include(t => t.Order)
+                    .ThenInclude(o => o.RegisteredUser)
+                .Include(t => t.Order)
+                    .ThenInclude(o => o.OrderItems)
+                        .ThenInclude(oi => oi.Product)
+                            .ThenInclude(p => p.Category)
+                .FirstOrDefaultAsync(t => t.PkTransactionId == id);
+
+            if (transaction == null) return NotFound();
+
+            var vm = new TransactionDetailVM
+            {
+                TransactionId = transaction.PkTransactionId,
+                OrderId = transaction.FkOrderId,
+                TransactionStatus = transaction.TransactionStatus,
+                Amount = transaction.Amount,
+                DeliveryFee = transaction.DeliveryFee,
+                TransactionDate = transaction.TransactionDate,
+
+                CustomerEmail = transaction.Order.RegisteredUser.Email,
+
+                Items = transaction.Order.OrderItems.Select(oi => new TransactionItemVM
+                {
+                    ProductId = oi.FkProductId,
+                    ProductName = oi.Product.Name,
+                    CategoryName = oi.Product.Category.CategoryName,
+                    UnitPrice = oi.Product.Price,
+                    DiscountPercent = oi.Product.DiscountPercent,
+                    Quantity = oi.Quantity,
+                    Thumbnail = oi.Product.ProductImage != null && oi.Product.ProductImage.Any()
+                        ? oi.Product.ProductImage.First().ProductImageURL
+                        : "/images/no-image.png"
+                }).ToList()
+            };
+
+            return View(vm);
+        }
+
+        // ================= STAFF ACCOUNTS =================
+        public async Task<IActionResult> ListOfStaffAccount(string search, string roleFilter, int page = 1)
+        {
+            int pageSize = 8;
+
+            // ✅ Get roles dynamically from DB
+            var rolesFromDb = _roleManager.Roles.Select(r => r.Name).ToList();
+
             var allUsers = _userManager.Users.ToList();
-
-            // Get all user-role relationships in a single query
-            var userRoles = from user in _context.Users
-                           join userRole in _context.UserRoles on user.Id equals userRole.UserId
-                           join role in _context.Roles on userRole.RoleId equals role.Id
-                           select new { UserId = user.Id, RoleName = role.Name };
-
-            var userRoleDict = userRoles.ToList()
-                .GroupBy(ur => ur.UserId)
-                .ToDictionary(g => g.Key, g => g.Select(ur => ur.RoleName).ToList());
-
             var staffList = new List<UserListVM>();
 
-            // Process users with pre-loaded roles (no more N+1 queries)
             foreach (var user in allUsers)
             {
-                var roles = userRoleDict.TryGetValue(user.Id, out var userRoleList) 
-                    ? userRoleList 
-                    : new List<string>();
+                var roles = await _userManager.GetRolesAsync(user);
 
-                // Include user if they have any staff-related role
-                if (roles.Any(r => StaffRoles.Contains(r)))
+                if (roles.Any())
+                {
                     staffList.Add(new UserListVM
                     {
                         Id = user.Id,
                         Email = user.Email ?? "",
                         Name = user.UserName ?? "",
-                        Roles = roles
+                        Roles = roles.ToList(),
+                        FirstName = user.UserName?.Split('.').FirstOrDefault(),
+                        LastName = user.UserName?.Split('.').LastOrDefault()
                     });
+                }
             }
 
-            // Apply search filter (in-memory after role filtering)
+            // 🔍 Search
             if (!string.IsNullOrEmpty(search))
-                staffList = staffList
-                    .Where(u => u.Email.Contains(search, StringComparison.OrdinalIgnoreCase) ||
-                               u.Roles.Any(r => r.Contains(search, StringComparison.OrdinalIgnoreCase)))
-                    .ToList();
+            {
+                staffList = staffList.Where(u =>
+                    u.Email.Contains(search, StringComparison.OrdinalIgnoreCase) ||
+                    u.Name.Contains(search, StringComparison.OrdinalIgnoreCase)
+                ).ToList();
+            }
 
+            // 🎯 Role Filter
+            if (!string.IsNullOrEmpty(roleFilter))
+            {
+                staffList = staffList
+                    .Where(u => u.Roles.Contains(roleFilter))
+                    .ToList();
+            }
+
+            // 📄 Pagination
+            int total = staffList.Count();
+
+            var pagedList = staffList
+                .Skip((page - 1) * pageSize)
+                .Take(pageSize)
+                .ToList();
+
+            // ✅ Send roles to View
+            ViewBag.Roles = rolesFromDb;
+
+            ViewBag.CurrentPage = page;
+            ViewBag.TotalPages = (int)Math.Ceiling((double)total / pageSize);
             ViewBag.Search = search;
-            return View(staffList);
+            ViewBag.RoleFilter = roleFilter;
+
+            return View(pagedList);
         }
 
         #endregion

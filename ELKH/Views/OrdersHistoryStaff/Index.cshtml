@@ -2,67 +2,66 @@
 @model PagedResult<OrderDetailsVM>
 
 <div class="container mt-4">
-    <header class="kawaii-hero text-center mb-4">
-        <h1 class="kawaii-cloud-title font-heading">
-            <i class="bi bi-clock-history me-2" aria-hidden="true"></i>
-            Order History
-        </h1>
-        <p class="hierarchy-tertiary">Manage and review all processed customer orders</p>
-    </header>
+    <div class="row mb-4">
+        <div class="col-12 text-center">
+            <h1 class="display-5 fw-bold text-primary">Order History</h1>
+            <p class="text-muted">Manage and review all processed customer orders</p>
+        </div>
+    </div>
 
     <div class="d-flex justify-content-between align-items-center mb-3">
-        <a class="btn-kawaii btn-secondary-kawaii btn-sm radius-pill" asp-controller="Staff" asp-action="Index">
+        <a class="btn btn-sm btn-secondary rounded-pill px-4 shadow-sm" asp-controller="Staff" asp-action="Index">
             ← Back To Dashboard
         </a>
     </div>
 
-    <div class="kawaii-card mb-4">
+    <div class="card shadow-sm border-0 rounded-4 mb-4">
         <div class="card-body">
             <form asp-action="Index" method="get" class="d-flex justify-content-center mb-3">
                 @* FIXED: Use .ToString() for hidden input *@
                 <input type="hidden" name="status" value="@ViewBag.CurrentStatus?.ToString()" />
-
+            
                 <div class="input-group" style="max-width:450px;">
                     <input type="text"
                            name="searchString"
                            value="@ViewBag.SearchString"
-                           class="input-kawaii rounded-start-pill"
+                           class="form-control rounded-start-pill"
                            placeholder="Search by Email or Order ID..." />
-                    <button type="submit" class="btn-kawaii btn-primary-kawaii px-4">
+                    <button type="submit" class="btn btn-primary px-4">
                         Search
                     </button>
-                    <a asp-action="Index" class="btn-kawaii btn-outline-kawaii rounded-end-pill">Clear</a>
+                    <a asp-action="Index" class="btn btn-outline-secondary rounded-end-pill">Clear</a>
                 </div>
             </form>
 
             <div class="d-flex flex-wrap justify-content-between align-items-center gap-3">
                 <div class="d-flex align-items-center gap-2">
-                    <span class="small font-heading hierarchy-tertiary">Filter Status:</span>
-                    <div class="btn-group" role="group">
+                    <span class="small fw-bold text-muted">Filter Status:</span>
+                    <div class="btn-group shadow-sm" role="group">
                         <a asp-action="Index"
                            asp-route-searchString="@ViewBag.SearchString"
-                           class="btn-kawaii btn-sm @(ViewBag.CurrentStatus == null ? "btn-secondary-kawaii" : "btn-outline-kawaii")">All</a>
+                           class="btn btn-sm @(ViewBag.CurrentStatus == null ? "btn-secondary" : "btn-outline-secondary")">All</a>
 
                         @* FIXED: Pass specific Enum values as strings for the route *@
                         <a asp-action="Index"
                                asp-route-status="@DeliveryStatus.Pending"
                                asp-route-searchString="@ViewBag.SearchString"
-                               class="btn-kawaii btn-sm @(ViewBag.CurrentStatus == DeliveryStatus.Pending ? "btn-primary-kawaii" : "btn-outline-kawaii")">
-                            Pending <span class="badge-mini bg-dark ms-1">@ViewBag.PendingOrders</span>
+                               class="btn btn-sm @(ViewBag.CurrentStatus == DeliveryStatus.Pending ? "btn-warning active" : "btn-outline-warning")">
+                            Pending <span class="badge bg-dark ms-1">@ViewBag.PendingOrders</span>
                         </a>
 
                         <a asp-action="Index"
                                asp-route-status="@DeliveryStatus.Delivered"
                                asp-route-searchString="@ViewBag.SearchString"
-                               class="btn-kawaii btn-sm @(ViewBag.CurrentStatus == DeliveryStatus.Delivered ? "btn-primary-kawaii" : "btn-outline-kawaii")">
-                            Delivered <span class="badge-mini bg-dark ms-1">@ViewBag.DeliveredOrders</span>
+                               class="btn btn-sm @(ViewBag.CurrentStatus == DeliveryStatus.Delivered ? "btn-success active" : "btn-outline-success")">
+                            Delivered <span class="badge bg-dark ms-1">@ViewBag.DeliveredOrders</span>
                         </a>
 
                         <a asp-action="Index"
                                asp-route-status="@DeliveryStatus.Cancelled"
                                asp-route-searchString="@ViewBag.SearchString"
-                               class="btn-kawaii btn-sm @(ViewBag.CurrentStatus == DeliveryStatus.Cancelled ? "btn-primary-kawaii" : "btn-outline-kawaii")">
-                            Cancelled <span class="badge-mini bg-dark ms-1">@ViewBag.CancelledOrders</span>
+                               class="btn btn-sm @(ViewBag.CurrentStatus == DeliveryStatus.Cancelled ? "btn-danger active" : "btn-outline-danger")">
+                            Cancelled <span class="badge bg-dark ms-1">@ViewBag.CancelledOrders</span>
                         </a>
                     </div>
                 </div>
@@ -70,7 +69,7 @@
         </div>
     </div>
 
-    <div class="kawaii-card">
+    <div class="card shadow-sm border-0">
         <div class="card-body p-0">
             <div class="table-responsive">
                 <table class="table table-hover align-middle mb-0">
@@ -94,19 +93,19 @@
                                         @* FIXED: Compare against Enum strings or the Enum itself *@
                                         @if (order.DeliveryStatus == DeliveryStatus.Delivered.ToString())
                                         {
-                                            <partial name="_Badge" model="@(new ELKH.ViewModels.BadgeVM { Text = "Delivered", Type = "best" })" />
+                                            <span class="badge bg-success">Delivered</span>
                                         }
                                         else if (order.DeliveryStatus == DeliveryStatus.Cancelled.ToString())
                                         {
-                                            <partial name="_Badge" model="@(new ELKH.ViewModels.BadgeVM { Text = "Cancelled", Type = "sale" })" />
+                                            <span class="badge bg-danger">Cancelled</span>
                                         }
                                         else
                                         {
-                                            <partial name="_Badge" model="@(new ELKH.ViewModels.BadgeVM { Text = order.DeliveryStatus, Type = "new" })" />
+                                            <span class="badge bg-warning text-dark">@order.DeliveryStatus</span>
                                         }
                                     </td>
                                     <td class="text-end pe-4">
-                                        <a class="btn-kawaii btn-primary-kawaii btn-sm radius-pill"
+                                        <a class="btn btn-sm btn-outline-primary rounded-pill px-3"
                                                asp-controller="OrdersHistoryStaff"
                                                asp-action="OrderDetail"
                                                asp-route-orderId="@order.OrderId">

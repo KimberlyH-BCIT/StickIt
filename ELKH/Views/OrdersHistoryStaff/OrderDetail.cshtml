@@ -20,27 +20,28 @@
         <div class="col-lg-9 col-xl-8">
             
             <div class="d-flex justify-content-between align-items-center mb-4">
-                <h2 class="font-heading text-purple mb-0">Order Detail</h2>
+                <h2 class="fw-bold text-primary mb-0">Order Detail</h2>
 
-                <a class="btn-kawaii btn-secondary-kawaii radius-pill" asp-action="Index">
+                <a class="btn btn-outline-secondary rounded-pill px-4 shadow-sm" asp-action="Index">
                     ← Back to Order List
                 </a>
-
+                
             </div>
 
-            <div class="kawaii-card overflow-hidden">
+            <div class="card shadow-lg border-0 rounded-4 overflow-hidden">
                 <div class="card-header bg-dark text-white p-4">
                     <div class="d-flex justify-content-between align-items-center">
                         <div>
-                            <h4 class="mb-0 font-heading">Invoice #@firstItem?.OrderId</h4>
+                            <h4 class="mb-0">Invoice #@firstItem?.OrderId</h4>
                             <small class="text-light">Transaction ID: @firstItem?.TransactionId</small>
                         </div>
                         <div class="text-end">
-                            @{
-                                var statusType = string.Equals(firstItem?.DeliveryStatus, ELKH.Models.DeliveryStatus.Delivered.ToString(), StringComparison.OrdinalIgnoreCase) ? "best" :
-                                                string.Equals(firstItem?.DeliveryStatus, ELKH.Models.DeliveryStatus.Cancelled.ToString(), StringComparison.OrdinalIgnoreCase) ? "sale" : "hot";
-                            }
-                            <partial name="_Badge" model="@(new ELKH.ViewModels.BadgeVM { Text = firstItem?.DeliveryStatus ?? "Unknown", Type = statusType })" />
+                            <span class="badge rounded-pill px-3 py-2
+                                @(string.Equals(firstItem?.DeliveryStatus, ELKH.Models.DeliveryStatus.Delivered.ToString(), StringComparison.OrdinalIgnoreCase) ? "bg-success" :
+                                            string.Equals(firstItem?.DeliveryStatus, ELKH.Models.DeliveryStatus.Cancelled.ToString(), StringComparison.OrdinalIgnoreCase) ? "bg-danger" :
+                                            "bg-warning text-dark")">
+                                @firstItem?.DeliveryStatus
+                            </span>
                         </div>
                     </div>
                 </div>
@@ -48,22 +49,22 @@
                 <div class="card-body p-5">
                     <div class="row mb-5 text-center text-sm-start">
                         <div class="col-sm-6">
-                            <h6 class="text-uppercase hierarchy-tertiary fw-bold small mb-3">Customer Information</h6>
-                            <p class="h5 mb-1 font-heading">@firstItem?.FirstName @firstItem?.LastName</p>
-                            <p class="hierarchy-secondary mb-1">@firstItem?.UserEmail</p>
-                            <p class="hierarchy-tertiary small">@firstItem?.Address</p>
+                            <h6 class="text-uppercase text-muted fw-bold small mb-3">Customer Information</h6>
+                            <p class="h5 mb-1">@firstItem?.FirstName @firstItem?.LastName</p>
+                            <p class="text-muted mb-1">@firstItem?.UserEmail</p>
+                            <p class="text-muted small">@firstItem?.Address</p>
                         </div>
-
+                        
                         <div class="col-sm-6 text-sm-end mt-4 mt-sm-0">
-                            <h6 class="text-uppercase hierarchy-tertiary fw-bold small mb-3">Update Order Status</h6>
-                            <form asp-action="UpdateStatus" method="post" class="btn-group">
+                            <h6 class="text-uppercase text-muted fw-bold small mb-3">Update Order Status</h6>
+                            <form asp-action="UpdateStatus" method="post" class="btn-group shadow-sm">
                                 @Html.AntiForgeryToken() @* Good practice for POST requests *@
                                 <input type="hidden" name="orderId" value="@firstItem?.OrderId" />
-
+        
                                 @* Values must match the Enum member names exactly *@
-                                <button type="submit" name="status" value="@ELKH.Models.DeliveryStatus.Pending" class="btn-kawaii btn-sm btn-outline-kawaii">Pending</button>
-                                <button type="submit" name="status" value="@ELKH.Models.DeliveryStatus.Delivered" class="btn-kawaii btn-sm btn-primary-kawaii">Delivered</button>
-                                <button type="submit" name="status" value="@ELKH.Models.DeliveryStatus.Cancelled" class="btn-kawaii btn-sm btn-outline-kawaii">Cancel</button>
+                                <button type="submit" name="status" value="@ELKH.Models.DeliveryStatus.Pending" class="btn btn-sm btn-outline-warning">Pending</button>
+                                <button type="submit" name="status" value="@ELKH.Models.DeliveryStatus.Delivered" class="btn btn-sm btn-outline-success">Delivered</button>
+                                <button type="submit" name="status" value="@ELKH.Models.DeliveryStatus.Cancelled" class="btn btn-sm btn-outline-danger">Cancel</button>
                             </form>
                         </div>
                     </div>

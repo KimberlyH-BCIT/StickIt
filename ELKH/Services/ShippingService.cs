@@ -11,7 +11,7 @@ namespace ELKH.Services;
 /// <remarks>
 /// TABLE OF CONTENTS (130 lines)
 /// ================================================================================
-/// 1. Constructor & Dependencies ................................. Lines   25-32
+/// 1. Constructor Dependencies ................................. Lines   25-32
 ///    - Database context and logger injection
 /// 
 /// 2. GetAvailableShippingMethodsAsync ........................... Lines   34-56

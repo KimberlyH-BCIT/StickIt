@@ -303,19 +303,23 @@ namespace ELKH.Areas.Identity.Pages.Account
                     // ── Admin Role Check ────────────────────────────────────────────────────────
                     if (await _userManager.IsInRoleAsync(user, "Admin"))
                     {
-                        return RedirectToAction("Index", "Admin", new { area = "" });
+                        //return RedirectToAction("Index", "Admin");
+                        return LocalRedirect("/Admin");
+
                     }
 
                     // ── Manager Role Check ───────────────────────────────────────────────────────
                     if (await _userManager.IsInRoleAsync(user, "Manager"))
                     {
-                        return RedirectToAction("Index", "Manager", new { area = "" });
+                        //return RedirectToAction("Index", "Manager");
+                        return LocalRedirect("/Manager");
                     }
 
                     // ── Staff Role Check ─────────────────────────────────────────────────────────
                     if (await _userManager.IsInRoleAsync(user, "Staff"))
                     {
-                        return RedirectToAction("Index", "Home", new { area = "" });
+                        //return RedirectToAction("Index", "Staff");
+                        return LocalRedirect("/Staff");
                     }
 
                     // ── Customer or Default ────────────────────────────────────────────────────

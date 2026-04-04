@@ -8,89 +8,79 @@
 <div class="container-fluid px-4 mt-4 pb-5">
 
     <!-- Header -->
-    <header class="kawaii-hero">
-        <h1 class="kawaii-cloud-title font-heading">
-            <i class="bi bi-person-badge me-2" aria-hidden="true"></i>
-            Staff Dashboard
-        </h1>
-        <p class="hierarchy-tertiary mb-3">
-            Daily operations · @DateTime.Now.ToString("dddd, MMMM d yyyy")
-        </p>
+    <div class="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-2">
+        <div>
+            <h2 class="fw-bold mb-0">Staff Dashboard</h2>
+            <p class="text-muted mb-0 small">
+                Daily operations · @DateTime.Now.ToString("dddd, MMMM d yyyy")
+            </p>
+        </div>
 
         <!-- View Switch -->
-        <nav class="d-flex gap-2 flex-wrap align-items-center justify-content-center" aria-label="View mode navigation">
-            <span class="hierarchy-tertiary small me-1">View as:</span>
+        <div class="d-flex gap-2 flex-wrap align-items-center">
+            <span class="text-muted small me-1">View as:</span>
 
             <a asp-controller="Staff" asp-action="Index"
-                   class="btn-kawaii @(viewAs == "Staff" ? "btn-primary-kawaii" : "btn-secondary-kawaii") btn-sm radius-pill">
+                   class="btn btn-sm rounded-pill px-3 @(viewAs == "Staff" ? "btn-primary" : "btn-outline-secondary")">
                 🧑‍💼 Staff
             </a>
 
             <a asp-controller="Home" asp-action="Index"
-                   class="btn-kawaii @(viewAs == "Customer" ? "btn-primary-kawaii" : "btn-secondary-kawaii") btn-sm radius-pill">
+                   class="btn btn-sm rounded-pill px-3 @(viewAs == "Customer" ? "btn-success" : "btn-outline-secondary")">
                 🛒 Customer
             </a>
-        </nav>
-    </header>
+        </div>
+    </div>
 
     <!-- ================= KPI CARDS ================= -->
     <div class="container-kawaii">
-        <div class="row g-3 mb-4 align-items-stretch">
+    <div class="row g-3 mb-4 align-items-stretch">
 
-            <div class="col-6 col-md-3 col-lg-2">
-                <div class="kawaii-card kawaii-card-sm text-center h-100 glow-on-hover">
-                    <div class="d-flex flex-column align-items-center justify-content-center p-3">
-                        <div class="fs-4">📦</div>
-                        <h5 class="font-heading text-purple mb-0">@ViewBag.TotalOrders</h5>
-                        <small class="hierarchy-tertiary">All Orders</small>
-                    </div>
-                </div>
+        <div class="col-6 col-md-3 col-lg-2">
+            <div class="card border-0 shadow-sm rounded-4 text-center p-3 h-100">
+                <div class="fs-4">📦</div>
+                <h5 class="fw-bold mb-0">@ViewBag.TotalOrders</h5>
+                <small class="text-muted">All Orders</small>
             </div>
-
-            <div class="col-6 col-md-3 col-lg-2">
-                <div class="kawaii-card kawaii-card-sm surface-sky text-center h-100 glow-on-hover">
-                    <div class="d-flex flex-column align-items-center justify-content-center p-3">
-                        <div class="fs-4">🚚</div>
-                        <h5 class="font-heading accent-blue mb-0">@ViewBag.TodayOrders</h5>
-                        <small class="hierarchy-tertiary">Shipping Today</small>
-                    </div>
-                </div>
-            </div>
-
-            <div class="col-6 col-md-3 col-lg-2">
-                <div class="kawaii-card kawaii-card-sm surface-butter text-center h-100 glow-on-hover">
-                    <div class="d-flex flex-column align-items-center justify-content-center p-3">
-                        <div class="fs-4">❌</div>
-                        <h5 class="font-heading mb-0" style="color: #dc3545;">@ViewBag.CancelledOrders</h5>
-                        <small class="hierarchy-tertiary">Cancelled</small>
-                    </div>
-                </div>
-            </div>
-
-            <div class="col-6 col-md-3 col-lg-2">
-                <div class="kawaii-card kawaii-card-sm surface-butter text-center h-100 glow-on-hover">
-                    <div class="d-flex flex-column align-items-center justify-content-center p-3">
-                        <div class="fs-4">⏳</div>
-                        <h5 class="font-heading mb-0" style="color: #ffc107;">@ViewBag.PendingOrders</h5>
-                        <small class="hierarchy-tertiary">Pending</small>
-                    </div>
-                </div>
-            </div>
-
-            <div class="col-6 col-md-3 col-lg-2">
-                <a asp-controller="Inventory" asp-action="Index" asp-route-stockFilter="low"
-                       class="text-decoration-none d-block h-100">
-                    <div class="kawaii-card kawaii-card-sm surface-butter text-center h-100 glow-on-hover">
-                        <div class="d-flex flex-column align-items-center justify-content-center p-3">
-                            <div class="fs-4">🔴</div>
-                            <h5 class="font-heading mb-0" style="color: #dc3545;">@ViewBag.LowStockCount</h5>
-                            <small class="hierarchy-tertiary">Low Stock</small>
-                        </div>
-                    </div>
-                </a>
-            </div>
-
         </div>
+            </div>
+
+        <div class="col-6 col-md-3 col-lg-2">
+            <div class="card border-0 shadow-sm rounded-4 text-center p-3 h-100">
+                <div class="fs-4">🚚</div>
+                <h5 class="fw-bold text-primary mb-0">@ViewBag.TodayOrders</h5>
+                <small class="text-muted">Shipping Today</small>
+            </div>
+        </div>
+
+        <div class="col-6 col-md-3 col-lg-2">
+            <div class="card border-0 shadow-sm rounded-4 text-center p-3 h-100">
+                <div class="fs-4">❌</div>
+                <h5 class="fw-bold text-danger mb-0">@ViewBag.CancelledOrders</h5>
+                <small class="text-muted">Cancelled</small>
+            </div>
+        </div>
+
+        <div class="col-6 col-md-3 col-lg-2">
+            <div class="card border-0 shadow-sm rounded-4 text-center p-3 h-100">
+                <div class="fs-4">⏳</div>
+                <h5 class="fw-bold text-warning mb-0">@ViewBag.PendingOrders</h5>
+                <small class="text-muted">Pending</small>
+            </div>
+        </div>
+
+        <div class="col-6 col-md-3 col-lg-2">
+            <a asp-controller="Inventory" asp-action="Index" asp-route-stockFilter="low"
+                   class="text-decoration-none d-block h-100">
+                <div class="card border-0 shadow-sm rounded-4 text-center p-3 h-100 mgr-card">
+                    <div class="fs-4">🔴</div>
+                    <h5 class="fw-bold mb-0 text-danger">@ViewBag.LowStockCount</h5>
+                    <small class="text-muted">Low Stock</small>
+                </div>
+            </a>
+        </div>
+
+    </div>
     </div>
 
     <!-- ================= MAIN CARDS ================= -->
@@ -199,12 +189,12 @@
                                         <!-- MARK READ -->
                                         <a asp-action="MarkMessageAsRead"
                                                asp-route-id="@msg.Id"
-                                               class="btn-kawaii btn-secondary-kawaii btn-sm radius-pill">
+                                               class="btn btn-sm btn-outline-secondary rounded-pill">
                                             ✔ Read
                                         </a>
 
                                         <!-- REPLY BUTTON -->
-                                        <button class="btn-kawaii btn-primary-kawaii btn-sm radius-pill"
+                                        <button class="btn btn-sm btn-outline-primary rounded-pill"
                                                 data-bs-toggle="collapse"
                                                 data-bs-target="#reply_@msg.Id">
                                             Reply
@@ -217,10 +207,10 @@
                                     <form asp-action="ReplyMessage" method="post">
                                         <input type="hidden" name="MessageId" value="@msg.Id" />
                                         <textarea name="ReplyText"
-                                                  class="input-kawaii mb-2"
+                                                  class="form-control mb-2"
                                                   rows="2"
                                                   placeholder="Write reply..."></textarea>
-                                        <button class="btn-kawaii btn-primary-kawaii btn-sm radius-pill">
+                                        <button class="btn btn-sm btn-primary rounded-pill px-3">
                                             Send Reply
                                         </button>
                                     </form>

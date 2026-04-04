@@ -636,3 +636,4 @@ license.txt
 # Performance counters
 *.perfcounter
 perfmon.log
+/ELKH/ELKH.csproj.txt

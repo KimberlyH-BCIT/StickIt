@@ -5,302 +5,239 @@ using ELKH.ViewModels;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.AspNetCore.Mvc.Rendering;
 
 namespace ELKH.Controllers
 {
-    // ╔===============================================================================================╗
-    // ║                       INVENTORY CONTROLLER - TABLE OF CONTENTS                               ║
-    // ╚===============================================================================================╝
-    // 
-    // OVERVIEW:
-    // Administrative inventory management controller providing stock level monitoring, quantity 
-    // adjustments, and automated customer notification system for stock replenishment.
-    // 
-    // TABLE OF CONTENTS:
-    // ┌─ Section 1: Controller Setup & Dependencies .......................................... Line 47
-    // │  ├─ Constructor with repository and service injection
-    // │  ├─ IInventoryRepo for database operations
-    // │  ├─ ImageValidationService for product image management
-    // │  ├─ StockNotificationEmailService for customer alerts
-    // │  └─ ApplicationDbContext for direct database access
-    // ├─ Section 2: Inventory Display & Listing ............................................ Line 50
-    // │  ├─ Index() - Product inventory listing with stock levels
-    // │  ├─ InventoryVM transformation for admin display
-    // │  ├─ Product name and quantity display
-    // │  └─ Administrative inventory overview
-    // ├─ Section 3: Stock Quantity Management .............................................. Line 66
-    // │  ├─ EditProductAmount() - Stock level adjustment with validation
-    // │  ├─ Out-of-stock detection and restoration tracking
-    // │  ├─ Pending notification validation before triggering
-    // │  ├─ Asynchronous notification processing (fire-and-forget)
-    // │  ├─ 24-hour notification cooldown management
-    // │  └─ Comprehensive error handling for notification failures
-    // └─ Section 4: Product Image Management ................................................ Line 130
-    //    ├─ Product image upload and validation
-    //    ├─ ImageValidationService integration for security
-    //    ├─ File format and size validation
-    //    └─ Image storage and product association
-    //
-    // ARCHITECTURE NOTES:
-    // • Admin-only access with role-based authorization
-    // • Repository pattern for clean data access abstraction
-    // • Service layer integration for complex business logic
-    // • Fire-and-forget pattern for notification processing
-    // • Comprehensive error handling with user feedback
-    //
-    // BUSINESS LOGIC:
-    // • Stock level monitoring with automated customer notifications
-    // • Out-of-stock to in-stock transition detection
-    // • Pending notification validation before processing
-    // • Cooldown period management to prevent notification spam
-    // • Asynchronous processing to maintain response times
-    //
-    // NOTIFICATION WORKFLOW:
-    // • Detect stock level changes from out-of-stock to available
-    // • Validate pending customer notification requests
-    // • Trigger asynchronous notification processing with cooldown
-    // • Error handling to prevent blocking inventory operations
-    // • Success feedback for administrative confirmation
-    //
-    // PERFORMANCE CONSIDERATIONS:
-    // • Asynchronous notification processing prevents blocking
-    // • Direct database queries for efficient stock checks
-    // • Repository pattern for optimized data access
-    // • Fire-and-forget pattern for background processing
-    // • Minimal UI blocking for better user experience
-    //
-    // SECURITY IMPLEMENTATION:
-    // • Admin role authorization for all inventory operations
-    // • Anti-forgery token validation for stock updates
-    // • Input validation for quantity adjustments
-    // • Image validation for security compliance
-    // • Error logging without sensitive data exposure
+    [Authorize(Roles = "Admin, Staff")]
+    public class InventoryController : Controller
+    {
+        private readonly InventoryRepo _inventoryRepo;
 
-    /// <summary>
-    /// Admin controller for inventory management: listing products, adjusting stock
-    /// quantities, and managing product images.
-    /// </summary>
-    /// <remarks>
-    /// <para><strong>Administrative Access Only</strong></para>
-    /// This controller requires Admin role authorization for all operations.
-    /// 
-    /// <para><strong>Core Features:</strong></para>
-    /// <list type="bullet">
-    /// <item>Product inventory listing with current stock levels</item>
-    /// <item>Stock quantity adjustments with validation</item>
-    /// <item>Automated customer notification for stock replenishment</item>
-    /// <item>Product image management with security validation</item>
-    /// </list>
-    /// 
-    /// <para><strong>Notification System:</strong></para>
-    /// When products are restocked from out-of-stock status, the system automatically
-    /// processes customer notifications with a 24-hour cooldown period to prevent spam.
-    /// </remarks>
-[Authorize(Roles = "Admin")]
-public class InventoryController : Controller
-{
-    #region Section 1: Controller Setup & Dependencies
-
-    // ===================================================================
-    // Section 1: Controller Setup & Dependencies
-    // ===================================================================
-
-    private readonly IInventoryRepo _inventoryRepo;
-    private readonly ELKH.Services.ImageValidationService _imageValidator;
-    private readonly ELKH.Services.StockNotificationEmailService _stockNotificationService;
-    private readonly ELKH.Data.ApplicationDbContext _db;
-
-        public InventoryController(
-            IInventoryRepo inventoryRepo, 
-            ELKH.Services.ImageValidationService imageValidator,
-            ELKH.Services.StockNotificationEmailService stockNotificationService,
-            ELKH.Data.ApplicationDbContext db)
+        public InventoryController(InventoryRepo inventoryRepo)
         {
             _inventoryRepo = inventoryRepo;
-            _imageValidator = imageValidator;
-            _stockNotificationService = stockNotificationService;
-            _db = db;
         }
 
-    #endregion
-
-    #region Section 2: Inventory Display & Listing
-
-    // ===================================================================
-    // Section 2: Inventory Display & Listing
-    // ===================================================================
-
-
-public async Task<IActionResult> Index()
+        private async Task<List<ProductImageVM>> SafeGetImages(int productId)
         {
-            var result = await _inventoryRepo.GetAllProduct(null);
-
-            return View(result.Items);
-        }
-
-        #endregion
-
-        #region Section 3: Stock Quantity Management
-
-        // ===================================================================
-        // Section 3: Stock Quantity Management
-        // ===================================================================
-
-[HttpPost]
-        [ValidateAntiForgeryToken]
-        public async Task<IActionResult> EditProductAmount(int productId, int quantityId)
-        {
-            // Check current stock before update
-            var product = await _db.Products.FindAsync(productId);
-            if (product == null)
+            try
             {
-                TempData["Message"] = "error, Product not found.";
-                return RedirectToAction(nameof(Index));
-            }
+                var rows = await _inventoryRepo.GetProductImages(productId);
+                if (rows == null) return new List<ProductImageVM>();
 
-            var wasOutOfStock = product.StockQuantity == null || product.StockQuantity == 0;
-
-            // Update the stock quantity
-            await _inventoryRepo.EditProductQuantity(productId, quantityId);
-
-            // Only trigger notifications if:
-            // 1. Product was previously out of stock
-            // 2. Now has positive stock
-            // 3. No notifications sent in the last 24 hours (checked in service)
-            if (wasOutOfStock && quantityId > 0)
-            {
-                // Check if there are any pending notifications before triggering
-                var hasPendingNotifications = await _db.StockNotifications
-                    .AnyAsync(sn => sn.FkProductId == productId 
-                                 && !sn.NotificationSent 
-                                 && !sn.IsCancelled);
-
-                if (hasPendingNotifications)
+                return rows.Select(pi => new ProductImageVM
                 {
-                    // Fire and forget - don't block the response
-                    // The service will check cooldown internally
-                    _ = Task.Run(async () =>
-                    {
-                        try
-                        {
-                            // Use default 24-hour cooldown
-                            await _stockNotificationService.ProcessRestockNotificationsAsync(productId, cooldownHours: 24);
-                        }
-                        catch (Exception ex)
-                        {
-                            // Log error but don't fail the request
-                            Console.WriteLine($"Error sending stock notifications: {ex.Message}");
-                        }
-                    });
-
-                    TempData["Message"] = "success, Stock updated! Notification emails are being sent to waiting customers.";
-                }
-                else
-                {
-                    TempData["Message"] = "success, Stock updated successfully.";
-                }
+                    ImageId = pi.ImageId,
+                    ImageData = pi.ImageData,
+                    FkProductId = productId,
+                    FileName = pi.FileName ?? string.Empty,
+                    Description = pi.Description ?? string.Empty
+                }).ToList();
             }
-            else if (quantityId > 0)
+            catch
             {
-                TempData["Message"] = "success, Stock updated successfully.";
+                TempData["ImageDbError"] =
+                    "⚠️ Image database is not set up yet. Run 'dotnet ef database update'.";
+                return new List<ProductImageVM>();
             }
-            else
-            {
-                TempData["Message"] = "success, Stock set to zero (out of stock).";
-            }
-
-            return RedirectToAction(nameof(Index));
         }
 
-        #endregion
-
-        #region Section 4: Product Image Management
-
-        // ===================================================================
-        // Section 4: Product Image Management
-        // ===================================================================
-
-        //Pass
-        public async Task<IActionResult> ProductImages(int Id)
+        public async Task<IActionResult> Index(string? searchString, string? sortOrder, string? stockFilter, int page = 1)
         {
+            int pageSize = 10;
 
-            ViewBag.ProductId = Id;
-            // GetProductImages likely returns List<ImageModel>
-            var productImages = await _inventoryRepo.GetProductImages(Id);
+            var products = await _inventoryRepo.GetAllProduct(searchString, sortOrder, stockFilter, page, pageSize);
 
-            if (productImages == null)
-            {
-                return NotFound();
-            }
+            ViewBag.CurrentFilter = searchString;
+            ViewBag.CurrentSort = sortOrder;
+            ViewBag.StockFilter = stockFilter;
 
-var vmList = productImages.Select(pi => new ProductImageVM
-{
-    FileName = pi.FileName,
-    Description = pi.Description,
-    ImageData = pi.ImageData
-}).ToList();
-
-            return View(vmList);
+            return View(products);
         }
 
-public async Task<IActionResult> AddImage(int productId)
-{
-    var vm = new ImageModel();
-    ViewBag.ProductId = productId;
+        public async Task<IActionResult> Detail(int Id)
+        {
+            var product = await _inventoryRepo.GetProductById(Id);
+            if (product == null) return NotFound();
+
+            var vm = new ProductVM
+            {
+                ProductId = Id,
+                ProductName = product.Name,
+                Description = product.Description,
+                Price = product.Price,
+                DiscountPercent = product.DiscountPercent,
+                StockQuantity = product.StockQuantity,
+                IsActive = product.IsActive,
+                CategoryId = product.FkCategoryId,
+                CategoryName = product.Category?.CategoryName ?? string.Empty,
+                ExistingImages = await SafeGetImages(Id)
+            };
 
             return View(vm);
         }
 
+        public async Task<IActionResult> EditProduct(int Id)
+        {
+            var product = await _inventoryRepo.GetProductById(Id);
+            if (product == null) return NotFound();
 
-        //Pass
+            var categories = await _inventoryRepo.GetAllCategories();
+            ViewBag.Categories = new SelectList(categories, "PkCategoryId", "CategoryName");
+
+            var vm = new ProductVM
+            {
+                ProductId = Id,
+                ProductName = product.Name,
+                Description = product.Description,
+                Price = product.Price,
+                DiscountPercent = product.DiscountPercent,
+                StockQuantity = product.StockQuantity,
+                IsActive = product.IsActive,
+                CategoryId = product.FkCategoryId,
+                ExistingImages = await SafeGetImages(Id),
+                ProductReviews = product.ProductRatings?.Select(pr => new ReviewDisplayVM
+                {
+                    RatingId = pr.PkRatingId,
+                    Rating = pr.Rating,
+                    Description = pr.Description,
+                    CreatedAt = pr.RatedTime,
+                    LastEditedAt = pr.LastEditedAt,
+                    ReviewerFirstName = pr.RegisteredUser.Email
+                }).ToList()
+            };
+
+            return View(vm);
+        }
+
         [HttpPost]
         [ValidateAntiForgeryToken]
-        [RequestSizeLimit(5 * 1024 * 1024)]
-        [RequestFormLimits(MultipartBodyLengthLimit = 5 * 1024 * 1024)]
-        public async Task<IActionResult> AddImage(int productId, IFormFile file)
+        public async Task<IActionResult> EditProduct(ProductVM vm)
         {
             if (!ModelState.IsValid)
             {
-                ViewBag.ProductId = productId;
-                return View("AddImage");
+                var categories = await _inventoryRepo.GetAllCategories();
+                ViewBag.Categories = new SelectList(categories, "PkCategoryId", "CategoryName");
+                vm.ExistingImages = await SafeGetImages(vm.ProductId);
+                return View(vm);
             }
 
-            // ===============================================================
-            // SECURITY: Multi-layer image validation
-            // Validates file through:
-            // - Magic byte verification (prevents disguised executables)
-            // - Extension and MIME type whitelisting
-            // - Image dimension limits (prevents memory exhaustion)
-            // - File size limits (enforced at middleware level + validation)
-            // - Filename sanitization (prevents path traversal)
-            // ===============================================================
-            var validationResult = await _imageValidator.ValidateImageAsync(file);
-
-            if (!validationResult.IsValid)
+            if (vm.NewImages != null && vm.NewImages.Count > 0)
             {
-                foreach (var error in validationResult.Errors)
+                var allowed = new HashSet<string>(StringComparer.OrdinalIgnoreCase)
+                    { ".jpg", ".jpeg", ".png", ".gif", ".webp", ".bmp" };
+
+                foreach (var file in vm.NewImages)
                 {
-                    ModelState.AddModelError("", error);
+                    if (file == null || file.Length == 0) continue;
+                    if (!allowed.Contains(Path.GetExtension(file.FileName))) continue;
+                    await _inventoryRepo.UploadImage(vm.ProductId, file);
                 }
-                ViewBag.ProductId = productId;
-                return View("AddImage");
             }
 
-            // Upload validated image with sanitized filename
-            var addImageRepo = await _inventoryRepo.UploadImage(productId, file);
-
-            if (addImageRepo)
-            {
-                TempData["Message"] = $"success, Image uploaded successfully ({validationResult.ImageWidth}x{validationResult.ImageHeight})";
-                return RedirectToAction("ProductImages", new { id = productId });
-            }
-
-            ModelState.AddModelError("", "The file could not be saved. Please try again.");
-            ViewBag.ProductId = productId;
-            return View("AddImage");
+            TempData["Success"] = "Product updated successfully.";
+            return RedirectToAction("EditProduct", new { Id = vm.ProductId });
         }
 
-        #endregion
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> DeleteProductReview(int reviewId, int productId)
+        {
+            await _inventoryRepo.DeleteProductReview(reviewId);
+            return RedirectToAction("EditProduct", new { Id = productId });
+        }
 
+        public async Task<IActionResult> AddProduct()
+        {
+            var categories = await _inventoryRepo.GetAllCategories();
+            ViewBag.Categories = new SelectList(categories, "PkCategoryId", "CategoryName");
+            return View(new ProductVM());
+        }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        [RequestSizeLimit(5 * 1024 * 1024)]
+        public async Task<IActionResult> AddProduct(ProductVM vm)
+        {
+            if (!ModelState.IsValid)
+            {
+                var categories = await _inventoryRepo.GetAllCategories();
+                ViewBag.Categories = new SelectList(categories, "PkCategoryId", "CategoryName");
+                return View(vm);
+            }
+
+            var savedId = await _inventoryRepo.AddProduct(vm);
+
+            if (vm.NewImages != null && vm.NewImages.Count > 0)
+            {
+                var allowed = new HashSet<string>(StringComparer.OrdinalIgnoreCase)
+                    { ".jpg", ".jpeg", ".png", ".gif", ".webp", ".bmp" };
+
+                foreach (var file in vm.NewImages)
+                {
+                    if (file == null || file.Length == 0) continue;
+                    if (!allowed.Contains(Path.GetExtension(file.FileName))) continue;
+                    await _inventoryRepo.UploadImage(savedId, file);
+                }
+            }
+
+            TempData["Success"] = "Product added successfully.";
+            return RedirectToAction("Detail", new { Id = savedId });
+        }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> EditProductAmount(int productId, int quantityId)
+        {
+            await _inventoryRepo.EditProductQuantity(productId, quantityId);
+            return RedirectToAction(nameof(Index));
+        }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> DeleteImage(int productId, int imageId)
+        {
+            await _inventoryRepo.DeleteImage(imageId);
+            return RedirectToAction("EditProduct", new { Id = productId });
+        }
+
+        public async Task<IActionResult> ProductImages(int Id)
+        {
+            ViewBag.ProductId = Id;
+            var images = await SafeGetImages(Id);
+            return View(images);
+        }
+
+        public IActionResult AddImage(int productId)
+        {
+            ViewBag.ProductId = productId;
+            return View();
+        }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> AddImage(int productId, IFormFile file)
+        {
+            if (file == null || file.Length == 0)
+            {
+                ModelState.AddModelError("", "Please select a file.");
+                ViewBag.ProductId = productId;
+                return View();
+            }
+
+            var allowed = new HashSet<string>(StringComparer.OrdinalIgnoreCase)
+                { ".jpg", ".jpeg", ".png", ".gif", ".webp", ".bmp" };
+
+            if (!allowed.Contains(Path.GetExtension(file.FileName)))
+            {
+                ModelState.AddModelError("", "Only image files are allowed.");
+                ViewBag.ProductId = productId;
+                return View();
+            }
+
+            await _inventoryRepo.UploadImage(productId, file);
+            return RedirectToAction("EditProduct", new { Id = productId });
+        }
     }
 }

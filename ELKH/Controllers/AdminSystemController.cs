@@ -513,3 +513,8 @@ public class AdminSystemController : AdminControllerBase
 
     #endregion
 }
+
+public class ReindexPayload
+{
+    public string? Reason { get; internal set; }
+}

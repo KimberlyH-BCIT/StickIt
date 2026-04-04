@@ -5,6 +5,9 @@
     Layout = "~/Views/Shared/_Layout.cshtml";
     var topProducts = ViewBag.TopProducts as List<ELKH.ViewModels.TopProductVM>
                       ?? new List<ELKH.ViewModels.TopProductVM>();
+
+    // Read which view the admin is currently "pretending" to be
+    string viewAs = ViewBag.ViewAs as string ?? "Admin";
 }
 
 @section title {
@@ -19,40 +22,41 @@
     </header>
 }
 
-    <main class="container-fluid px-4 py-4" role="main">
+    <!-- ── Header ────────────────────────────────────────────── -->
+    <div class="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-2">
+        <div>
+            <h2 class="fw-bold mb-0">Admin Dashboard</h2>
+            <p class="text-muted mb-0 small">Full system access · @DateTime.Now.ToString("dddd, MMMM d yyyy")</p>
+        </div>
 
-        <!-- Role Navigation Shortcuts -->
-        <section aria-labelledby="role-shortcuts-heading">
-            <div class="d-flex justify-content-end align-items-center mb-4 flex-wrap gap-2">
-                <h2 id="role-shortcuts-heading" class="sr-only">Quick role view shortcuts</h2>
-                <nav aria-label="Switch to different user role views" role="group">
-                    <div class="d-flex gap-2 flex-wrap">
-                        <a asp-controller="Manager" 
-                           asp-action="Index"
-                           class="btn-kawaii btn-secondary-kawaii btn-sm radius-pill"
-                           aria-label="Switch to Manager role view">
-                            <i class="bi bi-briefcase me-1" aria-hidden="true"></i>Manager View
-                        </a>
-                        <a asp-controller="Staff" 
-                           asp-action="Index"
-                           class="btn-kawaii btn-secondary-kawaii btn-sm radius-pill"
-                           aria-label="Switch to Staff role view">
-                            <i class="bi bi-person-badge me-1" aria-hidden="true"></i>Staff View
-                        </a>
-                        <a asp-controller="Home" 
-                           asp-action="Index"
-                           class="btn-kawaii btn-secondary-kawaii btn-sm radius-pill"
-                           aria-label="Switch to Customer view">
-                            <i class="bi bi-person me-1" aria-hidden="true"></i>Customer View
-                        </a>
-                    </div>
-                </nav>
-            </div>
-        </section>
-    <!-- Main Administrative Actions -->
-    <section aria-labelledby="admin-actions-heading">
-        <h2 id="admin-actions-heading" class="fw-bold mb-4 h5">Main Administrative Functions</h2>
-        <div class="row g-4 mb-5">
+        <!-- ── Persistent View-As Tab Strip ── -->
+        <div class="d-flex gap-2 flex-wrap align-items-center">
+            <span class="text-muted small me-1">View as:</span>
+
+            <a asp-controller="Admin" asp-action="Index"
+               class="btn btn-sm rounded-pill px-3 view-as-btn @(viewAs == "Admin" ? "btn-primary" : "btn-outline-secondary")">
+                🛡️ Admin
+            </a>
+
+            <a asp-controller="Manager" asp-action="Index"
+               class="btn btn-sm rounded-pill px-3 view-as-btn @(viewAs == "Manager" ? "btn-warning text-dark" : "btn-outline-secondary")">
+                👔 Manager
+            </a>
+
+            <a asp-controller="Staff" asp-action="Index"
+               class="btn btn-sm rounded-pill px-3 view-as-btn @(viewAs == "Staff" ? "btn-info text-dark" : "btn-outline-secondary")">
+                🧑‍💼 Staff
+            </a>
+
+            <a asp-controller="Home" asp-action="Index"
+               class="btn btn-sm rounded-pill px-3 view-as-btn @(viewAs == "Customer" ? "btn-success" : "btn-outline-secondary")">
+                🛒 Customer
+            </a>
+        </div>
+    </div>
+
+    <!-- ── 3 Main Action Cards ────────────────────────────────── -->
+    <div class="row g-4 mb-5">
 
             <!-- Manage Roles -->
             <div class="col-md-4">
@@ -81,32 +85,28 @@
                 </a>
             </div>
 
-            <!-- Manage Accounts -->
-            <div class="col-md-4">
-                <a asp-controller="Admin" 
-                   asp-action="ListUsers" 
-                   class="text-decoration-none"
-                   aria-labelledby="user-management-title"
-                   aria-describedby="user-management-desc">
-                    @{
-                        var accountCard = new ELKH.ViewModels.FeatureCardVM
-                        {
-                            ColumnSize = "12",
-                            Title = "Manage Accounts",
-                            Description = "View, edit, and manage all users",
-                            Icon = "👤",
-                            IconType = "emoji",
-                            IconWrapperClass = "admin-icon-wrap bg-success bg-opacity-10 rounded-4 p-3",
-                            Badge = "User Management",
-                            BadgeCssClass = "badge bg-success bg-opacity-10 text-success px-3 py-1 rounded-pill small",
-                            FooterText = "Go to User Accounts →",
-                            FooterCssClass = "bg-success text-white text-center py-2 rounded-bottom-4 fw-semibold small",
-                            CardCssClass = "admin-card"
-                        };
-                    }
-                    @await Html.PartialAsync("_FeatureCardPartial", accountCard)
-                </a>
-            </div>
+        <!-- Manage Accounts -->
+        <div class="col-md-4">
+            <a asp-controller="Admin" asp-action="ListUsers" class="text-decoration-none">
+                <div class="card border-0 shadow-sm rounded-4 h-100 admin-card">
+                    <div class="card-body p-4 d-flex align-items-center gap-4">
+                        <div class="admin-icon-wrap bg-success bg-opacity-10 rounded-4 p-3">
+                            <span style="font-size:2.4rem;">👤</span>
+                        </div>
+                        <div>
+                            <h5 class="fw-bold mb-1 text-dark">Manage Accounts</h5>
+                            <p class="text-muted small mb-2">View, edit, and manage all users</p>
+                            <span class="badge bg-success bg-opacity-10 text-success px-3 py-1 rounded-pill small">
+                                User Account Management
+                            </span>
+                        </div>
+                    </div>
+                    <div class="card-footer bg-success text-white text-center py-2 rounded-bottom-4 fw-semibold small">
+                        Go to User Accounts →
+                    </div>
+                </div>
+            </a>
+        </div>
 
             <!-- Manage Sales -->
             <div class="col-md-4">
@@ -147,82 +147,52 @@
                     Top 5 Products by Units Sold
                 </h2>
 
-                @if (topProducts.Any())
-                {
-                    <div class="table-responsive">
-                        <table class="table table-hover align-middle mb-0"
-                               role="table"
-                               aria-label="Top performing products with sales statistics"
-                               aria-describedby="products-table-desc">
-                            <caption id="products-table-desc" class="sr-only">
-                                Top 5 best-selling products ranked by units sold with revenue information
-                            </caption>
-                            <thead class="table-light">
-                                <tr role="row">
-                                    <th scope="col" style="width:60px;">Rank</th>
-                                    <th scope="col" class="text-start">Product Name</th>
-                                    <th scope="col">Units Sold</th>
-                                    <th scope="col">Total Revenue</th>
+            @if (topProducts != null && topProducts.Any())
+            {
+                <div class="table-responsive">
+                    <table class="table table-hover align-middle mb-0 text-center">
+                        <thead class="table-light">
+                            <tr>
+                                <th style="width:60px;">Rank</th>
+                                <th class="text-start">Product</th>
+                                <th>Units Sold</th>
+                                <th>Revenue</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @{ int rank = 1; }
+                            @foreach (var p in topProducts)
+                            {
+                                <tr>
+                                    <td>
+                                        @if (rank == 1)     { <span class="badge bg-warning text-dark fs-6">🥇</span> }
+                                        else if (rank == 2) { <span class="badge bg-secondary fs-6">🥈</span> }
+                                        else if (rank == 3) { <span class="badge bg-danger bg-opacity-75 fs-6">🥉</span> }
+                                        else                { <span class="fw-semibold text-muted">@rank</span> }
+                                    </td>
+                                    <td class="text-start fw-semibold">@p.ProductName</td>
+                                    <td>
+                                        <span class="badge bg-primary bg-opacity-10 text-primary px-3 py-2">
+                                            @p.UnitsSold units
+                                        </span>
+                                    </td>
+                                    <td class="text-success fw-bold">$@p.Revenue.ToString("N2")</td>
                                 </tr>
-                            </thead>
-                            <tbody>
-                                @{ int rank = 1; }
-                                @foreach (var p in topProducts)
-                                {
-                                    <tr role="row">
-                                        <td role="gridcell" class="text-center">
-                                            @if (rank == 1)
-                                            {
-                                                <span class="badge bg-warning text-dark fs-6" 
-                                                      role="img" 
-                                                      aria-label="First place">🥇</span>
-                                            }
-                                            else if (rank == 2)
-                                            {
-                                                <span class="badge bg-secondary fs-6" 
-                                                      role="img" 
-                                                      aria-label="Second place">🥈</span>
-                                            }
-                                            else if (rank == 3)
-                                            {
-                                                <span class="badge bg-danger bg-opacity-75 fs-6" 
-                                                      role="img" 
-                                                      aria-label="Third place">🥉</span>
-                                            }
-                                            else
-                                            {
-                                                <span class="fw-semibold text-muted" aria-label="Rank @rank">@rank</span>
-                                            }
-                                        </td>
-                                        <td role="gridcell" class="text-start fw-semibold">@p.ProductName</td>
-                                        <td role="gridcell" class="text-center">
-                                            <span class="badge bg-primary bg-opacity-10 text-primary px-3 py-2"
-                                                  aria-label="@p.UnitsSold units sold">
-                                                @p.UnitsSold units
-                                            </span>
-                                        </td>
-                                        <td role="gridcell" 
-                                            class="text-success fw-bold text-center"
-                                            aria-label="Revenue @p.Revenue.ToString("C")">
-                                            @p.Revenue.ToString("C")
-                                        </td>
-                                    </tr>
-                                    rank++;
-                                }
-                            </tbody>
-                        </table>
-                    </div>
-                }
-                else
-                {
-                    <div class="text-center text-muted py-5" role="status">
-                        <i class="bi bi-box display-1" aria-hidden="true"></i>
-                        <p class="mt-2">No sales data available yet. Products will appear here once orders are placed.</p>
-                    </div>
-                }
-            </div>
+                                rank++;
+                            }
+                        </tbody>
+                    </table>
+                </div>
+            }
+            else
+            {
+                <div class="text-center text-muted py-5">
+                    <span style="font-size:3rem;">📦</span>
+                    <p class="mt-2">No sales data yet. Products appear here once orders are placed.</p>
+                </div>
+            }
         </div>
-    </section>
+    </div>
 
     <!-- System Management Tools -->
     <section aria-labelledby="system-tools-heading">
@@ -379,63 +349,13 @@
         align-items: center;
         justify-content: center;
     }
-
-    /* Enhanced table accessibility */
-    .table-hover tbody tr:hover {
-        background-color: rgba(0,123,255,.075);
+    /* View-as buttons: keep a subtle active ring */
+    .view-as-btn {
+        font-weight: 500;
+        transition: all .15s ease;
     }
-
-    .table-hover tbody tr:focus-within {
-        background-color: rgba(0,123,255,.1);
-        outline: 2px solid #0d6efd;
-        outline-offset: -2px;
-    }
-
-    /* Form accessibility enhancements */
-    .form-control:focus {
-        border-color: #0d6efd;
-        box-shadow: 0 0 0 0.25rem rgba(13,110,253,.25);
-    }
-
-    /* Button accessibility */
-    .btn:focus {
-        box-shadow: 0 0 0 0.25rem rgba(13,110,253,.25);
-    }
-
-    /* Screen reader improvements */
-    .sr-only {
-        position: absolute !important;
-        width: 1px !important;
-        height: 1px !important;
-        padding: 0 !important;
-        margin: -1px !important;
-        overflow: hidden !important;
-        clip: rect(0, 0, 0, 0) !important;
-        white-space: nowrap !important;
-        border: 0 !important;
-    }
-
-    /* High contrast improvements */
-    @@media (prefers-contrast: high) {
-        .card {
-            border: 2px solid #000 !important;
-        }
-
-        .btn {
-            border-width: 2px !important;
-        }
-    }
-
-    /* Reduced motion support */
-    @@media (prefers-reduced-motion: reduce) {
-        .admin-card {
-            transition: none;
-        }
-
-        .admin-card:hover,
-        .admin-card:focus-within {
-            transform: none;
-        }
+    .view-as-btn:not(.btn-outline-secondary) {
+        box-shadow: 0 0 0 3px rgba(0,0,0,.1);
     }
 </style>
 
@@ -443,54 +363,17 @@
 <script>
     const token = document.querySelector('input[name="__RequestVerificationToken"]')?.value ?? '';
 
-    // Enhanced keyboard navigation support for admin cards
-    document.addEventListener('DOMContentLoaded', function() {
-        // Add keyboard navigation support for admin action cards
-        const adminCards = document.querySelectorAll('.admin-card');
-
-        adminCards.forEach(card => {
-            // Add keyboard support for Enter and Space keys
-            card.addEventListener('keydown', function(e) {
-                if (e.key === 'Enter' || e.key === ' ') {
-                    e.preventDefault();
-                    const link = this.closest('a');
-                    if (link) {
-                        link.click();
-                    }
-                }
-            });
-
-            // Add focus management
-            card.addEventListener('focus', function() {
-                this.classList.add('admin-card-focused');
-            });
-
-            card.addEventListener('blur', function() {
-                this.classList.remove('admin-card-focused');
-            });
-        });
-
-        // Enhanced form validation with accessibility
-        const forms = document.querySelectorAll('form');
-        forms.forEach(form => {
-            form.addEventListener('submit', function(e) {
-                const requiredFields = this.querySelectorAll('[required]');
-                let hasErrors = false;
-
-                requiredFields.forEach(field => {
-                    if (!field.value.trim()) {
-                        field.setAttribute('aria-invalid', 'true');
-                        field.focus();
-                        hasErrors = true;
-                    } else {
-                        field.setAttribute('aria-invalid', 'false');
-                    }
-                });
-
-                if (hasErrors) {
-                    e.preventDefault();
-                }
-            });
+    // ── Persist the "view-as" tab across navigation ──────────────
+    // When an admin clicks a view-as button, save the label in sessionStorage
+    // so the correct tab stays highlighted when they come back.
+    document.querySelectorAll('.view-as-btn').forEach(btn => {
+        btn.addEventListener('click', function () {
+            const href = this.getAttribute('href') ?? '';
+            let key = 'Admin';
+            if (href.includes('/Manager')) key = 'Manager';
+            else if (href.includes('/Staff'))   key = 'Staff';
+            else if (href.includes('/Home'))    key = 'Customer';
+            sessionStorage.setItem('adminViewAs', key);
         });
     });
 
@@ -625,7 +508,6 @@
         }, 1000);
     }
 
-    // Load stats on page load
-    document.addEventListener('DOMContentLoaded', refreshStats);
+    refreshStats();
 </script>
 }
