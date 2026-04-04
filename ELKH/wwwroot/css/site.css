@@ -74,7 +74,14 @@ body {
 /* ======================================================================================= */
 
 /* Skip links - always available regardless of design system */
-.skip-link {
+.skip-links {
+    position: absolute;
+    top: 0;
+    left: 0;
+    z-index: 999999;
+}
+
+.skip-links a {
     position: absolute !important;
     top: -40px;
     left: 6px;
@@ -86,7 +93,7 @@ body {
     border-radius: 4px;
 }
 
-.skip-link:focus {
+.skip-links a:focus {
     top: 6px;
 }
 
