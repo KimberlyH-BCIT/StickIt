@@ -253,6 +253,17 @@ dotnet user-secrets set "ApplicationInsights:InstrumentationKey" "your-key"
 
 See [Contributing Guidelines](docs/CONTRIBUTING.md) for detailed information.
 
+## 👥 Team
+
+**ELKH** is an acronym of the team members' first names. Built for the Systems Project course.
+
+| Member | Commits | Primary Contributions |
+|--------|---------|----------------------|
+| **Evan Hao** ([@Evlazy](https://github.com/Evlazy)) | 21 | Inventory management system, database schema and EF Core migrations, product image upload and delete, order and transaction history for staff, product data models |
+| **Lovedeep Kaur**([@Love-082] https://github.com/Love-082))| 24 | Admin role management (create, edit, delete, assign roles), admin dashboard, sales analytics, manager product management (list, add, edit, soft-delete/restore), staff accounts view, manager transactions list |
+| **Kimberly Hilliker** ([@Velyene](https://github.com/Velyene)) | 159 | Core application architecture, product catalog with fuzzy search and filtering, shopping cart, checkout and PayPal sandbox integration, user profiles and address book, ratings and reviews, shared layouts, kawaii design system and WCAG accessibility compliance, Docker infrastructure, background services, monitoring |
+| **Harry Yu** ([@yyu150](https://github.com/yyu150)) | 11 | Cart controller and cart views, checkout flow and order confirmation pages, guest checkout, order processing, home page |
+
 ## 📄 License
 
 This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
