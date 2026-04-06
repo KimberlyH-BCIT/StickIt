@@ -150,31 +150,6 @@
         }
     }
 
-    /* Enhanced Skip Links */
-    .skip-links {
-        position: relative;
-        z-index: 1050;
-    }
-
-    .skip-link {
-        position: absolute !important;
-        left: -10000px !important;
-        top: auto !important;
-        width: 1px !important;
-        height: 1px !important;
-        overflow: hidden !important;
-    }
-
-    .skip-link:focus {
-        position: static !important;
-        width: auto !important;
-        height: auto !important;
-        overflow: visible !important;
-        margin: 0 0.5rem 0.5rem 0 !important;
-        padding: 0.5rem 1rem !important;
-        z-index: 1051 !important;
-    }
-
     /* Enhanced Badge Groups */
     .badge-group .badge {
         margin-right: 0.25rem;
@@ -184,19 +159,7 @@
         margin-right: 0;
     }
 
-    /* Screen Reader Only but Focusable Elements */
-    .sr-only-focusable:not(:focus):not(:focus-within) {
-        position: absolute !important;
-        width: 1px !important;
-        height: 1px !important;
-        padding: 0 !important;
-        margin: -1px !important;
-        overflow: hidden !important;
-        clip: rect(0, 0, 0, 0) !important;
-        white-space: nowrap !important;
-        border: 0 !important;
-    }
-</style>
+    </style>
 
 @* ── Search and Filter Form ──────────────────────────────────────────── *@
 @await Html.PartialAsync("_ProductSearchFilterPartial", searchFilterVM)
