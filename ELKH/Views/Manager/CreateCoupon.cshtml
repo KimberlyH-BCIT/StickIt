@@ -1,0 +1,112 @@
+@model ELKH.Models.CouponModel
+
+@{
+    ViewData["Title"] = "Create Coupon";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+
+<main role="main" aria-labelledby="main-heading">
+    <div class="container mt-4 pb-5" style="max-width: 640px">
+
+        <header class="mb-4">
+            <h1 id="main-heading" class="fw-bold text-primary mb-0">Create Coupon</h1>
+            <p class="text-muted small">Add a new discount code</p>
+        </header>
+
+        <div class="kawaii-card">
+            <form asp-action="CreateCoupon" method="post">
+                @Html.AntiForgeryToken()
+
+                <div class="row g-3">
+                    <div class="col-sm-6">
+                        <label asp-for="Code" class="form-label fw-semibold"></label>
+                        <input asp-for="Code" class="form-control input-kawaii text-uppercase" placeholder="SAVE10" autofocus />
+                        <span asp-validation-for="Code" class="text-danger small"></span>
+                    </div>
+                    <div class="col-sm-6">
+                        <label asp-for="Name" class="form-label fw-semibold"></label>
+                        <input asp-for="Name" class="form-control input-kawaii" placeholder="10% Off Everything" />
+                        <span asp-validation-for="Name" class="text-danger small"></span>
+                    </div>
+                    <div class="col-12">
+                        <label asp-for="Description" class="form-label fw-semibold"></label>
+                        <textarea asp-for="Description" class="form-control textarea-kawaii" rows="2" placeholder="Optional description shown to customers"></textarea>
+                        <span asp-validation-for="Description" class="text-danger small"></span>
+                    </div>
+                    <div class="col-sm-6">
+                        <label asp-for="DiscountType" class="form-label fw-semibold"></label>
+                        <select asp-for="DiscountType" class="form-select select-kawaii" id="discountTypeSelect">
+                            <option value="">— Select type —</option>
+                            <option value="Percentage">Percentage (%)</option>
+                            <option value="FixedAmount">Fixed Amount ($)</option>
+                            <option value="FreeShipping">Free Shipping</option>
+                        </select>
+                        <span asp-validation-for="DiscountType" class="text-danger small"></span>
+                    </div>
+                    <div class="col-sm-6" id="discountValueGroup">
+                        <label asp-for="DiscountValue" class="form-label fw-semibold"></label>
+                        <input asp-for="DiscountValue" type="number" step="0.01" min="0" class="form-control input-kawaii" placeholder="0.00" />
+                        <span asp-validation-for="DiscountValue" class="text-danger small"></span>
+                    </div>
+                    <div class="col-sm-6" id="maxDiscountGroup">
+                        <label asp-for="MaxDiscountAmount" class="form-label fw-semibold"></label>
+                        <input asp-for="MaxDiscountAmount" type="number" step="0.01" min="0" class="form-control input-kawaii" placeholder="Optional cap" />
+                        <span asp-validation-for="MaxDiscountAmount" class="text-danger small"></span>
+                    </div>
+                    <div class="col-sm-6">
+                        <label asp-for="MinimumOrderValue" class="form-label fw-semibold"></label>
+                        <input asp-for="MinimumOrderValue" type="number" step="0.01" min="0" class="form-control input-kawaii" placeholder="0.00" />
+                        <span asp-validation-for="MinimumOrderValue" class="text-danger small"></span>
+                    </div>
+                    <div class="col-sm-6">
+                        <label asp-for="UsageLimit" class="form-label fw-semibold"></label>
+                        <input asp-for="UsageLimit" type="number" min="1" class="form-control input-kawaii" placeholder="Leave blank for unlimited" />
+                        <span asp-validation-for="UsageLimit" class="text-danger small"></span>
+                    </div>
+                    <div class="col-sm-6">
+                        <label asp-for="ValidFrom" class="form-label fw-semibold"></label>
+                        <input asp-for="ValidFrom" type="date" class="form-control input-kawaii" />
+                        <span asp-validation-for="ValidFrom" class="text-danger small"></span>
+                    </div>
+                    <div class="col-sm-6">
+                        <label asp-for="ValidUntil" class="form-label fw-semibold"></label>
+                        <input asp-for="ValidUntil" type="date" class="form-control input-kawaii" />
+                        <span asp-validation-for="ValidUntil" class="text-danger small"></span>
+                    </div>
+                    <div class="col-12">
+                        <div class="form-check">
+                            <input asp-for="IsActive" class="form-check-input" type="checkbox" />
+                            <label asp-for="IsActive" class="form-check-label fw-semibold">Active (usable immediately)</label>
+                        </div>
+                    </div>
+                </div>
+
+                <hr class="my-3" />
+                <div class="d-flex gap-2 justify-content-end">
+                    <a asp-action="Coupons" class="btn btn-outline-secondary rounded-pill px-4">Cancel</a>
+                    <button type="submit" class="btn btn-success rounded-pill px-4">
+                        <i class="bi bi-plus-circle me-1" aria-hidden="true"></i>Create Coupon
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</main>
+
+@section Scripts {
+    @{await Html.RenderPartialAsync("_ValidationScriptsPartial");}
+    <script>
+        // Hide MaxDiscount and DiscountValue fields when type is FreeShipping
+        const typeSelect = document.getElementById('discountTypeSelect');
+        const valueGroup = document.getElementById('discountValueGroup');
+        const maxGroup = document.getElementById('maxDiscountGroup');
+        function updateFields() {
+            const isFree = typeSelect.value === 'FreeShipping';
+            const isPct = typeSelect.value === 'Percentage';
+            valueGroup.style.display = isFree ? 'none' : '';
+            maxGroup.style.display = isPct ? '' : 'none';
+        }
+        typeSelect.addEventListener('change', updateFields);
+        updateFields();
+    </script>
+}
