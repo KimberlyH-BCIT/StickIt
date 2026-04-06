@@ -13,12 +13,10 @@
             <div asp-validation-summary="All" class="text-danger" role="alert"></div>
             @if (Model.IsEmailConfirmed)
             {
-                <div class="form-floating mb-3 input-group">
+                <div class="form-floating mb-3 position-relative">
                     <input asp-for="Email" class="form-control" placeholder="Please enter your email." disabled />
-                        <div class="input-group-append">
-                            <span class="h-100 input-group-text text-success font-weight-bold">✓</span>
-                        </div>
                     <label asp-for="Email" class="form-label"></label>
+                    <span class="position-absolute top-50 end-0 translate-middle-y me-3" style="color: var(--purple); font-weight: var(--font-weight-bold);" aria-label="Email confirmed">✓</span>
                 </div>
             }
             else
@@ -26,7 +24,9 @@
                 <div class="form-floating mb-3">
                     <input asp-for="Email" class="form-control" placeholder="Please enter your email." disabled />
                     <label asp-for="Email" class="form-label"></label>
-                    <button id="email-verification" type="submit" asp-page-handler="SendVerificationEmail" class="btn btn-link">Send verification email</button>
+                    <button id="email-verification" type="submit" asp-page-handler="SendVerificationEmail" class="btn-kawaii btn-outline-kawaii btn-sm mt-2">
+                        <i class="bi bi-envelope me-1" aria-hidden="true"></i>Send verification email
+                    </button>
                 </div>
             }
             <div class="form-floating mb-3">
@@ -34,7 +34,7 @@
                 <label asp-for="Input.NewEmail" class="form-label"></label>
                 <span asp-validation-for="Input.NewEmail" class="text-danger"></span>
             </div>
-            <button id="change-email-button" type="submit" asp-page-handler="ChangeEmail" class="w-100 btn btn-lg btn-primary">Change email</button>
+            <button id="change-email-button" type="submit" asp-page-handler="ChangeEmail" class="btn-kawaii btn-primary-kawaii btn-lg w-100">Change email</button>
         </form>
     </div>
 </div>
