@@ -195,6 +195,45 @@ public class CheckoutController : Controller
         // ===================================================================
         if (!ModelState.IsValid)
         {
+            // Re-populate display-only fields that are not posted back as form fields
+            var emailForRepopulate = User.FindFirstValue(ClaimTypes.Email) ?? User.Identity?.Name;
+            if (!string.IsNullOrWhiteSpace(emailForRepopulate))
+            {
+                var userForRepopulate = await _db.RegisteredUsers
+                    .FirstOrDefaultAsync(u => u.Email == emailForRepopulate);
+                if (userForRepopulate != null)
+                {
+                    var cartItemsForRepopulate = await _cartRepo.GetByUserIdAsync(userForRepopulate.PkRegisteredUserId);
+                    vm.Items = cartItemsForRepopulate.Select(c => new CartItemVM
+                    {
+                        CartItemId = c.PkCartId,
+                        ProductName = c.Product?.Name ?? "",
+                        Quantity = c.Quantity,
+                        UnitPrice = c.Product?.GetEffectivePrice() ?? 0m,
+                        LineTotal = (c.Product?.GetEffectivePrice() ?? 0m) * c.Quantity
+                    }).ToList();
+                    vm.Subtotal = vm.Items.Sum(i => i.LineTotal);
+                    vm.Tax = vm.Subtotal * 0.12m;
+                    vm.ShippingCost = await _shippingService.CalculateShippingCostAsync(
+                        vm.SelectedShippingMethodId, vm.Subtotal);
+                    vm.Total = vm.Subtotal + vm.Tax + vm.ShippingCost;
+                    vm.SavedAddresses = (await _contactRepo.GetAllByUserIdAsync(userForRepopulate.PkRegisteredUserId))
+                        .Select(a => new ContactDetailVM
+                        {
+                            ContactId = a.PkContactId,
+                            FirstName = a.FirstName,
+                            LastName = a.LastName,
+                            PhoneNumber = a.PhoneNumber,
+                            Street = a.Street,
+                            City = a.City,
+                            Province = a.Province,
+                            PostalCode = a.PostCode,
+                            Country = a.Country,
+                            IsDefault = a.IsDefault
+                        }).ToList();
+                    vm.AvailableShippingMethods = await _shippingService.GetAvailableShippingMethodsAsync();
+                }
+            }
             ViewBag.PayPalClientId = _configuration["PayPal:ClientId"];
             return View("Index", vm);
         }
