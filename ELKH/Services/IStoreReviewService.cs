@@ -61,5 +61,38 @@ namespace ELKH.Services
         /// <param name="ct">Cancellation token.</param>
         /// <returns>True if updated successfully, false if review not found or user doesn't own it.</returns>
         Task<bool> UpdateReviewAsync(int reviewId, int userId, string title, int rating, string description, CancellationToken ct = default);
+
+        /// <summary>
+        /// Soft-deletes a store review. Only the review owner may delete their own review.
+        /// </summary>
+        /// <param name="reviewId">Primary key of the review to delete.</param>
+        /// <param name="userId">User ID for ownership verification.</param>
+        /// <param name="ct">Cancellation token.</param>
+        /// <returns>True if deleted successfully, false if not found or user doesn't own it.</returns>
+        Task<bool> DeleteReviewAsync(int reviewId, int userId, CancellationToken ct = default);
+
+        /// <summary>
+        /// Retrieves unapproved, non-deleted store reviews for staff moderation.
+        /// </summary>
+        /// <param name="count">Maximum number of reviews to return.</param>
+        /// <param name="ct">Cancellation token.</param>
+        /// <returns>List of pending store reviews ordered oldest-first.</returns>
+        Task<List<StoreReviewModel>> GetPendingReviewsAsync(int count = 50, CancellationToken ct = default);
+
+        /// <summary>
+        /// Approves a store review, making it visible on the homepage.
+        /// </summary>
+        /// <param name="reviewId">Primary key of the review to approve.</param>
+        /// <param name="ct">Cancellation token.</param>
+        /// <returns>True if approved successfully, false if not found.</returns>
+        Task<bool> ApproveAsync(int reviewId, CancellationToken ct = default);
+
+        /// <summary>
+        /// Staff/admin hard soft-delete of any review regardless of ownership.
+        /// </summary>
+        /// <param name="reviewId">Primary key of the review to delete.</param>
+        /// <param name="ct">Cancellation token.</param>
+        /// <returns>True if deleted successfully, false if not found.</returns>
+        Task<bool> AdminDeleteAsync(int reviewId, CancellationToken ct = default);
     }
 }

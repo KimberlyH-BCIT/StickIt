@@ -13,6 +13,26 @@ namespace ELKH.Services
     /// Service for managing store reviews (reviews about the website/store itself).
     /// Handles submission, retrieval, verified buyer validation, and review updates.
     /// </summary>
+    /// <remarks>
+    /// TABLE OF CONTENTS (181 lines)
+    /// ================================================================================
+    /// 1. Constructor ................................................... Lines  18-25
+    ///    - StoreReviewService()   // ApplicationDbContext, ILogger injection
+    ///
+    /// 2. Review Submission &amp; Retrieval ................................ Lines  27-96
+    ///    - SubmitReviewAsync          // Create new review (duplicate + verified buyer checks)
+    ///    - GetApprovedReviewsAsync    // Approved homepage testimonials
+    ///    - IsVerifiedBuyerAsync       // Delivered/shipped order check for verification
+    ///    - GetUserReviewAsync         // Retrieve a user's active review
+    ///
+    /// 3. Review Editing &amp; Moderation .................................. Lines  98-181
+    ///    - UpdateReviewAsync          // Edit content (resets Approved flag)
+    ///    - DeleteReviewAsync          // User-initiated soft-delete
+    ///    - GetPendingReviewsAsync     // Moderation queue (Approved=false)
+    ///    - ApproveAsync               // Staff approve for homepage display
+    ///    - AdminDeleteAsync           // Staff/admin soft-delete
+    /// ================================================================================
+    /// </remarks>
     public class StoreReviewService : IStoreReviewService
     {
         private readonly ApplicationDbContext _db;
@@ -131,6 +151,80 @@ namespace ELKH.Services
                 _logger.LogError(ex, "Error updating store review {ReviewId} for user {UserId}", reviewId, userId);
                 return false;
             }
+        }
+
+        /// <inheritdoc/>
+        public async Task<bool> DeleteReviewAsync(int reviewId, int userId, CancellationToken ct = default)
+        {
+            try
+            {
+                var review = await _db.StoreReviews
+                    .Where(sr => sr.PkStoreReviewId == reviewId && sr.FkRegisteredUserId == userId && !sr.IsDeleted)
+                    .FirstOrDefaultAsync(ct);
+
+                if (review == null)
+                {
+                    _logger.LogWarning("Review {ReviewId} not found or user {UserId} doesn't own it", reviewId, userId);
+                    return false;
+                }
+
+                review.IsDeleted = true;
+                review.DeletedAt = DateTime.UtcNow;
+                await _db.SaveChangesAsync(ct);
+
+                _logger.LogInformation("Store review {ReviewId} soft-deleted by user {UserId}", reviewId, userId);
+                return true;
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error deleting store review {ReviewId} for user {UserId}", reviewId, userId);
+                return false;
+            }
+        }
+
+        /// <inheritdoc/>
+        public async Task<List<StoreReviewModel>> GetPendingReviewsAsync(int count = 50, CancellationToken ct = default)
+        {
+            return await _db.StoreReviews
+                .AsNoTracking()
+                .Include(sr => sr.RegisteredUser)
+                .Where(sr => !sr.Approved && !sr.IsDeleted)
+                .OrderBy(sr => sr.CreatedAt)
+                .Take(count)
+                .ToListAsync(ct);
+        }
+
+        /// <inheritdoc/>
+        public async Task<bool> ApproveAsync(int reviewId, CancellationToken ct = default)
+        {
+            var review = await _db.StoreReviews
+                .Where(sr => sr.PkStoreReviewId == reviewId && !sr.IsDeleted)
+                .FirstOrDefaultAsync(ct);
+
+            if (review == null) return false;
+
+            review.Approved = true;
+            await _db.SaveChangesAsync(ct);
+
+            _logger.LogInformation("Store review {ReviewId} approved", reviewId);
+            return true;
+        }
+
+        /// <inheritdoc/>
+        public async Task<bool> AdminDeleteAsync(int reviewId, CancellationToken ct = default)
+        {
+            var review = await _db.StoreReviews
+                .Where(sr => sr.PkStoreReviewId == reviewId && !sr.IsDeleted)
+                .FirstOrDefaultAsync(ct);
+
+            if (review == null) return false;
+
+            review.IsDeleted = true;
+            review.DeletedAt = DateTime.UtcNow;
+            await _db.SaveChangesAsync(ct);
+
+            _logger.LogInformation("Store review {ReviewId} admin-deleted", reviewId);
+            return true;
         }
     }
 }
