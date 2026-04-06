@@ -369,9 +369,7 @@ public class UserReviewController : UserControllerBase
 
         try
         {
-            // Store review service integration is planned for future release
-            // var success = await _storeReviewService.DeleteReviewAsync(reviewId, userId.Value);
-            var success = true; // Placeholder - currently auto-approves all deletions
+            var success = await _storeReviewService.DeleteReviewAsync(reviewId, userId.Value);
 
             if (success)
             {

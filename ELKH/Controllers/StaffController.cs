@@ -9,21 +9,28 @@ using Microsoft.EntityFrameworkCore;
 
 namespace ELKH.Controllers
 {
+    /// <summary>
+    /// Staff and Admin controller for daily operational tasks including the KPI dashboard,
+    /// product review moderation, store review moderation, and staff message inbox.
+    /// </summary>
     [Authorize(Roles = "Admin,Staff")]
     public class StaffController : Controller
     {
         private readonly IRatingService _ratingService;
         private readonly ApplicationDbContext _context;
         private readonly UserManager<IdentityUser> _userManager;
+        private readonly IStoreReviewService _storeReviewService;
 
         public StaffController(
             ApplicationDbContext context,
             UserManager<IdentityUser> userManager,
-            IRatingService ratingService)
+            IRatingService ratingService,
+            IStoreReviewService storeReviewService)
         {
             _context = context;
             _userManager = userManager;
             _ratingService = ratingService;
+            _storeReviewService = storeReviewService;
         }
 
         public async Task<IActionResult> Index()
@@ -80,6 +87,33 @@ namespace ELKH.Controllers
             }
 
             return RedirectToAction(nameof(Reviews));
+        }
+
+        // ================= STORE REVIEW MODERATION =================
+
+        [HttpGet]
+        public async Task<IActionResult> StoreReviews()
+        {
+            var pending = await _storeReviewService.GetPendingReviewsAsync();
+            return View(pending);
+        }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> ApproveStoreReview(int id)
+        {
+            await _storeReviewService.ApproveAsync(id);
+            TempData["Message"] = "success,Review approved and is now visible on the homepage.";
+            return RedirectToAction(nameof(StoreReviews));
+        }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> DeleteStoreReview(int id)
+        {
+            await _storeReviewService.AdminDeleteAsync(id);
+            TempData["Message"] = "success,Review deleted.";
+            return RedirectToAction(nameof(StoreReviews));
         }
 
         // ================= STAFF MESSAGES ACTIONS =================

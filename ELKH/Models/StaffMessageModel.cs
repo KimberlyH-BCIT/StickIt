@@ -2,6 +2,10 @@ using System.ComponentModel.DataAnnotations;
 
 namespace ELKH.Models
 {
+    /// <summary>
+    /// Represents a message sent by a manager to the staff team.
+    /// Staff members can mark messages as read and reply via <see cref="MessageReplyModel"/>.
+    /// </summary>
     public class StaffMessageModel
     {
         [Key]

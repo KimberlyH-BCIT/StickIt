@@ -231,7 +231,7 @@ public static partial class DbSeeder
         // ║ Review Content Pool for Product Ratings                            ║
         // ║ Range from 5-star excellent to 1-star poor with realistic text.    ║
         // ======================================================================
-        string[] reviewTexts = GetReviewTextPool();
+        var reviewTextsByRating = GetReviewTextPool();
 
         // Weighted star ratings: realistic e-commerce distribution
         // 50% 5-star, 25% 4-star, 15% 3-star, 7% 2-star, 3% 1-star
@@ -284,7 +284,7 @@ public static partial class DbSeeder
             await CreateCustomerWishlistAsync(db, registeredUser, products, rng);
 
             // 6. Orders with items, transactions, and reviews
-            await CreateCustomerOrdersAsync(db, userManager, registeredUser, products, starPool, reviewTexts, rng);
+            await CreateCustomerOrdersAsync(db, userManager, registeredUser, products, starPool, reviewTextsByRating, rng);
 
             await db.SaveChangesAsync();
         }
@@ -369,7 +369,7 @@ public static partial class DbSeeder
         RegisteredUserModel registeredUser,
         List<ProductModel> products,
         int[] starPool,
-        string[] reviewTexts,
+        Dictionary<int, string[]> reviewTextsByRating,
         Random rng)
     {
         var contact = await db.ContactDetails.FirstAsync(c => c.FkRegisteredUserId == registeredUser.PkRegisteredUserId);
@@ -377,7 +377,7 @@ public static partial class DbSeeder
 
         for (int o = 0; o < orderCount; o++)
         {
-            var orderDate = DateTime.UtcNow.AddDays(-rng.Next(15, 400));
+            var orderDate = DateTime.UtcNow.AddDays(-rng.Next(1, 400));
 
             // Weight order statuses: ~40 % delivered, ~30 % shipped, ~20 % processing, ~10 % pending
             int roll = rng.Next(10);
@@ -444,7 +444,7 @@ public static partial class DbSeeder
             // Review for one item from delivered/shipped orders (~66% chance per order)
             if (orderStatus is OrderStatus.Shipped && rng.Next(3) > 0)
             {
-                await CreateProductReviewAsync(db, userManager, registeredUser, orderItems, starPool, reviewTexts, orderDate, rng);
+                await CreateProductReviewAsync(db, userManager, registeredUser, orderItems, starPool, reviewTextsByRating, orderDate, rng);
             }
         }
     }
@@ -458,13 +458,14 @@ public static partial class DbSeeder
         RegisteredUserModel registeredUser,
         List<OrderItemModel> orderItems,
         int[] starPool,
-        string[] reviewTexts,
+        Dictionary<int, string[]> reviewTextsByRating,
         DateTime orderDate,
         Random rng)
     {
         var ratedItem = orderItems[rng.Next(orderItems.Count)];
         var starRating = starPool[rng.Next(starPool.Length)];
-        var reviewText = reviewTexts[rng.Next(reviewTexts.Length)];
+        var textsForRating = reviewTextsByRating[starRating];
+        var reviewText = textsForRating[rng.Next(textsForRating.Length)];
         var reviewDate = orderDate.AddDays(rng.Next(2, 21));
 
         // Guard: one rating per order item per user
@@ -495,90 +496,100 @@ public static partial class DbSeeder
     }
 
     /// <summary>
-    /// Gets the pool of review texts for product ratings spanning all star levels.
+    /// Gets the pool of review texts for product ratings, keyed by star rating (1-5).
+    /// Each rating level has its own set of appropriate review texts.
+    /// Empty strings represent star-only ratings with no written review.
     /// </summary>
-    private static string[] GetReviewTextPool() =>
-    [
-        // 5-star reviews (excellent)
-        "Absolutely love this sticker! Great quality and arrived quickly.",
-        "Really happy with this purchase. The colours are vibrant and true to the image.",
-        "Perfect for my laptop. Very sticky and durable - survived daily use perfectly.",
-        "Excellent product! Better than the photos. Will definitely buy again.",
-        "Outstanding quality for the price. Highly recommend to everyone!",
-        "Peels cleanly without residue. Very impressed with the adhesive technology.",
-        "Cute design! My kids loved it too - perfect family-friendly sticker.",
-        "Solid quality, holds up well on my water bottle through many washes.",
-        "Super fast shipping and exactly as described. Top-notch service!",
-        "Would give 6 stars if I could. Absolutely amazing artwork and quality.",
-        "Sharp print quality and the colours really pop. Professional-grade.",
-        "Exactly what I was looking for. Great addition to my planner collection.",
-        "The holographic effect is stunning in direct light! Eye-catching design.",
-        "Waterproof as advertised - survived a full wash cycle without damage.",
-        "Beautiful design. Sticks perfectly and looks fantastic on my car window.",
-        "Perfect size and amazing detail. This exceeded my expectations completely.",
-        "Love the texture and finish. Feels premium and looks professional.",
-        "Amazing artwork! This artist really knows how to create stunning designs.",
-        "Best sticker purchase I've made. Quality is consistently excellent here.",
-        "Incredible attention to detail. You can see the care put into this design.",
-        "Perfect for my gaming setup! Fits the aesthetic perfectly.",
-        "Great for decorating my journal. Adds the perfect touch of personality.",
-        "My daughter loves these on her school binder. Cute and colorful!",
-        "Excellent for my craft projects. Easy to work with and great results.",
-        "Perfect addition to my car's rear window. Shows my personality perfectly.",
-        "Great for my phone case. Durable and doesn't interfere with wireless charging.",
-        "Love using these for my small business packaging. Customers love them too!",
-        "Perfect for my toolbox at work. Still looks great after months of use.",
-        "Great for organizing my storage boxes. Both functional and decorative.",
-        "Excellent for my travel luggage. Makes it easy to spot at baggage claim.",
-
-        // 4-star reviews (very good)
-        "Really nice quality sticker, arrived on time. Very satisfied overall.",
-        "Good product, slightly smaller than expected but still love the design.",
-        "Decent quality for the price. Would definitely consider ordering again.",
-        "Nice addition to my collection. Good colors and clean printing.",
-        "Pretty good quality, sticks well. Minor air bubbles but otherwise great.",
-        "Good value for money. Not perfect but definitely worth the purchase.",
-        "Nice design and good adhesion. Took a bit longer to ship than expected.",
-        "Solid quality sticker. Colors are good, maybe slightly different from photo.",
-        "Happy with this purchase. Good size and the material feels durable.",
-        "Good quality overall. Easy to apply and looks nice once positioned.",
-        "Nice sticker, good quality printing. Packaging could have been better.",
-        "Pretty happy with this. Good design and reasonable price point.",
-        "Good product, does what it's supposed to. Would recommend for the price.",
-        "Nice colors and design. Application was straightforward and clean.",
-        "Good quality sticker. Arrived safely packaged and in good condition.",
-
-        // 3-star reviews (average)
-        "It's okay. Not bad but not amazing either. Average quality for the price.",
-        "Decent sticker. Colors are fine but not as vibrant as I hoped.",
-        "Fair quality. Does the job but I've seen better for similar prices.",
-        "It's alright. Nothing spectacular but serves its purpose adequately.",
-        "Average product. Not disappointed but not particularly impressed either.",
-        "Okay quality. Sticks well enough but the colors seem a bit faded.",
-        "It's fine for what it is. Would probably look elsewhere next time.",
-        "Decent enough. Got the job done but expected slightly better quality.",
-        "Not bad, not great. Middle-of-the-road product at a fair price.",
-        "Average sticker. Colors are okay, size is as expected. Nothing special.",
-
-        // 2-star reviews (below average)
-        "Not quite what I expected. Colors are duller than shown in the image.",
-        "Quality is mediocre at best. Had some issues with the adhesive.",
-        "Disappointing quality for the price. Expected much better materials.",
-        "The sticker is okay but feels cheap. Probably won't order again.",
-        "Not impressed. Colors faded quickly and edges started peeling.",
-        "Below average quality. Had trouble getting it to stick properly.",
-        "Mediocre product. Design is nice but execution could be much better.",
-        "Not great quality. Corners started lifting after just a few days.",
-
-        // 1-star reviews (poor)
-        "Poor quality. Colors were completely different from what was shown.",
-        "Terrible adhesive - wouldn't stick properly and kept peeling off.",
-        "Very disappointed. Cheap material that started fading immediately.",
-        "Worst sticker I've bought. Completely fell apart within a week.",
-
-        // Empty reviews (star-only ratings)
-        "", "", "", "", "", "", "", "", "", ""
-    ];
+    private static Dictionary<int, string[]> GetReviewTextPool() => new()
+    {
+        [5] =
+        [
+            "Absolutely love this sticker! Great quality and arrived quickly.",
+            "Really happy with this purchase. The colours are vibrant and true to the image.",
+            "Perfect for my laptop. Very sticky and durable - survived daily use perfectly.",
+            "Excellent product! Better than the photos. Will definitely buy again.",
+            "Outstanding quality for the price. Highly recommend to everyone!",
+            "Peels cleanly without residue. Very impressed with the adhesive technology.",
+            "Cute design! My kids loved it too - perfect family-friendly sticker.",
+            "Solid quality, holds up well on my water bottle through many washes.",
+            "Super fast shipping and exactly as described. Top-notch service!",
+            "Would give 6 stars if I could. Absolutely amazing artwork and quality.",
+            "Sharp print quality and the colours really pop. Professional-grade.",
+            "Exactly what I was looking for. Great addition to my planner collection.",
+            "The holographic effect is stunning in direct light! Eye-catching design.",
+            "Waterproof as advertised - survived a full wash cycle without damage.",
+            "Beautiful design. Sticks perfectly and looks fantastic on my car window.",
+            "Perfect size and amazing detail. This exceeded my expectations completely.",
+            "Love the texture and finish. Feels premium and looks professional.",
+            "Amazing artwork! This artist really knows how to create stunning designs.",
+            "Best sticker purchase I've made. Quality is consistently excellent here.",
+            "Incredible attention to detail. You can see the care put into this design.",
+            "Perfect for my gaming setup! Fits the aesthetic perfectly.",
+            "Great for decorating my journal. Adds the perfect touch of personality.",
+            "My daughter loves these on her school binder. Cute and colorful!",
+            "Excellent for my craft projects. Easy to work with and great results.",
+            "Perfect addition to my car's rear window. Shows my personality perfectly.",
+            "Great for my phone case. Durable and doesn't interfere with wireless charging.",
+            "Love using these for my small business packaging. Customers love them too!",
+            "Perfect for my toolbox at work. Still looks great after months of use.",
+            "Great for organizing my storage boxes. Both functional and decorative.",
+            "Excellent for my travel luggage. Makes it easy to spot at baggage claim.",
+            "", "", ""
+        ],
+        [4] =
+        [
+            "Really nice quality sticker, arrived on time. Very satisfied overall.",
+            "Good product, slightly smaller than expected but still love the design.",
+            "Decent quality for the price. Would definitely consider ordering again.",
+            "Nice addition to my collection. Good colors and clean printing.",
+            "Pretty good quality, sticks well. Minor air bubbles but otherwise great.",
+            "Good value for money. Not perfect but definitely worth the purchase.",
+            "Nice design and good adhesion. Took a bit longer to ship than expected.",
+            "Solid quality sticker. Colors are good, maybe slightly different from photo.",
+            "Happy with this purchase. Good size and the material feels durable.",
+            "Good quality overall. Easy to apply and looks nice once positioned.",
+            "Nice sticker, good quality printing. Packaging could have been better.",
+            "Pretty happy with this. Good design and reasonable price point.",
+            "Good product, does what it's supposed to. Would recommend for the price.",
+            "Nice colors and design. Application was straightforward and clean.",
+            "Good quality sticker. Arrived safely packaged and in good condition.",
+            "", ""
+        ],
+        [3] =
+        [
+            "It's okay. Not bad but not amazing either. Average quality for the price.",
+            "Decent sticker. Colors are fine but not as vibrant as I hoped.",
+            "Fair quality. Does the job but I've seen better for similar prices.",
+            "It's alright. Nothing spectacular but serves its purpose adequately.",
+            "Average product. Not disappointed but not particularly impressed either.",
+            "Okay quality. Sticks well enough but the colors seem a bit faded.",
+            "It's fine for what it is. Would probably look elsewhere next time.",
+            "Decent enough. Got the job done but expected slightly better quality.",
+            "Not bad, not great. Middle-of-the-road product at a fair price.",
+            "Average sticker. Colors are okay, size is as expected. Nothing special.",
+            "", ""
+        ],
+        [2] =
+        [
+            "Not quite what I expected. Colors are duller than shown in the image.",
+            "Quality is mediocre at best. Had some issues with the adhesive.",
+            "Disappointing quality for the price. Expected much better materials.",
+            "The sticker is okay but feels cheap. Probably won't order again.",
+            "Not impressed. Colors faded quickly and edges started peeling.",
+            "Below average quality. Had trouble getting it to stick properly.",
+            "Mediocre product. Design is nice but execution could be much better.",
+            "Not great quality. Corners started lifting after just a few days.",
+            ""
+        ],
+        [1] =
+        [
+            "Poor quality. Colors were completely different from what was shown.",
+            "Terrible adhesive - wouldn't stick properly and kept peeling off.",
+            "Very disappointed. Cheap material that started fading immediately.",
+            "Worst sticker I've bought. Completely fell apart within a week.",
+            ""
+        ]
+    };
 
     #endregion
 }

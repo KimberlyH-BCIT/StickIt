@@ -32,30 +32,30 @@
 <!-- ║ Page Header & Category Display with Enhanced Accessibility                 ║ -->
 <!-- ================================================================================ -->
 
-<header class="category-header mb-4" role="banner">
+<header class="kawaii-hero" role="banner">
     <!-- Skip Links for Keyboard Navigation -->
     <nav class="skip-links sr-only-focusable" aria-label="Skip navigation">
-        <a href="#category-sorting" class="skip-link btn btn-primary">Skip to sorting</a>
-        <a href="#categoryProductGrid" class="skip-link btn btn-primary">Skip to products</a>
-        <a href="#pagination" class="skip-link btn btn-primary">Skip to pagination</a>
+        <a href="#category-sorting" class="skip-link btn-kawaii btn-secondary-kawaii">Skip to sorting</a>
+        <a href="#categoryProductGrid" class="skip-link btn-kawaii btn-secondary-kawaii">Skip to products</a>
+        <a href="#pagination" class="skip-link btn-kawaii btn-secondary-kawaii">Skip to pagination</a>
     </nav>
 
-    <div class="d-flex justify-content-between align-items-center mb-3">
-        <div>
-            <nav aria-label="Breadcrumb">
-                <ol class="breadcrumb">
-                    <li class="breadcrumb-item"><a asp-controller="Home" asp-action="Index">Home</a></li>
-                    <li class="breadcrumb-item"><a asp-controller="Product" asp-action="Index">Products</a></li>
-                    <li class="breadcrumb-item"><a asp-controller="Category" asp-action="Index">Categories</a></li>
-                    <li class="breadcrumb-item active" aria-current="page">@categoryName</li>
-                </ol>
-            </nav>
-            <h1 class="mb-1" id="main-heading">
-                <i class="bi bi-tag-fill me-2 text-primary" aria-hidden="true"></i>@categoryName
+    <div class="container-kawaii">
+        <nav aria-label="Breadcrumb" class="mb-3">
+            <ol class="breadcrumb justify-content-center">
+                <li class="breadcrumb-item"><a asp-controller="Home" asp-action="Index">Home</a></li>
+                <li class="breadcrumb-item"><a asp-controller="Product" asp-action="Index">Products</a></li>
+                <li class="breadcrumb-item"><a asp-controller="Category" asp-action="Index">Categories</a></li>
+                <li class="breadcrumb-item active" aria-current="page">@categoryName</li>
+            </ol>
+        </nav>
+        <div class="text-center">
+            <h1 class="kawaii-cloud-title display-title" id="main-heading">
+                <i class="bi bi-tag-fill me-2" style="color: var(--butter);" aria-hidden="true"></i>@categoryName
             </h1>
-            <p class="text-muted mb-0">
-                <span class="badge bg-secondary">@total @(total == 1 ? "product" : "products")</span>
-            </p>
+            <div class="kawaii-subtitle">
+                @total @(total == 1 ? "product" : "products") available
+            </div>
         </div>
     </div>
 </header>
@@ -65,21 +65,24 @@
 @* ================================================================================== *@
 @if (products.Any())
 {
-    <div class="mb-4" id="category-sorting">
-        <div class="row align-items-center">
-            <div class="col-md-6">
-                <h2 class="h6 mb-0 text-muted">
-                    Showing @products.Count of @total products
-                </h2>
-            </div>
-            <div class="col-md-6">
-                @if (sortingVM != null)
-                {
-                    @await Html.PartialAsync("_ProductSortingPartial", sortingVM)
-                }
+    <section class="container-kawaii mb-4" id="category-sorting">
+        <div class="kawaii-card">
+            <div class="d-flex flex-column flex-md-row align-items-md-center justify-content-between">
+                <div class="mb-2 mb-md-0">
+                    <h2 class="font-heading">
+                        <i class="bi bi-collection me-2" style="color: var(--purple);" aria-hidden="true"></i>
+                        Showing @products.Count of @total products
+                    </h2>
+                </div>
+                <div>
+                    @if (sortingVM != null)
+                    {
+                        @await Html.PartialAsync("_ProductSortingPartial", sortingVM)
+                    }
+                </div>
             </div>
         </div>
-    </div>
+    </section>
 }
 
 @* ================================================================================== *@
@@ -124,10 +127,10 @@
                 This category doesn't have any products yet. Check back later or explore other categories.
             </p>
             <div class="d-flex justify-content-center gap-3">
-                <a asp-controller="Category" asp-action="Index" class="btn btn-outline-primary">
+                <a asp-controller="Category" asp-action="Index" class="btn-kawaii btn-outline-kawaii">
                     <i class="bi bi-arrow-left me-2" aria-hidden="true"></i>Browse All Categories
                 </a>
-                <a asp-controller="Product" asp-action="Index" class="btn btn-primary">
+                <a asp-controller="Product" asp-action="Index" class="btn-kawaii btn-secondary-kawaii">
                     <i class="bi bi-grid me-2" aria-hidden="true"></i>View All Products
                 </a>
             </div>
@@ -200,30 +203,7 @@
         }
     }
 
-    /* Enhanced Skip Links */
-    .skip-links {
-        position: relative;
-        z-index: 1000;
-    }
-
-    .skip-link {
-        position: absolute;
-        left: -10000px;
-        top: auto;
-        width: 1px;
-        height: 1px;
-        overflow: hidden;
-    }
-
-    .skip-link:focus {
-        position: static;
-        width: auto;
-        height: auto;
-        overflow: visible;
-        margin: 0 10px 10px 0;
-        display: inline-block;
-    }
-</style>
+    </style>
 
 <!-- ================================================================================ -->
 <!-- ║ JavaScript for Enhanced Interaction (Optional)                             ║ -->

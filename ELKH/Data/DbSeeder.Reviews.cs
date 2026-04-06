@@ -99,9 +99,12 @@ public static partial class DbSeeder
         // ======================================================================
         // ║ Idempotency Check - Skip if reviews already exist                  ║
         // ======================================================================
-        if (await db.StoreReviews.AnyAsync())
+        // Only skip if our specific seed reviewer accounts already exist.
+        // A blanket AnyAsync() would block re-seeding whenever a user has submitted any review.
+        var seedEmails = new[] { "lovedeep@storereview.com", "evan@storereview.com", "kimberly@storereview.com" };
+        if (await db.RegisteredUsers.AnyAsync(u => seedEmails.Contains(u.Email)))
         {
-            return; // Reviews already seeded
+            return; // Seed reviews already exist
         }
 
         // ======================================================================

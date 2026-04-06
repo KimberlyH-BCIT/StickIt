@@ -2,9 +2,12 @@
 
 @if (!String.IsNullOrEmpty(Model))
 {
-    var statusMessageClass = Model.StartsWith("Error") ? "danger" : "success";
-    <div class="alert alert-@statusMessageClass alert-dismissible" role="alert">
-        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-        @Model
+    var isError = Model.StartsWith("Error");
+    var surface = isError ? "surface-sky" : "surface-mint";
+    var icon = isError ? "exclamation-triangle-fill" : "check-circle-fill";
+    <div class="kawaii-card @surface mb-3 d-flex align-items-center gap-2" role="alert" aria-live="polite">
+        <i class="bi bi-@icon flex-shrink-0" aria-hidden="true" style="color: var(--purple);"></i>
+        <span class="flex-grow-1">@Model</span>
+        <button type="button" class="btn-close ms-auto flex-shrink-0" data-bs-dismiss="alert" aria-label="Close"></button>
     </div>
 }

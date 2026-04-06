@@ -33,15 +33,13 @@ public static partial class DbSeeder
     /// </remarks>
     public static async Task SeedShippingMethodsAsync(ApplicationDbContext db)
     {
-        // TODO: This method is currently disabled because ShippingMethodModel and the corresponding
-        // DbSet are not implemented in the current database schema.
-        // Shipping is currently handled via simple string fields in OrderModel.
-        // Uncomment and implement when ShippingMethod functionality is ready.
-
-        await Task.CompletedTask; // Placeholder to satisfy async signature
-        return; // Early return to disable functionality
-
-        /* Original implementation commented out until ShippingMethodModel is created
+        // ======================================================================
+        // ║ Idempotency Check: Skip if shipping methods already exist          ║
+        // ======================================================================
+        if (await db.ShippingMethods.AnyAsync())
+        {
+            return;
+        }
 
         // ======================================================================
         // ║ Shipping Method Configuration                                       ║
@@ -88,6 +86,5 @@ public static partial class DbSeeder
 
         await db.ShippingMethods.AddRangeAsync(shippingMethods);
         await db.SaveChangesAsync();
-        */
     }
 }

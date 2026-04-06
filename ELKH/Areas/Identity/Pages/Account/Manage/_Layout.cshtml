@@ -9,17 +9,23 @@
     }
 }
 
-<h1>Manage your account</h1>
+<header class="kawaii-hero">
+    <h1 class="kawaii-cloud-title font-heading">
+        <i class="bi bi-person-gear me-2" aria-hidden="true"></i>
+        My Account
+    </h1>
+    <p class="kawaii-subtitle">Manage your account settings</p>
+</header>
 
-<div>
-    <h2>Change your account settings</h2>
-    <hr />
-    <div class="row">
+<div class="container-kawaii">
+    <div class="row g-4">
         <div class="col-md-3">
             <partial name="_ManageNav" />
         </div>
         <div class="col-md-9">
-            @RenderBody()
+            <div class="kawaii-card">
+                @RenderBody()
+            </div>
         </div>
     </div>
 </div>

@@ -115,7 +115,7 @@
                                                   class="d-flex gap-1 align-items-center"
                                                   aria-label="Update quantity for @item.ProductName">
                                                 @Html.AntiForgeryToken()
-                                                <input type="hidden" name="itemId" value="@item.ProductId" />
+                                                <input type="hidden" name="cartId" value="@item.CartItemId" />
 
                                                 <label for="quantity-@item.ProductId" class="sr-only">
                                                     Quantity for @item.ProductName
@@ -258,7 +258,7 @@
                                 {
                                     <a asp-area="Identity" asp-page="/Account/Login"
                                        asp-route-returnUrl="@Context.Request.Path"
-                                       class="btn btn-dark btn-lg"
+                                       class="btn-kawaii btn-secondary-kawaii btn-lg"
                                        aria-label="Sign in to checkout your order totaling @Model.Total.ToString("C")">
                                         <i class="bi bi-box-arrow-in-right me-2" aria-hidden="true"></i>
                                         Sign In to Checkout

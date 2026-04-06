@@ -280,16 +280,20 @@ public static partial class DbSeeder
     /// Legacy entry point for admin seeding. 
     /// Redirects to the new decomposed Users and Roles seeding.
     /// </summary>
+    /// <param name="db">Database context for creating app-level user records.</param>
     /// <param name="userManager">ASP.NET Core Identity UserManager for account creation.</param>
     /// <param name="roleManager">ASP.NET Core Identity RoleManager for role creation.</param>
     /// <param name="configuration">Application configuration for retrieving credentials.</param>
+    /// <param name="wwwRootPath">Web root path for loading the placeholder avatar.</param>
     [Obsolete("Use SeedUsersAndRolesAsync instead. This method is maintained for backward compatibility.")]
     public static async Task SeedAdminAsync(
+        ApplicationDbContext db,
         UserManager<IdentityUser> userManager,
         RoleManager<IdentityRole> roleManager,
-        IConfiguration configuration)
+        IConfiguration configuration,
+        string wwwRootPath)
     {
-        await SeedUsersAndRolesAsync(userManager, roleManager, configuration);
+        await SeedUsersAndRolesAsync(db, userManager, roleManager, configuration, wwwRootPath);
     }
 
     /// <summary>

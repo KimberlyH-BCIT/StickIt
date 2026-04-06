@@ -54,66 +54,12 @@ a:hover {
   border-bottom: 1px solid var(--outline, #E2DEF0);
 }
 
-/* ── Site header ────────────────────────────────────────────────────── */
-.site-header {
-  position: sticky;
-  top: 0;
-  z-index: 1030;
-}
-
-/* Top bar */
-.header-top {
-  font-size: .9rem;
-}
-
-/* Centered search wrapper - grows up to 560px, shrinks on mobile */
-.header-search-wrap {
-  width: 100%;
-  max-width: 560px;
-}
-
-/* Nav strip - single row, hamburger + evenly-spaced links */
-.header-nav {
-  padding-top: .25rem;
-  padding-bottom: .25rem;
-}
-
-/* Hamburger button - uses kawaii theme colors */
-.nav-hamburger {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  background: none;
-  border: none;
-  padding: .25rem .35rem;
-  border-radius: var(--radius-xs, 6px);
-  color: var(--ink, #4A3B5C);
-  cursor: pointer;
-  line-height: 1;
-  transition: color var(--transition-fast, .15s ease), 
-              background-color var(--transition-fast, .15s ease);
-}
-
-.nav-hamburger:hover,
-.nav-hamburger:focus {
-  color: var(--purple, #7B5FB6);
-  background-color: var(--surface-lavender, rgba(228, 193, 249, 0.30));
-  outline: none;
-}
-
-/* Keep all nav links on one line regardless of viewport width */
-.header-nav .navbar-nav {
-  flex-wrap: nowrap;
-  white-space: nowrap;
-}
-
-/* Offcanvas sidebar nav items use kawaii theme */
-#navOffcanvas .nav-link:hover,
-#navOffcanvas .nav-link:focus {
-  background-color: var(--surface-lavender, rgba(228, 193, 249, 0.30));
-  color: var(--purple, #7B5FB6);
-  border-radius: var(--radius-xs, 6px);
-}
+/*
+ * NOTE: Header/nav component styles (.site-header, .header-top, .header-nav,
+ * .nav-hamburger, #navOffcanvas .nav-link) have been moved to kawaii-theme.css
+ * where they reliably apply to elements in partial views (_Navbar.cshtml).
+ * Scoped CSS isolation prevents this file from styling partial elements.
+ */
 
 /* ── Cart icon ──────────────────────────────────────────────────────── */
 .cart-icon-link {
@@ -147,10 +93,6 @@ a:hover {
   line-height: 18px;
   text-align: center;
   pointer-events: none;
-}
-
-.box-shadow {
-  box-shadow: var(--shadow-soft, 0 8px 24px rgba(169, 222, 249, 0.12));
 }
 
 button.accept-policy {

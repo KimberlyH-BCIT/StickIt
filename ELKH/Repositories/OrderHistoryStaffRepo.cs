@@ -5,6 +5,11 @@ using Microsoft.EntityFrameworkCore;
 
 namespace ELKH.Repositories
 {
+    /// <summary>
+    /// Repository for staff order management operations.
+    /// Provides filtered, paginated order listings, delivery status updates,
+    /// order detail retrieval, and order count queries by status.
+    /// </summary>
     public class OrderHistoryStaffRepo
     {
         private readonly ApplicationDbContext _context;

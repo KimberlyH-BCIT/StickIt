@@ -1,4 +1,5 @@
 using ELKH.Data;
+using ELKH.Models;
 using ELKH.ViewModels;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
@@ -347,6 +348,68 @@ namespace ELKH.Controllers
             return View(vm);
         }
 
+        /// <summary>
+        /// Soft-deletes a product by setting IsDeleted = true.
+        /// The product remains in the database but is hidden from active listings.
+        /// </summary>
+        /// <param name="id">Product ID to soft-delete</param>
+        /// <returns>Redirects back to ProductDetails</returns>
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> DeleteProduct(int id)
+        {
+            var product = await _context.Products.FindAsync(id);
+            if (product == null) return NotFound();
+
+            product.IsDeleted = true;
+            product.IsActive = false;
+            await _context.SaveChangesAsync();
+
+            TempData["Success"] = $"'{product.Name}' has been soft-deleted.";
+            return RedirectToAction("ListOfProducts");
+        }
+
+        /// <summary>
+        /// Restores a soft-deleted product by setting IsDeleted = false.
+        /// </summary>
+        /// <param name="id">Product ID to restore</param>
+        /// <returns>Redirects back to DeletedProducts list</returns>
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> RestoreProduct(int id)
+        {
+            var product = await _context.Products.FindAsync(id);
+            if (product == null) return NotFound();
+
+            product.IsDeleted = false;
+            await _context.SaveChangesAsync();
+
+            TempData["Restored"] = $"'{product.Name}' has been restored.";
+            return RedirectToAction("DeletedProducts");
+        }
+
+        /// <summary>
+        /// Displays all soft-deleted products for potential restoration.
+        /// </summary>
+        /// <returns>View with list of deleted products</returns>
+        public async Task<IActionResult> DeletedProducts()
+        {
+            var deletedProducts = await _context.Products
+                .Where(p => p.IsDeleted)
+                .Include(p => p.Category)
+                .OrderBy(p => p.Name)
+                .Select(p => new ProductVM
+                {
+                    ProductId = p.PkProductId,
+                    ProductName = p.Name,
+                    Price = p.Price,
+                    IsDeleted = true
+                })
+                .ToListAsync();
+
+            return View(deletedProducts);
+        }
+
         #endregion
         #region Transaction Management
 
@@ -399,6 +462,55 @@ namespace ELKH.Controllers
             ViewBag.Search = search;
 
             return View(transactions);
+        }
+
+        /// <summary>
+        /// Displays detailed information for a specific transaction including order items.
+        /// </summary>
+        /// <param name="id">Transaction ID to display</param>
+        /// <returns>View with transaction details and associated order items</returns>
+        public async Task<IActionResult> TransactionDetail(int id)
+        {
+            var transaction = await _context.Transactions
+                .Include(t => t.Order)
+                    .ThenInclude(o => o.RegisteredUser)
+                .Include(t => t.Order)
+                    .ThenInclude(o => o.OrderItems)
+                        .ThenInclude(oi => oi.Product)
+                            .ThenInclude(p => p.Category)
+                .Include(t => t.Order)
+                    .ThenInclude(o => o.OrderItems)
+                        .ThenInclude(oi => oi.Product)
+                            .ThenInclude(p => p.ProductImage)
+                .FirstOrDefaultAsync(t => t.PkTransactionId == id);
+
+            if (transaction == null) return NotFound();
+
+            var order = transaction.Order;
+
+            var vm = new TransactionDetailVM
+            {
+                TransactionId = transaction.PkTransactionId,
+                OrderId = transaction.FkOrderId,
+                TransactionStatus = transaction.TransactionStatus,
+                Amount = transaction.Amount,
+                DeliveryFee = transaction.DeliveryFee,
+                TransactionDate = transaction.TransactionDate,
+                CustomerName = order?.RegisteredUser?.Email ?? "Unknown",
+                CustomerEmail = order?.RegisteredUser?.Email ?? "Unknown",
+                Items = order?.OrderItems?.Select(oi => new TransactionItemVM
+                {
+                    ProductId = oi.FkProductId,
+                    ProductName = oi.Product?.Name ?? "Unknown Product",
+                    CategoryName = oi.Product?.Category?.CategoryName ?? "",
+                    UnitPrice = oi.UnitPrice,
+                    DiscountPercent = oi.Product?.DiscountPercent ?? 0,
+                    Quantity = oi.Quantity,
+                    Thumbnail = oi.Product?.ProductImage?.FirstOrDefault()?.ProductImageURL ?? ""
+                }).ToList() ?? new List<TransactionItemVM>()
+            };
+
+            return View(vm);
         }
 
         #endregion
@@ -903,6 +1015,251 @@ namespace ELKH.Controllers
                 TempData["Message"] = "error,An error occurred while deleting the shipping method. Please try again.";
                 return RedirectToAction(nameof(ShippingMethods));
             }
+        }
+
+        #endregion
+
+        #region Category Management
+
+        /// <summary>Displays all product categories with product counts.</summary>
+        public async Task<IActionResult> Categories()
+        {
+            var categories = await _context.Categories
+                .Include(c => c.Products)
+                .OrderBy(c => c.CategoryName)
+                .ToListAsync();
+
+            return View(categories);
+        }
+
+        [HttpGet]
+        public IActionResult CreateCategory()
+        {
+            return View(new CategoryModel());
+        }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> CreateCategory(CategoryModel model)
+        {
+            if (!ModelState.IsValid) return View(model);
+
+            var existing = await _context.Categories
+                .FirstOrDefaultAsync(c => c.CategoryName.ToLower(CultureInfo.InvariantCulture) == model.CategoryName.ToLower(CultureInfo.InvariantCulture));
+
+            if (existing != null)
+            {
+                ModelState.AddModelError("CategoryName", "A category with this name already exists.");
+                return View(model);
+            }
+
+            _context.Categories.Add(new CategoryModel { CategoryName = model.CategoryName.Trim() });
+            await _context.SaveChangesAsync();
+
+            TempData["Message"] = $"success,Category '{model.CategoryName.Trim()}' created successfully!";
+            return RedirectToAction(nameof(Categories));
+        }
+
+        [HttpGet]
+        public async Task<IActionResult> EditCategory(int id)
+        {
+            var category = await _context.Categories.FindAsync(id);
+            if (category == null) return NotFound();
+
+            return View(category);
+        }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> EditCategory(CategoryModel model)
+        {
+            if (!ModelState.IsValid) return View(model);
+
+            var category = await _context.Categories.FindAsync(model.PkCategoryId);
+            if (category == null) return NotFound();
+
+            var duplicate = await _context.Categories
+                .FirstOrDefaultAsync(c =>
+                    c.CategoryName.ToLower(CultureInfo.InvariantCulture) == model.CategoryName.ToLower(CultureInfo.InvariantCulture) &&
+                    c.PkCategoryId != model.PkCategoryId);
+
+            if (duplicate != null)
+            {
+                ModelState.AddModelError("CategoryName", "A category with this name already exists.");
+                return View(model);
+            }
+
+            category.CategoryName = model.CategoryName.Trim();
+            await _context.SaveChangesAsync();
+
+            TempData["Message"] = $"success,Category updated to '{category.CategoryName}'.";
+            return RedirectToAction(nameof(Categories));
+        }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> DeleteCategory(int id)
+        {
+            var category = await _context.Categories
+                .Include(c => c.Products)
+                .FirstOrDefaultAsync(c => c.PkCategoryId == id);
+
+            if (category == null)
+            {
+                TempData["Message"] = "warning,Category not found.";
+                return RedirectToAction(nameof(Categories));
+            }
+
+            if (category.Products.Count > 0)
+            {
+                TempData["Message"] = $"error,Cannot delete '{category.CategoryName}' — it contains {category.Products.Count} product(s). Reassign those products first.";
+                return RedirectToAction(nameof(Categories));
+            }
+
+            _context.Categories.Remove(category);
+            await _context.SaveChangesAsync();
+
+            TempData["Message"] = $"success,Category '{category.CategoryName}' deleted.";
+            return RedirectToAction(nameof(Categories));
+        }
+
+        #endregion
+
+        #region Coupon Management
+
+        /// <summary>Displays all coupons with usage and status information.</summary>
+        public async Task<IActionResult> Coupons()
+        {
+            var coupons = await _context.Coupons
+                .OrderByDescending(c => c.CreatedAt)
+                .ToListAsync();
+
+            return View(coupons);
+        }
+
+        [HttpGet]
+        public IActionResult CreateCoupon()
+        {
+            return View(new CouponModel { IsActive = true });
+        }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> CreateCoupon(CouponModel model)
+        {
+            if (!ModelState.IsValid) return View(model);
+
+            model.Code = model.Code.Trim().ToUpperInvariant();
+
+            var existing = await _context.Coupons
+                .FirstOrDefaultAsync(c => c.Code == model.Code);
+
+            if (existing != null)
+            {
+                ModelState.AddModelError("Code", "A coupon with this code already exists.");
+                return View(model);
+            }
+
+            model.CreatedAt = DateTime.UtcNow;
+            model.CurrentUsageCount = 0;
+            _context.Coupons.Add(model);
+            await _context.SaveChangesAsync();
+
+            TempData["Message"] = $"success,Coupon '{model.Code}' created successfully!";
+            return RedirectToAction(nameof(Coupons));
+        }
+
+        [HttpGet]
+        public async Task<IActionResult> EditCoupon(int id)
+        {
+            var coupon = await _context.Coupons.FindAsync(id);
+            if (coupon == null) return NotFound();
+
+            return View(coupon);
+        }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> EditCoupon(CouponModel model)
+        {
+            if (!ModelState.IsValid) return View(model);
+
+            var coupon = await _context.Coupons.FindAsync(model.PkCouponId);
+            if (coupon == null) return NotFound();
+
+            model.Code = model.Code.Trim().ToUpperInvariant();
+
+            var duplicate = await _context.Coupons
+                .FirstOrDefaultAsync(c => c.Code == model.Code && c.PkCouponId != model.PkCouponId);
+
+            if (duplicate != null)
+            {
+                ModelState.AddModelError("Code", "A coupon with this code already exists.");
+                return View(model);
+            }
+
+            coupon.Code = model.Code;
+            coupon.Name = model.Name;
+            coupon.Description = model.Description;
+            coupon.DiscountType = model.DiscountType;
+            coupon.DiscountValue = model.DiscountValue;
+            coupon.MinimumOrderValue = model.MinimumOrderValue;
+            coupon.MaxDiscountAmount = model.MaxDiscountAmount;
+            coupon.IsActive = model.IsActive;
+            coupon.UsageLimit = model.UsageLimit;
+            coupon.ValidFrom = model.ValidFrom;
+            coupon.ValidUntil = model.ValidUntil;
+            coupon.UpdatedAt = DateTime.UtcNow;
+
+            await _context.SaveChangesAsync();
+
+            TempData["Message"] = $"success,Coupon '{coupon.Code}' updated.";
+            return RedirectToAction(nameof(Coupons));
+        }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> ToggleCouponStatus(int id)
+        {
+            var coupon = await _context.Coupons.FindAsync(id);
+            if (coupon == null)
+            {
+                TempData["Message"] = "warning,Coupon not found.";
+                return RedirectToAction(nameof(Coupons));
+            }
+
+            coupon.IsActive = !coupon.IsActive;
+            coupon.UpdatedAt = DateTime.UtcNow;
+            await _context.SaveChangesAsync();
+
+            var statusText = coupon.IsActive ? "activated" : "deactivated";
+            TempData["Message"] = $"success,Coupon '{coupon.Code}' {statusText}.";
+            return RedirectToAction(nameof(Coupons));
+        }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> DeleteCoupon(int id)
+        {
+            var coupon = await _context.Coupons.FindAsync(id);
+            if (coupon == null)
+            {
+                TempData["Message"] = "warning,Coupon not found.";
+                return RedirectToAction(nameof(Coupons));
+            }
+
+            var usageCount = await _context.OrderCoupons.CountAsync(oc => oc.FkCouponId == id);
+            if (usageCount > 0)
+            {
+                TempData["Message"] = $"error,Cannot delete coupon '{coupon.Code}' — it has been used in {usageCount} order(s). Deactivate it instead.";
+                return RedirectToAction(nameof(Coupons));
+            }
+
+            _context.Coupons.Remove(coupon);
+            await _context.SaveChangesAsync();
+
+            TempData["Message"] = $"success,Coupon '{coupon.Code}' deleted.";
+            return RedirectToAction(nameof(Coupons));
         }
 
         #endregion

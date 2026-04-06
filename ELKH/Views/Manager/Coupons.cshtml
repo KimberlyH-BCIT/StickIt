@@ -1,0 +1,157 @@
+@model List<ELKH.Models.CouponModel>
+
+@{
+    ViewData["Title"] = "Coupon Management";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+    var now = DateTime.UtcNow;
+}
+
+<main role="main" aria-labelledby="main-heading">
+    <div class="container-fluid mt-4 px-4 pb-5">
+
+        <header class="mb-4">
+            <div class="d-flex justify-content-between align-items-center flex-wrap gap-2">
+                <div>
+                    <h1 id="main-heading" class="fw-bold text-primary mb-0">Coupon Management</h1>
+                    <p class="text-muted mb-0 small">Create and manage discount codes</p>
+                </div>
+                <div class="d-flex gap-2">
+                    <a asp-action="CreateCoupon" class="btn btn-success rounded-pill px-4">
+                        <i class="bi bi-plus-circle me-1" aria-hidden="true"></i>New Coupon
+                    </a>
+                    <a asp-action="Index" class="btn btn-outline-primary rounded-pill px-4">← Dashboard</a>
+                </div>
+            </div>
+        </header>
+
+        @if (TempData["Message"] is string msg)
+        {
+            var parts = msg.Split(',', 2);
+            var alertType = parts[0] switch { "success" => "success", "warning" => "warning", _ => "danger" };
+            <div class="alert alert-@alertType alert-dismissible fade show" role="alert">
+                @parts.ElementAtOrDefault(1)?.Trim()
+                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+            </div>
+        }
+
+        <div class="kawaii-panel overflow-auto">
+            <table class="table table-hover align-middle mb-0" aria-label="Discount coupons">
+                <thead>
+                    <tr>
+                        <th scope="col">Code</th>
+                        <th scope="col">Name</th>
+                        <th scope="col">Discount</th>
+                        <th scope="col">Min Order</th>
+                        <th scope="col">Usage</th>
+                        <th scope="col">Valid Until</th>
+                        <th scope="col" class="text-center">Status</th>
+                        <th scope="col" class="text-end">Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var c in Model)
+                    {
+                        var isExpired = c.ValidUntil.HasValue && c.ValidUntil.Value < now;
+                        <tr class="@(isExpired ? "table-secondary" : "")">
+                            <td><code class="fw-bold">@c.Code</code></td>
+                            <td>@c.Name</td>
+                            <td>
+                                @switch (c.DiscountType)
+                                {
+                                    case "Percentage":
+                                        @($"{c.DiscountValue}%")
+                                        if (c.MaxDiscountAmount.HasValue)
+                                        {
+                                            <small class="text-muted">(max $@c.MaxDiscountAmount.Value.ToString("0.00"))</small>
+                                        }
+                                        break;
+                                    case "FixedAmount":
+                                        @($"${c.DiscountValue:0.00} off")
+                                        break;
+                                    case "FreeShipping":
+                                        <span class="badge bg-info text-dark">Free Shipping</span>
+                                        break;
+                                    default:
+                                        @c.DiscountType
+                                        break;
+                                }
+                            </td>
+                            <td>@(c.MinimumOrderValue > 0 ? $"${c.MinimumOrderValue:0.00}" : "—")</td>
+                            <td>
+                                @c.CurrentUsageCount
+                                @if (c.UsageLimit.HasValue)
+                                {
+                                    <span class="text-muted">/ @c.UsageLimit</span>
+                                }
+                                else
+                                {
+                                    <span class="text-muted">/ ∞</span>
+                                }
+                            </td>
+                            <td>
+                                @if (isExpired)
+                                {
+                                    <span class="text-danger small">Expired @c.ValidUntil!.Value.ToLocalTime().ToString("MMM d, yyyy")</span>
+                                }
+                                else if (c.ValidUntil.HasValue)
+                                {
+                                    @c.ValidUntil.Value.ToLocalTime().ToString("MMM d, yyyy")
+                                }
+                                else
+                                {
+                                    <span class="text-muted">No expiry</span>
+                                }
+                            </td>
+                            <td class="text-center">
+                                @if (c.IsActive && !isExpired)
+                                {
+                                    <span class="badge bg-success">Active</span>
+                                }
+                                else if (isExpired)
+                                {
+                                    <span class="badge bg-secondary">Expired</span>
+                                }
+                                else
+                                {
+                                    <span class="badge bg-warning text-dark">Inactive</span>
+                                }
+                            </td>
+                            <td class="text-end">
+                                <div class="d-flex justify-content-end gap-1">
+                                    <a asp-action="EditCoupon" asp-route-id="@c.PkCouponId"
+                                       class="btn btn-outline-primary btn-sm rounded-pill px-2">
+                                        <i class="bi bi-pencil" aria-hidden="true"></i>
+                                    </a>
+                                    <form asp-action="ToggleCouponStatus" method="post" class="d-inline">
+                                        @Html.AntiForgeryToken()
+                                        <input type="hidden" name="id" value="@c.PkCouponId" />
+                                        <button type="submit"
+                                                class="btn btn-sm rounded-pill px-2 @(c.IsActive ? "btn-outline-warning" : "btn-outline-success")"
+                                                title="@(c.IsActive ? "Deactivate" : "Activate")">
+                                            <i class="bi bi-@(c.IsActive ? "pause" : "play")" aria-hidden="true"></i>
+                                        </button>
+                                    </form>
+                                    <form asp-action="DeleteCoupon" method="post" class="d-inline">
+                                        @Html.AntiForgeryToken()
+                                        <input type="hidden" name="id" value="@c.PkCouponId" />
+                                        <button type="submit"
+                                                class="btn btn-outline-danger btn-sm rounded-pill px-2"
+                                                onclick="return confirm('Delete coupon \'@c.Code\'?')">
+                                            <i class="bi bi-trash" aria-hidden="true"></i>
+                                        </button>
+                                    </form>
+                                </div>
+                            </td>
+                        </tr>
+                    }
+                    @if (!Model.Any())
+                    {
+                        <tr>
+                            <td colspan="8" class="text-center text-muted py-4">No coupons yet. Create one above.</td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    </div>
+</main>

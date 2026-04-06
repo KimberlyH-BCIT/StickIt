@@ -1,32 +1,61 @@
 @model OrderDetailsVM
-
-@section title{
-    <h3>Order Details</h3>
-    <h4>User: @Model.UserEmail</h4>
-    <h4>Order Id: @Model.OrderId</h4>
-    <h4>Transation Id: @Model.TransactionId</h4>
+@{
+    ViewData["Title"] = "Order Details";
+    Layout = "~/Views/Shared/_Layout.cshtml";
 }
 
-<table>
-    <thead>
-        <tr>
-            <th>SKU</th>
-            <th>Product Name</th>
-            <th>Quantity</th>
-            <th>Unit Price</th>
-            <th>Report</th>
-        </tr>
-    </thead>
-    <tbody>
-        @foreach(var item in Model.OrderItems)
-        {
-            <tr>
-                <td>@item.ProductId</td>
-                <td>@item.ProductName</td>
-                <td>@item.Quantity</td>
-                <td>@item.ProductPrice</td>
-                <td></td>
-            </tr>
-        }
-    </tbody>
-</table>
+<header class="kawaii-hero">
+    <h1 class="kawaii-cloud-title font-heading">
+        <i class="bi bi-receipt me-2" aria-hidden="true"></i>
+        Order #@Model.OrderId
+    </h1>
+    <p class="kawaii-subtitle">Your order details</p>
+</header>
+
+<div class="container-kawaii">
+    <div class="kawaii-card mb-4">
+        <dl class="row mb-0">
+            <dt class="col-sm-3 hierarchy-tertiary">Customer</dt>
+            <dd class="col-sm-9 hierarchy-primary">@Model.UserEmail</dd>
+
+            <dt class="col-sm-3 hierarchy-tertiary">Order ID</dt>
+            <dd class="col-sm-9 hierarchy-primary">#@Model.OrderId</dd>
+
+            <dt class="col-sm-3 hierarchy-tertiary">Transaction ID</dt>
+            <dd class="col-sm-9 hierarchy-primary">@Model.TransactionId</dd>
+        </dl>
+    </div>
+
+    <div class="kawaii-card">
+        <div class="table-responsive">
+            <table class="table table-hover align-middle">
+                <thead class="table-light">
+                    <tr>
+                        <th>SKU</th>
+                        <th>Product Name</th>
+                        <th>Quantity</th>
+                        <th>Unit Price</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var item in Model.OrderItems)
+                    {
+                        <tr>
+                            <td class="hierarchy-tertiary">@item.ProductId</td>
+                            <td class="hierarchy-primary">@item.ProductName</td>
+                            <td class="hierarchy-secondary">@item.Quantity</td>
+                            <td class="hierarchy-primary">$@item.ProductPrice.ToString("F2")</td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <div class="mt-4">
+        <a asp-controller="Order" asp-action="MyHistory" class="btn-kawaii btn-outline-kawaii">
+            <i class="bi bi-arrow-left me-2" aria-hidden="true"></i>
+            Back to My Orders
+        </a>
+    </div>
+</div>

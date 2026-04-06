@@ -1,0 +1,8 @@
+@model IEnumerable<ELKH.ViewModels.ProductVM>
+
+@foreach (var p in Model)
+{
+    <div class="col-lg-3 col-md-4 col-sm-6" role="gridcell">
+        @await Html.PartialAsync("_ProductCard", p)
+    </div>
+}

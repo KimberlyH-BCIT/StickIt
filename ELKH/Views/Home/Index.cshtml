@@ -8,30 +8,6 @@
         /* Accessibility Improvements */
 
         /* Enhanced focus indicators */
-        .btn:focus,
-        .btn:focus-visible {
-            outline: 2px solid #0066cc;
-            outline-offset: 2px;
-            box-shadow: 0 0 0 3px rgba(0, 102, 204, 0.3);
-        }
-
-        /* Skip links styling */
-        .visually-hidden a:focus {
-            position: static !important;
-            width: auto !important;
-            height: auto !important;
-            padding: 8px 16px !important;
-            margin: 8px !important;
-            overflow: visible !important;
-            clip: auto !important;
-            white-space: normal !important;
-            z-index: 9999;
-            background: #0066cc;
-            color: white;
-            text-decoration: none;
-        }
-
-        /* High contrast mode support */
         @@media (prefers-contrast: high) {
             .card {
                 border: 2px solid currentColor !important;
@@ -118,19 +94,6 @@
         /* Ensure proper contrast for badges */
         .badge {
             font-weight: 600;
-        }
-
-        /* Screen reader only content styling */
-        .visually-hidden:not(.visually-hidden a:focus) {
-            position: absolute !important;
-            width: 1px !important;
-            height: 1px !important;
-            padding: 0 !important;
-            margin: -1px !important;
-            overflow: hidden !important;
-            clip: rect(0, 0, 0, 0) !important;
-            white-space: nowrap !important;
-            border: 0 !important;
         }
 
         /* =============================================================== */
@@ -320,11 +283,11 @@
 }
 
 <!-- Skip links for screen readers with kawaii styling -->
-<div class="visually-hidden" role="navigation" aria-label="Skip navigation">
-    <a href="#main-content" class="btn-kawaii btn-secondary-kawaii">Skip to main content</a>
-    <a href="#features-section" class="btn-kawaii btn-secondary-kawaii">Skip to features</a>
-    <a href="#reviews-section" class="btn-kawaii btn-secondary-kawaii">Skip to customer reviews</a>
-</div>
+<nav class="skip-links sr-only-focusable" aria-label="Skip navigation">
+    <a href="#main-content" class="skip-link btn-kawaii btn-secondary-kawaii">Skip to main content</a>
+    <a href="#features-section" class="skip-link btn-kawaii btn-secondary-kawaii">Skip to features</a>
+    <a href="#reviews-section" class="skip-link btn-kawaii btn-secondary-kawaii">Skip to customer reviews</a>
+</nav>
 
 <!-- Page landmark information for screen readers -->
 <div class="visually-hidden" aria-live="polite">
@@ -541,7 +504,7 @@
                          aria-labelledby="q2">
                         <div class="accordion-body hierarchy-secondary" style="padding: 1.25rem 1.5rem; font-size: 1rem;">
                             <p class="mb-3">No. This is a non-refundable purchase.</p>
-                            <a asp-controller="Order" asp-action="History" 
+                            <a asp-controller="Order" asp-action="MyHistory" 
                                class="btn-kawaii btn-outline-kawaii btn-sm px-3 py-2"
                                style="font-weight: 500;"
                                aria-label="View my order history">My Orders</a>
