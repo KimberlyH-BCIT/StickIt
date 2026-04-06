@@ -41,7 +41,7 @@
     /* 📖 IMPROVED TEXT CONTRAST - Darker for readability */
     --ink: #4A3B5C;           /* Darker base text (was #6B5A87) */
     --ink-medium: #5D4A73;    /* Medium contrast text */
-    --ink-soft: #7A6B8F;     /* Soft contrast text (lighter) */
+    --ink-soft: #72688A;     /* Soft contrast text — #72688A gives ~4.67:1 on white (WCAG AA) */
     --ink-light: #A09BB0;    /* Light text for secondary info */
     --white: #FFFFFF;
 
@@ -141,13 +141,14 @@ body {
     color: var(--ink);
     background:
         radial-gradient(circle at top left, rgba(255,255,255,0.75) 0%, rgba(255,255,255,0) 22%),
-        linear-gradient(180deg, 
-            var(--mint) 0%, 
-            var(--surface-sky) 25%, 
-            rgba(211, 255, 228, 0.5) 45%,
-            var(--surface-lavender) 65%, 
-            rgba(228, 193, 249, 0.6) 80%,
-            rgba(253, 242, 248, 0.8) 100%
+        linear-gradient(180deg,
+            rgba(211, 255, 228, 0.55) 0%,
+            rgba(211, 255, 228, 0.40) 12%,
+            rgba(169, 222, 249, 0.40) 28%,
+            rgba(211, 255, 228, 0.30) 45%,
+            rgba(228, 193, 249, 0.38) 62%,
+            rgba(228, 193, 249, 0.52) 80%,
+            rgba(253, 242, 248, 0.65) 100%
         );
     min-height: 100vh;
     overflow-x: hidden;
@@ -326,9 +327,15 @@ a:hover {
 
 /* ⚠️ OVERRIDE PREVENTION - Ensure no accidental Sniglet on body text */
 p, span, div:not(.font-heading), 
-label, input, button:not(.btn-kawaii), select, textarea,
+label, input, button:not(.btn-kawaii):not(.kawaii-nav-link), select, textarea,
 .card-text, .product-description, .nav-link:not(.kawaii-nav-link) {
     font-family: var(--font-body) !important;  /* Force Nunito */
+}
+
+/* Nav links always use heading font, including their child spans (e.g. .sparkle wrappers) */
+.kawaii-nav-link,
+.kawaii-nav-link span {
+    font-family: var(--font-heading) !important;
 }
 
 /* =============================================================================== */
@@ -395,16 +402,16 @@ label, input, button:not(.btn-kawaii), select, textarea,
     box-shadow: var(--shadow-focus), var(--shadow-pill);
 }
 
-/* 💕 PRIMARY (Pink) - SPARINGLY for main CTAs only */
+/* 💜 PRIMARY (Purple) - SPARINGLY for main CTAs only */
 .btn-primary-kawaii {
-    background: linear-gradient(135deg, var(--pink) 0%, #f281b5 100%);
+    background: linear-gradient(135deg, var(--purple) 0%, var(--purple-dark) 100%);
     color: white;
-    border-color: var(--outline-pink);
+    border-color: var(--outline-lavender);
     /* Reserve for: "Add to Cart", "Sign Up", "Subscribe", "Buy Now" */
 }
 
 .btn-primary-kawaii:hover {
-    background: linear-gradient(135deg, #f281b5 0%, var(--pink) 100%);
+    background: linear-gradient(135deg, var(--purple-dark) 0%, var(--purple) 100%);
     color: white;
 }
 
@@ -649,6 +656,13 @@ label, input, button:not(.btn-kawaii), select, textarea,
     transform: scale(1.05);
 }
 
+/* Keyboard focus ring — scale alone does not satisfy WCAG 2.4.7 Focus Visible */
+.kawaii-brand:focus-visible {
+    outline: 3px solid var(--purple-dark);
+    outline-offset: 4px;
+    border-radius: var(--radius-xs);
+}
+
 .kawaii-nav {
     background: linear-gradient(180deg, rgba(255,255,255,0.95) 0%, var(--surface-lavender) 100%);
     backdrop-filter: blur(12px);
@@ -680,7 +694,7 @@ label, input, button:not(.btn-kawaii), select, textarea,
 .kawaii-nav-hamburger:hover,
 .kawaii-nav-hamburger:focus {
     background: linear-gradient(135deg, var(--sky) 0%, #8dd3f7 100%);
-    color: white;
+    color: var(--purple-dark); /* was white — sky bg gives only ~1.4:1 against white */
     transform: translateY(-2px);
     box-shadow: var(--shadow-hover);
 }
@@ -703,7 +717,7 @@ label, input, button:not(.btn-kawaii), select, textarea,
 .kawaii-nav-link:hover,
 .kawaii-nav-link:focus {
     background: linear-gradient(135deg, var(--lavender) 0%, #d8b7fb 100%);
-    color: white;
+    color: var(--ink); /* was white — lavender bg gives only ~1.5:1 against white; ink gives ~5.8:1 */
     border-color: var(--outline-lavender);
     box-shadow: var(--shadow-hover);
     text-decoration: none;
@@ -783,7 +797,7 @@ label, input, button:not(.btn-kawaii), select, textarea,
     height: 18px;
     padding: 0 4px;
     border-radius: var(--radius-pill);
-    background: var(--pink);
+    background: var(--purple); /* was var(--pink) — white on pink is ~2:1; white on purple is ~4.6:1 */
     color: var(--white);
     font-size: 0.65rem;
     font-weight: var(--font-weight-bold);
@@ -804,7 +818,7 @@ label, input, button:not(.btn-kawaii), select, textarea,
 .kawaii-promo-link:hover,
 .kawaii-promo-link:focus {
     background: linear-gradient(135deg, #e6d088 0%, var(--butter) 100%);
-    color: var(--purple);
+    color: var(--ink); /* was var(--purple) — purple on #e6d088 yellow gives ~3.0:1; ink gives ~5.9:1 */
     transform: translateY(-3px) scale(1.05);
 }
 
@@ -1133,6 +1147,7 @@ label, input, button:not(.btn-kawaii), select, textarea,
     backdrop-filter: blur(12px);
     animation: float-gentle 4s ease-in-out infinite;
     transition: background var(--transition-med), border-color var(--transition-fast);
+    font-family: var(--font-heading) !important;
 }
 
 .kawaii-cloud-title::before,
@@ -1171,7 +1186,9 @@ label, input, button:not(.btn-kawaii), select, textarea,
     border: 2px solid var(--outline-lavender);
     box-shadow: var(--shadow-pill);
     font-weight: var(--font-weight-bold);
-    font-family: var(--font-heading);
+    font-family: var(--font-heading) !important;
+    position: relative;
+    z-index: 1;
 }
 
 @keyframes float-gentle {
@@ -1522,6 +1539,19 @@ button.badge-kawaii:hover,
     }
 }
 
+/* Prevent nav pill overflow on tablets — signed-in users can have 9+ pills */
+@media (max-width: 992px) {
+    .kawaii-nav-list {
+        overflow-x: auto;
+        -webkit-overflow-scrolling: touch;
+        scrollbar-width: none;
+    }
+
+    .kawaii-nav-list::-webkit-scrollbar {
+        display: none;
+    }
+}
+
 @media (max-width: 768px) {
     :root {
         --spacing-xl: 1.5rem;
@@ -1537,10 +1567,21 @@ button.badge-kawaii:hover,
     .kawaii-nav-link {
         padding: var(--spacing-sm) var(--spacing-md);
         font-size: var(--font-size-sm);
+        min-height: 44px;          /* WCAG 2.5.5: minimum 44×44px touch target */
+        display: inline-flex;
+        align-items: center;
     }
 
     .kawaii-cloud-title {
         padding: var(--spacing-md) var(--spacing-lg);
+    }
+
+    .kawaii-cloud-title::before {
+        height: 38px;
+    }
+
+    .kawaii-cloud-title::after {
+        height: 44px;
     }
 
     .tab-row,
@@ -2033,9 +2074,9 @@ section {
     100% { box-shadow: 0 0 0 0 rgba(220, 38, 38, 0); }
 }
 
-/* Promotion Stats Box */
+/* Promotion Stats Box - background provided by surface-* modifier on the element */
 .promotion-stats {
-    background: linear-gradient(135deg, #dc2626 0%, #ef4444 100%) !important;
+    text-align: center;
 }
 
 /* Enhanced Focus Styles for Promotions */
@@ -2097,6 +2138,291 @@ section {
         border: 2px solid;
     }
 }
+
+/* ======================================================================================= */
+/* ║ IDENTITY / MANAGE PAGE OVERRIDES                                                       ║ */
+/* ======================================================================================= */
+
+/* Give Bootstrap .form-control inputs kawaii color treatment without breaking form-floating */
+.form-control {
+    border: 2px solid var(--outline) !important;
+    background: var(--surface) !important;
+    color: var(--ink) !important;
+    transition: all var(--transition-fast) !important;
+}
+
+.form-control:focus {
+    border-color: var(--sky) !important;
+    box-shadow: 0 0 0 4px rgba(169, 222, 249, 0.3) !important;
+    background: var(--surface-strong) !important;
+    outline: none !important;
+}
+
+.form-control:disabled,
+.form-control[readonly] {
+    background: var(--surface-soft) !important;
+    color: var(--ink-soft) !important;
+    cursor: not-allowed;
+}
+
+/* Hide ASP.NET Core's empty validation summary (valid state adds this class automatically) */
+.validation-summary-valid {
+    display: none !important;
+}
+
+/* Kawaii link style for auth pages (login/register navigation links) */
+.kawaii-link {
+    color: var(--purple);
+    font-weight: var(--font-weight-medium);
+    text-decoration: none;
+    transition: color var(--transition-fast);
+}
+
+.kawaii-link:hover,
+.kawaii-link:focus {
+    color: var(--purple-dark);
+    text-decoration: underline;
+}
+
+/* ======================================================================================= */
+/* ║ BOOTSTRAP CLASS OVERRIDES - Align Bootstrap utilities with kawaii theme              ║ */
+/* ======================================================================================= */
+
+/* --- Text color overrides --- */
+/* Replace Bootstrap gray/blue semantic colors with kawaii ink palette */
+.text-muted     { color: var(--ink-soft)   !important; }
+.text-primary   { color: var(--purple)     !important; }
+.text-secondary { color: var(--ink-soft)   !important; }
+.text-dark      { color: var(--ink)        !important; }
+/* text-danger / text-success / text-warning intentionally left as Bootstrap defaults
+   (used for validation errors, success confirmations, and warnings) */
+
+/* --- Shadow overrides --- */
+/* Replace Bootstrap's gray box-shadows with kawaii color-tinted versions */
+.shadow-sm { box-shadow: var(--shadow-soft)  !important; }
+.shadow    { box-shadow: var(--shadow-card)  !important; }
+.shadow-lg { box-shadow: var(--shadow-float) !important; }
+
+/* --- Background overrides --- */
+/* Remap Bootstrap bg-* to kawaii surfaces */
+.bg-light {
+    background: linear-gradient(180deg,
+        rgba(211, 255, 228, 0.3) 0%,
+        rgba(169, 222, 249, 0.2) 100%) !important;
+}
+
+.bg-white {
+    background: var(--surface-strong) !important;
+}
+
+.bg-primary {
+    background: linear-gradient(135deg, var(--purple) 0%, var(--purple-dark) 100%) !important;
+    color: white !important;
+}
+
+.bg-secondary {
+    background: linear-gradient(135deg, var(--sky) 0%, #8dd3f7 100%) !important;
+    color: var(--ink) !important;
+}
+
+/* --- Button overrides --- */
+/* .btn-kawaii variants already use kawaii tokens; these cover plain Bootstrap buttons */
+.btn.btn-primary {
+    background: linear-gradient(135deg, var(--pink) 0%, #f281b5 100%);
+    border-color: var(--outline-pink);
+    color: white;
+    border-radius: var(--radius-sm);
+    font-weight: var(--font-weight-bold);
+    box-shadow: var(--shadow-pill);
+    transition:
+        transform var(--transition-fast),
+        box-shadow var(--transition-fast),
+        filter var(--transition-fast),
+        background var(--transition-med);
+}
+
+.btn.btn-primary:hover,
+.btn.btn-primary:focus {
+    background: linear-gradient(135deg, #f281b5 0%, var(--pink) 100%);
+    border-color: var(--outline-pink);
+    color: white;
+    transform: translateY(-2px);
+    filter: brightness(1.05);
+    box-shadow: var(--shadow-hover);
+}
+
+.btn.btn-outline-primary,
+.btn.btn-outline-secondary {
+    background: var(--surface-strong);
+    border: 2px solid var(--outline-sky);
+    color: var(--ink);
+    border-radius: var(--radius-sm);
+    font-weight: var(--font-weight-bold);
+    box-shadow: var(--shadow-pill);
+    transition:
+        transform var(--transition-fast),
+        box-shadow var(--transition-fast),
+        background var(--transition-med);
+}
+
+.btn.btn-outline-primary:hover,
+.btn.btn-outline-primary:focus,
+.btn.btn-outline-secondary:hover,
+.btn.btn-outline-secondary:focus {
+    background: var(--surface-sky);
+    border-color: var(--sky);
+    color: var(--ink);
+    transform: translateY(-2px);
+    box-shadow: var(--shadow-hover);
+}
+
+/* --- Semantic text color overrides --- */
+/* Retain danger/success/warning meaning but expressed in kawaii palette */
+
+/* Deep kawaii pink — readable against white, still signals error */
+.text-danger  { color: #c73864 !important; }
+
+/* Muted kawaii mint-green — darker shade for text readability */
+.text-success { color: #3d8c68 !important; }
+
+/* Dark amber derived from --butter — readable golden-brown */
+.text-warning { color: #8a6e0a !important; }
+
+/* --- Semantic background overrides --- */
+.bg-danger  { background: linear-gradient(135deg, rgba(247, 113, 175, 0.2) 0%, rgba(199, 56, 100, 0.15) 100%) !important; }
+.bg-success { background: linear-gradient(180deg, rgba(211, 255, 228, 0.6) 0%, rgba(211, 255, 228, 0.3) 100%) !important; }
+.bg-warning { background: linear-gradient(180deg, rgba(242, 230, 163, 0.5) 0%, rgba(242, 230, 163, 0.2) 100%) !important; }
+.bg-dark    { background: linear-gradient(135deg, var(--purple) 0%, var(--ink) 100%) !important; color: white !important; }
+
+/* --- Semantic button overrides --- */
+
+/* btn-danger → hot kawaii magenta-pink (more urgent than soft primary pink) */
+.btn.btn-danger {
+    background: linear-gradient(135deg, #f04080 0%, #c73060 100%);
+    border-color: #f082b0;
+    color: white;
+    border-radius: var(--radius-sm);
+    font-weight: var(--font-weight-bold);
+    box-shadow: var(--shadow-pill);
+    transition:
+        transform var(--transition-fast),
+        box-shadow var(--transition-fast),
+        filter var(--transition-fast),
+        background var(--transition-med);
+}
+
+.btn.btn-danger:hover,
+.btn.btn-danger:focus {
+    background: linear-gradient(135deg, #c73060 0%, #f04080 100%);
+    border-color: #f082b0;
+    color: white;
+    transform: translateY(-2px);
+    filter: brightness(1.05);
+    box-shadow: 0 12px 32px rgba(240, 64, 128, 0.3);
+}
+
+/* btn-outline-danger → hot pink outline */
+.btn.btn-outline-danger {
+    background: var(--surface-strong);
+    border: 2px solid #f082b0;
+    color: #c73864;
+    border-radius: var(--radius-sm);
+    font-weight: var(--font-weight-bold);
+    box-shadow: var(--shadow-pill);
+    transition:
+        transform var(--transition-fast),
+        box-shadow var(--transition-fast),
+        background var(--transition-med);
+}
+
+.btn.btn-outline-danger:hover,
+.btn.btn-outline-danger:focus {
+    background: rgba(247, 113, 175, 0.12);
+    border-color: #f04080;
+    color: #c73060;
+    transform: translateY(-2px);
+    box-shadow: 0 12px 32px rgba(240, 64, 128, 0.2);
+}
+
+/* btn-success → kawaii mint gradient with dark ink text */
+.btn.btn-success {
+    background: linear-gradient(135deg, var(--mint) 0%, #6de8b0 100%);
+    border-color: rgba(211, 255, 228, 0.9);
+    color: var(--ink);
+    border-radius: var(--radius-sm);
+    font-weight: var(--font-weight-bold);
+    box-shadow: var(--shadow-pill);
+    transition:
+        transform var(--transition-fast),
+        box-shadow var(--transition-fast),
+        filter var(--transition-fast),
+        background var(--transition-med);
+}
+
+.btn.btn-success:hover,
+.btn.btn-success:focus {
+    background: linear-gradient(135deg, #6de8b0 0%, var(--mint) 100%);
+    border-color: rgba(211, 255, 228, 0.9);
+    color: var(--ink);
+    transform: translateY(-2px);
+    filter: brightness(1.05);
+    box-shadow: var(--shadow-hover);
+}
+
+/* btn-warning → kawaii butter gradient (same accent as btn-butter-kawaii) */
+.btn.btn-warning {
+    background: linear-gradient(135deg, var(--butter) 0%, #e6d088 100%);
+    border-color: var(--outline-butter);
+    color: var(--ink);
+    border-radius: var(--radius-sm);
+    font-weight: var(--font-weight-bold);
+    box-shadow: var(--shadow-pill);
+    transition:
+        transform var(--transition-fast),
+        box-shadow var(--transition-fast),
+        filter var(--transition-fast),
+        background var(--transition-med);
+}
+
+.btn.btn-warning:hover,
+.btn.btn-warning:focus {
+    background: linear-gradient(135deg, #e6d088 0%, var(--butter) 100%);
+    border-color: var(--outline-butter);
+    color: var(--ink);
+    transform: translateY(-2px);
+    filter: brightness(1.05);
+    box-shadow: var(--shadow-hover);
+}
+
+/* btn-dark → purple/ink gradient */
+.btn.btn-dark {
+    background: linear-gradient(135deg, var(--purple) 0%, var(--ink) 100%);
+    border-color: rgba(74, 59, 92, 0.6);
+    color: white;
+    border-radius: var(--radius-sm);
+    font-weight: var(--font-weight-bold);
+    box-shadow: var(--shadow-pill);
+    transition:
+        transform var(--transition-fast),
+        box-shadow var(--transition-fast),
+        filter var(--transition-fast),
+        background var(--transition-med);
+}
+
+.btn.btn-dark:hover,
+.btn.btn-dark:focus {
+    background: linear-gradient(135deg, var(--ink) 0%, var(--purple) 100%);
+    border-color: rgba(74, 59, 92, 0.8);
+    color: white;
+    transform: translateY(-2px);
+    filter: brightness(1.1);
+    box-shadow: 0 12px 32px rgba(74, 59, 92, 0.25);
+}
+
+/* Accessible card footer backgrounds — Bootstrap defaults fail WCAG AA at small text sizes */
+.bg-primary-accessible   { background-color: #0a58ca !important; } /* 5.87:1 with white */
+.bg-success-accessible   { background-color: #0f5132 !important; } /* 8.40:1 with white */
+.bg-secondary-accessible { background-color: #5a6268 !important; } /* 5.68:1 with white */
 
 /* Final touch - ensure proper font loading */
 @font-face {
