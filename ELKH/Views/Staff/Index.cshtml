@@ -71,7 +71,7 @@
                 <div class="kawaii-card kawaii-card-sm surface-butter text-center h-100 glow-on-hover">
                     <div class="d-flex flex-column align-items-center justify-content-center p-3">
                         <div class="fs-4">⏳</div>
-                        <h5 class="font-heading mb-0" style="color: #ffc107;">@ViewBag.PendingOrders</h5>
+                        <h5 class="font-heading mb-0" style="color: #7d5f00;">@ViewBag.PendingOrders</h5>
                         <small class="hierarchy-tertiary">Pending</small>
                     </div>
                 </div>
@@ -111,7 +111,7 @@
                             </p>
                         </div>
                     </div>
-                    <div class="card-footer bg-primary text-white text-center py-2 rounded-bottom-4 small">
+                    <div class="card-footer bg-primary-accessible text-white text-center py-2 rounded-bottom-4 small">
                         Go to Inventory →
                     </div>
                 </div>
@@ -133,7 +133,7 @@
                             </p>
                         </div>
                     </div>
-                    <div class="card-footer bg-success text-white text-center py-2 rounded-bottom-4 small">
+                    <div class="card-footer bg-success-accessible text-white text-center py-2 rounded-bottom-4 small">
                         Go to Orders →
                     </div>
                 </div>
@@ -149,14 +149,36 @@
                             <span style="font-size:2.4rem;">⭐</span>
                         </div>
                         <div>
-                            <h5 class="fw-bold mb-1 text-dark">Reviews</h5>
+                            <h5 class="fw-bold mb-1 text-dark">Product Reviews</h5>
                             <p class="text-muted small mb-2">
-                                View customer feedback
+                                Moderate customer product ratings
                             </p>
                         </div>
                     </div>
                     <div class="card-footer bg-warning text-dark text-center py-2 rounded-bottom-4 small">
-                        Go to Reviews →
+                        Go to Product Reviews →
+                    </div>
+                </div>
+            </a>
+        </div>
+
+        <!-- Store Reviews -->
+        <div class="col-md-4">
+            <a asp-controller="Staff" asp-action="StoreReviews" class="text-decoration-none">
+                <div class="card border-0 shadow-sm rounded-4 h-100 mgr-card">
+                    <div class="card-body p-4 d-flex align-items-center gap-4">
+                        <div class="bg-info bg-opacity-10 rounded-4 p-3">
+                            <span style="font-size:2.4rem;">💬</span>
+                        </div>
+                        <div>
+                            <h5 class="fw-bold mb-1 text-dark">Store Reviews</h5>
+                            <p class="text-muted small mb-2">
+                                Approve store testimonials for homepage
+                            </p>
+                        </div>
+                    </div>
+                    <div class="card-footer bg-info text-dark text-center py-2 rounded-bottom-4 small">
+                        Go to Store Reviews →
                     </div>
                 </div>
             </a>
@@ -197,11 +219,13 @@
                                     <div class="d-flex gap-2">
 
                                         <!-- MARK READ -->
-                                        <a asp-action="MarkMessageAsRead"
-                                               asp-route-id="@msg.Id"
-                                               class="btn-kawaii btn-secondary-kawaii btn-sm radius-pill">
-                                            ✔ Read
-                                        </a>
+                                        <form asp-action="MarkMessageAsRead" method="post" class="d-inline">
+                                            <input type="hidden" name="id" value="@msg.Id" />
+                                            <button type="submit"
+                                                    class="btn-kawaii btn-secondary-kawaii btn-sm radius-pill">
+                                                ✔ Read
+                                            </button>
+                                        </form>
 
                                         <!-- REPLY BUTTON -->
                                         <button class="btn-kawaii btn-primary-kawaii btn-sm radius-pill"

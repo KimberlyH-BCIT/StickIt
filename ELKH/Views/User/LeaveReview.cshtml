@@ -245,9 +245,10 @@
             const radio = document.querySelector(`input[name="Rating"][value="${value}"]`);
             if (radio) radio.checked = true;
 
-            // Update rating text
+            // Update rating description (aria-live region)
             const texts = ['', 'Poor', 'Fair', 'Good', 'Very Good', 'Excellent'];
-            document.getElementById('ratingText').textContent = texts[value] || '';
+            const ratingDesc = document.getElementById('rating-description');
+            if (ratingDesc) ratingDesc.textContent = `Current rating: ${texts[value] || ''} (${value} out of 5 stars)`;
 
             highlightStars(value);
         }

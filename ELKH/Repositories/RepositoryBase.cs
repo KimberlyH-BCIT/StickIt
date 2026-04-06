@@ -10,6 +10,26 @@ namespace ELKH.Repositories
     /// </summary>
     /// <typeparam name="TEntity">The entity type</typeparam>
     /// <typeparam name="TKey">The primary key type</typeparam>
+    /// <remarks>
+    /// TABLE OF CONTENTS (166 lines)
+    /// ================================================================================
+    /// 1. Constructor ................................................... Lines  14-22
+    ///    - RepositoryBase()   // Context + Logger dependency injection
+    ///
+    /// 2. Read Operations .............................................. Lines  24-79
+    ///    - GetById / GetByIdAsync       // Entity lookup by primary key
+    ///    - GetAll / GetAllAsync         // Full table retrieval
+    ///
+    /// 3. Write Staging (no save) ...................................... Lines  81-87
+    ///    - Add / Update / Delete        // Stage change without persisting
+    ///
+    /// 4. Write + Save (async) ......................................... Lines  89-166
+    ///    - AddAndSaveAsync      // Insert and immediately persist
+    ///    - UpdateAndSaveAsync   // Update and immediately persist
+    ///    - DeleteAsync          // Delete by ID and immediately persist
+    ///    - DeleteAndSave        // Delete with synchronous save
+    /// ================================================================================
+    /// </remarks>
     public abstract class RepositoryBase<TEntity, TKey> where TEntity : class
     {
         protected readonly ApplicationDbContext Context;

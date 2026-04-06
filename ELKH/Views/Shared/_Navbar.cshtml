@@ -8,10 +8,10 @@
 @using Microsoft.AspNetCore.Identity
 @inject SignInManager<IdentityUser> SignInManager
 
-<header class="kawaii-header site-header bg-white box-shadow mb-3" role="banner" id="site-header">
+<header class="kawaii-header mb-3" role="banner" id="site-header">
 
     @* Top bar: brand + login greeting with professional clean styling *@
-    <div class="header-top border-bottom py-2">
+    <div class="header-top py-2">
         <div class="container-fluid d-flex align-items-center justify-content-between flex-wrap gap-2">
             <a class="kawaii-brand" 
                asp-area="" asp-controller="Home" asp-action="Index"
@@ -29,7 +29,7 @@
     <partial name="_SearchBar" />
 
     @* Navigation strip with soft kawaii styling *@
-    <nav class="kawaii-nav header-nav border-top" role="navigation" aria-label="Main navigation" id="site-navigation">
+    <nav class="kawaii-nav" role="navigation" aria-label="Main navigation" id="site-navigation">
         <div class="container-fluid d-flex align-items-center py-2">
             <button class="kawaii-nav-hamburger btn-kawaii btn-outline-kawaii flex-shrink-0 me-3"
                     type="button"
@@ -63,42 +63,65 @@
                     </li>
                 </ul>
             }
+            else if (User.IsInRole("Manager"))
+            {
+                <ul class="navbar-nav kawaii-nav-list flex-row flex-grow-1 justify-content-evenly mb-0 gap-2">
+                    <li class="nav-item">
+                        <a class="kawaii-nav-link glow-on-hover" asp-controller="Manager" asp-action="Index">
+                            <span class="sparkle">Manager Home</span>
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="kawaii-nav-link" asp-area="" asp-controller="Home" asp-action="Index">View as Customer</a>
+                    </li>
+                </ul>
+            }
+            else if (User.IsInRole("Staff"))
+            {
+                <ul class="navbar-nav kawaii-nav-list flex-row flex-grow-1 justify-content-evenly mb-0 gap-2">
+                    <li class="nav-item">
+                        <a class="kawaii-nav-link glow-on-hover" asp-controller="Staff" asp-action="Index">
+                            <span class="sparkle">Staff Home</span>
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="kawaii-nav-link" asp-area="" asp-controller="Home" asp-action="Index">View as Customer</a>
+                    </li>
+                </ul>
+            }
             else
             {
                 <ul class="navbar-nav kawaii-nav-list flex-row flex-grow-1 justify-content-evenly mb-0 gap-2">
                     <li class="nav-item">
-                        <a class="kawaii-nav-link glow-on-hover" asp-area="" asp-controller="Home" asp-action="Index">
-                            <span class="sparkle">Home</span>
-                        </a>
+                        <a class="kawaii-nav-link glow-on-hover" asp-area="" asp-controller="Home" asp-action="Index">Home</a>
                     </li>
                     <li class="nav-item">
                         <a class="kawaii-nav-link" asp-area="" asp-controller="Product" asp-action="Index">Products</a>
                     </li>
                     <li class="nav-item">
                         <a class="kawaii-promo-link kawaii-nav-link" asp-controller="Promotions" asp-action="Index">
-                            <i class="bi bi-percent me-1" aria-hidden="true"></i>
-                            <span class="sparkle">Promotions</span>
+                            <i class="bi bi-percent me-1" aria-hidden="true"></i>Promotions
                         </a>
                     </li>
                     <li class="nav-item dropdown">
                         <a class="kawaii-nav-link dropdown-toggle" href="#" id="navbarCategoriesDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false" aria-haspopup="true">
                             Categories
                         </a>
-                        <ul class="dropdown-menu kawaii-dropdown-menu surface-lavender" aria-labelledby="navbarCategoriesDropdown" role="menu">
-                            <li role="presentation"><a class="dropdown-item kawaii-dropdown-item" role="menuitem" asp-controller="Category" asp-action="ByCategory" asp-route-id="1">Canadian</a></li>
-                            <li role="presentation"><a class="dropdown-item kawaii-dropdown-item" role="menuitem" asp-controller="Category" asp-action="ByCategory" asp-route-id="2">Christmas</a></li>
-                            <li role="presentation"><a class="dropdown-item kawaii-dropdown-item" role="menuitem" asp-controller="Category" asp-action="ByCategory" asp-route-id="3">Cute Animals</a></li>
-                            <li role="presentation"><a class="dropdown-item kawaii-dropdown-item" role="menuitem" asp-controller="Category" asp-action="ByCategory" asp-route-id="4">Easter</a></li>
-                            <li role="presentation"><a class="dropdown-item kawaii-dropdown-item" role="menuitem" asp-controller="Category" asp-action="ByCategory" asp-route-id="5">Food</a></li>
-                            <li role="presentation"><a class="dropdown-item kawaii-dropdown-item" role="menuitem" asp-controller="Category" asp-action="ByCategory" asp-route-id="6">Halloween</a></li>
-                            <li role="presentation"><a class="dropdown-item kawaii-dropdown-item" role="menuitem" asp-controller="Category" asp-action="ByCategory" asp-route-id="7">Lunar New Year</a></li>
-                            <li role="presentation"><a class="dropdown-item kawaii-dropdown-item" role="menuitem" asp-controller="Category" asp-action="ByCategory" asp-route-id="8">Nature & Floral</a></li>
-                            <li role="presentation"><a class="dropdown-item kawaii-dropdown-item" role="menuitem" asp-controller="Category" asp-action="ByCategory" asp-route-id="9">New Years Eve</a></li>
-                            <li role="presentation"><a class="dropdown-item kawaii-dropdown-item" role="menuitem" asp-controller="Category" asp-action="ByCategory" asp-route-id="10">Thanksgiving</a></li>
-                            <li role="presentation"><hr class="dropdown-divider soft-divider"></li>
-                            <li role="presentation"><a class="dropdown-item kawaii-dropdown-item" role="menuitem" asp-controller="Category" asp-action="ByCategory" asp-route-id="11">Miscellaneous</a></li>
-                            <li role="presentation"><hr class="dropdown-divider soft-divider"></li>
-                            <li role="presentation"><a class="dropdown-item kawaii-dropdown-item" role="menuitem" asp-controller="Category" asp-action="Index">View All Categories</a></li>
+                        <ul class="dropdown-menu kawaii-dropdown-menu surface-lavender" aria-labelledby="navbarCategoriesDropdown">
+                            <li><a class="dropdown-item kawaii-dropdown-item" asp-controller="Category" asp-action="ByCategory" asp-route-id="1">Canadian</a></li>
+                            <li><a class="dropdown-item kawaii-dropdown-item" asp-controller="Category" asp-action="ByCategory" asp-route-id="2">Christmas</a></li>
+                            <li><a class="dropdown-item kawaii-dropdown-item" asp-controller="Category" asp-action="ByCategory" asp-route-id="3">Cute Animals</a></li>
+                            <li><a class="dropdown-item kawaii-dropdown-item" asp-controller="Category" asp-action="ByCategory" asp-route-id="4">Easter</a></li>
+                            <li><a class="dropdown-item kawaii-dropdown-item" asp-controller="Category" asp-action="ByCategory" asp-route-id="5">Food</a></li>
+                            <li><a class="dropdown-item kawaii-dropdown-item" asp-controller="Category" asp-action="ByCategory" asp-route-id="6">Halloween</a></li>
+                            <li><a class="dropdown-item kawaii-dropdown-item" asp-controller="Category" asp-action="ByCategory" asp-route-id="7">Lunar New Year</a></li>
+                            <li><a class="dropdown-item kawaii-dropdown-item" asp-controller="Category" asp-action="ByCategory" asp-route-id="8">Nature & Floral</a></li>
+                            <li><a class="dropdown-item kawaii-dropdown-item" asp-controller="Category" asp-action="ByCategory" asp-route-id="9">New Years Eve</a></li>
+                            <li><a class="dropdown-item kawaii-dropdown-item" asp-controller="Category" asp-action="ByCategory" asp-route-id="10">Thanksgiving</a></li>
+                            <li><hr class="dropdown-divider soft-divider"></li>
+                            <li><a class="dropdown-item kawaii-dropdown-item" asp-controller="Category" asp-action="ByCategory" asp-route-id="11">Miscellaneous</a></li>
+                            <li><hr class="dropdown-divider soft-divider"></li>
+                            <li><a class="dropdown-item kawaii-dropdown-item" asp-controller="Category" asp-action="Index">View All Categories</a></li>
                         </ul>
                     </li>
                     
@@ -153,29 +176,56 @@
             @if (User.IsInRole("Admin"))
             {
                 <li class="nav-item border-bottom border-soft">
-                    <a class="kawaii-nav-link text-dark px-4 py-3 fw-semibold" asp-controller="Admin" asp-action="Index">
+                    <a class="kawaii-nav-link text-dark fw-semibold" asp-controller="Admin" asp-action="Index">
                         <span class="sparkle">Admin Home</span>
                     </a>
                 </li>
                 <li class="nav-item border-bottom border-soft">
-                    <a class="kawaii-nav-link text-dark px-4 py-3" asp-controller="Home" asp-action="Index">View as Customer</a>
+                    <a class="kawaii-nav-link text-dark" asp-controller="Home" asp-action="Index">View as Customer</a>
                 </li>
                 <li class="nav-item border-bottom border-soft">
-                    <a class="kawaii-nav-link text-dark px-4 py-3" asp-controller="Manager" asp-action="Index">View as Manager</a>
+                    <a class="kawaii-nav-link text-dark" asp-controller="Manager" asp-action="Index">View as Manager</a>
                 </li>
                 <li class="nav-item border-bottom border-soft">
-                    <a class="kawaii-nav-link text-dark px-4 py-3" asp-controller="Staff" asp-action="Index">View as Staff</a>
+                    <a class="kawaii-nav-link text-dark" asp-controller="Staff" asp-action="Index">View as Staff</a>
+                </li>
+            }
+            else if (User.IsInRole("Manager"))
+            {
+                <li class="nav-item border-bottom border-soft">
+                    <a class="kawaii-nav-link text-dark fw-semibold" asp-controller="Manager" asp-action="Index">
+                        <span class="sparkle">Manager Home</span>
+                    </a>
+                </li>
+                <li class="nav-item border-bottom border-soft">
+                    <a class="kawaii-nav-link text-dark" asp-area="" asp-controller="Home" asp-action="Index">View as Customer</a>
+                </li>
+            }
+            else if (User.IsInRole("Staff"))
+            {
+                <li class="nav-item border-bottom border-soft">
+                    <a class="kawaii-nav-link text-dark fw-semibold" asp-controller="Staff" asp-action="Index">
+                        <span class="sparkle">Staff Home</span>
+                    </a>
+                </li>
+                <li class="nav-item border-bottom border-soft">
+                    <a class="kawaii-nav-link text-dark" asp-area="" asp-controller="Home" asp-action="Index">View as Customer</a>
                 </li>
             }
             else
             {
                 <li class="nav-item border-bottom border-soft">
-                    <a class="kawaii-nav-link text-dark px-4 py-3" asp-area="" asp-controller="Home" asp-action="Index">
+                    <a class="kawaii-nav-link text-dark fw-semibold" asp-area="" asp-controller="Home" asp-action="Index">
                         <span class="sparkle">Home</span>
                     </a>
                 </li>
                 <li class="nav-item border-bottom border-soft">
-                    <a class="kawaii-nav-link text-dark px-4 py-3" asp-area="" asp-controller="Product" asp-action="Index">Products</a>
+                    <a class="kawaii-nav-link text-dark" asp-area="" asp-controller="Product" asp-action="Index">Products</a>
+                </li>
+                <li class="nav-item border-bottom border-soft">
+                    <a class="kawaii-nav-link kawaii-promo-link text-dark" asp-controller="Promotions" asp-action="Index">
+                        <i class="bi bi-percent me-2" aria-hidden="true"></i>Promotions
+                    </a>
                 </li>
 
                 @* Categories Section with kawaii accordion styling *@
@@ -183,25 +233,25 @@
                     <div class="accordion accordion-flush kawaii-panel" id="categoriesAccordion">
                         <div class="accordion-item border-0">
                             <h2 class="accordion-header" id="categoriesHeading">
-                                <button class="accordion-button collapsed kawaii-nav-link px-4 py-3 text-dark bg-transparent" type="button" data-bs-toggle="collapse" data-bs-target="#categoriesCollapse" aria-expanded="false" aria-controls="categoriesCollapse">
+                                <button class="accordion-button collapsed kawaii-nav-link text-dark bg-transparent" type="button" data-bs-toggle="collapse" data-bs-target="#categoriesCollapse" aria-expanded="false" aria-controls="categoriesCollapse">
                                     Categories
                                 </button>
                             </h2>
                             <div id="categoriesCollapse" class="accordion-collapse collapse" aria-labelledby="categoriesHeading" data-bs-parent="#categoriesAccordion">
                                 <div class="accordion-body p-0 surface-lavender">
                                     <ul class="list-unstyled mb-0">
-                                        <li><a class="kawaii-nav-link dropdown-item py-2 px-5" asp-controller="Product" asp-action="Index" asp-route-category="Canadian">Canadian</a></li>
-                                        <li><a class="kawaii-nav-link dropdown-item py-2 px-5" asp-controller="Product" asp-action="Index" asp-route-category="Christmas">Christmas</a></li>
-                                        <li><a class="kawaii-nav-link dropdown-item py-2 px-5" asp-controller="Product" asp-action="Index" asp-route-category="Cute Animals">Cute Animals</a></li>
-                                        <li><a class="kawaii-nav-link dropdown-item py-2 px-5" asp-controller="Product" asp-action="Index" asp-route-category="Easter">Easter</a></li>
-                                        <li><a class="kawaii-nav-link dropdown-item py-2 px-5" asp-controller="Product" asp-action="Index" asp-route-category="Food">Food</a></li>
-                                        <li><a class="kawaii-nav-link dropdown-item py-2 px-5" asp-controller="Product" asp-action="Index" asp-route-category="Halloween">Halloween</a></li>
-                                        <li><a class="kawaii-nav-link dropdown-item py-2 px-5" asp-controller="Product" asp-action="Index" asp-route-category="Lunar New Year">Lunar New Year</a></li>
-                                        <li><a class="kawaii-nav-link dropdown-item py-2 px-5" asp-controller="Product" asp-action="Index" asp-route-category="Nature & Floral">Nature & Floral</a></li>
-                                        <li><a class="kawaii-nav-link dropdown-item py-2 px-5" asp-controller="Product" asp-action="Index" asp-route-category="New Years Eve">New Years Eve</a></li>
-                                        <li><a class="kawaii-nav-link dropdown-item py-2 px-5" asp-controller="Product" asp-action="Index" asp-route-category="Thanksgiving">Thanksgiving</a></li>
+                                        <li><a class="kawaii-nav-link dropdown-item" asp-controller="Product" asp-action="Index" asp-route-category="Canadian">Canadian</a></li>
+                                        <li><a class="kawaii-nav-link dropdown-item" asp-controller="Product" asp-action="Index" asp-route-category="Christmas">Christmas</a></li>
+                                        <li><a class="kawaii-nav-link dropdown-item" asp-controller="Product" asp-action="Index" asp-route-category="Cute Animals">Cute Animals</a></li>
+                                        <li><a class="kawaii-nav-link dropdown-item" asp-controller="Product" asp-action="Index" asp-route-category="Easter">Easter</a></li>
+                                        <li><a class="kawaii-nav-link dropdown-item" asp-controller="Product" asp-action="Index" asp-route-category="Food">Food</a></li>
+                                        <li><a class="kawaii-nav-link dropdown-item" asp-controller="Product" asp-action="Index" asp-route-category="Halloween">Halloween</a></li>
+                                        <li><a class="kawaii-nav-link dropdown-item" asp-controller="Product" asp-action="Index" asp-route-category="Lunar New Year">Lunar New Year</a></li>
+                                        <li><a class="kawaii-nav-link dropdown-item" asp-controller="Product" asp-action="Index" asp-route-category="Nature & Floral">Nature & Floral</a></li>
+                                        <li><a class="kawaii-nav-link dropdown-item" asp-controller="Product" asp-action="Index" asp-route-category="New Years Eve">New Years Eve</a></li>
+                                        <li><a class="kawaii-nav-link dropdown-item" asp-controller="Product" asp-action="Index" asp-route-category="Thanksgiving">Thanksgiving</a></li>
                                         <li><hr class="soft-divider my-2"></li>
-                                        <li><a class="kawaii-nav-link dropdown-item py-2 px-5" asp-controller="Product" asp-action="Index" asp-route-category="Miscellaneous">Miscellaneous</a></li>
+                                        <li><a class="kawaii-nav-link dropdown-item" asp-controller="Product" asp-action="Index" asp-route-category="Miscellaneous">Miscellaneous</a></li>
                                     </ul>
                                 </div>
                             </div>
@@ -210,33 +260,33 @@
                 </li>
 
                 <li class="nav-item border-bottom border-soft">
-                    <a class="kawaii-nav-link text-dark px-4 py-3" asp-area="" asp-controller="Home" asp-action="Privacy">Privacy</a>
+                    <a class="kawaii-nav-link text-dark" asp-area="" asp-controller="Home" asp-action="Privacy">Privacy</a>
                 </li>
 
                 @if (SignInManager.IsSignedIn(User))
                 {
                     <li class="nav-item border-bottom border-soft">
-                        <a class="kawaii-nav-link text-dark px-4 py-3" asp-area="" asp-controller="Cart" asp-action="Index">
+                        <a class="kawaii-nav-link text-dark" asp-area="" asp-controller="Cart" asp-action="Index">
                             <i class="bi bi-cart3 me-2" aria-hidden="true"></i>My Cart
                         </a>
                     </li>
                     <li class="nav-item border-bottom border-soft">
-                        <a class="kawaii-nav-link text-dark px-4 py-3" asp-area="" asp-controller="Wishlist" asp-action="Index">
-                            <i class="bi bi-heart me-2" aria-hidden="true"></i>Wishlist
+                        <a class="kawaii-nav-link text-dark" asp-area="" asp-controller="Wishlist" asp-action="Index">
+                            <i class="bi bi-heart me-2" aria-hidden="true"></i>My Wishlist
                         </a>
                     </li>
                     <li class="nav-item border-bottom border-soft">
-                        <a class="kawaii-nav-link text-dark px-4 py-3" asp-area="" asp-controller="Order" asp-action="MyHistory">
+                        <a class="kawaii-nav-link text-dark" asp-area="" asp-controller="Order" asp-action="MyHistory">
                             <i class="bi bi-clock-history me-2" aria-hidden="true"></i>My Orders
                         </a>
                     </li>
                     <li class="nav-item border-bottom border-soft">
-                        <a class="kawaii-nav-link text-dark px-4 py-3" asp-area="" asp-controller="User" asp-action="MyRatings">
+                        <a class="kawaii-nav-link text-dark" asp-area="" asp-controller="User" asp-action="MyRatings">
                             <i class="bi bi-star me-2" aria-hidden="true"></i>My Ratings
                         </a>
                     </li>
                     <li class="nav-item border-bottom border-soft">
-                        <a class="kawaii-nav-link text-dark px-4 py-3" asp-area="" asp-controller="User" asp-action="EditProfile">
+                        <a class="kawaii-nav-link text-dark" asp-area="" asp-controller="User" asp-action="EditProfile">
                             <i class="bi bi-person me-2" aria-hidden="true"></i>My Profile
                         </a>
                     </li>

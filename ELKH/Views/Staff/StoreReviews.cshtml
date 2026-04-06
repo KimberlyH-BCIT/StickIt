@@ -1,0 +1,103 @@
+@model List<ELKH.Models.StoreReviewModel>
+
+@{
+    ViewData["Title"] = "Store Review Moderation";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+
+<main role="main" aria-labelledby="main-heading">
+    <div class="container-fluid mt-4 px-4 pb-5">
+
+        <header class="mb-4">
+            <div class="d-flex justify-content-between align-items-center flex-wrap gap-2">
+                <div>
+                    <h1 id="main-heading" class="fw-bold text-primary mb-0">Store Review Moderation</h1>
+                    <p class="text-muted mb-0 small">Approve or remove customer store reviews</p>
+                </div>
+                <a asp-action="Index" class="btn btn-outline-primary rounded-pill px-4">← Dashboard</a>
+            </div>
+        </header>
+
+        @if (TempData["Message"] is string msg)
+        {
+            var parts = msg.Split(',', 2);
+            var alertType = parts[0] == "success" ? "success" : "danger";
+            <div class="alert alert-@alertType alert-dismissible fade show" role="alert">
+                @parts.ElementAtOrDefault(1)?.Trim()
+                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+            </div>
+        }
+
+        @if (!Model.Any())
+        {
+            <div class="alert alert-info" role="status">
+                <i class="bi bi-check-circle me-2" aria-hidden="true"></i>
+                No pending store reviews — all caught up!
+            </div>
+        }
+        else
+        {
+            <p class="text-muted mb-3">
+                <span class="badge bg-warning text-dark">@Model.Count pending</span>
+                review@(Model.Count != 1 ? "s" : "") awaiting moderation
+            </p>
+
+            <div class="row g-3">
+                @foreach (var review in Model)
+                {
+                    <div class="col-md-6 col-xl-4">
+                        <div class="kawaii-card h-100">
+                            <div class="d-flex justify-content-between align-items-start mb-2">
+                                <div>
+                                    <h5 class="mb-0">@review.Title</h5>
+                                    <small class="text-muted">
+                                        by @(review.RegisteredUser?.Email ?? "Unknown") &bull;
+                                        @review.CreatedAt.ToLocalTime().ToString("MMM d, yyyy")
+                                    </small>
+                                </div>
+                                <div class="d-flex align-items-center gap-1">
+                                    @for (int i = 1; i <= 5; i++)
+                                    {
+                                        <i class="bi bi-star@(i <= review.Rating ? "-fill" : "") text-warning" aria-hidden="true"></i>
+                                    }
+                                    <span class="sr-only">@review.Rating out of 5 stars</span>
+                                </div>
+                            </div>
+
+                            @if (review.IsVerifiedBuyer)
+                            {
+                                <span class="badge bg-success mb-2">✓ Verified Buyer</span>
+                            }
+                            @if (review.IsFlagged)
+                            {
+                                <span class="badge bg-danger mb-2">⚑ Flagged</span>
+                            }
+
+                            <p class="text-muted small mb-3">@review.Description</p>
+
+                            <div class="d-flex gap-2 mt-auto">
+                                <form asp-action="ApproveStoreReview" method="post" class="d-inline">
+                                    @Html.AntiForgeryToken()
+                                    <input type="hidden" name="id" value="@review.PkStoreReviewId" />
+                                    <button type="submit" class="btn btn-success btn-sm rounded-pill px-3"
+                                            aria-label="Approve review by @(review.RegisteredUser?.Email ?? "user")">
+                                        <i class="bi bi-check-lg me-1" aria-hidden="true"></i>Approve
+                                    </button>
+                                </form>
+                                <form asp-action="DeleteStoreReview" method="post" class="d-inline">
+                                    @Html.AntiForgeryToken()
+                                    <input type="hidden" name="id" value="@review.PkStoreReviewId" />
+                                    <button type="submit" class="btn btn-outline-danger btn-sm rounded-pill px-3"
+                                            onclick="return confirm('Delete this review?')"
+                                            aria-label="Delete review by @(review.RegisteredUser?.Email ?? "user")">
+                                        <i class="bi bi-trash me-1" aria-hidden="true"></i>Delete
+                                    </button>
+                                </form>
+                            </div>
+                        </div>
+                    </div>
+                }
+            </div>
+        }
+    </div>
+</main>

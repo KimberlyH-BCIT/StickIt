@@ -26,14 +26,14 @@
                         <p class="hierarchy-secondary">@r.Description</p>
                         <small class="hierarchy-tertiary">@r.RatedTime.ToLocalTime().ToString("g")</small>
                         <div class="mt-2 d-flex gap-2">
-                            <form asp-controller="Rating" asp-action="Approve" method="post" class="d-inline">
+                            <form asp-controller="Moderation" asp-action="Approve" method="post" class="d-inline">
                                 @Html.AntiForgeryToken()
-                                <input type="hidden" name="ratingId" value="@r.PkRatingId" />
+                                <input type="hidden" name="id" value="@r.PkRatingId" />
                                 <button class="btn-kawaii btn-primary-kawaii btn-sm">Approve</button>
                             </form>
-                            <form asp-controller="Rating" asp-action="Flag" method="post" class="d-inline">
+                            <form asp-controller="Moderation" asp-action="Flag" method="post" class="d-inline">
                                 @Html.AntiForgeryToken()
-                                <input type="hidden" name="ratingId" value="@r.PkRatingId" />
+                                <input type="hidden" name="id" value="@r.PkRatingId" />
                                 <input type="hidden" name="note" value="Flagged by moderator" />
                                 <button class="btn-kawaii btn-secondary-kawaii btn-sm">Flag</button>
                             </form>

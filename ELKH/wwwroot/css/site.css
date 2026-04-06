@@ -74,20 +74,45 @@ body {
 /* ======================================================================================= */
 
 /* Skip links - always available regardless of design system */
-.skip-link {
+.skip-links {
+    position: absolute;
+    top: 0;
+    left: 0;
+    z-index: 999999;
+}
+
+.skip-links a,
+.skip-links .skip-link {
     position: absolute !important;
-    top: -40px;
+    top: -40px !important;
     left: 6px;
     z-index: 999999;
     padding: 8px 16px;
     background: #000;
-    color: #fff;
+    color: #fff !important;
     text-decoration: none;
     border-radius: 4px;
+    width: auto;
+    height: auto;
+    overflow: visible;
 }
 
-.skip-link:focus {
-    top: 6px;
+.skip-links a:focus,
+.skip-links .skip-link:focus {
+    top: 6px !important;
+}
+
+/* Screen reader only - visible on focus/focus-within (for skip-link containers) */
+.sr-only-focusable:not(:focus-within) {
+    position: absolute !important;
+    width: 1px !important;
+    height: 1px !important;
+    padding: 0 !important;
+    margin: -1px !important;
+    overflow: hidden !important;
+    clip: rect(0, 0, 0, 0) !important;
+    white-space: nowrap !important;
+    border: 0 !important;
 }
 
 /* Screen reader only content */

@@ -13,8 +13,8 @@
 
     <div class="row justify-content-center">
         <div class="col-lg-8 col-md-10">
-            <main class="card shadow-sm" role="main">
-                <div class="card-body p-4 p-md-5">
+            <main class="kawaii-card" role="main">
+                <div>
                     <header class="text-center mb-4">
                         <h1 class="card-title">Create Account</h1>
                         <p class="text-muted mb-0">Join our community to start shopping and track your orders</p>
@@ -31,13 +31,12 @@
                             <div id="registration-status" aria-live="polite" aria-atomic="true" class="sr-only"></div>
 
                             <div asp-validation-summary="ModelOnly" 
-                                 class="alert alert-danger" 
+                                 class="kawaii-card surface-mint mb-4" 
                                  role="alert" 
                                  aria-live="assertive"
-                                 aria-labelledby="validation-heading"
-                                 style="display:none;">
-                                <h3 id="validation-heading" class="alert-heading h6 mb-2">
-                                    <i class="bi bi-exclamation-triangle-fill me-1" aria-hidden="true"></i>
+                                 aria-labelledby="validation-heading">
+                                <h3 id="validation-heading" class="font-heading hierarchy-primary mb-2">
+                                    <i class="bi bi-exclamation-triangle-fill me-1" aria-hidden="true" style="color: var(--purple);"></i>
                                     Please fix the following errors:
                                 </h3>
                             </div>
@@ -87,7 +86,7 @@
                                                 Password
                                             </label>
                                             <button type="button" 
-                                                    class="btn btn-sm btn-outline-secondary position-absolute top-50 end-0 translate-middle-y me-2" 
+                                                    class="btn-kawaii btn-outline-kawaii btn-sm position-absolute top-50 end-0 translate-middle-y me-2" 
                                                     aria-label="Show password" 
                                                     onclick="togglePassword('Input_Password', this)">
                                                 <i class="bi bi-eye" aria-hidden="true"></i>
@@ -116,7 +115,7 @@
                                                 Confirm Password
                                             </label>
                                             <button type="button" 
-                                                    class="btn btn-sm btn-outline-secondary position-absolute top-50 end-0 translate-middle-y me-2" 
+                                                    class="btn-kawaii btn-outline-kawaii btn-sm position-absolute top-50 end-0 translate-middle-y me-2" 
                                                     aria-label="Show password confirmation" 
                                                     onclick="togglePassword('Input_ConfirmPassword', this)">
                                                 <i class="bi bi-eye" aria-hidden="true"></i>
@@ -218,8 +217,8 @@
                             </div>
 
                             <div class="d-grid gap-2 mb-4">
-                                <button id="registerSubmit" type="submit" class="btn btn-lg btn-primary">
-                                    <i class="bi bi-person-plus-fill me-2"></i>Create Account
+                                <button id="registerSubmit" type="submit" class="btn-kawaii btn-primary-kawaii btn-lg">
+                                    <i class="bi bi-person-plus-fill me-2" aria-hidden="true"></i>Create Account
                                 </button>
                             </div>
 
@@ -238,20 +237,18 @@
             @* External Login Section (only shown if providers are configured) *@
             @if ((Model.ExternalLogins?.Count ?? 0) > 0)
             {
-                <div class="card shadow-sm mt-4">
-                    <div class="card-body p-4">
-                        <h5 class="card-title text-center mb-3">Or register with</h5>
-                        <form id="external-account" asp-page="./ExternalLogin" asp-route-returnUrl="@Model.ReturnUrl" method="post">
-                            <div class="d-grid gap-2">
-                                @foreach (var provider in Model.ExternalLogins!)
-                                {
-                                    <button type="submit" class="btn btn-outline-secondary" name="provider" value="@provider.Name" title="Register using your @provider.DisplayName account">
-                                        <i class="bi bi-@provider.Name.ToLower()"></i> @provider.DisplayName
-                                    </button>
-                                }
-                            </div>
-                        </form>
-                    </div>
+                <div class="kawaii-card mt-4">
+                    <h5 class="text-center mb-3">Or register with</h5>
+                    <form id="external-account" asp-page="./ExternalLogin" asp-route-returnUrl="@Model.ReturnUrl" method="post">
+                        <div class="d-grid gap-2">
+                            @foreach (var provider in Model.ExternalLogins!)
+                            {
+                                <button type="submit" class="btn-kawaii btn-outline-kawaii" name="provider" value="@provider.Name" title="Register using your @provider.DisplayName account">
+                                    <i class="bi bi-@provider.Name.ToLower()" aria-hidden="true"></i> @provider.DisplayName
+                                </button>
+                            }
+                        </div>
+                    </form>
                 </div>
             }
         </div>
@@ -261,45 +258,4 @@
 @section Scripts {
     <partial name="_ValidationScriptsPartial" />
     <script src="https://www.google.com/recaptcha/api.js" async defer></script>
-
-    <!-- Enhanced Accessibility Styles -->
-    <style>
-        /* Skip Links for Enhanced Keyboard Navigation */
-        .skip-links {
-            position: relative;
-            z-index: 1050;
-        }
-
-        .skip-link {
-            position: absolute !important;
-            left: -10000px !important;
-            top: auto !important;
-            width: 1px !important;
-            height: 1px !important;
-            overflow: hidden !important;
-        }
-
-        .skip-link:focus {
-            position: static !important;
-            width: auto !important;
-            height: auto !important;
-            overflow: visible !important;
-            margin: 0 0.5rem 0.5rem 0 !important;
-            padding: 0.5rem 1rem !important;
-            z-index: 1051 !important;
-        }
-
-        /* Screen Reader Only but Focusable Elements */
-        .sr-only-focusable:not(:focus):not(:focus-within) {
-            position: absolute !important;
-            width: 1px !important;
-            height: 1px !important;
-            padding: 0 !important;
-            margin: -1px !important;
-            overflow: hidden !important;
-            clip: rect(0, 0, 0, 0) !important;
-            white-space: nowrap !important;
-            border: 0 !important;
-        }
-    </style>
 }

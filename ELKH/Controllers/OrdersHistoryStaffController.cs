@@ -5,6 +5,10 @@ using Microsoft.AspNetCore.Mvc;
 
 namespace ELKH.Controllers
 {
+    /// <summary>
+    /// Staff, Manager, and Admin controller for managing customer orders and updating delivery statuses.
+    /// Provides filtered order listings, status updates, and order detail views.
+    /// </summary>
     [Authorize(Roles = "Staff,Admin,Manager")]
     public class OrdersHistoryStaffController : Controller
     {

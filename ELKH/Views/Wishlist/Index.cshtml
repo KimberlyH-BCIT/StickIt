@@ -6,47 +6,45 @@
 
 <!-- Skip Links for Keyboard Navigation -->
 <nav class="skip-links sr-only-focusable mb-2" aria-label="Skip navigation">
-    <a href="#wishlist-heading" class="skip-link btn btn-primary">Skip to wishlist</a>
-    <a href="#wishlist-sorting" class="skip-link btn btn-primary">Skip to sorting options</a>
-    <a href="#wishlist-items" class="skip-link btn btn-primary">Skip to wishlist items</a>
+    <a href="#wishlist-heading" class="skip-link btn-kawaii btn-secondary-kawaii">Skip to wishlist</a>
+    <a href="#wishlist-sorting" class="skip-link btn-kawaii btn-secondary-kawaii">Skip to sorting options</a>
+    <a href="#wishlist-items" class="skip-link btn-kawaii btn-secondary-kawaii">Skip to wishlist items</a>
 </nav>
 
 <main role="main" aria-labelledby="wishlist-heading">
-    <header class="wishlist-header mb-4">
-        <h1 id="wishlist-heading" class="fw-bold">
-            <i class="bi bi-heart-fill text-danger me-2" aria-hidden="true"></i>
+    <header class="kawaii-hero">
+        <h1 id="wishlist-heading" class="kawaii-cloud-title font-heading">
+            <i class="bi bi-heart-fill me-2" aria-hidden="true" style="color: var(--pink);"></i>
             My Wishlist
         </h1>
-        <p class="text-muted mb-0">Your saved favorite products for later shopping</p>
+        <p class="kawaii-subtitle">Your saved favorite products for later shopping</p>
     </header>
 
     <!-- Sorting Controls with Enhanced Accessibility -->
     <section class="sorting-controls mb-4" aria-labelledby="sorting-heading" id="wishlist-sorting">
         <h2 id="sorting-heading" class="sr-only">Wishlist sorting options</h2>
 
-        <div class="card bg-light">
-            <div class="card-body py-3">
-                <div class="d-flex align-items-center gap-2" role="group" aria-label="Sort wishlist items">
-                    <span class="text-muted small me-2" id="sort-label">Sort by:</span>
-                    <a class="btn btn-sm btn-outline-primary" 
-                       asp-action="Index" 
-                       asp-route-sort="date_desc"
-                       role="button"
-                       aria-describedby="sort-label"
-                       aria-label="Sort wishlist items by newest first">
-                        <i class="bi bi-sort-down-alt me-1" aria-hidden="true"></i>
-                        Newest
-                    </a>
-                    <a class="btn btn-sm btn-outline-primary" 
-                       asp-action="Index" 
-                       asp-route-sort="date_asc"
-                       role="button"
-                       aria-describedby="sort-label"
-                       aria-label="Sort wishlist items by oldest first">
-                        <i class="bi bi-sort-up me-1" aria-hidden="true"></i>
-                        Oldest
-                    </a>
-                </div>
+        <div class="kawaii-panel">
+            <div class="d-flex align-items-center gap-2 flex-wrap" role="group" aria-label="Sort wishlist items">
+                <span class="hierarchy-tertiary me-1" id="sort-label">Sort by:</span>
+                <a class="tab-kawaii" 
+                   asp-action="Index" 
+                   asp-route-sort="date_desc"
+                   role="button"
+                   aria-describedby="sort-label"
+                   aria-label="Sort wishlist items by newest first">
+                    <i class="bi bi-sort-down-alt me-1" aria-hidden="true"></i>
+                    Newest
+                </a>
+                <a class="tab-kawaii" 
+                   asp-action="Index" 
+                   asp-route-sort="date_asc"
+                   role="button"
+                   aria-describedby="sort-label"
+                   aria-label="Sort wishlist items by oldest first">
+                    <i class="bi bi-sort-up me-1" aria-hidden="true"></i>
+                    Oldest
+                </a>
             </div>
         </div>
     </section>
@@ -63,7 +61,7 @@
         ActionController = "Product",
         ActionAction = "Index",
         ActionIcon = "grid-3x3-gap",
-        ActionButtonClass = "btn btn-primary"
+        ActionButtonClass = "btn-kawaii btn-primary-kawaii"
     };
 
     <section aria-labelledby="empty-wishlist-heading" id="wishlist-items">
@@ -204,87 +202,14 @@ else
 
 <!-- Back to Shopping Link -->
 <nav aria-label="Return to shopping" class="mt-4">
-    <a asp-controller="Product" asp-action="Index" class="btn btn-outline-primary">
+    <a asp-controller="Product" asp-action="Index" class="btn-kawaii btn-outline-kawaii">
         <i class="bi bi-arrow-left me-1" aria-hidden="true"></i>
         Back to Shop
     </a>
 </nav>
 </main>
 
-<!-- Enhanced Accessibility Styles -->
 <style>
-    /* Skip Links for Enhanced Keyboard Navigation */
-    .skip-links {
-        position: relative;
-        z-index: 1050;
-    }
-
-    .skip-link {
-        position: absolute !important;
-        left: -10000px !important;
-        top: auto !important;
-        width: 1px !important;
-        height: 1px !important;
-        overflow: hidden !important;
-    }
-
-    .skip-link:focus {
-        position: static !important;
-        width: auto !important;
-        height: auto !important;
-        overflow: visible !important;
-        margin: 0 0.5rem 0.5rem 0 !important;
-        padding: 0.5rem 1rem !important;
-        z-index: 1051 !important;
-    }
-
-    /* Screen Reader Only but Focusable Elements */
-    .sr-only-focusable:not(:focus):not(:focus-within) {
-        position: absolute !important;
-        width: 1px !important;
-        height: 1px !important;
-        padding: 0 !important;
-        margin: -1px !important;
-        overflow: hidden !important;
-        clip: rect(0, 0, 0, 0) !important;
-        white-space: nowrap !important;
-        border: 0 !important;
-    }
-
-    /* Enhanced Focus Management for Wishlist Items */
-    .wishlist-item:focus-within {
-        outline: 2px solid #0d6efd;
-        outline-offset: 2px;
-        border-radius: 0.375rem;
-    }
-
-    /* Wishlist Card Hover and Focus States */
-    .wishlist-item {
-        transition: transform 0.2s ease, box-shadow 0.2s ease;
-    }
-
-    .wishlist-item:hover,
-    .wishlist-item:focus-within {
-        transform: translateY(-2px);
-        box-shadow: 0 0.5rem 1.5rem rgba(0, 0, 0, 0.1) !important;
-    }
-
-    /* Reduce motion for users who prefer it */
-    @@media (prefers-reduced-motion: reduce) {
-        .wishlist-item {
-            transition: none;
-        }
-        .wishlist-item:hover,
-        .wishlist-item:focus-within {
-            transform: none;
-        }
-    }
-
-    /* Enhanced button accessibility */
-    .remove-from-wishlist-button:focus {
-        box-shadow: 0 0 0 0.2rem rgba(220, 53, 69, 0.25);
-    }
-
     /* Section scroll targets */
     #wishlist-items:target,
     #wishlist-sorting:target {

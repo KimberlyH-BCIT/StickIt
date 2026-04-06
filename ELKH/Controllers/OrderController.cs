@@ -122,4 +122,33 @@ public class OrderController : AuthenticatedControllerBase
         var details = await _orderManagementRepo.OrderDetailsAsync(email);
         return View(details);
     }
+
+    // POST: /Order/CancelOrder/5
+    // Allows the order owner to cancel a Pending order.
+    [HttpPost]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> CancelOrder(int id)
+    {
+        var authResult = RequireAuthenticatedUser(out var email);
+        if (authResult != null) return authResult;
+
+        var order = await _orderManagementRepo.GetOrderWithDetailsAsync(id);
+        if (order == null) return NotFound();
+
+        // Only the order owner may cancel (Admins may use the manager panel instead).
+        if (order.RegisteredUser?.Email != email)
+            return Forbid();
+
+        if (order.OrderStatus != ELKH.Models.OrderStatus.Pending)
+        {
+            SetErrorMessage("Only orders in Pending status can be cancelled.");
+            return RedirectToAction(nameof(Details), new { id });
+        }
+
+        order.OrderStatus = ELKH.Models.OrderStatus.Cancelled;
+        await _db.SaveChangesAsync();
+
+        SetSuccessMessage("Your order has been cancelled.");
+        return RedirectToAction(nameof(MyHistory));
+    }
 }

@@ -146,34 +146,8 @@
         /* =========================================================================== */
         /* ║ GLOBAL ACCESSIBILITY STYLES - WCAG 2.1 AA COMPLIANCE                   ║ */
         /* ║ Now using kawaii theme CSS variables for consistent styling            ║ */
+        /* ║ Skip-link styles are defined globally in site.css                     ║ */
         /* =========================================================================== */
-
-        /* Skip links for keyboard navigation */
-        .skip-links {
-            position: absolute;
-            top: -40px;
-            left: 6px;
-            z-index: 10000;
-        }
-
-        .skip-links a {
-            position: absolute;
-            top: 0;
-            background: var(--ink, #4A3B5C);
-            color: var(--white, #fff);
-            padding: 8px 16px;
-            text-decoration: none;
-            border-radius: var(--radius-xs, 6px);
-            font-weight: var(--font-weight-bold, 700);
-            transition: top var(--transition-med, 0.3s);
-        }
-
-        .skip-links a:focus,
-        .skip-links a:active {
-            top: 0;
-            position: relative;
-            background: var(--purple, #7B5FB6);
-        }
 
         /* Enhanced focus indicators using kawaii theme */
         *:focus,
@@ -270,7 +244,7 @@
 
         /* Mobile touch target sizes (minimum 44x44px) */
         @@media (max-width: 768px) {
-            .btn, .nav-link, .dropdown-item {
+            .btn, .nav-link, .kawaii-nav-link, .dropdown-item {
                 min-height: 44px;
                 min-width: 44px;
                 padding: 12px 16px;
@@ -286,12 +260,12 @@
 
 <body>
     <!-- Skip Navigation Links for Screen Reader and Keyboard Users -->
-    <div class="skip-links">
-        <a href="#main-content">Skip to main content</a>
-        <a href="#site-navigation">Skip to navigation</a>
-        <a href="#search-form">Skip to search</a>
-        <a href="#site-footer">Skip to footer</a>
-    </div>
+    <nav class="skip-links sr-only-focusable" aria-label="Skip navigation">
+        <a href="#main-content" class="skip-link">Skip to main content</a>
+        <a href="#site-navigation" class="skip-link">Skip to navigation</a>
+        <a href="#search-form" class="skip-link">Skip to search</a>
+        <a href="#site-footer" class="skip-link">Skip to footer</a>
+    </nav>
 
     <!-- Floating Sparkles Background Effect -->
     <div class="sparkle-bg" aria-hidden="true"></div>

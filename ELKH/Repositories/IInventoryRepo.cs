@@ -4,6 +4,11 @@ using Microsoft.AspNetCore.Http;
 
 namespace ELKH.Repositories
 {
+    /// <summary>
+    /// Repository interface for inventory management operations.
+    /// Defines contracts for product listing, stock adjustment, image management,
+    /// category retrieval, and product review deletion.
+    /// </summary>
     public interface IInventoryRepo
     {
 
@@ -14,10 +19,7 @@ namespace ELKH.Repositories
         Task<ProductVM> EditProductQuantity(int productId, int quantityAmount);
         Task<bool> UploadImage(int productId, IFormFile file);
 
-        // already used in controller but missing in interface
         Task<ProductModel> GetProductById(int Id);
-        Task<bool> EditProduct(ProductVM vm);
-        Task<int> AddProduct(ProductVM vm);
         Task<List<CategoryModel>> GetAllCategories();
         Task<bool> DeleteProductReview(int reviewId);
         Task<bool> DeleteImage(int imageId);

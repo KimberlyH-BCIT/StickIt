@@ -6,6 +6,35 @@ using Microsoft.EntityFrameworkCore;
 
 namespace ELKH.Repositories
 {
+    /// <summary>
+    /// Repository implementation for inventory management operations.
+    /// Handles product listing, stock adjustments, image upload/deletion,
+    /// category retrieval, and product review removal.
+    /// </summary>
+    /// <remarks>
+    /// TABLE OF CONTENTS
+    /// ================================================================================
+    /// 1. Constructor &amp; Dependencies .................................... Lines   9-21
+    ///    - InventoryRepo()    // ApplicationDbContext, ImageStoreContext, RoleManager
+    ///
+    /// 2. Product Listing .............................................. Lines  23-121
+    ///    - GetAllProduct (sort+filter)   // Paginated list with sort and stock filter
+    ///    - GetAllProduct (search-only)   // Simple search overload
+    ///
+    /// 3. Product Read/Write ........................................... Lines 123-160
+    ///    - GetProductById         // Full product with category and ratings included
+    ///    - EditProductQuantity    // Stock count adjustment
+    ///    - DeleteProductReview    // Hard-delete a product rating record
+    ///
+    /// 4. Category Lookup .............................................. Lines 162-167
+    ///    - GetAllCategories       // Full unfiltered category list
+    ///
+    /// 5. Image Management ............................................. Lines 169-214
+    ///    - GetProductImages       // List all images for a given product
+    ///    - UploadImage            // Validate and persist a new product image
+    ///    - DeleteImage            // Remove an image by ID from the image store
+    /// ================================================================================
+    /// </remarks>
     public class InventoryRepo : IInventoryRepo
     {
         private readonly ApplicationDbContext _context;
@@ -132,45 +161,7 @@ namespace ELKH.Repositories
                 .FirstOrDefaultAsync(p => p.PkProductId == Id) ?? null!;
         }
 
-        // --- EditProduct ------------------------------------------------------
-        public async Task<bool> EditProduct(ProductVM vm)
-        {
-            var product = await GetProductById(vm.ProductId);
-            if (product == null) return false;
-
-            product.Name = vm.ProductName;
-            product.Description = vm.Description;
-            product.Price = vm.Price;
-            product.FkCategoryId = vm.CategoryId;
-            product.StockQuantity = vm.StockQuantity;
-            product.DiscountPercent = vm.DiscountPercent;
-            product.IsActive = vm.IsActive;
-
-            await _context.SaveChangesAsync();
-            return true;
-        }
-
-        // --- AddProduct -------------------------------------------------------
-        public async Task<int> AddProduct(ProductVM vm)
-        {
-            var product = new ProductModel
-            {
-                Name = vm.ProductName,
-                NameNormalized = vm.ProductName.ToLower(),
-                Price = vm.Price,
-                DiscountPercent = vm.DiscountPercent,
-                StockQuantity = vm.StockQuantity,
-                IsActive = vm.IsActive,
-                FkCategoryId = vm.CategoryId,
-                Description = vm.Description
-            };
-
-            await _context.Products.AddAsync(product);
-            await _context.SaveChangesAsync();
-            return product.PkProductId;
-        }
-
-        // --- EditProductQuantity ----------------------------------------------
+        // --- EditProductQuantity
         public async Task<ProductVM> EditProductQuantity(int productId, int quantityAmount)
         {
             var product = await _context.Products

@@ -7,49 +7,53 @@
 ╚==================================================================================╝
 *@
 
-<section aria-labelledby="search-filter-heading">
-    <h2 id="search-filter-heading" class="sr-only">Search and Filter Products</h2>
+<section class="container-kawaii mb-4" aria-labelledby="search-filter-heading">
+    <div class="kawaii-panel">
+        <h2 id="search-filter-heading" class="sr-only">Search and Filter Products</h2>
 
-    <form method="get" asp-action="Index" class="row g-2 mb-3 align-items-end" role="search" aria-label="Product search and filtering">
-        <div class="col-sm-5">
-            <label for="product-search-input" class="form-label fw-semibold">Search</label>
-            <input type="search" 
-                   id="product-search-input"
-                   name="search" 
-                   value="@Model.Search"
-                   class="form-control" 
-                   placeholder="Search by name or description..."
-                   aria-describedby="search-help" />
-            <div id="search-help" class="form-text sr-only">
-                Enter keywords to search product names and descriptions
+        <form method="get" asp-action="Index" class="row g-3 align-items-end" role="search" aria-label="Product search and filtering">
+            <div class="col-sm-5">
+                <label for="product-search-input" class="text-medium mb-1 d-block">Search</label>
+                <input type="search"
+                       id="product-search-input"
+                       name="search"
+                       value="@Model.Search"
+                       class="input-kawaii"
+                       placeholder="Search by name or description..."
+                       aria-describedby="search-help" />
+                <div id="search-help" class="sr-only">
+                    Enter keywords to search product names and descriptions
+                </div>
             </div>
-        </div>
-        <div class="col-sm-4">
-            <label for="category-filter-select" class="form-label fw-semibold">Category</label>
-            <select id="category-filter-select"
-                    name="categoryId" 
-                    asp-items="Model.Categories" 
-                    class="form-select"
-                    aria-describedby="category-help">
-                <option value="">All categories</option>
-            </select>
-            <div id="category-help" class="form-text sr-only">
-                Filter products by category
+            <div class="col-sm-4">
+                <label for="category-filter-select" class="text-medium mb-1 d-block">Category</label>
+                <select id="category-filter-select"
+                        name="categoryId"
+                        asp-items="Model.Categories"
+                        class="select-kawaii"
+                        aria-describedby="category-help">
+                    <option value="">All categories</option>
+                </select>
+                <div id="category-help" class="sr-only">
+                    Filter products by category
+                </div>
             </div>
-        </div>
-        <div class="col-sm-auto d-flex gap-2">
-            <input type="hidden" name="sort" value="@Model.CurrentSort" />
-            <button type="submit" class="btn btn-primary" aria-label="Apply search and category filters">
-                <span class="d-none d-sm-inline">Filter</span>
-                <span class="d-sm-none">Go</span>
-            </button>
-            @if (!string.IsNullOrWhiteSpace(Model.Search) || Model.CategoryId.HasValue)
-            {
-                <a asp-action="Index" class="btn btn-outline-secondary" aria-label="Clear all filters and show all products">
-                    <span class="d-none d-sm-inline">Clear</span>
-                    <span class="d-sm-none">✕</span>
-                </a>
-            }
-        </div>
-    </form>
+            <div class="col-sm-auto d-flex gap-2">
+                <input type="hidden" name="sort" value="@Model.CurrentSort" />
+                <button type="submit" class="btn-kawaii btn-secondary-kawaii" aria-label="Apply search and category filters">
+                    <i class="bi bi-search me-1" aria-hidden="true"></i>
+                    <span class="d-none d-sm-inline">Filter</span>
+                    <span class="d-sm-none">Go</span>
+                </button>
+                @if (!string.IsNullOrWhiteSpace(Model.Search) || Model.CategoryId.HasValue)
+                {
+                    <a asp-action="Index" class="btn-kawaii btn-outline-kawaii" aria-label="Clear all filters and show all products">
+                        <i class="bi bi-x-lg me-1" aria-hidden="true"></i>
+                        <span class="d-none d-sm-inline">Clear</span>
+                        <span class="d-sm-none">✕</span>
+                    </a>
+                }
+            </div>
+        </form>
+    </div>
 </section>
