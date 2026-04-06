@@ -245,6 +245,26 @@ namespace ELKH.Services
         #region Reindexing Logic
 
         /// <summary>
+        /// Returns <see langword="true"/> when the <c>Products</c> table is present in the
+        /// SQLite schema.  Uses a direct <c>sqlite_master</c> query through raw ADO.NET so
+        /// that the check never reaches EF Core's query pipeline — EF Core logs every failed
+        /// SQL command at <c>fail</c> level before the exception propagates, which produces
+        /// alarming noise even when the code handles the exception gracefully.
+        /// </summary>
+        private static async Task<bool> IsProductsTableReadyAsync(
+            ApplicationDbContext db, CancellationToken cancellationToken)
+        {
+            var connection = db.Database.GetDbConnection();
+            if (connection.State != System.Data.ConnectionState.Open)
+                await connection.OpenAsync(cancellationToken);
+
+            using var cmd = connection.CreateCommand();
+            cmd.CommandText = "SELECT COUNT(*) FROM sqlite_master WHERE type='table' AND name='Products'";
+            var result = await cmd.ExecuteScalarAsync(cancellationToken);
+            return Convert.ToInt32(result) > 0;
+        }
+
+        /// <summary>
         /// Perform a single reindex operation. This method is safe to call concurrently
         /// from the host loop but is intended to be called once at a time.
         /// </summary>
@@ -286,6 +306,16 @@ namespace ELKH.Services
                 // Configure database timeout
                 db.Database.SetCommandTimeout(TimeSpan.FromSeconds(_options.DatabaseTimeoutSeconds));
 
+                // ── Migration guard ────────────────────────────────────────────────────
+                // Query sqlite_master via raw ADO.NET rather than EF Core so that a
+                // missing table never reaches the EF Core query pipeline (which logs
+                // every failed command at fail level before the exception can be caught).
+                if (!await IsProductsTableReadyAsync(db, cancellationToken))
+                {
+                    _logger.LogDebug("Products table not yet present; skipping reindex until migrations have run.");
+                    return;
+                }
+
                 // ╔======================================================================╗
                 // ║ PHASE 1: FTS5 Virtual Table Rebuild                                  ║
                 // ╚======================================================================╝
@@ -314,11 +344,6 @@ namespace ELKH.Services
         {
             try
             {
-                // ── Check if Products table exists ─────────────────────────────────
-                // The Products table might not exist yet if migrations haven't run.
-                // We'll try to query it and catch the "no such table" exception.
-                var productExists = await db.Products.AnyAsync(cancellationToken);
-
                 // ── Create FTS5 Virtual Table (Idempotent) ─────────────────────────
                 // Using FTS5 with the product Name and an unindexed PkProductId column.
                 // The rowid is set to PkProductId for consistent references.
@@ -336,15 +361,9 @@ WHERE PkProductId NOT IN (SELECT rowid FROM ProductFTS);
 
                 _logger.LogInformation("FTS5 virtual table rebuild completed successfully");
             }
-            catch (Microsoft.Data.Sqlite.SqliteException sqlEx) when (sqlEx.Message.Contains("no such table"))
-            {
-                // Products table doesn't exist yet - migrations haven't run
-                _logger.LogWarning("Products table does not exist yet. Skipping FTS5 rebuild until database is migrated.");
-                return;
-            }
             catch (Microsoft.Data.Sqlite.SqliteException sqlEx)
             {
-                // Other SQLite-specific errors (e.g., FTS5 module issues, table corruption)
+                // SQLite-specific errors (e.g., FTS5 module issues, table corruption)
                 _logger.LogError(sqlEx, "SQLite error while ensuring ProductFTS contents");
                 throw;
             }
@@ -412,11 +431,15 @@ WHERE PkProductId NOT IN (SELECT rowid FROM ProductFTS);
                     throw;
                 }
             }
-            catch (Microsoft.Data.Sqlite.SqliteException sqlEx) when (sqlEx.Message.Contains("no such table"))
+            catch (Microsoft.Data.Sqlite.SqliteException sqlEx)
             {
-                // Products table doesn't exist yet - migrations haven't run
-                _logger.LogWarning("Products table does not exist yet. Skipping fuzzy suggestions rebuild until database is migrated.");
-                return;
+                _logger.LogError(sqlEx, "SQLite error while rebuilding fuzzy suggestions");
+                throw;
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Failed to rebuild fuzzy suggestions");
+                throw;
             }
         }
 

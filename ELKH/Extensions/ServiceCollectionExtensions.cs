@@ -1,6 +1,7 @@
 using ELKH.Data;
 using ELKH.Repositories;
 using ELKH.Services;
+using Microsoft.AspNetCore.OutputCaching;
 using Microsoft.AspNetCore.RateLimiting;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
@@ -215,10 +216,10 @@ namespace ELKH.Extensions
 
                 // Policy for product listings - cache longer, vary by all query params
                 // so search/filter/page combinations each get their own cache entry.
-                options.AddPolicy("ProductList", builder => builder
-                    .Expire(TimeSpan.FromMinutes(5))
-                    .SetVaryByQuery("*")
-                    .Tag("products"));
+                // ProductListOutputCachePolicy also varies by auth state so that
+                // auth-dependent markup (e.g. wishlist buttons in _ProductCard) is never
+                // served to the wrong user type.
+                options.AddPolicy("ProductList", new ProductListOutputCachePolicy());
 
                 // Policy for product details - cache with user variation
                 options.AddPolicy("ProductDetails", builder => builder
@@ -233,6 +234,42 @@ namespace ELKH.Extensions
             return services;
         }
     }
+}
+
+/// <summary>
+/// Output-cache policy for product listings.<br/>
+/// Varies by every query-string parameter (search, category, sort, offset…) AND by
+/// authentication state, so that auth-dependent markup — such as the wishlist button
+/// in <c>_ProductCard.cshtml</c> — is never served to the wrong class of user.
+/// </summary>
+internal sealed class ProductListOutputCachePolicy : IOutputCachePolicy
+{
+    public ValueTask CacheRequestAsync(OutputCacheContext context, CancellationToken cancellationToken)
+    {
+        context.EnableOutputCaching             = true;
+        context.AllowCacheLookup                = true;
+        context.AllowCacheStorage               = true;
+        context.AllowLocking                    = true;
+        context.ResponseExpirationTimeSpan      = TimeSpan.FromMinutes(5);
+
+        // Vary by all query-string keys (search, categoryId, sort, offset…)
+        context.CacheVaryByRules.QueryKeys = "*";
+
+        // Vary by auth state: authenticated and anonymous users get separate cache
+        // entries, preventing the wishlist button from rendering in the wrong state.
+        var authKey = context.HttpContext.User.Identity?.IsAuthenticated == true ? "1" : "0";
+        context.CacheVaryByRules.VaryByValues.TryAdd("auth", authKey);
+
+        context.Tags.Add("products");
+
+        return ValueTask.CompletedTask;
+    }
+
+    public ValueTask ServeFromCacheAsync(OutputCacheContext context, CancellationToken cancellationToken)
+        => ValueTask.CompletedTask;
+
+    public ValueTask ServeResponseAsync(OutputCacheContext context, CancellationToken cancellationToken)
+        => ValueTask.CompletedTask;
 }
 
 namespace ELKH.Extensions
