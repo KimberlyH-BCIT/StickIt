@@ -2,6 +2,10 @@ using System.ComponentModel.DataAnnotations;
 
 namespace ELKH.Models
 {
+    /// <summary>
+    /// Represents a reply sent by a staff member in response to a manager message.
+    /// Belongs to a <see cref="StaffMessageModel"/> via <see cref="MessageId"/>.
+    /// </summary>
     public class MessageReplyModel
     {
         [Key]

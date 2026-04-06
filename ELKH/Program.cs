@@ -374,6 +374,7 @@ if (runSeeders)
             await DbSeeder.SeedCustomersAndOrdersAsync(db, userManager, app.Environment.WebRootPath);
             await DbSeeder.SeedStoreReviewsAsync(db, userManager); // Seed featured homepage reviews
             await DbSeeder.SeedTestTransactionsAsync(db);
+            await DbSeeder.SeedDashboardDataAsync(db);             // Seed KPI data for all dashboards
 
             app.Logger.LogInformation("Seeding completed successfully.");
         }
