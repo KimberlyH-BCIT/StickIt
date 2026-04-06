@@ -258,6 +258,7 @@ else
                     <button type="button"
                             id="showMoreBtn"
                             class="btn-kawaii btn-primary-kawaii radius-pill px-5 py-3 glow-on-hover"
+                            data-url="@Url.Action("LoadMore", "Product")"
                             data-offset="@products.Count"
                             data-total="@total"
                             data-search="@(search ?? "")"
@@ -283,6 +284,7 @@ else
     const grid = document.getElementById('productGrid');
     let offset = parseInt(btn.dataset.offset, 10);
     const total = parseInt(btn.dataset.total, 10);
+    const loadMoreUrl = btn.dataset.url;
     const search = btn.dataset.search;
     const categoryId = btn.dataset.categoryId;
     const sort = btn.dataset.sort;
@@ -299,7 +301,7 @@ else
             params.set('sort', sort);
             params.set('offset', offset);
 
-            const response = await fetch('/Product/LoadMore?' + params);
+            const response = await fetch(loadMoreUrl + '?' + params);
             if (!response.ok) throw new Error('Failed to load products');
 
             const html = await response.text();

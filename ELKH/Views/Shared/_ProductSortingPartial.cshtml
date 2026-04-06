@@ -20,12 +20,11 @@
 
 <span id="sorting-controls-heading" class="sr-only">Product sorting options</span>
 <div class="tab-row" role="group" aria-label="Product sorting controls" aria-describedby="sorting-controls-heading">
-    <span class="hierarchy-tertiary align-self-center me-1" id="sort-label" aria-hidden="true">Sort:</span>
+    <span class="hierarchy-tertiary align-self-center me-1" aria-hidden="true">Sort:</span>
 
     <a href="@SortLink("name_asc")"
        class="@BtnClass("name_asc")"
        role="button"
-       aria-describedby="sort-label"
        aria-pressed="@(Model.CurrentSort == "name_asc" ? "true" : "false")"
        aria-label="Sort products by name from A to Z">
         Name A &rarr; Z
@@ -33,7 +32,6 @@
     <a href="@SortLink("name_desc")"
        class="@BtnClass("name_desc")"
        role="button"
-       aria-describedby="sort-label"
        aria-pressed="@(Model.CurrentSort == "name_desc" ? "true" : "false")"
        aria-label="Sort products by name from Z to A">
         Name Z &rarr; A
@@ -41,7 +39,6 @@
     <a href="@SortLink("price_low")"
        class="@BtnClass("price_low")"
        role="button"
-       aria-describedby="sort-label"
        aria-pressed="@(Model.CurrentSort == "price_low" ? "true" : "false")"
        aria-label="Sort products by price from low to high">
         Price Low &rarr; High
@@ -49,7 +46,6 @@
     <a href="@SortLink("price_high")"
        class="@BtnClass("price_high")"
        role="button"
-       aria-describedby="sort-label"
        aria-pressed="@(Model.CurrentSort == "price_high" ? "true" : "false")"
        aria-label="Sort products by price from high to low">
         Price High &rarr; Low
@@ -57,7 +53,6 @@
     <a href="@SortLink("newest")"
        class="@BtnClass("newest")"
        role="button"
-       aria-describedby="sort-label"
        aria-pressed="@(Model.CurrentSort == "newest" ? "true" : "false")"
        aria-label="Sort products by newest arrivals first">
         Newest First
@@ -65,7 +60,6 @@
     <a href="@SortLink("oldest")"
        class="@BtnClass("oldest")"
        role="button"
-       aria-describedby="sort-label"
        aria-pressed="@(Model.CurrentSort == "oldest" ? "true" : "false")"
        aria-label="Sort products by oldest first">
         Oldest First
