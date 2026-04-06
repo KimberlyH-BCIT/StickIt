@@ -1,5 +1,9 @@
 namespace ELKH.ViewModels
 {
+    /// <summary>
+    /// View model representing the full detail of a single transaction,
+    /// including payment info, customer identity, and purchased line items.
+    /// </summary>
     public class TransactionDetailVM
     {
         public int TransactionId { get; set; }
@@ -14,6 +18,9 @@ namespace ELKH.ViewModels
         public List<TransactionItemVM> Items { get; set; } = new();
     }
 
+    /// <summary>
+    /// View model representing a single purchased item within a <see cref="TransactionDetailVM"/>.
+    /// </summary>
     public class TransactionItemVM
     {
         public int ProductId { get; set; }

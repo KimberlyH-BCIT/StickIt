@@ -8,6 +8,10 @@ using Microsoft.Extensions.Logging;
 
 namespace ELKH.Controllers
 {
+    /// <summary>
+    /// Admin-only controller for viewing and managing all customer order histories.
+    /// Provides order listing, detailed order views, and delivery status updates.
+    /// </summary>
     [Authorize(Roles = "Admin")]
     public class OrderHistoryController : Controller
     {

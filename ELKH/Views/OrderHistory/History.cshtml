@@ -4,80 +4,115 @@
     Layout = "~/Views/Shared/_Layout.cshtml";
 }
 
-@section title {
-    <h1 class="fw-bold mb-4">My Orders ≡ƒôª</h1>
-}
-
-<div class="container py-4">
-
-    @if (TempData["Message"] is string msg)
+@if (TempData["Message"] is string msg)
 {
-        var parts = msg.Split(',', 2);
-        var alertType = parts[0].Trim() == "success" ? "alert-success" : "alert-warning";
-        <div class="alert @alertType alert-dismissible fade show" role="alert">
-            @parts[^1].Trim()
-            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-        </div>
+    var parts = msg.Split(',', 2);
+    var isSuccess = parts[0].Trim() == "success";
+    var alertVM = new ELKH.ViewModels.AlertBannerVM
+    {
+        Message = parts[^1].Trim(),
+        AlertType = isSuccess ? "alert-success" : "alert-warning",
+        Icon = isSuccess ? "check-circle-fill" : "exclamation-triangle-fill",
+        IconType = "bootstrap",
+        IconAriaLabel = isSuccess ? "Success" : "Warning",
+        Dismissible = true
+    };
+    @await Html.PartialAsync("_AlertBannerPartial", alertVM)
 }
 
+<header class="kawaii-hero">
+    <h1 class="kawaii-cloud-title font-heading">
+        <i class="bi bi-bag-check me-2" aria-hidden="true"></i>
+        My Orders
+    </h1>
+    <p class="kawaii-subtitle">Track and manage your purchases</p>
+</header>
+
+<div class="container-kawaii">
     @if (!Model.Orders.Any())
     {
-        <div class="text-center py-5">
-            <i class="bi bi-box display-1 text-muted"></i>
-            <p class="fs-5 text-muted mt-3">You haven't placed any orders yet.</p>
-            <a asp-controller="Product" asp-action="Index" class="btn btn-dark mt-2">Start Shopping</a>
+        <div class="kawaii-card text-center py-5">
+            <i class="bi bi-box display-1" style="color: var(--lavender);" aria-hidden="true"></i>
+            <p class="fs-5 mt-3 hierarchy-secondary">You haven't placed any orders yet.</p>
+            <a asp-controller="Product" asp-action="Index" class="btn-kawaii btn-primary-kawaii mt-2">
+                <i class="bi bi-bag me-2" aria-hidden="true"></i>
+                Start Shopping
+            </a>
         </div>
     }
-else
-{
-        <div class="card shadow-sm">
+    else
+    {
+        <div class="kawaii-card">
             <div class="table-responsive">
-                <table class="table table-hover mb-0">
+                <table class="table table-hover align-middle">
                     <thead class="table-light">
-            <tr>
-                <th>Order #</th>
-                <th>Date</th>
+                        <tr>
+                            <th>Order #</th>
+                            <th>Date</th>
                             <th>Items</th>
-                <th>Total</th>
-                <th>Status</th>
+                            <th>Total</th>
+                            <th>Status</th>
                             <th>Delivery</th>
-                <th></th>
-            </tr>
-        </thead>
-        <tbody>
+                            <th></th>
+                        </tr>
+                    </thead>
+                    <tbody>
                         @foreach (var order in Model.Orders)
                         {
-                            @* Determine badge color based ONLY on your existing OrderStatus Enum *@
-                            var statusBadge = order.OrderStatus switch
+                            var statusBadgeType = order.OrderStatus switch
                             {
-                                ELKH.Models.OrderStatus.Shipped => "bg-primary",
-                                ELKH.Models.OrderStatus.Pending => "bg-warning text-dark",
-                                ELKH.Models.OrderStatus.Cancelled => "bg-danger",
-                                // Add Paid here if it exists in your OrderStatus enum, otherwise it hits default
-                                _ => "bg-secondary"
+                                ELKH.Models.OrderStatus.Shipped => "hot",
+                                ELKH.Models.OrderStatus.Pending => "new",
+                                ELKH.Models.OrderStatus.Cancelled => "default",
+                                _ => "sale"
+                            };
+                            var statusBadgeVM = new ELKH.ViewModels.BadgeVM
+                            {
+                                Text = order.OrderStatus.ToString(),
+                                Type = statusBadgeType
                             };
 
-                            <tr class="align-middle">
-                                <td>#@order.PkOrderId</td>
-                                <td>@order.CreatedAt.ToString("MMM d, yyyy")</td>
-                                <td>@order.OrderItems.Count item@(order.OrderItems.Count != 1 ? "s" : "")</td>
-                                <td>$@order.TotalAmount.ToString("F2")</td>
+                            var deliveryBadgeType = order.DeliveryStatus.ToString() switch
+                            {
+                                "Delivered" => "best",
+                                "Shipped" => "hot",
+                                "Processing" => "sale",
+                                _ => "new"
+                            };
+                            var deliveryBadgeVM = new ELKH.ViewModels.BadgeVM
+                            {
+                                Text = order.DeliveryStatus.ToString(),
+                                Type = deliveryBadgeType
+                            };
 
-                                <td>
-                                    <span class="badge @statusBadge">
-                                        @order.OrderStatus.ToString()
-                                    </span>
-                                </td>
-                                <td>
-                                    <span class="text-muted small">
-                                        @order.DeliveryStatus.ToString()
-                                    </span>
-                                </td>
-
+                            <tr>
+                                <td class="font-heading text-purple">#@order.PkOrderId</td>
+                                <td class="hierarchy-tertiary">@order.CreatedAt.ToString("MMM d, yyyy")</td>
+                                <td class="hierarchy-secondary">@order.OrderItems.Count item@(order.OrderItems.Count != 1 ? "s" : "")</td>
+                                <td class="hierarchy-primary">$@order.TotalAmount.ToString("F2")</td>
+                                <td><partial name="_Badge" model="statusBadgeVM" /></td>
+                                <td><partial name="_Badge" model="deliveryBadgeVM" /></td>
                                 <td class="d-flex gap-1 flex-wrap">
                                     <a asp-controller="Order" asp-action="Details" asp-route-id="@order.PkOrderId"
-                                       class="btn btn-sm btn-outline-dark">View</a>
-            
+                                       class="btn-kawaii btn-secondary-kawaii btn-sm">
+                                        <i class="bi bi-eye me-1" aria-hidden="true"></i>
+                                        View
+                                    </a>
+                                    @if (order.OrderStatus == ELKH.Models.OrderStatus.Pending)
+                                    {
+                                        <form asp-controller="Order" asp-action="CancelOrder" method="post" class="d-inline">
+                                            @Html.AntiForgeryToken()
+                                            <input type="hidden" name="id" value="@order.PkOrderId" />
+                                            <button type="submit"
+                                                    class="btn-kawaii btn-outline-kawaii btn-sm"
+                                                    style="border-color: #f082b0; color: #c73864;"
+                                                    onclick="return confirm('Cancel order #@order.PkOrderId? This cannot be undone.')"
+                                                    aria-label="Cancel order #@order.PkOrderId">
+                                                <i class="bi bi-x-circle me-1" aria-hidden="true"></i>
+                                                Cancel
+                                            </button>
+                                        </form>
+                                    }
                                     @foreach (var item in order.OrderItems)
                                     {
                                         if (item.Product is not null)
@@ -86,9 +121,9 @@ else
                                                 @Html.AntiForgeryToken()
                                                 <input type="hidden" name="itemId" value="@item.FkProductId" />
                                                 <input type="hidden" name="quantity" value="1" />
-                                                <button type="submit" class="btn btn-sm btn-outline-secondary"
+                                                <button type="submit" class="btn-kawaii btn-outline-kawaii btn-sm"
                                                         title="Buy @item.Product.Name again">
-                                                    <i class="bi bi-arrow-repeat me-1"></i>@item.Product.Name
+                                                    <i class="bi bi-arrow-repeat me-1" aria-hidden="true"></i>@item.Product.Name
                                                 </button>
                                             </form>
                                         }
@@ -96,9 +131,9 @@ else
                                 </td>
                             </tr>
                         }
-        </tbody>
-    </table>
+                    </tbody>
+                </table>
             </div>
         </div>
-}
+    }
 </div>
