@@ -12,7 +12,7 @@
     <a asp-action="Index" class="btn-kawaii btn-primary-kawaii radius-pill">
         Go Back To Product List
     </a>
-    <a asp-action="EditProduct" asp-route-Id="@ViewBag.ProductId" class="btn-kawaii btn-secondary-kawaii radius-pill">
+    <a asp-controller="Product" asp-action="Edit" asp-route-id="@ViewBag.ProductId" class="btn-kawaii btn-secondary-kawaii radius-pill">
         Go Back To Edit
     </a>
 </div>

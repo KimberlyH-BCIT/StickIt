@@ -235,6 +235,7 @@ public async Task<IActionResult> Index()
 
 var vmList = productImages.Select(pi => new ProductImageVM
 {
+    ImageId = pi.ImageId,
     FileName = pi.FileName,
     Description = pi.Description,
     ImageData = pi.ImageData
@@ -298,6 +299,15 @@ public async Task<IActionResult> AddImage(int productId)
             ModelState.AddModelError("", "The file could not be saved. Please try again.");
             ViewBag.ProductId = productId;
             return View("AddImage");
+        }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> DeleteImage(int productId, int imageId)
+        {
+            await _inventoryRepo.DeleteImage(imageId);
+            TempData["Message"] = "success, Image deleted successfully.";
+            return RedirectToAction("ProductImages", new { id = productId });
         }
 
         #endregion
