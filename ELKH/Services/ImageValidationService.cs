@@ -1,5 +1,3 @@
-using SixLabors.ImageSharp;
-
 namespace ELKH.Services;
 
 /// <summary>
@@ -233,25 +231,21 @@ public class ImageValidationService
             // Check 5: Image dimension validation
             // Prevents memory exhaustion attacks from extremely large images
             // ===============================================================
-            try
-            {
-                using var image = await Image.LoadAsync(stream);
-                
-                if (image.Width > MaxImageWidth || image.Height > MaxImageHeight)
-                {
-                    result.Errors.Add($"Image dimensions ({image.Width}x{image.Height}) exceed maximum allowed size ({MaxImageWidth}x{MaxImageHeight}).");
-                    return result;
-                }
-
-                result.ImageWidth = image.Width;
-                result.ImageHeight = image.Height;
-            }
-            catch (Exception ex)
+            if (!TryReadImageDimensions(stream, extension, out var imageWidth, out var imageHeight))
             {
                 result.Errors.Add("File is not a valid image or is corrupted.");
-                _logger.LogWarning(ex, "Failed to load image from file {FileName}", file.FileName);
+                _logger.LogWarning("Failed to read image dimensions from file {FileName}", file.FileName);
                 return result;
             }
+
+            if (imageWidth > MaxImageWidth || imageHeight > MaxImageHeight)
+            {
+                result.Errors.Add($"Image dimensions ({imageWidth}x{imageHeight}) exceed maximum allowed size ({MaxImageWidth}x{MaxImageHeight}).");
+                return result;
+            }
+
+            result.ImageWidth = imageWidth;
+            result.ImageHeight = imageHeight;
         }
         catch (Exception ex)
         {
@@ -334,6 +328,191 @@ public class ImageValidationService
         }
 
         return false;
+    }
+
+    private static bool TryReadImageDimensions(Stream stream, string extension, out int width, out int height)
+    {
+        width = 0;
+        height = 0;
+
+        if (!stream.CanSeek)
+        {
+            return false;
+        }
+
+        stream.Position = 0;
+
+        return extension switch
+        {
+            ".png" => TryReadPngDimensions(stream, out width, out height),
+            ".gif" => TryReadGifDimensions(stream, out width, out height),
+            ".bmp" => TryReadBmpDimensions(stream, out width, out height),
+            ".jpg" or ".jpeg" => TryReadJpegDimensions(stream, out width, out height),
+            ".webp" => TryReadWebpDimensions(stream, out width, out height),
+            _ => false
+        };
+    }
+
+    private static bool TryReadPngDimensions(Stream stream, out int width, out int height)
+    {
+        width = 0;
+        height = 0;
+
+        var header = new byte[24];
+        if (stream.Read(header, 0, header.Length) < header.Length)
+        {
+            return false;
+        }
+
+        width = ReadInt32BigEndian(header, 16);
+        height = ReadInt32BigEndian(header, 20);
+        return width > 0 && height > 0;
+    }
+
+    private static bool TryReadGifDimensions(Stream stream, out int width, out int height)
+    {
+        width = 0;
+        height = 0;
+
+        var header = new byte[10];
+        if (stream.Read(header, 0, header.Length) < header.Length)
+        {
+            return false;
+        }
+
+        width = header[6] | (header[7] << 8);
+        height = header[8] | (header[9] << 8);
+        return width > 0 && height > 0;
+    }
+
+    private static bool TryReadBmpDimensions(Stream stream, out int width, out int height)
+    {
+        width = 0;
+        height = 0;
+
+        var header = new byte[26];
+        if (stream.Read(header, 0, header.Length) < header.Length)
+        {
+            return false;
+        }
+
+        width = BitConverter.ToInt32(header, 18);
+        height = Math.Abs(BitConverter.ToInt32(header, 22));
+        return width > 0 && height > 0;
+    }
+
+    private static bool TryReadJpegDimensions(Stream stream, out int width, out int height)
+    {
+        width = 0;
+        height = 0;
+
+        using var reader = new BinaryReader(stream, System.Text.Encoding.UTF8, leaveOpen: true);
+
+        if (reader.ReadByte() != 0xFF || reader.ReadByte() != 0xD8)
+        {
+            return false;
+        }
+
+        while (stream.Position < stream.Length)
+        {
+            byte markerPrefix;
+            do
+            {
+                if (stream.Position >= stream.Length)
+                {
+                    return false;
+                }
+
+                markerPrefix = reader.ReadByte();
+            }
+            while (markerPrefix != 0xFF);
+
+            byte marker;
+            do
+            {
+                if (stream.Position >= stream.Length)
+                {
+                    return false;
+                }
+
+                marker = reader.ReadByte();
+            }
+            while (marker == 0xFF);
+
+            if (marker == 0xD9 || marker == 0xDA)
+            {
+                break;
+            }
+
+            var segmentLength = ReadUInt16BigEndian(reader);
+            if (segmentLength < 2)
+            {
+                return false;
+            }
+
+            if (marker is >= 0xC0 and <= 0xC3 or >= 0xC5 and <= 0xC7 or >= 0xC9 and <= 0xCB or >= 0xCD and <= 0xCF)
+            {
+                _ = reader.ReadByte();
+                height = ReadUInt16BigEndian(reader);
+                width = ReadUInt16BigEndian(reader);
+                return width > 0 && height > 0;
+            }
+
+            stream.Position += segmentLength - 2;
+        }
+
+        return false;
+    }
+
+    private static bool TryReadWebpDimensions(Stream stream, out int width, out int height)
+    {
+        width = 0;
+        height = 0;
+
+        var header = new byte[30];
+        if (stream.Read(header, 0, header.Length) < header.Length)
+        {
+            return false;
+        }
+
+        var chunkType = System.Text.Encoding.ASCII.GetString(header, 12, 4);
+        if (chunkType == "VP8 ")
+        {
+            width = header[26] | ((header[27] & 0x3F) << 8);
+            height = header[28] | ((header[29] & 0x3F) << 8);
+            return width > 0 && height > 0;
+        }
+
+        if (chunkType == "VP8L")
+        {
+            width = 1 + (((header[21] & 0x3F) << 8) | header[20]);
+            height = 1 + (((header[24] & 0x0F) << 10) | (header[23] << 2) | ((header[22] & 0xC0) >> 6));
+            return width > 0 && height > 0;
+        }
+
+        if (chunkType == "VP8X")
+        {
+            width = 1 + header[24] + (header[25] << 8) + (header[26] << 16);
+            height = 1 + header[27] + (header[28] << 8) + (header[29] << 16);
+            return width > 0 && height > 0;
+        }
+
+        return false;
+    }
+
+    private static int ReadInt32BigEndian(byte[] buffer, int offset)
+    {
+        return (buffer[offset] << 24) |
+               (buffer[offset + 1] << 16) |
+               (buffer[offset + 2] << 8) |
+               buffer[offset + 3];
+    }
+
+    private static ushort ReadUInt16BigEndian(BinaryReader reader)
+    {
+        var high = reader.ReadByte();
+        var low = reader.ReadByte();
+        return (ushort)((high << 8) | low);
     }
 
     /// <summary>

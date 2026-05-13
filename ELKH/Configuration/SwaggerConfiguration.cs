@@ -1,6 +1,5 @@
 using Microsoft.AspNetCore.Mvc.ApiExplorer;
-using Microsoft.OpenApi.Models;
-using Microsoft.OpenApi.Any;
+using Microsoft.OpenApi;
 using Swashbuckle.AspNetCore.SwaggerGen;
 using System.Reflection;
 using Microsoft.AspNetCore.Mvc;
@@ -100,24 +99,11 @@ public static class SwaggerConfiguration
                 Name = "X-API-Key",
                 Type = SecuritySchemeType.ApiKey,
                 In = ParameterLocation.Header,
-                Description = "API Key for authentication. Example: \"X-API-Key: your-api-key\""
+                Description = "API key for authenticated API requests."
             });
 
-            // Add security requirement for all endpoints
-            options.AddSecurityRequirement(new OpenApiSecurityRequirement
-            {
-                {
-                    new OpenApiSecurityScheme
-                    {
-                        Reference = new OpenApiReference
-                        {
-                            Type = ReferenceType.SecurityScheme,
-                            Id = "Bearer"
-                        }
-                    },
-                    Array.Empty<string>()
-                }
-            });
+            options.OperationFilter<SwaggerSecurityOperationFilter>();
+            options.DocumentFilter<SwaggerServerDocumentFilter>();
 
             // Include XML comments for detailed documentation
             var xmlFile = $"{Assembly.GetExecutingAssembly().GetName().Name}.xml";
@@ -126,15 +112,6 @@ public static class SwaggerConfiguration
             {
                 options.IncludeXmlComments(xmlPath);
             }
-
-            // Custom operation filter for additional metadata
-            options.OperationFilter<SwaggerOperationFilter>();
-            
-            // Schema filter for custom model documentation
-            options.SchemaFilter<SwaggerSchemaFilter>();
-
-            // Document filter for additional API information
-            options.DocumentFilter<SwaggerDocumentFilter>();
         });
 
         return services;
@@ -172,8 +149,6 @@ public static class SwaggerConfiguration
                 });
             }
 
-            // Version-specific documentation
-            options.OperationFilter<ApiVersionOperationFilter>();
         });
 
         return services;
@@ -259,256 +234,39 @@ public static class SwaggerConfiguration
     #endregion
 }
 
-#region Section 4: Operation Filtering & Enhancement
-
-// ===================================================================
-// Section 4: Operation Filtering & Enhancement
-// ===================================================================
-
-/// <summary>
-/// Operation filter to add custom metadata to Swagger operations.
-/// </summary>
-public class SwaggerOperationFilter : IOperationFilter
+public class SwaggerSecurityOperationFilter : IOperationFilter
 {
     public void Apply(OpenApiOperation operation, OperationFilterContext context)
     {
-        // Add response examples
-        if (operation.Responses.TryGetValue("200", out var response))
+        if (operation == null)
         {
-            if (response.Content.TryGetValue("application/json", out var mediaType))
-            {
-                // Add example responses based on the operation
-                AddExampleResponses(operation, mediaType, context);
-            }
+            return;
         }
 
-        // Add custom tags based on controller
-        var controllerName = context.MethodInfo.DeclaringType?.Name;
-        if (controllerName != null)
+        var hasAuthorize = context.MethodInfo.DeclaringType?.GetCustomAttributes(true)
+            .Concat(context.MethodInfo.GetCustomAttributes(true))
+            .Any(attribute => attribute is Microsoft.AspNetCore.Authorization.AuthorizeAttribute) == true;
+
+        if (hasAuthorize)
         {
-            if (controllerName.Contains("Product"))
-                operation.Tags = new List<OpenApiTag> { new() { Name = "Products" } };
-            else if (controllerName.Contains("Cart"))
-                operation.Tags = new List<OpenApiTag> { new() { Name = "Shopping Cart" } };
-            else if (controllerName.Contains("User"))
-                operation.Tags = new List<OpenApiTag> { new() { Name = "User Management" } };
+            operation.Description = string.IsNullOrWhiteSpace(operation.Description)
+                ? "Authentication required."
+                : $"{operation.Description}\n\nAuthentication required.";
         }
 
-        // Add rate limiting information
-        operation.Extensions.Add("x-rate-limit", new OpenApiObject
-        {
-            ["requests"] = new OpenApiInteger(100),
-            ["period"] = new OpenApiString("minute")
-        });
-    }
-
-    private void AddExampleResponses(OpenApiOperation operation, OpenApiMediaType mediaType, OperationFilterContext context)
-    {
-        var methodName = context.MethodInfo.Name;
-        var controllerName = context.MethodInfo.DeclaringType?.Name;
-
-        // Add examples based on the endpoint
-        if (controllerName?.Contains("ProductApi") == true)
-        {
-            if (methodName == "GetProducts")
-            {
-                mediaType.Example = CreateProductListExample();
-            }
-            else if (methodName == "GetProduct")
-            {
-                mediaType.Example = CreateSingleProductExample();
-            }
-        }
-    }
-
-    private OpenApiObject CreateProductListExample()
-    {
-        return new OpenApiObject
-        {
-            ["data"] = new OpenApiObject
-            {
-                ["items"] = new OpenApiArray
-                {
-                    new OpenApiObject
-                    {
-                        ["id"] = new OpenApiInteger(1),
-                        ["name"] = new OpenApiString("Funny Cat Sticker"),
-                        ["description"] = new OpenApiString("Hilarious cat sticker for laptops"),
-                        ["price"] = new OpenApiDouble(9.99),
-                        ["discountPercent"] = new OpenApiDouble(0),
-                        ["stockQuantity"] = new OpenApiInteger(50),
-                        ["isInStock"] = new OpenApiBoolean(true)
-                    }
-                },
-                ["page"] = new OpenApiInteger(1),
-                ["pageSize"] = new OpenApiInteger(20),
-                ["totalCount"] = new OpenApiInteger(100),
-                ["totalPages"] = new OpenApiInteger(5)
-            },
-            ["success"] = new OpenApiBoolean(true),
-            ["message"] = new OpenApiString("Products retrieved successfully")
-        };
-    }
-
-    private OpenApiObject CreateSingleProductExample()
-    {
-        return new OpenApiObject
-        {
-            ["data"] = new OpenApiObject
-            {
-                ["id"] = new OpenApiInteger(1),
-                ["name"] = new OpenApiString("Funny Cat Sticker"),
-                ["description"] = new OpenApiString("Hilarious cat sticker for laptops"),
-                ["price"] = new OpenApiDouble(9.99),
-                ["discountPercent"] = new OpenApiDouble(10),
-                ["stockQuantity"] = new OpenApiInteger(50),
-                ["isInStock"] = new OpenApiBoolean(true),
-                ["categoryId"] = new OpenApiInteger(1),
-                ["isActive"] = new OpenApiBoolean(true)
-            },
-            ["success"] = new OpenApiBoolean(true),
-            ["message"] = new OpenApiString("Product retrieved successfully")
-        };
+        operation.Summary ??= context.ApiDescription.ActionDescriptor.DisplayName;
     }
 }
 
-/// <summary>
-/// Schema filter to add custom model documentation.
-/// </summary>
-public class SwaggerSchemaFilter : ISchemaFilter
-{
-    public void Apply(OpenApiSchema schema, SchemaFilterContext context)
-    {
-        // Add examples for common models
-        if (context.Type.Name.Contains("ProductApi"))
-        {
-            AddProductSchemaExamples(schema, context);
-        }
-
-        // Add validation information to schema
-        AddValidationInfo(schema, context);
-    }
-
-    private void AddProductSchemaExamples(OpenApiSchema schema, SchemaFilterContext context)
-    {
-        if (schema.Properties?.TryGetValue("name", out var nameProperty) == true)
-        {
-            nameProperty.Example = new OpenApiString("Awesome Sticker");
-        }
-
-        if (schema.Properties?.TryGetValue("price", out var priceProperty) == true)
-        {
-            priceProperty.Example = new OpenApiDouble(9.99);
-        }
-    }
-
-    private void AddValidationInfo(OpenApiSchema schema, SchemaFilterContext context)
-    {
-        // Add format information for common types
-        if (schema.Properties != null)
-        {
-            foreach (var property in schema.Properties)
-            {
-                if (property.Key.ToLower().Contains("email"))
-                {
-                    property.Value.Format = "email";
-                }
-                else if (property.Key.ToLower().Contains("url"))
-                {
-                    property.Value.Format = "uri";
-                }
-                else if (property.Key.ToLower().Contains("date"))
-                {
-                    property.Value.Format = "date-time";
-                }
-            }
-        }
-    }
-}
-
-#endregion
-
-#region Section 5: Document-Level Filters
-
-// ===================================================================
-// Section 5: Document-Level Filters
-// ===================================================================
-
-/// <summary>
-/// Document filter to add additional API information.
-/// </summary>
-public class SwaggerDocumentFilter : IDocumentFilter
+public class SwaggerServerDocumentFilter : IDocumentFilter
 {
     public void Apply(OpenApiDocument swaggerDoc, DocumentFilterContext context)
     {
-        // Add custom vendor extensions
-        swaggerDoc.Extensions.Add("x-api-id", new OpenApiString("elkh-ecommerce-api"));
-        swaggerDoc.Extensions.Add("x-audience", new OpenApiString("public"));
-        
-        // Add servers information
         swaggerDoc.Servers = new List<OpenApiServer>
         {
             new() { Url = "https://api.elkh.com", Description = "Production server" },
             new() { Url = "https://staging-api.elkh.com", Description = "Staging server" },
             new() { Url = "http://localhost:5000", Description = "Development server" }
         };
-
-        // Add common response schemas
-        AddCommonSchemas(swaggerDoc);
-    }
-
-    private void AddCommonSchemas(OpenApiDocument swaggerDoc)
-    {
-        swaggerDoc.Components.Schemas.Add("ErrorResponse", new OpenApiSchema
-        {
-            Type = "object",
-            Properties = new Dictionary<string, OpenApiSchema>
-            {
-                ["success"] = new() { Type = "boolean", Example = new OpenApiBoolean(false) },
-                ["message"] = new() { Type = "string", Example = new OpenApiString("Error message") },
-                ["errorCode"] = new() { Type = "string", Example = new OpenApiString("ERROR_CODE") }
-            }
-        });
     }
 }
-
-#endregion
-
-#region Section 6: API Versioning Integration
-
-// ===================================================================
-// Section 6: API Versioning Integration
-// ===================================================================
-
-/// <summary>
-/// Operation filter to handle API versioning in Swagger.
-/// </summary>
-public class ApiVersionOperationFilter : IOperationFilter
-{
-    public void Apply(OpenApiOperation operation, OperationFilterContext context)
-    {
-        var apiDescription = context.ApiDescription;
-
-        // Check if API is deprecated (simple version check)
-        if (apiDescription.ActionDescriptor.EndpointMetadata
-            .Any(m => m.GetType().Name.Contains("ApiVersionAttribute")))
-        {
-            // For now, we'll keep this simple
-            // operation.Deprecated defaults to false
-        }
-
-        if (operation.Parameters == null)
-            return;
-
-        // Remove version parameter from documentation (it's in the URL)
-        foreach (var parameter in operation.Parameters.ToList())
-        {
-            if (parameter.Name == "version")
-            {
-                operation.Parameters.Remove(parameter);
-            }
-        }
-    }
-}
-
-#endregion

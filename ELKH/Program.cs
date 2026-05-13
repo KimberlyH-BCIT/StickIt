@@ -94,8 +94,6 @@ builder.Services.AddSwaggerDocumentation();
 builder.Services.AddApplicationInsightsTelemetry(options =>
 {
     options.ConnectionString = builder.Configuration.GetConnectionString("ApplicationInsights");
-    options.DeveloperMode = builder.Environment.IsDevelopment();
-    options.EnableAdaptiveSampling = !builder.Environment.IsDevelopment();
     options.EnableQuickPulseMetricStream = true;
     options.EnableAuthenticationTrackingJavaScript = true;
     options.EnableDependencyTrackingTelemetryModule = true;
