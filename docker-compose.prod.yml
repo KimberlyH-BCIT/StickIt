@@ -1,5 +1,7 @@
-# ELKH Sticker Store - Production Docker Compose Override
-# Production-specific configurations with enhanced security and performance
+# ELKH Sticker Store - Experimental Production Docker Compose Override
+# This file is not a validated production deployment path for the current app.
+# The application is currently wired for SQLite in ELKH/Program.cs, and the
+# PostgreSQL and Redis services below are placeholders for future work.
 
 version: '3.8'
 
@@ -10,11 +12,10 @@ services:
   elkh-app:
     environment:
       - ASPNETCORE_ENVIRONMENT=Production
-      - ConnectionStrings__DefaultConnection=${DATABASE_CONNECTION_STRING}
+      - ConnectionStrings__DefaultConnection=${SQLITE_CONNECTION_STRING}
       - Authentication__Google__ClientId=${GOOGLE_CLIENT_ID}
       - Authentication__Google__ClientSecret=${GOOGLE_CLIENT_SECRET}
-      - Cache__Redis__ConnectionString=redis:6379
-      - ApplicationInsights__ConnectionString=${APPLICATION_INSIGHTS_CONNECTION_STRING}
+      - APPLICATIONINSIGHTS_CONNECTION_STRING=${APPLICATION_INSIGHTS_CONNECTION_STRING}
       - Logging__LogLevel__Default=Warning
       - Logging__LogLevel__Microsoft.AspNetCore=Error
       - ASPNETCORE_FORWARDEDHEADERS_ENABLED=true
@@ -38,7 +39,8 @@ services:
         max-file: "3"
 
   # ====================================
-  # Production Database Configuration
+  # Experimental PostgreSQL Placeholder
+  # Not used by the current app startup, which configures SQLite.
   # ====================================
   postgres:
     environment:
@@ -64,7 +66,8 @@ services:
       -c default_statistics_target=100
 
   # ====================================
-  # Production Redis Configuration
+  # Experimental Redis Placeholder
+  # Redis is not currently registered in ELKH/Program.cs.
   # ====================================
   redis:
     command: >
@@ -100,19 +103,25 @@ services:
           cpus: '0.1'
 
 # ====================================
-# Production Usage
+# Experimental Usage
 # ====================================
-# 
-# Create .env file with production secrets:
-# DATABASE_CONNECTION_STRING=your-production-db
+# This override is for documentation and future wiring work, not a supported
+# production deployment recipe for the current codebase.
+#
+# Create .env file with current app-compatible settings:
+# SQLITE_CONNECTION_STRING=Data Source=/app/data/elkh.db
 # GOOGLE_CLIENT_ID=your-google-client-id
 # GOOGLE_CLIENT_SECRET=your-google-client-secret
-# REDIS_PASSWORD=your-redis-password
 # APPLICATION_INSIGHTS_CONNECTION_STRING=your-app-insights
+# REDIS_PASSWORD=optional-placeholder-password
+# POSTGRES_DB=optional-placeholder-db
+# POSTGRES_USER=optional-placeholder-user
+# POSTGRES_PASSWORD=optional-placeholder-password
 # 
-# Deploy to production:
+# Experimental stack bring-up:
 # docker-compose -f docker-compose.yml -f docker-compose.prod.yml up -d
 #
-# Scale for high availability:
+# Do not treat this as a validated high-availability deployment.
+# Scale examples remain illustrative only:
 # docker-compose -f docker-compose.yml -f docker-compose.prod.yml up -d --scale elkh-app=3
 #

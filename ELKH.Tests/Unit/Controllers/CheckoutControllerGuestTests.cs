@@ -386,6 +386,40 @@ public class CheckoutControllerGuestTests : IDisposable
     }
 
     [Fact]
+    public async Task ProcessGuestPayment_WhenStockChangesBeforeReservation_ShouldRedirectWithAvailabilityError()
+    {
+        var validModel = CreateValidGuestCheckoutVM();
+        SetupVerifiedPayment(43.81m);
+
+        var cartItems = new List<CartItemVM>
+        {
+            new CartItemVM
+            {
+                ProductId = 1,
+                ProductName = "Test Sticker 1",
+                UnitPrice = 15.99m,
+                Quantity = 2,
+                LineTotal = 31.98m
+            }
+        };
+
+        var product = await _context.Products.FindAsync(1);
+        product!.StockQuantity = 1;
+        await _context.SaveChangesAsync();
+
+        _mockGuestCartService.Setup(g => g.GetCartItemsAsync())
+            .ReturnsAsync(cartItems);
+
+        var result = await _controller.ProcessGuestPayment(validModel);
+
+        var redirect = result.Should().BeOfType<RedirectToActionResult>().Subject;
+        redirect.ActionName.Should().Be("Guest");
+        _controller.TempData["Message"]?.ToString()
+            .Should().Be("error,One or more items in your cart are out of stock.");
+        _context.Orders.Should().BeEmpty();
+    }
+
+    [Fact]
     public async Task ProcessGuestPayment_ShouldCalculateTotalsServerSide()
     {
         // Arrange

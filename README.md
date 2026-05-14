@@ -109,13 +109,15 @@ Then open:
 
 ## Demo logins
 
-The app seeds local demo accounts through `ELKH/Data/DbSeeder.Users.cs`.
+The app can seed local demo accounts through `ELKH/Data/DbSeeder.Users.cs`, but default elevated credentials are now disabled unless development explicitly opts in with `Seed:AllowDefaultElevatedCredentials=true`.
 
 | Role | Email | Password |
 |---|---|---|
 | Admin | `admin@stickit.dev` | `Admin@2025!` |
 | Manager | `manager@stickit.dev` | `Manager@2025!` |
 | Staff | `staff@stickit.dev` | `Staff@2025!` |
+
+These defaults are for explicit local demo mode only. In non-development environments, configure elevated seed credentials explicitly or disable privileged seeding.
 
 The customer seeder also generates many demo customer accounts with `@home.com` emails and `Demo@2025!##` style passwords for local and demo exploration.
 

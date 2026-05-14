@@ -216,21 +216,6 @@ public class GlobalExceptionMiddleware
 
     private string GetClientIpAddress(HttpContext context)
     {
-        // Check for forwarded IP (behind load balancer/proxy)
-        var xForwardedFor = context.Request.Headers["X-Forwarded-For"].FirstOrDefault();
-        if (!string.IsNullOrEmpty(xForwardedFor))
-        {
-            return xForwardedFor.Split(',').FirstOrDefault()?.Trim() ?? context.Connection.RemoteIpAddress?.ToString() ?? "Unknown";
-        }
-
-        // Check for real IP header
-        var xRealIp = context.Request.Headers["X-Real-IP"].FirstOrDefault();
-        if (!string.IsNullOrEmpty(xRealIp))
-        {
-            return xRealIp;
-        }
-
-        // Fallback to connection remote IP
         return context.Connection.RemoteIpAddress?.ToString() ?? "Unknown";
     }
 }

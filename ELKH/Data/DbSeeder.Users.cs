@@ -53,7 +53,8 @@ public static partial class DbSeeder
         UserManager<IdentityUser> userManager,
         RoleManager<IdentityRole> roleManager,
         IConfiguration configuration,
-        string wwwRootPath)
+        string wwwRootPath,
+        bool allowDefaultElevatedCredentials)
     {
         const string adminRole    = "Admin";
         const string managerRole  = "Manager";
@@ -67,20 +68,37 @@ public static partial class DbSeeder
         // Read from user-secrets / environment variables.
         // IsNullOrWhiteSpace guards against empty-string values in appsettings.json,
         // which would bypass the ?? operator and create credential-less accounts.
+        const string defaultAdminEmail = "admin@stickit.dev";
+        const string defaultAdminPass = "Admin@2025!";
+        const string defaultManagerEmail = "manager@stickit.dev";
+        const string defaultManagerPass = "Manager@2025!";
+        const string defaultStaffEmail = "staff@stickit.dev";
+        const string defaultStaffPass = "Staff@2025!";
+
         var adminEmail = configuration["Seed:AdminEmail"];
-        if (string.IsNullOrWhiteSpace(adminEmail)) adminEmail = "admin@stickit.dev";
         var adminPass  = configuration["Seed:AdminPass"];
-        if (string.IsNullOrWhiteSpace(adminPass))  adminPass  = "Admin@2025!";
-
         var managerEmail = configuration["Seed:ManagerEmail"];
-        if (string.IsNullOrWhiteSpace(managerEmail)) managerEmail = "manager@stickit.dev";
         var managerPass  = configuration["Seed:ManagerPass"];
-        if (string.IsNullOrWhiteSpace(managerPass))  managerPass  = "Manager@2025!";
-
         var staffEmail = configuration["Seed:StaffEmail"];
-        if (string.IsNullOrWhiteSpace(staffEmail)) staffEmail = "staff@stickit.dev";
         var staffPass  = configuration["Seed:StaffPass"];
-        if (string.IsNullOrWhiteSpace(staffPass))  staffPass  = "Staff@2025!";
+
+        if (!allowDefaultElevatedCredentials)
+        {
+            if (string.IsNullOrWhiteSpace(adminEmail) || string.IsNullOrWhiteSpace(adminPass) ||
+                string.IsNullOrWhiteSpace(managerEmail) || string.IsNullOrWhiteSpace(managerPass) ||
+                string.IsNullOrWhiteSpace(staffEmail) || string.IsNullOrWhiteSpace(staffPass))
+            {
+                throw new InvalidOperationException(
+                    "Elevated seed accounts require explicit credentials when default demo credentials are disabled.");
+            }
+        }
+
+        adminEmail ??= defaultAdminEmail;
+        adminPass ??= defaultAdminPass;
+        managerEmail ??= defaultManagerEmail;
+        managerPass ??= defaultManagerPass;
+        staffEmail ??= defaultStaffEmail;
+        staffPass ??= defaultStaffPass;
 
         // ======================================================================
         // â•‘ Ensure Roles Exist                                                 â•‘

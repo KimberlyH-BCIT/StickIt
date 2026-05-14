@@ -292,7 +292,15 @@ public class CheckoutController : Controller
             ContactDetailModel? contact = null;
             if (vm.SelectedContactId.HasValue && vm.SelectedContactId.Value > 0)
             {
-                contact = await _contactRepo.GetByIdAsync(vm.SelectedContactId.Value);
+                contact = await _db.ContactDetails.FirstOrDefaultAsync(c =>
+                    c.PkContactId == vm.SelectedContactId.Value &&
+                    c.FkRegisteredUserId == regUser.PkRegisteredUserId);
+
+                if (contact == null)
+                {
+                    TempData["Message"] = "error,Selected contact details could not be found for your account.";
+                    return RedirectToAction("Index");
+                }
             }
 
             if (contact == null)
@@ -356,10 +364,15 @@ public class CheckoutController : Controller
                 };
                 _db.OrderItems.Add(orderItem);
 
-                // Decrement inventory
-                if (cartItem.Product != null)
+                if (!await TryReserveInventoryAsync(cartItem.FkProductID, cartItem.Quantity))
                 {
-                    cartItem.Product.StockQuantity = (cartItem.Product.StockQuantity ?? 0) - cartItem.Quantity;
+                    if (transaction != null)
+                    {
+                        await transaction.RollbackAsync();
+                    }
+
+                    TempData["Message"] = "error,One or more items in your cart are no longer available in the requested quantity.";
+                    return RedirectToAction("Index");
                 }
             }
 
@@ -613,7 +626,17 @@ public class CheckoutController : Controller
                         UnitPrice = CalculateCheckoutUnitPrice(product)
                     };
                     _db.OrderItems.Add(orderItem);
-                    product.StockQuantity = (product.StockQuantity ?? 0) - item.Quantity;
+
+                    if (!await TryReserveInventoryAsync(product.PkProductId, item.Quantity))
+                    {
+                        if (transaction != null)
+                        {
+                            await transaction.RollbackAsync();
+                        }
+
+                        TempData["Message"] = "error,One or more items in your cart are no longer available in the requested quantity.";
+                        return RedirectToAction("Guest");
+                    }
                 }
             }
 
@@ -709,6 +732,59 @@ public class CheckoutController : Controller
         }
 
         return verification;
+    }
+
+    private async Task<bool> TryReserveInventoryAsync(int productId, int quantity)
+    {
+        if (quantity <= 0)
+        {
+            return false;
+        }
+
+        if (_db.Database.IsRelational())
+        {
+            FormattableString sql = $@"
+UPDATE Products
+SET StockQuantity = StockQuantity - {quantity}
+WHERE PkProductId = {productId}
+  AND StockQuantity IS NOT NULL
+  AND StockQuantity >= {quantity};";
+
+            var rowsAffected = await _db.Database.ExecuteSqlInterpolatedAsync(sql);
+            if (rowsAffected == 1)
+            {
+                var trackedProductEntry = _db.ChangeTracker
+                    .Entries<ProductModel>()
+                    .FirstOrDefault(e => e.Entity.PkProductId == productId);
+
+                if (trackedProductEntry != null)
+                {
+                    trackedProductEntry.Entity.StockQuantity = (trackedProductEntry.Entity.StockQuantity ?? 0) - quantity;
+                    trackedProductEntry.OriginalValues[nameof(ProductModel.StockQuantity)] = trackedProductEntry.Entity.StockQuantity;
+                    trackedProductEntry.State = EntityState.Unchanged;
+                }
+            }
+
+            return rowsAffected == 1;
+        }
+
+        var product = await _db.Products.FirstOrDefaultAsync(p => p.PkProductId == productId);
+        if (product == null || (product.StockQuantity ?? 0) < quantity)
+        {
+            return false;
+        }
+
+        product.StockQuantity -= quantity;
+
+        try
+        {
+            await _db.SaveChangesAsync();
+            return true;
+        }
+        catch (DbUpdateConcurrencyException)
+        {
+            return false;
+        }
     }
 
     private static TransactionModel CreateVerifiedTransaction(OrderModel order, int contactId, decimal shipping, PayPalVerificationResult verification)

@@ -12,8 +12,8 @@ This directory contains comprehensive test coverage configuration and execution 
 
 ## Current measured baseline
 - **Latest audited full-suite run**: `dotnet test ELKH.Tests\ELKH.Tests.csproj --no-restore -p:Threshold=0`
-- **Measured line coverage**: `47.79%`
-- **Measured branch coverage**: `16.35%`
+- **Measured line coverage**: `48.46%`
+- **Measured branch coverage**: `23.52%`
 
 The `ELKH.Tests` project currently enforces a conservative `15%` floor for both line and branch coverage. This keeps coverage collection gated without advertising the previous unrealistic `80%` threshold.
 
@@ -152,16 +152,19 @@ protected override void SeedDatabase()
 ```
 
 ### Current suite state
-- **Latest solution-level run**: 378 tests executed, 0 failed, 378 passed
-- **Latest main test-project run**: 306 tests executed, 0 failed, 306 passed
-- **Latest guest checkout regression run**: 72 tests executed, 0 failed, 72 passed
-- **Verification commands used**:
+- **Observed local validation date**: 2026-05-14
+- **Solution-level total across both test projects**: 378 tests executed, 0 failed, 378 passed
+- **Main test-project run**: 306 tests executed, 0 failed, 306 passed
+- **Guest checkout regression run**: 72 tests executed, 0 failed, 72 passed
+- **Verification commands used for this snapshot**:
 
 ```bash
 dotnet test ELKH.slnx --no-restore -p:Threshold=0 --logger "console;verbosity=minimal"
 dotnet test ELKH.Tests\ELKH.Tests.csproj --no-restore -p:Threshold=0 --logger "console;verbosity=minimal"
 dotnet test ELKH.Tests\ELKH.GuestCheckoutTests\ELKH.GuestCheckoutTests.csproj --no-restore -p:Threshold=0 --logger "console;verbosity=minimal"
 ```
+
+Prefer linking a CI job or artifact when refreshing this section for future portfolio evidence.
 
 ## Test Organization Best Practices
 

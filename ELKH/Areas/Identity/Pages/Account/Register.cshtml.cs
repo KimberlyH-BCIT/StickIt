@@ -66,6 +66,7 @@ namespace ELKH.Areas.Identity.Pages.Account
         // â”€â”€ ASP.NET Core Identity Services â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
         private readonly SignInManager<IdentityUser> _signInManager;
         private readonly UserManager<IdentityUser> _userManager;
+        private readonly RoleManager<IdentityRole> _roleManager;
         private readonly IUserStore<IdentityUser> _userStore;
         private readonly IUserEmailStore<IdentityUser> _emailStore;
         private readonly ILogger<RegisterModel> _logger;
@@ -97,6 +98,7 @@ namespace ELKH.Areas.Identity.Pages.Account
         /// <param name="reCaptchaOptions">Google reCAPTCHA configuration (site key for client-side integration).</param>
         public RegisterModel(
             UserManager<IdentityUser> userManager,
+            RoleManager<IdentityRole> roleManager,
             IUserStore<IdentityUser> userStore,
             SignInManager<IdentityUser> signInManager,
             ILogger<RegisterModel> logger,
@@ -107,6 +109,7 @@ namespace ELKH.Areas.Identity.Pages.Account
         )
         {
             _userManager = userManager;
+            _roleManager = roleManager;
 
             _userStore = userStore;
             _emailStore = GetEmailStore();
@@ -266,6 +269,8 @@ namespace ELKH.Areas.Identity.Pages.Account
         [Microsoft.AspNetCore.RateLimiting.EnableRateLimiting(ELKH.Extensions.RateLimitPolicies.Auth)]
         public async Task<IActionResult> OnPostAsync(string returnUrl = null)
         {
+            const string customerRoleName = "Customer";
+
             returnUrl ??= Url.Content("~/");
             ExternalLogins = (await _signInManager.GetExternalAuthenticationSchemesAsync()).ToList();
             if (ModelState.IsValid)

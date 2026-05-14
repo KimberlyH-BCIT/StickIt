@@ -26,8 +26,22 @@ Thank you for your interest in contributing to ELKH! This guide will help you ge
 
 3. **Setup Database**
    ```bash
-   dotnet ef database update --project ELKH
+   dotnet ef database update --project ELKH --context ApplicationDbContext
+   dotnet ef database update --project ELKH --context ImageStoreContext
    ```
+
+### Schema Change Workflow
+- Use EF Core migrations for every relational schema change.
+- Add a new migration for the affected context and commit the generated files with the model change.
+- Do not rely on ad hoc startup patches or one-off SQL to keep application schema in sync.
+
+```bash
+# Application schema changes
+dotnet ef migrations add <MigrationName> --project ELKH --context ApplicationDbContext --output-dir Data/Migrations
+
+# Image store schema changes
+dotnet ef migrations add <MigrationName> --project ELKH --context ImageStoreContext --output-dir Models/Migrations/ImageStore
+```
 
 4. **Configure User Secrets**
    ```bash

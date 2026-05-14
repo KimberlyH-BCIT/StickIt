@@ -12,6 +12,8 @@ using Asp.Versioning;
 using Asp.Versioning.ApiExplorer;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Filters;
+using Microsoft.AspNetCore.HttpOverrides;
+using System.Net;
 using System.Globalization;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -118,6 +120,31 @@ builder.Services.AddIdentity<IdentityUser, IdentityRole>(options =>
 // -- MVC / Razor
 builder.Services.AddControllersWithViews();
 builder.Services.AddRazorPages();
+
+builder.Services.Configure<ForwardedHeadersOptions>(options =>
+{
+    options.ForwardedHeaders = ForwardedHeaders.XForwardedFor | ForwardedHeaders.XForwardedProto;
+    options.ForwardLimit = 1;
+
+    var knownProxies = builder.Configuration.GetSection("ForwardedHeaders:KnownProxies").Get<string[]>() ?? Array.Empty<string>();
+    foreach (var proxy in knownProxies)
+    {
+        if (IPAddress.TryParse(proxy, out var ipAddress))
+        {
+            options.KnownProxies.Add(ipAddress);
+        }
+    }
+
+    var knownNetworks = builder.Configuration.GetSection("ForwardedHeaders:KnownNetworks").Get<string[]>() ?? Array.Empty<string>();
+    foreach (var network in knownNetworks)
+    {
+        var parts = network.Split('/', StringSplitOptions.TrimEntries | StringSplitOptions.RemoveEmptyEntries);
+        if (parts.Length == 2 && IPAddress.TryParse(parts[0], out var prefix) && int.TryParse(parts[1], out var prefixLength))
+        {
+            options.KnownIPNetworks.Add(new(IPAddress.Parse(parts[0]), prefixLength));
+        }
+    }
+});
 
 // Configure antiforgery to also accept the validation token from the X-CSRF-TOKEN request
 // header. This enables JSON AJAX endpoints (which cannot submit form-encoded token fields)
@@ -234,6 +261,16 @@ if (!isApplicationInsightsConfigured)
         "Application Insights telemetry is disabled because no ApplicationInsights connection string was configured.");
 }
 
+var forwardedHeadersEnabled = builder.Configuration.GetValue<bool>("ASPNETCORE_FORWARDEDHEADERS_ENABLED");
+var configuredKnownProxies = builder.Configuration.GetSection("ForwardedHeaders:KnownProxies").Get<string[]>() ?? Array.Empty<string>();
+var configuredKnownNetworks = builder.Configuration.GetSection("ForwardedHeaders:KnownNetworks").Get<string[]>() ?? Array.Empty<string>();
+
+if (forwardedHeadersEnabled && configuredKnownProxies.Length == 0 && configuredKnownNetworks.Length == 0)
+{
+    app.Logger.LogWarning(
+        "Forwarded headers were enabled, but no ForwardedHeaders:KnownProxies or ForwardedHeaders:KnownNetworks were configured. Proxy headers will not be trusted until explicit trusted proxies or networks are supplied.");
+}
+
 // =======================================================================
 // CONFIGURATION VALIDATION
 // Validate all required secrets and configuration at startup to fail fast
@@ -286,9 +323,6 @@ else
     // Exception handling and status-code pages are registered inside UseApplicationMiddleware.
     app.UseHsts();
 
-    // Enable Swagger in production for API documentation (consider security implications)
-    var prodApiVersionProvider = app.Services.GetRequiredService<IApiVersionDescriptionProvider>();
-    app.UseSwaggerDocumentation(prodApiVersionProvider);
 }
 
 app.UseApplicationMiddleware(app.Environment);
@@ -357,6 +391,9 @@ await using (var migrationScope = app.Services.CreateAsyncScope())
 // Seeding can be disabled via Database:RunSeeders = false in appsettings.json
 // or via environment variable. Useful after first run to prevent accidental reseeding.
 var runSeeders = app.Configuration.GetValue<bool>("Database:RunSeeders", defaultValue: true);
+var allowDefaultElevatedSeedCredentials =
+    app.Environment.IsDevelopment() &&
+    app.Configuration.GetValue<bool>("Seed:AllowDefaultElevatedCredentials", defaultValue: false);
 
 if (runSeeders)
 {
@@ -380,7 +417,13 @@ if (runSeeders)
         {
             await DbSeeder.SeedProductsAsync(db);
             await DbSeeder.SeedShippingMethodsAsync(db); // Seed shipping options
-            await DbSeeder.SeedUsersAndRolesAsync(db, userManager, roleManager, app.Configuration, app.Environment.WebRootPath);
+            await DbSeeder.SeedUsersAndRolesAsync(
+                db,
+                userManager,
+                roleManager,
+                app.Configuration,
+                app.Environment.WebRootPath,
+                allowDefaultElevatedSeedCredentials);
             await DbSeeder.SeedCustomersAndOrdersAsync(db, userManager, app.Environment.WebRootPath);
             await DbSeeder.SeedStoreReviewsAsync(db, userManager); // Seed featured homepage reviews
             await DbSeeder.SeedTestTransactionsAsync(db);

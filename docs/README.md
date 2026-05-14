@@ -102,12 +102,12 @@ Some guides describe:
 
 ## Current verification snapshot
 
-Latest validated evidence on this branch:
-- solution-level test run passing: `378/378`
-- main test project passing: `306/306`
-- guest checkout regression suite passing: `72/72`
+Observed local validation on `2026-05-14` for this branch:
+- solution-level totals from the two test projects below: `378/378` passing
+- main test project: `306/306` passing via `dotnet test ELKH.Tests\\ELKH.Tests.csproj --no-restore -p:Threshold=0 --logger "console;verbosity=minimal"`
+- guest checkout regression suite: `72/72` passing via `dotnet test ELKH.Tests\\ELKH.GuestCheckoutTests\\ELKH.GuestCheckoutTests.csproj --no-restore -p:Threshold=0 --logger "console;verbosity=minimal"`
 
-This is the current observed test state, not a promise that future changes will preserve it without re-validation.
+This is a dated branch snapshot, not a standing guarantee. Prefer a CI-generated run record when publishing fresh validation evidence.
 
 ### Documentation standards
 - **Format**: Markdown with consistent structure and styling

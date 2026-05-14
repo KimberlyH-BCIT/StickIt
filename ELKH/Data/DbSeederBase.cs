@@ -168,11 +168,13 @@ public static partial class DbSeeder
     {
         try
         {
+            var allowDefaultElevatedCredentials = configuration.GetValue<bool>("Seed:AllowDefaultElevatedCredentials", false);
+
             // Step 1: Core product catalog
             await SeedProductsAsync(db);
             
             // Step 2: Administrative users and roles
-            await SeedUsersAndRolesAsync(db, userManager, roleManager, configuration, wwwRootPath);
+            await SeedUsersAndRolesAsync(db, userManager, roleManager, configuration, wwwRootPath, allowDefaultElevatedCredentials);
             
             // Step 3: Demo customers with orders and contact details
             await SeedCustomersAndOrdersAsync(db, userManager, wwwRootPath);

@@ -1,4 +1,5 @@
 using Microsoft.AspNetCore.Builder;
+using Microsoft.AspNetCore.HttpOverrides;
 
 namespace ELKH.Extensions
 {
@@ -33,6 +34,8 @@ namespace ELKH.Extensions
         /// </remarks>
         public static IApplicationBuilder UseApplicationMiddleware(this IApplicationBuilder app, IWebHostEnvironment env)
         {
+            app.UseForwardedHeaders();
+
             // 0. Global Exception Handling - must be first to catch all errors with structured logging
             app.UseMiddleware<ELKH.Middleware.GlobalExceptionMiddleware>();
 
@@ -116,47 +119,22 @@ namespace ELKH.Extensions
                 // Prevent Adobe Flash and PDF readers from making cross-domain requests.
                 context.Response.Headers["X-Permitted-Cross-Domain-Policies"] = "none";
 
-                // =====================================================================
-                // CONTENT SECURITY POLICY (CSP) - DISABLED
-                // =====================================================================
-                // CSP has been disabled to prevent compatibility issues with browser
-                // extensions and third-party scripts. This reduces security but improves
-                // compatibility and developer experience.
-                // 
-                // WARNING: Disabling CSP removes protection against:
-                // - Cross-Site Scripting (XSS) attacks
-                // - Data injection attacks
-                // - Unauthorized script execution
-                // 
-                // To re-enable CSP, uncomment the code below and adjust the policy
-                // as needed for your third-party integrations.
-                // =====================================================================
-
-                /*
-                // Primary browser-side XSS defence: restrict sources for scripts, styles,
-                // images, and other resource types to same-origin by default.
-                // PayPal SDK is loaded from www.paypal.com; it communicates with the PayPal
-                // checkout page (www.paypal.com) and the sandbox/live API (api-m.*.paypal.com).
-                // Google reCAPTCHA requires scripts from google.com and gstatic.com, frames from google.com,
-                // and 'unsafe-eval' for its internal script execution (required by reCAPTCHA v2).
-                // Google Fonts requires fonts.googleapis.com for CSS fetching (connect-src), 
-                // stylesheets (style-src), and fonts.gstatic.com for font files (font-src).
-                // 'unsafe-inline' for style-src is required by Bootstrap/inline styles and inline scripts.
-                // In development, allow localhost connections for Browser Link and hot reload tools.
-                var connectSrc = env.IsDevelopment() 
-                    ? "'self' ws://localhost:* http://localhost:* https://api-m.paypal.com https://api-m.sandbox.paypal.com https://www.google.com https://fonts.googleapis.com https://fonts.gstatic.com"
-                    : "'self' https://api-m.paypal.com https://api-m.sandbox.paypal.com https://www.google.com https://fonts.googleapis.com https://fonts.gstatic.com";
+                var connectSrc = env.IsDevelopment()
+                    ? "'self' ws://localhost:* http://localhost:* https://api-m.paypal.com https://api-m.sandbox.paypal.com https://www.google.com https://www.gstatic.com https://fonts.googleapis.com https://fonts.gstatic.com"
+                    : "'self' https://api-m.paypal.com https://api-m.sandbox.paypal.com https://www.google.com https://www.gstatic.com https://fonts.googleapis.com https://fonts.gstatic.com";
 
                 context.Response.Headers["Content-Security-Policy"] =
                     "default-src 'self'; " +
+                    "base-uri 'self'; " +
+                    "object-src 'none'; " +
                     "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://www.paypal.com https://www.sandbox.paypal.com https://www.google.com https://www.gstatic.com; " +
                     "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; " +
-                    "img-src 'self' data: https://www.paypalobjects.com; " +
-                    "font-src 'self' https://fonts.gstatic.com; " +
+                    "img-src 'self' data: blob: https://www.paypalobjects.com https:; " +
+                    "font-src 'self' data: https://fonts.gstatic.com; " +
                     $"connect-src {connectSrc}; " +
-                    "frame-src https://www.paypal.com https://www.sandbox.paypal.com https://www.google.com; " +
+                    "frame-src https://www.paypal.com https://www.sandbox.paypal.com https://www.google.com https://www.gstatic.com; " +
+                    "form-action 'self' https://www.paypal.com https://www.sandbox.paypal.com https://www.google.com; " +
                     "frame-ancestors 'self';";
-                */
 
                 await next();
             });

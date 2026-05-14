@@ -71,6 +71,7 @@ namespace ELKH.Areas.Identity.Pages.Account
         // â”€â”€ ReCaptcha Validation â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
         private readonly IReCaptchaService _reCaptcha;
         private readonly ReCaptchaOptions _reCaptchaOptions;
+        private readonly IWebHostEnvironment _environment;
 
         /// <summary>
         /// Google reCAPTCHA v2 site key for client-side rendering.
@@ -89,7 +90,8 @@ namespace ELKH.Areas.Identity.Pages.Account
             SignInManager<IdentityUser> signInManager,
             ILogger<LoginModel> logger,
             IReCaptchaService reCaptcha,
-            IOptions<ReCaptchaOptions> reCaptchaOptions)
+            IOptions<ReCaptchaOptions> reCaptchaOptions,
+            IWebHostEnvironment environment)
         {
             _signInManager = signInManager;
             _logger = logger;
@@ -97,6 +99,7 @@ namespace ELKH.Areas.Identity.Pages.Account
 
             _reCaptcha = reCaptcha;
             _reCaptchaOptions = reCaptchaOptions.Value;
+            _environment = environment;
             ReCaptchaSiteKey = _reCaptchaOptions.SiteKey;
         }
 
@@ -232,7 +235,7 @@ namespace ELKH.Areas.Identity.Pages.Account
         ///
         /// <para><strong>Security Notes:</strong></para>
         /// <list type="bullet">
-        /// <item>Account lockout currently disabled (lockoutOnFailure: false) - consider enabling for production</item>
+        /// <item>Account lockout is enabled outside Development and remains paired with rate limiting</item>
         /// <item>Rate limiting prevents rapid login attempts</item>
         /// <item>reCAPTCHA prevents automated bot attacks</item>
         /// </list>
@@ -261,13 +264,12 @@ namespace ELKH.Areas.Identity.Pages.Account
                 // ======================================================================
                 // â•‘ PHASE 2: Password Sign-In Attempt                                    â•‘
                 // ======================================================================
-                // NOTE: lockoutOnFailure is currently false. Consider enabling for production
-                // to prevent brute-force attacks (set to true).
+                var lockoutOnFailure = !_environment.IsDevelopment();
                 var result = await _signInManager.PasswordSignInAsync(
                     Input.Email, 
                     Input.Password, 
                     Input.RememberMe, 
-                    lockoutOnFailure: false);
+                    lockoutOnFailure: lockoutOnFailure);
 
                 if (result.Succeeded)
                 {
@@ -295,10 +297,17 @@ namespace ELKH.Areas.Identity.Pages.Account
                         return RedirectToAction("Index", "Home", new { area = "" });
                     }
 
-                    // â”€â”€ Customer or Default â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
-                    // Customer role or no specific role - redirect to user dashboard
-                    _logger.LogInformation("User {Email} logged in as Customer.", Input.Email);
-                    return RedirectToAction("Index", "User", new { area = "" });
+                    // â”€â”€ Customer Role Check â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+                    if (await _userManager.IsInRoleAsync(user, "Customer"))
+                    {
+                        _logger.LogInformation("User {Email} logged in as Customer.", Input.Email);
+                        return RedirectToAction("Index", "User", new { area = "" });
+                    }
+
+                    await _signInManager.SignOutAsync();
+                    _logger.LogWarning("User {Email} logged in successfully but has no recognized application role.", Input.Email);
+                    ModelState.AddModelError(string.Empty, "Your account does not have an assigned role. Please contact support.");
+                    return Page();
                 }
 
                 // ======================================================================

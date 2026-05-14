@@ -192,6 +192,81 @@ public class CheckoutControllerTests : IDisposable
         _mockCartRepo.Verify(r => r.GetByUserIdAsync(1), Times.AtLeastOnce);
     }
 
+    [Fact]
+    public async Task ProcessPayment_WithContactOwnedByDifferentUser_ShouldRejectCheckout()
+    {
+        var vm = CreateValidCheckoutVm();
+        vm.SelectedContactId = 99;
+
+        _context.ContactDetails.Add(new ContactDetailModel
+        {
+            PkContactId = 99,
+            FkRegisteredUserId = 2,
+            FirstName = "Other",
+            LastName = "User",
+            PhoneNumber = "604-555-0199",
+            Street = "999 Other St",
+            City = "Victoria",
+            Province = "BC",
+            PostCode = "V8V 1A1",
+            Country = "Canada"
+        });
+        await _context.SaveChangesAsync();
+
+        _mockPayPalService.Setup(p => p.VerifyCapturedOrderAsync(vm.PayPalOrderId!, ExpectedTotal, "CAD"))
+            .ReturnsAsync(new PayPalVerificationResult
+            {
+                PayPalOrderId = vm.PayPalOrderId!,
+                CaptureId = "CAPTURE-OWNERSHIP",
+                Status = "COMPLETED",
+                Amount = ExpectedTotal,
+                Currency = "CAD",
+                CapturedAtUtc = DateTime.UtcNow,
+                PayerId = "PAYER-OWNERSHIP",
+                PayerEmail = "buyer@example.com",
+                VerificationSummaryJson = "{\"status\":\"COMPLETED\"}"
+            });
+
+        var result = await _controller.ProcessPayment(vm);
+
+        var redirect = result.Should().BeOfType<RedirectToActionResult>().Subject;
+        redirect.ActionName.Should().Be("Index");
+        _controller.TempData["Message"]?.ToString()
+            .Should().Be("error,Selected contact details could not be found for your account.");
+        _context.Orders.Should().BeEmpty();
+    }
+
+    [Fact]
+    public async Task ProcessPayment_WithInsufficientStock_ShouldRejectCheckout()
+    {
+        var vm = CreateValidCheckoutVm();
+        var product = await _context.Products.SingleAsync(p => p.PkProductId == 1);
+        product.StockQuantity = 1;
+        await _context.SaveChangesAsync();
+
+        _mockPayPalService.Setup(p => p.VerifyCapturedOrderAsync(vm.PayPalOrderId!, ExpectedTotal, "CAD"))
+            .ReturnsAsync(new PayPalVerificationResult
+            {
+                PayPalOrderId = vm.PayPalOrderId!,
+                CaptureId = "CAPTURE-STOCK",
+                Status = "COMPLETED",
+                Amount = ExpectedTotal,
+                Currency = "CAD",
+                CapturedAtUtc = DateTime.UtcNow,
+                PayerId = "PAYER-STOCK",
+                PayerEmail = "buyer@example.com",
+                VerificationSummaryJson = "{\"status\":\"COMPLETED\"}"
+            });
+
+        var result = await _controller.ProcessPayment(vm);
+
+        var redirect = result.Should().BeOfType<RedirectToActionResult>().Subject;
+        redirect.ActionName.Should().Be("Index");
+        _controller.TempData["Message"]?.ToString()
+            .Should().Be("error,One or more items in your cart are out of stock.");
+        _context.Orders.Should().BeEmpty();
+    }
+
     private void ConfigureDefaults()
     {
         _mockConfiguration.Setup(c => c["PayPal:Currency"]).Returns("CAD");
@@ -277,9 +352,25 @@ public class CheckoutControllerTests : IDisposable
             TotalPrice = 31.82m
         };
 
+        var contact = new ContactDetailModel
+        {
+            PkContactId = 1,
+            FkRegisteredUserId = 1,
+            FirstName = "Test",
+            LastName = "User",
+            PhoneNumber = "604-555-0100",
+            Street = "123 Test St",
+            City = "Vancouver",
+            Province = "BC",
+            PostCode = "V6B 1A1",
+            Country = "Canada",
+            IsDefault = true
+        };
+
         _context.Categories.Add(category);
         _context.RegisteredUsers.Add(user);
         _context.Products.Add(product);
+        _context.ContactDetails.Add(contact);
         _context.Carts.Add(cart);
         _context.SaveChanges();
     }

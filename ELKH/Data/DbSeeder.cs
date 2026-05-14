@@ -193,7 +193,8 @@ public static partial class DbSeeder
         IConfiguration configuration,
         string wwwRootPath)
     {
-        await SeedUsersAndRolesAsync(db, userManager, roleManager, configuration, wwwRootPath);
+        var allowDefaultElevatedCredentials = configuration.GetValue<bool>("Seed:AllowDefaultElevatedCredentials", false);
+        await SeedUsersAndRolesAsync(db, userManager, roleManager, configuration, wwwRootPath, allowDefaultElevatedCredentials);
     }
 
     /// <summary>

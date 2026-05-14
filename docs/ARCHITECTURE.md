@@ -2,13 +2,13 @@
 
 ## Overview
 
-StickIt follows **Clean Architecture** principles with clear separation of concerns, ensuring maintainability, testability, and scalability. The architecture is designed to support both current e-commerce requirements and future growth.
+StickIt is best described as a **layered monolith** built with ASP.NET Core MVC plus Razor Pages for Identity flows. It has useful separation between controllers, services, repositories, middleware, and EF Core data access, but it is not a textbook Clean Architecture implementation.
 
 ## 🎯 Architecture Principles
 
 ### Core Design Principles
 - **Separation of Concerns** - Each layer has distinct responsibilities
-- **Dependency Inversion** - High-level modules don't depend on low-level modules
+- **Dependency Inversion** - Interfaces are used in many service and repository boundaries where that improves testability
 - **Single Responsibility** - Classes and methods have one clear purpose
 - **Open/Closed Principle** - Open for extension, closed for modification
 - **Interface Segregation** - Clients depend only on interfaces they use
@@ -94,10 +94,9 @@ StickIt/
 │   ├── Extensions/                # Service and app configuration extensions
 │   ├── Middleware/               # Custom middleware components
 │   ├── Models/                   # Domain models and DTOs
-│   ├── Pages/                    # Razor pages and view models
+│   ├── Areas/Identity/Pages/     # Razor Pages used primarily for Identity UI flows
 │   ├── Repositories/            # Data access layer
 │   ├── Services/               # Business logic services
-│   ├── Telemetry/             # Application Insights processors
 │   ├── Views/                 # MVC views and layouts
 │   └── wwwroot/              # Static web assets
 ├── ELKH.Tests/               # Comprehensive test suite
@@ -107,6 +106,8 @@ StickIt/
 ```
 
 ## 🎮 Controller Decomposition
+
+This application is more MVC-controller-heavy than Razor-Pages-heavy. Razor Pages are concentrated in the Identity area rather than being the primary pattern for the storefront and admin flows.
 
 ### Original Monolithic Design
 - **UserController** (772 lines) - Multiple responsibilities

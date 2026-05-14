@@ -23,9 +23,8 @@
     <PackageReference Include="xunit.runner.visualstudio" Version="2.8.2" />
 
     <!-- Performance Testing -->
-    <PackageReference Include="NBomber" Version="5.11.1" />
-    <PackageReference Include="NBomber.Http" Version="5.11.1" />
-    <PackageReference Include="NBomber.Sinks.InfluxDB" Version="4.1.0" />
+    <PackageReference Include="NBomber" Version="6.0.1" />
+    <PackageReference Include="NBomber.Http" Version="6.0.0" />
 
     <!-- Mocking and Test Utilities -->
     <PackageReference Include="Moq" Version="4.20.72" />

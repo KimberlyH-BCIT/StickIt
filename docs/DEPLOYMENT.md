@@ -59,6 +59,25 @@ dotnet ef database update --project ELKH --context ImageStoreContext
 dotnet run --project ELKH
 ```
 
+### Database evolution policy
+- Treat Entity Framework Core migrations as the only supported schema evolution path for relational deployments.
+- `Program.cs` applies `MigrateAsync()` for relational providers at startup and uses `EnsureCreatedAsync()` only for non-relational test providers.
+- When `ApplicationDbContext` changes, create a follow-up migration instead of adding ad hoc startup SQL or schema patches:
+
+```bash
+dotnet ef migrations add <MigrationName> --project ELKH --context ApplicationDbContext --output-dir Data/Migrations
+dotnet ef database update --project ELKH --context ApplicationDbContext
+```
+
+- When `ImageStoreContext` changes, add a follow-up migration for that context as well:
+
+```bash
+dotnet ef migrations add <MigrationName> --project ELKH --context ImageStoreContext --output-dir Models/Migrations/ImageStore
+dotnet ef database update --project ELKH --context ImageStoreContext
+```
+
+- Do not patch schema drift with raw startup SQL for relational environments; commit a new migration and let deployment apply it.
+
 ### Development Configuration
 ```json
 // appsettings.Development.json
@@ -188,7 +207,10 @@ HEALTHCHECK --interval=30s --timeout=3s --start-period=5s --retries=3 \
 ENTRYPOINT ["dotnet", "ELKH.dll"]
 ```
 
-#### Production Docker Compose
+#### Experimental Docker Compose Override
+
+The current app startup is still wired for SQLite in `ELKH/Program.cs`. Treat `docker-compose.prod.yml` as an experimental override for future infrastructure work, not as a validated production deployment recipe.
+
 ```yaml
 # docker-compose.prod.yml
 version: '3.8'
@@ -203,8 +225,8 @@ services:
       - "443:8081"
     environment:
       - ASPNETCORE_ENVIRONMENT=Production
-      - ConnectionStrings__DefaultConnection=${CONNECTION_STRING}
-      - ApplicationInsights__InstrumentationKey=${APPINSIGHTS_KEY}
+      - ConnectionStrings__DefaultConnection=${SQLITE_CONNECTION_STRING}
+      - APPLICATIONINSIGHTS_CONNECTION_STRING=${APPLICATION_INSIGHTS_CONNECTION_STRING}
     volumes:
       - ./certs:/app/certs:ro
       - ./data:/app/data
@@ -234,13 +256,13 @@ services:
 # Build production image
 docker build -f Dockerfile -t stickit-web:latest .
 
-# Run production stack
+# Run experimental compose override
 docker compose -f docker-compose.prod.yml up -d
 
 # View logs
 docker compose logs -f stickit-web
 
-# Scale application
+# Scale application (illustrative only; not a validated HA setup)
 docker compose up --scale stickit-web=3
 
 # Stop services
