@@ -1,5 +1,6 @@
 using FluentAssertions;
 using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.Http.Features;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Controllers;
 using Microsoft.AspNetCore.Mvc.ViewFeatures;
@@ -108,7 +109,7 @@ public class HomeControllerTests
     {
         // Arrange
         var httpContext = new DefaultHttpContext();
-        httpContext.TraceIdentifier = null;
+        httpContext.Features.Set<IHttpRequestIdentifierFeature>(new NullRequestIdentifierFeature());
         _controller.ControllerContext.HttpContext = httpContext;
 
         // Act
@@ -118,5 +119,10 @@ public class HomeControllerTests
         var viewResult = result.Should().BeOfType<ViewResult>().Subject;
         var model = viewResult.Model.Should().BeOfType<ErrorVM>().Subject;
         model.RequestId.Should().BeNull();
+    }
+
+    private sealed class NullRequestIdentifierFeature : IHttpRequestIdentifierFeature
+    {
+        public string? TraceIdentifier { get; set; }
     }
 }

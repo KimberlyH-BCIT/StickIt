@@ -192,6 +192,13 @@ public async Task<int> BuyNowAsync(string userEmail, int itemId, int quantity, i
         public async Task RemoveFromCartAsync(string userEmail, int cartId)
         {
             var user = await _userService.GetByEmailAsync(userEmail);
+            if (user == null)
+            {
+                user = await _db.RegisteredUsers
+                    .AsNoTracking()
+                    .FirstOrDefaultAsync(u => u.Email == userEmail);
+            }
+
             if (user == null) return;
 
             var item = await _db.Carts.FirstOrDefaultAsync(

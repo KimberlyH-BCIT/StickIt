@@ -33,7 +33,7 @@ namespace ELKH.Data
 
         // ── Core Product Catalog ──
         /// <summary>Products in the e-commerce catalog with pricing, categories, and availability.</summary>
-        public DbSet<ProductModel> Products { get; set; }
+        public virtual DbSet<ProductModel> Products { get; set; }
 
         /// <summary>Product categories for catalog organization and filtering.</summary>
         public DbSet<CategoryModel> Categories { get; set; }
@@ -56,13 +56,13 @@ namespace ELKH.Data
         public DbSet<CartModel> Carts { get; set; }
 
         /// <summary>Customer orders with shipping information and status tracking.</summary>
-        public DbSet<OrderModel> Orders { get; set; }
+        public virtual DbSet<OrderModel> Orders { get; set; }
 
         /// <summary>Individual line items within orders, linking products with quantities and pricing.</summary>
         public DbSet<OrderItemModel> OrderItems { get; set; }
 
         /// <summary>Payment transactions with gateway integration and financial reconciliation data.</summary>
-        public DbSet<TransactionModel> Transactions { get; set; }
+        public virtual DbSet<TransactionModel> Transactions { get; set; }
 
         /// <summary>Shipping and billing addresses for orders and user profiles.</summary>
         public DbSet<ContactDetailModel> ContactDetails { get; set; }

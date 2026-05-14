@@ -11,11 +11,11 @@ This directory contains comprehensive test coverage configuration and execution 
 - **Built-in MSBuild Integration**: Automatic coverage collection during test runs
 
 ## Current measured baseline
-- **Latest full-suite artifact**: `TestResults/db821130-2eea-4277-96a3-df73b9af58d7/coverage.cobertura.xml`
-- **Measured line coverage**: `17.94%`
-- **Measured branch coverage**: `9.71%`
+- **Latest audited full-suite run**: `dotnet test ELKH.Tests\ELKH.Tests.csproj --no-restore -p:Threshold=0`
+- **Measured line coverage**: `47.79%`
+- **Measured branch coverage**: `16.35%`
 
-The current `ELKH.Tests` project still enforces higher thresholds in project configuration, but coverage and threshold expectations should be documented separately from pass/fail suite status.
+The `ELKH.Tests` project currently enforces a conservative `15%` floor for both line and branch coverage. This keeps coverage collection gated without advertising the previous unrealistic `80%` threshold.
 
 ## Running Tests with Coverage
 
@@ -152,13 +152,15 @@ protected override void SeedDatabase()
 ```
 
 ### Current suite state
-- **Latest full integration run**: 91 integration tests executed, 0 failed, 91 passed
-- **Latest targeted catalog/API integration run**: 34 tests executed, 0 failed, 34 passed
+- **Latest solution-level run**: 378 tests executed, 0 failed, 378 passed
+- **Latest main test-project run**: 306 tests executed, 0 failed, 306 passed
+- **Latest guest checkout regression run**: 72 tests executed, 0 failed, 72 passed
 - **Verification commands used**:
 
 ```bash
-dotnet test "ELKH.Tests\ELKH.Tests.csproj" -p:Threshold=0 --filter "FullyQualifiedName~ELKH.Tests.Integration"
-dotnet test "ELKH.Tests\ELKH.Tests.csproj" -p:Threshold=0 --filter "FullyQualifiedName~ProductCatalogIntegrationTests|FullyQualifiedName~ProductApiIntegrationTests"
+dotnet test ELKH.slnx --no-restore -p:Threshold=0 --logger "console;verbosity=minimal"
+dotnet test ELKH.Tests\ELKH.Tests.csproj --no-restore -p:Threshold=0 --logger "console;verbosity=minimal"
+dotnet test ELKH.Tests\ELKH.GuestCheckoutTests\ELKH.GuestCheckoutTests.csproj --no-restore -p:Threshold=0 --logger "console;verbosity=minimal"
 ```
 
 ## Test Organization Best Practices
@@ -242,7 +244,8 @@ dotnet test --logger console --verbosity diagnostic
 ## Metrics and Reporting
 
 ### Coverage Metrics
-- **Current measured coverage**: 17.94% line, 9.71% branch
+- **Current measured coverage**: 47.79% line, 16.35% branch
+- **Configured coverage threshold**: 15% minimum for line and branch coverage
 - **Trend Analysis**: Track coverage over time using saved Cobertura artifacts
 - **Hotspot Identification**: Focus on high-complexity, low-coverage areas
 

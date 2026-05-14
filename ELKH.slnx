@@ -1,3 +1,5 @@
 <Solution>
   <Project Path="ELKH/ELKH.csproj" />
+  <Project Path="ELKH.Tests/ELKH.Tests.csproj" />
+  <Project Path="ELKH.Tests/ELKH.GuestCheckoutTests/ELKH.GuestCheckoutTests.csproj" />
 </Solution>

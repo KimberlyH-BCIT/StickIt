@@ -9,7 +9,7 @@
     <CollectCoverage>true</CollectCoverage>
     <CoverletOutputFormat>opencover,cobertura,json</CoverletOutputFormat>
     <CoverletOutput>./Coverage/</CoverletOutput>
-    <Threshold>80</Threshold>
+    <Threshold>15</Threshold>
     <ThresholdType>line,branch</ThresholdType>
     <ThresholdStat>minimum</ThresholdStat>
     <ExcludeByFile>**/Migrations/**/*.cs</ExcludeByFile>

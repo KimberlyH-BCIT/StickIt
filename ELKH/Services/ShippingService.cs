@@ -64,12 +64,16 @@ public class ShippingService : IShippingService
     /// </remarks>
     public async Task<decimal> CalculateShippingCostAsync(int shippingMethodId, decimal cartSubtotal, decimal freeShippingThreshold = 50m)
     {
+        if (cartSubtotal < 0)
+        {
+            throw new ArgumentException("Cart subtotal cannot be negative.", nameof(cartSubtotal));
+        }
+
         var shippingMethod = await GetShippingMethodByIdAsync(shippingMethodId);
 
         if (shippingMethod == null)
         {
-            _logger.LogWarning("Shipping method {ShippingMethodId} not found, defaulting to $0", shippingMethodId);
-            return 0m;
+            throw new ArgumentException($"Shipping method {shippingMethodId} was not found.", nameof(shippingMethodId));
         }
 
         // Free shipping applies ONLY to Standard Shipping when cart meets threshold

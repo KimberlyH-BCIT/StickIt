@@ -352,7 +352,7 @@ public class CartController : Controller
     {
         if (User.Identity?.IsAuthenticated != true)
         {
-            return RedirectToAction("Login", "Account", new { area = "Identity", returnUrl = Url.Action("Details", "Product", new { id = itemId }) });
+            return RedirectToAction("Login", "Account");
         }
 
         var email = User.FindFirst(System.Security.Claims.ClaimTypes.Email)?.Value;

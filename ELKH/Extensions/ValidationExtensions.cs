@@ -48,9 +48,9 @@ namespace ELKH.Extensions
         {
             if (product.DiscountPercent > 0)
             {
-                return product.Price * (1 - (product.DiscountPercent / 100m));
+                return decimal.Round(product.Price * (1 - (product.DiscountPercent / 100m)), 2, MidpointRounding.AwayFromZero);
             }
-            return product.Price;
+            return decimal.Round(product.Price, 2, MidpointRounding.AwayFromZero);
         }
 
         /// <summary>

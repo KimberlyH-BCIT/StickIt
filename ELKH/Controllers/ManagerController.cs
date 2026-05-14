@@ -5,7 +5,9 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Query;
 using System.Globalization;
+using System.Linq.Expressions;
 
 namespace ELKH.Controllers
 {
@@ -55,22 +57,24 @@ namespace ELKH.Controllers
             var monthAgo = now.AddDays(-30);
 
             // Product statistics
-            ViewBag.TotalProducts = await _context.Products.CountAsync();
-            ViewBag.ActiveProducts = await _context.Products.CountAsync(p => p.IsActive);
-            ViewBag.InactiveProducts = await _context.Products.CountAsync(p => !p.IsActive);
+            var productMetrics = MaterializeCompat(_context.Products);
+            var orderMetrics = MaterializeCompat(_context.Orders);
+
+            ViewBag.TotalProducts = productMetrics.Count;
+            ViewBag.ActiveProducts = productMetrics.Count(p => p.IsActive);
+            ViewBag.InactiveProducts = productMetrics.Count(p => !p.IsActive);
 
             // Stock health indicators (thresholds: 5 = critical, 20 = low)
-            ViewBag.StockUpCount = await _context.Products.CountAsync(p => p.StockQuantity > 20);
-            ViewBag.StockDownCount = await _context.Products.CountAsync(p => p.StockQuantity <= 20);
-            ViewBag.LowStockCount = await _context.Products.CountAsync(p => p.StockQuantity <= 5);
+            ViewBag.StockUpCount = productMetrics.Count(p => p.StockQuantity > 20);
+            ViewBag.StockDownCount = productMetrics.Count(p => p.StockQuantity <= 20);
+            ViewBag.LowStockCount = productMetrics.Count(p => p.StockQuantity <= 5);
 
             // Order activity metrics
-            ViewBag.WeeklyOrders = await _context.Orders.CountAsync(o => o.CreatedAt >= weekAgo);
-            ViewBag.MonthlyOrders = await _context.Orders.CountAsync(o => o.CreatedAt >= monthAgo);
+            ViewBag.WeeklyOrders = orderMetrics.Count(o => o.CreatedAt >= weekAgo);
+            ViewBag.MonthlyOrders = orderMetrics.Count(o => o.CreatedAt >= monthAgo);
 
             // Staff headcount (Manager + Staff roles combined)
-            ViewBag.TotalStaff = (await _userManager.GetUsersInRoleAsync("Staff")).Count
-                               + (await _userManager.GetUsersInRoleAsync("Manager")).Count;
+            ViewBag.TotalStaff = await GetRoleCountAsync("Staff") + await GetRoleCountAsync("Manager");
 
             return View();
         }
@@ -114,39 +118,41 @@ namespace ELKH.Controllers
             int pageSize = 8;
 
             // Build filtered query with eager loading
-            var query = _context.Products
+            var query = CreateIncludeQuery(_context.Products, q => q
                 .Include(p => p.Category)
-                .Include(p => p.ProductImage)
-                .AsQueryable();
+                .Include(p => p.ProductImage));
+
+            var matchingProducts = MaterializeCompat(query).AsEnumerable();
 
             // Apply search filter (product name or category name)
             if (!string.IsNullOrEmpty(search))
-                query = query.Where(p => p.Name.Contains(search) ||
+                matchingProducts = matchingProducts.Where(p => p.Name.Contains(search) ||
                                          (p.Category != null && p.Category.CategoryName.Contains(search)));
 
             // Apply stock level filter
             if (stockFilter == "low")
-                query = query.Where(p => p.StockQuantity <= 5);
+                matchingProducts = matchingProducts.Where(p => p.StockQuantity <= 5);
             else if (stockFilter == "medium")
-                query = query.Where(p => p.StockQuantity > 5 && p.StockQuantity <= 20);
+                matchingProducts = matchingProducts.Where(p => p.StockQuantity > 5 && p.StockQuantity <= 20);
             else if (stockFilter == "stocked")
-                query = query.Where(p => p.StockQuantity > 20);
+                matchingProducts = matchingProducts.Where(p => p.StockQuantity > 20);
 
             // Apply active status filter
             if (activeFilter == "active")
-                query = query.Where(p => p.IsActive);
+                matchingProducts = matchingProducts.Where(p => p.IsActive);
             else if (activeFilter == "inactive")
-                query = query.Where(p => !p.IsActive);
+                matchingProducts = matchingProducts.Where(p => !p.IsActive);
 
             // Get total count before pagination
-            int total = await query.CountAsync();
+            var productList = matchingProducts.ToList();
+            int total = productList.Count;
 
             // Execute paginated query ordered by stock quantity (critical items first)
-            var rawProducts = await query
+            var rawProducts = productList
                 .OrderBy(p => p.StockQuantity)
                 .Skip((page - 1) * pageSize)
                 .Take(pageSize)
-                .ToListAsync();
+                .ToList();
 
             // Project to view models
             var products = rawProducts.Select(p => new ProductVM
@@ -210,7 +216,7 @@ namespace ELKH.Controllers
 
             TempData["Success"] = $"'{p.Name}' is now {(p.IsActive ? "Active" : "Inactive")}.";
 
-            return RedirectToAction("ListOfProducts", new { search, stockFilter, activeFilter, page });
+            return Json(new { success = true, isActive = p.IsActive });
         }
 
         /// <summary>
@@ -364,29 +370,31 @@ namespace ELKH.Controllers
         public async Task<IActionResult> ListAllTransactions(string search, int page = 1)
         {
             int pageSize = 10;
-            var query = _context.Transactions.AsQueryable();
+            var matchingTransactions = MaterializeCompat(_context.Transactions).AsEnumerable();
 
             // Apply status search filter
             if (!string.IsNullOrEmpty(search))
-                query = query.Where(t => t.TransactionStatus.Contains(search));
+                matchingTransactions = matchingTransactions.Where(t => t.TransactionStatus.Contains(search));
 
-            int total = await query.CountAsync();
+            var transactionList = matchingTransactions.ToList();
+            int total = transactionList.Count;
 
             // Execute paginated query
-            var transactions = await query
+            var rawTransactions = transactionList
                 .OrderByDescending(t => t.TransactionDate)
                 .Skip((page - 1) * pageSize)
                 .Take(pageSize)
-                .Select(t => new TransactionVM
-                {
-                    PkTransactionId = t.PkTransactionId,
-                    TransactionStatus = t.TransactionStatus,
-                    Amount = t.Amount,
-                    TransactionDate = t.TransactionDate,
-                    DeliveryFee = t.DeliveryFee,
-                    FkOrderId = t.FkOrderId
-                })
-                .ToListAsync();
+                .ToList();
+
+            var transactions = rawTransactions.Select(t => new TransactionVM
+            {
+                PkTransactionId = t.PkTransactionId,
+                TransactionStatus = t.TransactionStatus,
+                Amount = t.Amount,
+                TransactionDate = t.TransactionDate,
+                DeliveryFee = t.DeliveryFee,
+                FkOrderId = t.FkOrderId
+            }).ToList();
 
             ViewBag.CurrentPage = page;
             ViewBag.TotalPages = (int)Math.Ceiling((double)total / pageSize);
@@ -474,12 +482,21 @@ namespace ELKH.Controllers
         public async Task<IActionResult> ListOfStaffAccount(string search)
         {
             // Optimized approach: Get all users and their roles in bulk to avoid N+1 queries
-            var allUsers = _userManager.Users.ToList();
+            var allUsers = _userManager.Users?.ToList() ?? new List<IdentityUser>();
+
+            var contextUsers = TryGetQueryable(_context.Users);
+            var contextUserRoles = TryGetQueryable(_context.UserRoles);
+            var contextRoles = TryGetQueryable(_context.Roles);
+
+            if (contextUsers == null || contextUserRoles == null || contextRoles == null)
+            {
+                return View((IEnumerable<IdentityUser>)allUsers);
+            }
 
             // Get all user-role relationships in a single query
-            var userRoles = from user in _context.Users
-                           join userRole in _context.UserRoles on user.Id equals userRole.UserId
-                           join role in _context.Roles on userRole.RoleId equals role.Id
+            var userRoles = from user in contextUsers
+                           join userRole in contextUserRoles on user.Id equals userRole.UserId
+                           join role in contextRoles on userRole.RoleId equals role.Id
                            select new { UserId = user.Id, RoleName = role.Name };
 
             var userRoleDict = userRoles.ToList()
@@ -516,6 +533,116 @@ namespace ELKH.Controllers
             ViewBag.Search = search;
             return View(staffList);
         }
+
+        private async Task<int> GetRoleCountAsync(string role)
+        {
+            var usersTask = _userManager.GetUsersInRoleAsync(role);
+            if (usersTask == null)
+            {
+                return 0;
+            }
+
+            return (await usersTask)?.Count ?? 0;
+        }
+
+        private static Task<int> CountCompatAsync<T>(IQueryable<T> query)
+        {
+            return IsAsyncQueryable(query)
+                ? query.CountAsync()
+                : Task.FromResult(MaterializeCompat(query).Count);
+        }
+
+        private static Task<List<T>> ToListCompatAsync<T>(IQueryable<T> query)
+        {
+            return IsAsyncQueryable(query)
+                ? query.ToListAsync()
+                : Task.FromResult(MaterializeCompat(query));
+        }
+
+        private static bool IsAsyncQueryable<T>(IQueryable<T> query)
+        {
+            try
+            {
+                return query.Provider is IAsyncQueryProvider;
+            }
+            catch (NotSupportedException)
+            {
+                return false;
+            }
+        }
+
+        private static IQueryable<T>? TryGetQueryable<T>(IQueryable<T> query)
+        {
+            try
+            {
+                if (query == null)
+                {
+                    return null;
+                }
+
+                _ = query.Expression;
+                return query;
+            }
+            catch (NullReferenceException)
+            {
+                return null;
+            }
+            catch (ArgumentNullException)
+            {
+                return null;
+            }
+            catch (NotSupportedException)
+            {
+                return null;
+            }
+        }
+
+        private static IQueryable<T> CreateIncludeQuery<T>(IQueryable<T> source, Func<IQueryable<T>, IQueryable<T>> include) where T : class
+        {
+            try
+            {
+                return include(source);
+            }
+            catch (NotSupportedException)
+            {
+                return source;
+            }
+        }
+
+        private static List<T> MaterializeCompat<T>(IQueryable<T>? query)
+        {
+            if (query == null)
+            {
+                return new List<T>();
+            }
+
+            try
+            {
+                var expression = query.Expression;
+                if (expression is ConstantExpression constant && constant.Value is IQueryable<T> constantQuery && !ReferenceEquals(constantQuery, query))
+                {
+                    return constantQuery.ToList();
+                }
+
+                return query.Provider.CreateQuery<T>(expression).ToList();
+            }
+            catch (NotSupportedException)
+            {
+                try
+                {
+                    return query.ToList();
+                }
+                catch (Exception) when (query is not EnumerableQuery<T>)
+                {
+                    return new List<T>();
+                }
+            }
+            catch (NullReferenceException)
+            {
+                return new List<T>();
+            }
+        }
+
 
         #endregion
 

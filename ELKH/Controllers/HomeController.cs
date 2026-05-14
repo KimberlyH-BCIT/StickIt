@@ -113,7 +113,8 @@ namespace ELKH.Controllers
         [ResponseCache(Duration = 0, Location = ResponseCacheLocation.None, NoStore = true)]
         public IActionResult Error()
         {
-            return View(new ErrorVM { RequestId = Activity.Current?.Id ?? HttpContext.TraceIdentifier });
+            var traceIdentifier = ControllerContext.HttpContext?.TraceIdentifier;
+            return View(new ErrorVM { RequestId = traceIdentifier is null ? null : Activity.Current?.Id ?? traceIdentifier });
         }
     }
 }

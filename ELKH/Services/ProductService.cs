@@ -91,8 +91,10 @@ namespace ELKH.Services
         /// <inheritdoc/>
         public async Task<ProductVM?> GetByIdAsync(int id, CancellationToken ct = default)
         {
-            // CompiledQueries.GetProductById avoids repeated EF query translation on this hot path.
-            var p = await CompiledQueries.GetProductById(db, id, ct);
+            var p = await db.Products
+                .Include(p => p.Category)
+                .AsNoTracking()
+                .FirstOrDefaultAsync(p => p.PkProductId == id && !p.IsDeleted, ct);
             if (p == null) return null;
             return mapper.ToViewModel(p);
         }
@@ -119,7 +121,19 @@ namespace ELKH.Services
         /// <inheritdoc/>
         public async Task CreateAsync(ProductVM vm, CancellationToken ct = default)
         {
-            var entity = mapper.ToModel(vm);
+            var entity = mapper.ToModel(vm) ?? new ProductModel
+            {
+                Name = vm.ProductName,
+                Description = vm.Description,
+                Price = vm.Price,
+                DiscountPercent = vm.DiscountPercent,
+                StockQuantity = vm.StockQuantity,
+                FkCategoryId = vm.CategoryId,
+                IsActive = vm.IsActive,
+                DateAdded = vm.DateAdded,
+                IsTrending = vm.IsTrending,
+                IsBestSeller = vm.IsBestSeller
+            };
             // Normalize the name immediately so the entity is search-ready before it is persisted.
             entity.NameNormalized = NormalizeName(entity.Name);
             db.Products.Add(entity);

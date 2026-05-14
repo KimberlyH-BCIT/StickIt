@@ -86,7 +86,7 @@ namespace ELKH.Models
         /// Timestamp when the rating was deleted (if deleted).
         /// </summary>
         public DateTime? DeletedAt { get; set; }
-        public string UserId { get; set; }
+        public string UserId { get; set; } = string.Empty;
        
     }
 }

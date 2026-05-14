@@ -1,5 +1,6 @@
 using ELKH.Extensions;
 using ELKH.Services;
+using Microsoft.EntityFrameworkCore;
 using System.Security.Cryptography;
 using System.Text;
 
@@ -278,7 +279,9 @@ public class CheckoutController : Controller
         // STEP 5-8: Create order in a transaction to ensure atomicity
         // All database operations wrapped in transaction for data consistency
         // ===================================================================
-        await using var transaction = await _db.Database.BeginTransactionAsync();
+        await using var transaction = _db.Database.IsRelational()
+            ? await _db.Database.BeginTransactionAsync()
+            : null;
         try
         {
             // ===================================================================
@@ -368,7 +371,10 @@ public class CheckoutController : Controller
             await _db.SaveChangesAsync();
 
             // Commit transaction - all changes are now permanent
-            await transaction.CommitAsync();
+            if (transaction != null)
+            {
+                await transaction.CommitAsync();
+            }
 
             TempData["Message"] = "success,Order placed successfully!";
             return RedirectToAction("Details", "Order", new { id = order.PkOrderId });
@@ -376,7 +382,10 @@ public class CheckoutController : Controller
         catch (Exception ex)
         {
             // Rollback transaction on any error to maintain data consistency
-            await transaction.RollbackAsync();
+            if (transaction != null)
+            {
+                await transaction.RollbackAsync();
+            }
             _logger.LogError(ex, "Failed to process order for user {Email}", email);
             TempData["Message"] = "error,An error occurred while processing your order. Please try again.";
             return RedirectToAction("Index");
@@ -423,7 +432,7 @@ public class CheckoutController : Controller
         };
 
         // Calculate totals using ShippingService
-        guestCheckoutVM.Tax = guestCheckoutVM.Subtotal * 0.12m;
+        guestCheckoutVM.Tax = decimal.Round(guestCheckoutVM.Subtotal * 0.12m, 2, MidpointRounding.AwayFromZero);
         guestCheckoutVM.ShippingCost = await _shippingService.CalculateShippingCostAsync(
             guestCheckoutVM.SelectedShippingMethodId, guestCheckoutVM.Subtotal);
 
@@ -504,12 +513,12 @@ public class CheckoutController : Controller
             var product = products.FirstOrDefault(p => p.PkProductId == item.ProductId);
             if (product != null)
             {
-                subtotal += product.GetEffectivePrice() * item.Quantity;
+                subtotal += CalculateCheckoutUnitPrice(product) * item.Quantity;
             }
         }
         var tax = subtotal * 0.12m;
         var shipping = await _shippingService.CalculateShippingCostAsync(vm.SelectedShippingMethodId, subtotal);
-        var total = subtotal + tax + shipping;
+        var total = decimal.Round(subtotal + tax + shipping, 2, MidpointRounding.AwayFromZero);
 
         if (string.IsNullOrWhiteSpace(vm.PayPalOrderId))
         {
@@ -545,7 +554,9 @@ public class CheckoutController : Controller
         // ===================================================================
         // STEP 5: Create contact detail (not linked to user account)
         // ===================================================================
-        await using var transaction = await _db.Database.BeginTransactionAsync();
+        await using var transaction = _db.Database.IsRelational()
+            ? await _db.Database.BeginTransactionAsync()
+            : null;
         try
         {
             var names = (vm.FullName ?? "").Split(' ', 2);
@@ -569,6 +580,7 @@ public class CheckoutController : Controller
             var order = new OrderModel
             {
                 FkContactId = contact.PkContactId,
+                ContactDetail = contact,
                 FkRegisteredUserId = null,
                 OrderStatus = OrderStatus.Paid,
                 TotalAmount = total,
@@ -594,9 +606,11 @@ public class CheckoutController : Controller
                     var orderItem = new OrderItemModel
                     {
                         FkOrderId = order.PkOrderId,
+                        Order = order,
                         FkProductId = product.PkProductId,
+                        Product = product,
                         Quantity = item.Quantity,
-                        UnitPrice = product.GetEffectivePrice()
+                        UnitPrice = CalculateCheckoutUnitPrice(product)
                     };
                     _db.OrderItems.Add(orderItem);
                     product.StockQuantity = (product.StockQuantity ?? 0) - item.Quantity;
@@ -605,21 +619,45 @@ public class CheckoutController : Controller
 
             await _db.SaveChangesAsync();
             await _guestCartService.ClearCartAsync();
-            await transaction.CommitAsync();
+            if (transaction != null)
+            {
+                await transaction.CommitAsync();
+            }
 
             var guestConfirmationLink = BuildGuestConfirmationLink(guestAccessToken);
-            await _orderEmailService.SendOrderConfirmationAsync(
-                vm.Email,
-                contact.FirstName,
-                order.PkOrderId,
-                guestConfirmationLink);
+            try
+            {
+                await _orderEmailService.SendOrderConfirmationAsync(
+                    vm.Email,
+                    contact.FirstName,
+                    order.PkOrderId,
+                    guestConfirmationLink);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogWarning(ex, "Failed to send guest order confirmation email for order {OrderId}", order.PkOrderId);
+            }
 
             TempData["Message"] = "success,Order placed successfully! Check your email for order details.";
             return RedirectToAction(nameof(GuestConfirmation), new { token = guestAccessToken });
         }
         catch (Exception ex)
         {
-            await transaction.RollbackAsync();
+            try
+            {
+                if (transaction != null)
+                {
+                if (transaction != null)
+                {
+                    await transaction.RollbackAsync();
+                }
+                }
+            }
+            catch (Exception rollbackEx)
+            {
+                _logger.LogWarning(rollbackEx, "Failed to roll back guest checkout transaction for {Email}", vm.Email);
+            }
+
             _logger.LogError(ex, "Failed to process guest order for {Email}", vm.Email);
             TempData["Message"] = "error,An error occurred while processing your order. Please try again.";
             return RedirectToAction("Guest");
@@ -694,6 +732,13 @@ public class CheckoutController : Controller
         };
     }
 
+    private static decimal CalculateCheckoutUnitPrice(ProductModel product)
+    {
+        return product.DiscountPercent > 0
+            ? product.Price * (1 - (product.DiscountPercent / 100m))
+            : product.Price;
+    }
+
     private static string GenerateGuestAccessToken()
     {
         return Microsoft.AspNetCore.WebUtilities.WebEncoders.Base64UrlEncode(RandomNumberGenerator.GetBytes(32));
@@ -741,6 +786,19 @@ public class CheckoutController : Controller
         {
             TempData["Message"] = "error,Invalid guest order access link.";
             return RedirectToAction("Index", "Home");
+        }
+
+        if (order.ContactDetail == null)
+        {
+            order.ContactDetail = await _db.ContactDetails.FindAsync(order.FkContactId);
+        }
+
+        if (order.OrderItems.Count == 0)
+        {
+            order.OrderItems = await _db.OrderItems
+                .Include(oi => oi.Product)
+                .Where(oi => oi.FkOrderId == order.PkOrderId)
+                .ToListAsync();
         }
 
         return View(order);

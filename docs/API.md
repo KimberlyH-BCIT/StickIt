@@ -12,7 +12,7 @@ StickIt provides a comprehensive REST API built on ASP.NET Core 10 MVC controlle
 - **Production**: `https://stickit.example.com`
 
 ### Authentication
-All authenticated endpoints require a valid session cookie or bearer token.
+Authenticated web endpoints use ASP.NET Core Identity session cookies. JWT bearer authentication is not currently registered in the application startup.
 
 ```http
 GET /UserProfile/Index
@@ -23,7 +23,7 @@ Cookie: .AspNetCore.Identity.Application=<session-cookie>
 
 ### Authentication Methods
 - **Session-based** - Default for web browsers
-- **Bearer Token** - For API clients and mobile apps
+- **Bearer Token** - Not currently implemented; add JWT bearer registration before documenting token-based API clients
 - **Identity Integration** - ASP.NET Core Identity with role-based access
 
 ### Authorization Levels

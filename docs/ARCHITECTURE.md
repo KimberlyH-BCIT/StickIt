@@ -43,7 +43,6 @@ graph TB
     
     subgraph "Data Access Layer"
         Repositories[Repository Pattern]
-        UnitOfWork[Unit of Work]
         DbContext[Entity Framework DbContext]
     end
     
@@ -70,8 +69,7 @@ graph TB
     Services --> Validators
     Services --> Handlers
     Handlers --> Repositories
-    Repositories --> UnitOfWork
-    UnitOfWork --> DbContext
+    Repositories --> DbContext
     DbContext --> Database
     
     Services --> Cache

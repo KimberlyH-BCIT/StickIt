@@ -1,8 +1,8 @@
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Mvc.Testing;
+using Microsoft.Data.Sqlite;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
-using Microsoft.EntityFrameworkCore.Storage;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
 using Microsoft.Extensions.Hosting;
@@ -12,6 +12,8 @@ using Microsoft.AspNetCore.Identity;
 using Microsoft.Extensions.Logging;
 using System.Data.Common;
 using ELKH.Services;
+using Microsoft.AspNetCore.Builder;
+using Microsoft.AspNetCore.Http;
 
 namespace ELKH.GuestCheckoutTests;
 
@@ -23,8 +25,18 @@ public class ELKHWebApplicationFactory : WebApplicationFactory<Program>
 {
     private bool _seeded = false;
     private readonly object _seedLock = new object();
-    private readonly InMemoryDatabaseRoot _dbRoot = new();
-    private readonly InMemoryDatabaseRoot _imageDbRoot = new();
+    private readonly string _appDbConnectionString = $"Data Source=GuestCheckoutAppDb_{Guid.NewGuid():N};Mode=Memory;Cache=Shared";
+    private readonly string _imageDbConnectionString = $"Data Source=GuestCheckoutImageDb_{Guid.NewGuid():N};Mode=Memory;Cache=Shared";
+    private readonly SqliteConnection _dbKeepAliveConnection;
+    private readonly SqliteConnection _imageDbKeepAliveConnection;
+
+    public ELKHWebApplicationFactory()
+    {
+        _dbKeepAliveConnection = new SqliteConnection(_appDbConnectionString);
+        _imageDbKeepAliveConnection = new SqliteConnection(_imageDbConnectionString);
+        _dbKeepAliveConnection.Open();
+        _imageDbKeepAliveConnection.Open();
+    }
 
     protected override void ConfigureWebHost(IWebHostBuilder builder)
     {
@@ -56,18 +68,23 @@ public class ELKHWebApplicationFactory : WebApplicationFactory<Program>
 
             services.AddDbContext<ApplicationDbContext>(options =>
             {
-                options.UseInMemoryDatabase("GuestCheckoutIntegrationTestDb", _dbRoot);
+                options.UseSqlite(_appDbConnectionString);
                 options.EnableSensitiveDataLogging();
             }, ServiceLifetime.Scoped);
 
             services.AddDbContext<ImageStoreContext>(options =>
             {
-                options.UseInMemoryDatabase("GuestCheckoutIntegrationImageDb", _imageDbRoot);
+                options.UseSqlite(_imageDbConnectionString);
                 options.EnableSensitiveDataLogging();
             }, ServiceLifetime.Scoped);
 
             services.RemoveAll<IPayPalService>();
             services.AddScoped<IPayPalService, TestPayPalService>();
+
+            services.Configure<SessionOptions>(options =>
+            {
+                options.Cookie.SecurePolicy = CookieSecurePolicy.None;
+            });
         });
 
         builder.UseEnvironment("Testing");
@@ -217,6 +234,12 @@ public class ELKHWebApplicationFactory : WebApplicationFactory<Program>
 
     protected override void Dispose(bool disposing)
     {
+        if (disposing)
+        {
+            _dbKeepAliveConnection.Dispose();
+            _imageDbKeepAliveConnection.Dispose();
+        }
+
         base.Dispose(disposing);
     }
 

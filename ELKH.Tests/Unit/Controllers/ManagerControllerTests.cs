@@ -6,6 +6,8 @@ using Microsoft.AspNetCore.Mvc.ViewFeatures;
 using Microsoft.AspNetCore.Routing;
 using Microsoft.AspNetCore.Identity;
 using Moq;
+using System.Collections;
+using System.Linq.Expressions;
 using System.Security.Claims;
 using Xunit;
 using ELKH.Controllers;
@@ -13,6 +15,7 @@ using ELKH.Data;
 using ELKH.Models;
 using ELKH.ViewModels;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Query;
 
 namespace ELKH.Tests.Unit.Controllers;
 
@@ -87,6 +90,7 @@ public class ManagerControllerTests
     private readonly Mock<ApplicationDbContext> _mockDbContext;
     private readonly Mock<UserManager<IdentityUser>> _mockUserManager;
     private readonly ManagerController _controller;
+    private readonly ApplicationDbContext _dbContext;
     private readonly Mock<DbSet<ProductModel>> _mockProductSet;
     private readonly Mock<DbSet<TransactionModel>> _mockTransactionSet;
 
@@ -117,6 +121,7 @@ public class ManagerControllerTests
         var options = new DbContextOptionsBuilder<ApplicationDbContext>()
             .UseInMemoryDatabase(databaseName: Guid.NewGuid().ToString())
             .Options;
+        _dbContext = new ApplicationDbContext(options);
         _mockDbContext = new Mock<ApplicationDbContext>(options);
 
         #endregion
@@ -145,7 +150,7 @@ public class ManagerControllerTests
         #region Controller Initialization
 
         // Create controller instance with all mocked dependencies
-        _controller = new ManagerController(_mockDbContext.Object, _mockUserManager.Object);
+        _controller = new ManagerController(_dbContext, _mockUserManager.Object);
 
         // Configure ASP.NET Core controller context for request simulation
         var httpContext = new DefaultHttpContext();
@@ -258,7 +263,8 @@ public class ManagerControllerTests
             new ProductModel { PkProductId = 2, Name = "Product 2", Price = 29.99m, IsActive = false }
         }.AsQueryable();
 
-        SetupMockDbSet(_mockProductSet, products);
+        _dbContext.Products.AddRange(products);
+        await _dbContext.SaveChangesAsync();
 
         #endregion
 
@@ -303,7 +309,8 @@ public class ManagerControllerTests
             new ProductModel { PkProductId = 2, Name = "Wireless Mouse", Price = 29.99m, IsActive = true }
         }.AsQueryable();
 
-        SetupMockDbSet(_mockProductSet, products);
+        _dbContext.Products.AddRange(products);
+        await _dbContext.SaveChangesAsync();
 
         #endregion
 
@@ -359,7 +366,13 @@ public class ManagerControllerTests
 
         #region Act - Execute product status toggle
 
-        var result = await _controller.ToggleActive(1, null, null, null, 1);
+        var controller = new ManagerController(_mockDbContext.Object, _mockUserManager.Object)
+        {
+            ControllerContext = _controller.ControllerContext,
+            TempData = _controller.TempData
+        };
+
+        var result = await controller.ToggleActive(1, null, null, null, 1);
 
         #endregion
 
@@ -406,7 +419,13 @@ public class ManagerControllerTests
 
         #region Act & Assert - Validate 404 response for missing product
 
-        var result = await _controller.ToggleActive(999, null, null, null, 1);
+        var controller = new ManagerController(_mockDbContext.Object, _mockUserManager.Object)
+        {
+            ControllerContext = _controller.ControllerContext,
+            TempData = _controller.TempData
+        };
+
+        var result = await controller.ToggleActive(999, null, null, null, 1);
         result.Should().BeOfType<NotFoundResult>();
 
         #endregion
@@ -458,7 +477,8 @@ public class ManagerControllerTests
             }
         }.AsQueryable();
 
-        SetupMockDbSet(_mockTransactionSet, transactions);
+        _dbContext.Transactions.AddRange(transactions);
+        await _dbContext.SaveChangesAsync();
 
         #endregion
 
@@ -471,7 +491,7 @@ public class ManagerControllerTests
         #region Assert - Validate financial data display
 
         var viewResult = result.Should().BeOfType<ViewResult>().Subject;
-        var model = viewResult.Model.Should().BeAssignableTo<IEnumerable<TransactionModel>>().Subject;
+        var model = viewResult.Model.Should().BeAssignableTo<IEnumerable<TransactionVM>>().Subject;
         model.Should().HaveCount(2);
         model.First().TransactionStatus.Should().Be("Completed");
 
@@ -509,7 +529,8 @@ public class ManagerControllerTests
             new TransactionModel { PkTransactionId = 3, TransactionStatus = "Completed", Amount = 35.99m }
         }.AsQueryable();
 
-        SetupMockDbSet(_mockTransactionSet, transactions);
+        _dbContext.Transactions.AddRange(transactions);
+        await _dbContext.SaveChangesAsync();
 
         #endregion
 
@@ -522,7 +543,7 @@ public class ManagerControllerTests
         #region Assert - Validate filtering accuracy and completeness
 
         var viewResult = result.Should().BeOfType<ViewResult>().Subject;
-        var model = viewResult.Model.Should().BeAssignableTo<IEnumerable<TransactionModel>>().Subject;
+        var model = viewResult.Model.Should().BeAssignableTo<IEnumerable<TransactionVM>>().Subject;
         model.Should().HaveCount(2);
         model.All(t => t.TransactionStatus == "Completed").Should().BeTrue();
 
@@ -564,12 +585,22 @@ public class ManagerControllerTests
 
         var users = new List<IdentityUser>
         {
-            new IdentityUser { UserName = "manager1@example.com", Email = "manager1@example.com" },
-            new IdentityUser { UserName = "admin1@example.com", Email = "admin1@example.com" }
+            new IdentityUser { Id = "manager-1", UserName = "manager1@example.com", Email = "manager1@example.com" },
+            new IdentityUser { Id = "admin-1", UserName = "admin1@example.com", Email = "admin1@example.com" }
         };
 
         _mockUserManager.Setup(u => u.Users)
                        .Returns(users.AsQueryable());
+
+        var managerRole = new IdentityRole { Id = "role-manager", Name = "Manager" };
+        var adminRole = new IdentityRole { Id = "role-admin", Name = "Admin" };
+
+        _dbContext.Users.AddRange(users);
+        _dbContext.Roles.AddRange(managerRole, adminRole);
+        _dbContext.UserRoles.AddRange(
+            new IdentityUserRole<string> { UserId = "manager-1", RoleId = "role-manager" },
+            new IdentityUserRole<string> { UserId = "admin-1", RoleId = "role-admin" });
+        await _dbContext.SaveChangesAsync();
 
         #endregion
 
@@ -582,7 +613,7 @@ public class ManagerControllerTests
         #region Assert - Validate staff data display and accessibility
 
         var viewResult = result.Should().BeOfType<ViewResult>().Subject;
-        var model = viewResult.Model.Should().BeOfType<IEnumerable<IdentityUser>>().Subject;
+        var model = viewResult.Model.Should().BeAssignableTo<IEnumerable<UserListVM>>().Subject;
         model.Should().HaveCount(2);
         model.First().Email.Should().Be("manager1@example.com");
 
@@ -665,7 +696,91 @@ public class ManagerControllerTests
         mockDbSet.As<IQueryable<T>>().Setup(m => m.Provider).Returns(data.Provider);
         mockDbSet.As<IQueryable<T>>().Setup(m => m.Expression).Returns(data.Expression);
         mockDbSet.As<IQueryable<T>>().Setup(m => m.ElementType).Returns(data.ElementType);
-        mockDbSet.As<IQueryable<T>>().Setup(m => m.GetEnumerator()).Returns(data.GetEnumerator());
+        mockDbSet.As<IQueryable<T>>().Setup(m => m.GetEnumerator()).Returns(() => data.GetEnumerator());
+    }
+
+    private sealed class TestAsyncQueryProvider<TEntity> : IAsyncQueryProvider
+    {
+        private readonly IQueryProvider _inner;
+
+        internal TestAsyncQueryProvider(IQueryProvider inner)
+        {
+            _inner = inner;
+        }
+
+        public IQueryable CreateQuery(Expression expression)
+        {
+            return new TestAsyncEnumerable<TEntity>(expression);
+        }
+
+        public IQueryable<TElement> CreateQuery<TElement>(Expression expression)
+        {
+            return new TestAsyncEnumerable<TElement>(expression);
+        }
+
+        public object? Execute(Expression expression)
+        {
+            return _inner.Execute(expression);
+        }
+
+        public TResult Execute<TResult>(Expression expression)
+        {
+            return _inner.Execute<TResult>(expression);
+        }
+
+        public TResult ExecuteAsync<TResult>(Expression expression, CancellationToken cancellationToken = default)
+        {
+            var expectedResultType = typeof(TResult).GetGenericArguments()[0];
+            var executionResult = typeof(IQueryProvider)
+                .GetMethod(nameof(IQueryProvider.Execute), 1, new[] { typeof(Expression) })!
+                .MakeGenericMethod(expectedResultType)
+                .Invoke(this, new object[] { expression });
+
+            return (TResult)typeof(Task).GetMethod(nameof(Task.FromResult))!
+                .MakeGenericMethod(expectedResultType)
+                .Invoke(null, new[] { executionResult })!;
+        }
+    }
+
+    private sealed class TestAsyncEnumerable<T> : EnumerableQuery<T>, IAsyncEnumerable<T>, IQueryable<T>
+    {
+        public TestAsyncEnumerable(IEnumerable<T> enumerable) : base(enumerable)
+        {
+        }
+
+        public TestAsyncEnumerable(Expression expression) : base(expression)
+        {
+        }
+
+        public IAsyncEnumerator<T> GetAsyncEnumerator(CancellationToken cancellationToken = default)
+        {
+            return new TestAsyncEnumerator<T>(this.AsEnumerable().GetEnumerator());
+        }
+
+        IQueryProvider IQueryable.Provider => new TestAsyncQueryProvider<T>(this);
+    }
+
+    private sealed class TestAsyncEnumerator<T> : IAsyncEnumerator<T>
+    {
+        private readonly IEnumerator<T> _inner;
+
+        public TestAsyncEnumerator(IEnumerator<T> inner)
+        {
+            _inner = inner;
+        }
+
+        public T Current => _inner.Current;
+
+        public ValueTask DisposeAsync()
+        {
+            _inner.Dispose();
+            return ValueTask.CompletedTask;
+        }
+
+        public ValueTask<bool> MoveNextAsync()
+        {
+            return ValueTask.FromResult(_inner.MoveNext());
+        }
     }
 
     #endregion

@@ -25,6 +25,10 @@
 
     @if (Model.IsEmpty)
     {
+        <form method="post" class="d-none" aria-hidden="true">
+            @Html.AntiForgeryToken()
+        </form>
+
         var emptyCartVM = new ELKH.ViewModels.EmptyStateCardVM
         {
             Title = "Your cart is empty",

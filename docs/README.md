@@ -102,9 +102,10 @@ Some guides describe:
 
 ## Current verification snapshot
 
-Latest validated integration evidence on this branch:
-- full integration suite passing: `91/91`
-- targeted product catalog + product API slice passing: `34/34`
+Latest validated evidence on this branch:
+- solution-level test run passing: `378/378`
+- main test project passing: `306/306`
+- guest checkout regression suite passing: `72/72`
 
 This is the current observed test state, not a promise that future changes will preserve it without re-validation.
 

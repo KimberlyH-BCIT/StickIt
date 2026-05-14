@@ -52,7 +52,8 @@ cd StickIt
 dotnet restore
 
 # Apply database migrations
-dotnet ef database update --project ELKH
+dotnet ef database update --project ELKH --context ApplicationDbContext
+dotnet ef database update --project ELKH --context ImageStoreContext
 
 # Run application
 dotnet run --project ELKH
@@ -712,7 +713,7 @@ jobs:
 
 ### Pre-Deployment
 - [ ] Tests passing in CI/CD pipeline
-- [ ] Database migrations tested
+- [ ] EF Core migrations applied for ApplicationDbContext and ImageStoreContext
 - [ ] Environment variables configured
 - [ ] SSL certificates valid
 - [ ] Health checks configured

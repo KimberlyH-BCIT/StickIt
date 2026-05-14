@@ -72,6 +72,7 @@ namespace ELKH.Repositories
         {
             return await Context.Orders
                 .AsNoTracking()
+                .Include(o => o.RegisteredUser)
                 .Where(o => o.RegisteredUser!.Email == userEmail)
                 .Include(o => o.OrderItems)
                     .ThenInclude(oi => oi.Product)

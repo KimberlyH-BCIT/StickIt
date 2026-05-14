@@ -306,18 +306,16 @@ app.UseResponseCaching();
 app.UseApplicationEndpoints();
 
 // =====================================================================
-// Database migration and seeding
+// Database initialization and seeding
 // =====================================================================
-// Migrations: controlled by Database:ApplyMigrationsOnStartup (defaults true
-// in Development, false elsewhere). Database:AllowMigrationInProduction must
-// ALSO be true before migrations run outside Development - the double-guard
-// prevents accidental schema changes on a shared production database.
+// Relational providers use EF Core migrations. Non-relational test providers
+// use EnsureCreated because migrations are relational-provider specific.
 //
 // Seeding: fully idempotent - each seeder checks for existing data and
 // returns immediately when the database is already populated.
 // ... after app.Build() and middleware ...
 
-// 1. Run Migrations first and dispose of that scope immediately
+// 1. Initialize database schema first and dispose of that scope immediately
 await using (var migrationScope = app.Services.CreateAsyncScope())
 {
     var sp = migrationScope.ServiceProvider;
@@ -333,31 +331,8 @@ await using (var migrationScope = app.Services.CreateAsyncScope())
         }
         else
         {
-            var appMigrations = db.Database.GetMigrations().ToList();
-            if (appMigrations.Count > 0)
-            {
-                await db.Database.MigrateAsync();
-                app.Logger.LogInformation("Application database migrations applied successfully.");
-            }
-            else
-            {
-                if (app.Environment.IsDevelopment() &&
-                    db.Database.IsSqlite() &&
-                    !await TableExistsAsync(db, "Products"))
-                {
-                    app.Logger.LogWarning(
-                        "Application database is missing the Products table and no migrations were found. Recreating the local SQLite database.");
-
-                    await db.Database.EnsureDeletedAsync();
-                }
-
-                await db.Database.EnsureCreatedAsync();
-                if (db.Database.IsSqlite())
-                {
-                    await EnsureGuestOrderSecuritySchemaAsync(db, app.Logger);
-                }
-                app.Logger.LogWarning("No ApplicationDbContext migrations were found. EnsureCreated was used instead.");
-            }
+            await db.Database.MigrateAsync();
+            app.Logger.LogInformation("Application database migrations applied successfully.");
         }
 
         if (!imageDb.Database.IsRelational())
@@ -367,17 +342,8 @@ await using (var migrationScope = app.Services.CreateAsyncScope())
         }
         else
         {
-            var imageMigrations = imageDb.Database.GetMigrations().ToList();
-            if (imageMigrations.Count > 0)
-            {
-                await imageDb.Database.MigrateAsync();
-                app.Logger.LogInformation("Image store database migrations applied successfully.");
-            }
-            else
-            {
-                await imageDb.Database.EnsureCreatedAsync();
-                app.Logger.LogWarning("No ImageStoreContext migrations were found. EnsureCreated was used instead.");
-            }
+            await imageDb.Database.MigrateAsync();
+            app.Logger.LogInformation("Image store database migrations applied successfully.");
         }
     }
     catch (Exception ex)
@@ -433,78 +399,6 @@ if (runSeeders)
                 await db.Database.ExecuteSqlRawAsync("PRAGMA foreign_keys=ON");
             }
         }
-    }
-}
-
-static async Task<bool> TableExistsAsync(DbContext context, string tableName)
-{
-    await using var connection = context.Database.GetDbConnection();
-
-    if (connection.State != System.Data.ConnectionState.Open)
-    {
-        await connection.OpenAsync();
-    }
-
-    await using var command = connection.CreateCommand();
-    command.CommandText = "SELECT 1 FROM sqlite_master WHERE type = 'table' AND name = $tableName LIMIT 1;";
-
-    var parameter = command.CreateParameter();
-    parameter.ParameterName = "$tableName";
-    parameter.Value = tableName;
-    command.Parameters.Add(parameter);
-
-    var result = await command.ExecuteScalarAsync();
-    return result is not null and not DBNull;
-}
-
-static async Task<bool> ColumnExistsAsync(DbContext context, string tableName, string columnName)
-{
-    await using var connection = context.Database.GetDbConnection();
-
-    if (connection.State != System.Data.ConnectionState.Open)
-    {
-        await connection.OpenAsync();
-    }
-
-    await using var command = connection.CreateCommand();
-    command.CommandText = $"PRAGMA table_info(\"{tableName}\");";
-
-    await using var reader = await command.ExecuteReaderAsync();
-    while (await reader.ReadAsync())
-    {
-        if (string.Equals(reader[1]?.ToString(), columnName, StringComparison.OrdinalIgnoreCase))
-        {
-            return true;
-        }
-    }
-
-    return false;
-}
-
-static async Task EnsureGuestOrderSecuritySchemaAsync(ApplicationDbContext db, ILogger logger)
-{
-    try
-    {
-        if (!await TableExistsAsync(db, "Orders"))
-        {
-            return;
-        }
-
-        if (!await ColumnExistsAsync(db, "Orders", "GuestAccessTokenHash"))
-        {
-            await db.Database.ExecuteSqlRawAsync("ALTER TABLE Orders ADD COLUMN GuestAccessTokenHash TEXT NULL;");
-            logger.LogInformation("Added Orders.GuestAccessTokenHash column for guest order token security.");
-        }
-
-        await db.Database.ExecuteSqlRawAsync(
-            "UPDATE Orders SET FkRegisteredUserId = NULL WHERE FkRegisteredUserId = 0;");
-
-        await db.Database.ExecuteSqlRawAsync(
-            "CREATE UNIQUE INDEX IF NOT EXISTS IX_Orders_GuestAccessTokenHash ON Orders(GuestAccessTokenHash) WHERE GuestAccessTokenHash IS NOT NULL;");
-    }
-    catch (Microsoft.Data.Sqlite.SqliteException ex) when (ex.SqliteErrorCode == 1 && ex.Message.Contains("no such table: Orders", StringComparison.OrdinalIgnoreCase))
-    {
-        logger.LogDebug("Skipping guest order security schema patch because Orders table is not present in the current database.");
     }
 }
 

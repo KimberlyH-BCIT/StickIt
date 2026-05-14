@@ -1,4 +1,3 @@
-using Microsoft.AspNetCore.Mvc.Testing;
 using FluentAssertions;
 using System.Net.Http;
 using System.Text;
@@ -9,12 +8,12 @@ namespace ELKH.Tests.Integration;
 /// <summary>
 /// Integration tests for current Cart routes and anonymous-user behavior.
 /// </summary>
-public class CartIntegrationTests : IClassFixture<WebApplicationFactory<Program>>
+public class CartIntegrationTests : IClassFixture<ELKHWebApplicationFactory>
 {
-    private readonly WebApplicationFactory<Program> _factory;
+    private readonly ELKHWebApplicationFactory _factory;
     private readonly HttpClient _client;
 
-    public CartIntegrationTests(WebApplicationFactory<Program> factory)
+    public CartIntegrationTests(ELKHWebApplicationFactory factory)
     {
         _factory = factory;
         _client = _factory.CreateClient();
