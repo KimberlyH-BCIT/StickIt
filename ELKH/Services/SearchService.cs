@@ -158,7 +158,9 @@ namespace ELKH.Services;
             try
             {
                 using var cmd = conn.CreateCommand();
-                // Join FTS virtual table with Products to get full product details
+                // Join FTS virtual table with Products to get full product details.
+                // If the FTS table is unavailable or not yet initialized in a test/local database,
+                // swallow that failure and continue to the fuzzy fallback instead of failing the request.
                 cmd.CommandText = @"SELECT p.PkProductId as Id, p.Name as Name, p.Price as Price,
 IFNULL((SELECT ProductImageURL FROM ProductImages pi WHERE pi.FkProductId = p.PkProductId LIMIT 1), '') as Thumbnail
 FROM ProductFTS f
@@ -172,14 +174,21 @@ LIMIT 10;";
                 cmd.Parameters.Add(p);
 
                 var results = new List<SearchResultDto>();
-                using var rdr = await cmd.ExecuteReaderAsync();
-                while (await rdr.ReadAsync())
+                try
                 {
-                    var id = rdr.GetInt32(0);
-                    var name = rdr.IsDBNull(1) ? string.Empty : rdr.GetString(1);
-                    var price = rdr.IsDBNull(2) ? 0m : rdr.GetDecimal(2);
-                    var thumb = rdr.IsDBNull(3) ? string.Empty : rdr.GetString(3);
-                    results.Add(new SearchResultDto { Id = id, Name = name, Price = price, Thumbnail = thumb });
+                    using var rdr = await cmd.ExecuteReaderAsync();
+                    while (await rdr.ReadAsync())
+                    {
+                        var id = rdr.GetInt32(0);
+                        var name = rdr.IsDBNull(1) ? string.Empty : rdr.GetString(1);
+                        var price = rdr.IsDBNull(2) ? 0m : rdr.GetDecimal(2);
+                        var thumb = rdr.IsDBNull(3) ? string.Empty : rdr.GetString(3);
+                        results.Add(new SearchResultDto { Id = id, Name = name, Price = price, Thumbnail = thumb });
+                    }
+                }
+                catch (Exception) when (_db.Database.IsSqlite())
+                {
+                    results.Clear();
                 }
 
                 if (results.Count > 0)

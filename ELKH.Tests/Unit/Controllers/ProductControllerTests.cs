@@ -2,6 +2,7 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc.Controllers;
 using Microsoft.AspNetCore.Mvc.ViewFeatures;
+using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.AspNetCore.Routing;
 using Microsoft.Extensions.Logging.Abstractions;
 using System.Reflection;
@@ -71,6 +72,7 @@ public class ProductControllerTests
     private readonly Mock<IProductService> _mockProductService;
     private readonly Mock<IRatingService> _mockRatingService;
     private readonly Mock<IUserService> _mockUserService;
+    private readonly Mock<IStockNotificationService> _mockStockNotificationService;
     private readonly ProductController _controller;
 
     /// <summary>
@@ -98,13 +100,15 @@ public class ProductControllerTests
         _mockProductService = new Mock<IProductService>();
         _mockRatingService = new Mock<IRatingService>();
         _mockUserService = new Mock<IUserService>();
+        _mockStockNotificationService = new Mock<IStockNotificationService>();
 
         // Create controller instance with all required dependencies
         _controller = new ProductController(
             _mockSearchService.Object,
             _mockProductService.Object,
             _mockRatingService.Object,
-            _mockUserService.Object);
+            _mockUserService.Object,
+            _mockStockNotificationService.Object);
 
         // Configure ASP.NET Core request context for controller testing
         var httpContext = new DefaultHttpContext();
@@ -137,8 +141,14 @@ public class ProductControllerTests
         #region Arrange - Setup product catalog data
 
         var products = CreateTestProductList();
-        _mockProductService.Setup(p => p.GetAllAsync(It.IsAny<CancellationToken>()))
-                          .ReturnsAsync(products);
+        _mockProductService.Setup(p => p.GetPagedCatalogAsync(null, null, "name_asc", 0, 12, It.IsAny<CancellationToken>()))
+                          .ReturnsAsync(new PagedResult<ProductVM>
+                          {
+                              Items = products,
+                              TotalCount = 25
+                          });
+        _mockProductService.Setup(p => p.GetCategoriesAsync(It.IsAny<CancellationToken>()))
+                          .ReturnsAsync(new List<CategoryModel>());
 
         #endregion
 
@@ -154,8 +164,39 @@ public class ProductControllerTests
         var model = viewResult.Model.Should().BeOfType<List<ProductVM>>().Subject;
         model.Should().HaveCount(2);
         model.First().ProductName.Should().Be("Product 1");
+        ((int)_controller.ViewBag.Total).Should().Be(25);
+        ((bool)_controller.ViewBag.HasMore).Should().BeTrue();
+
+        _mockProductService.Verify(p => p.GetPagedCatalogAsync(null, null, "name_asc", 0, 12, It.IsAny<CancellationToken>()), Times.Once);
+        _mockProductService.Verify(p => p.GetAllAsync(It.IsAny<CancellationToken>()), Times.Never);
 
         #endregion
+    }
+
+    [Fact]
+    public async Task LoadMore_ShouldRequestNextCatalogPageOnly()
+    {
+        var nextPage = new List<ProductVM>
+        {
+            CreateTestProduct(13, "Product 13", 20.99m),
+            CreateTestProduct(14, "Product 14", 21.99m)
+        };
+
+        _mockProductService.Setup(p => p.GetPagedCatalogAsync("sticker", 4, "price_desc", 12, 12, It.IsAny<CancellationToken>()))
+                          .ReturnsAsync(new PagedResult<ProductVM>
+                          {
+                              Items = nextPage,
+                              TotalCount = 14
+                          });
+
+        var result = await _controller.LoadMore("sticker", 4, "price_desc", 12);
+
+        var partial = result.Should().BeOfType<PartialViewResult>().Subject;
+        partial.ViewName.Should().Be("_ProductCardBatch");
+        partial.Model.Should().BeEquivalentTo(nextPage);
+
+        _mockProductService.Verify(p => p.GetPagedCatalogAsync("sticker", 4, "price_desc", 12, 12, It.IsAny<CancellationToken>()), Times.Once);
+        _mockProductService.Verify(p => p.GetAllAsync(It.IsAny<CancellationToken>()), Times.Never);
     }
 
     /// <summary>
@@ -218,7 +259,7 @@ public class ProductControllerTests
     /// • SEO-friendly 404 responses for search engines
     /// </remarks>
     [Fact]
-    public async Task Details_WithInvalidId_ShouldReturnNotFound()
+    public async Task Details_WithInvalidId_ShouldRedirectWithWarning()
     {
         #region Arrange - Setup missing product scenario
 
@@ -227,10 +268,12 @@ public class ProductControllerTests
 
         #endregion
 
-        #region Act & Assert - Validate 404 response
+        #region Act & Assert - Validate redirect response
 
         var result = await _controller.Details(999);
-        result.Should().BeOfType<NotFoundResult>();
+        var redirect = result.Should().BeOfType<RedirectToActionResult>().Subject;
+        redirect.ActionName.Should().Be(nameof(ProductController.Index));
+        _controller.TempData["Message"].Should().Be("warning, Unable to find product ID: 999");
 
         #endregion
     }
@@ -396,10 +439,11 @@ public class ProductControllerTests
 
         // Should be empty model for new product creation
         model.ProductId.Should().Be(0);
-        model.ProductName.Should().BeNull();
+        model.ProductName.Should().BeEmpty();
 
         // ViewBag should contain category options
-        _controller.ViewBag.CategoryId.Should().NotBeNull();
+        var categoryOptions = ((object)_controller.ViewBag.CategoryId).Should().BeAssignableTo<IEnumerable<SelectListItem>>().Subject;
+        categoryOptions.Should().HaveCount(2);
 
         #endregion
     }
@@ -541,7 +585,8 @@ public class ProductControllerTests
         model.Price.Should().Be(19.99m);
 
         // ViewBag should contain category options
-        _controller.ViewBag.CategoryId.Should().NotBeNull();
+        var categoryOptions = ((object)_controller.ViewBag.CategoryId).Should().BeAssignableTo<IEnumerable<SelectListItem>>().Subject;
+        categoryOptions.Should().HaveCount(2);
 
         #endregion
     }
@@ -693,7 +738,7 @@ public class ProductControllerTests
         _mockProductService.Verify(p => p.DeleteAsync(1, It.IsAny<CancellationToken>()), Times.Once);
 
         // Verify TempData success message
-        _controller.TempData["Message"].Should().Be("success, Product deleted successfully");
+        _controller.TempData["Message"].Should().Be("success, Product archived successfully");
 
         #endregion
     }
@@ -760,6 +805,27 @@ public class ProductControllerTests
         AssertAdminManagerAuthorization(GetAction(nameof(ProductController.Edit), typeof(ProductVM)));
         AssertAdminManagerAuthorization(GetAction(nameof(ProductController.Delete), typeof(int)));
         AssertAdminManagerAuthorization(GetAction(nameof(ProductController.DeleteConfirmed), typeof(int)));
+    }
+
+    [Fact]
+    public void CustomerRole_ShouldNotSatisfyAdminProductManagementRoleRequirement()
+    {
+        var protectedActions = new[]
+        {
+            GetAction(nameof(ProductController.Create), Type.EmptyTypes),
+            GetAction(nameof(ProductController.Create), typeof(ProductVM)),
+            GetAction(nameof(ProductController.Edit), typeof(int)),
+            GetAction(nameof(ProductController.Edit), typeof(ProductVM)),
+            GetAction(nameof(ProductController.Delete), typeof(int)),
+            GetAction(nameof(ProductController.DeleteConfirmed), typeof(int))
+        };
+
+        foreach (var action in protectedActions)
+        {
+            var authorizeAttribute = action.GetCustomAttribute<AuthorizeAttribute>();
+            authorizeAttribute.Should().NotBeNull();
+            authorizeAttribute!.Roles!.Split(',').Should().NotContain("Customer");
+        }
     }
 
     #endregion

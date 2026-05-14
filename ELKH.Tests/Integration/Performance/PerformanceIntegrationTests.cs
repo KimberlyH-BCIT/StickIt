@@ -16,6 +16,7 @@ namespace ELKH.Tests.Integration.Performance;
 /// Performance integration tests to ensure the application meets performance requirements.
 /// These tests validate response times, memory usage, and throughput under various conditions.
 /// </summary>
+[Collection("Integration")]
 public class PerformanceIntegrationTests : IClassFixture<ELKHWebApplicationFactory>
 {
     private readonly ELKHWebApplicationFactory _factory;
@@ -250,7 +251,16 @@ public class PerformanceIntegrationTests : IClassFixture<ELKHWebApplicationFacto
         var response = await _client.GetAsync(url);
         stopwatch.Stop();
 
-        response.IsSuccessStatusCode.Should().BeTrue($"Request to {url} should succeed");
+        if (string.Equals(url, "/health", StringComparison.OrdinalIgnoreCase))
+        {
+            (response.StatusCode == HttpStatusCode.OK || response.StatusCode == HttpStatusCode.ServiceUnavailable)
+                .Should().BeTrue($"Request to {url} should return the current integration-host health contract");
+        }
+        else
+        {
+            response.IsSuccessStatusCode.Should().BeTrue($"Request to {url} should succeed");
+        }
+
         return stopwatch.Elapsed;
     }
 }

@@ -1,110 +1,138 @@
-using Microsoft.AspNetCore.Mvc.Testing;
-using Microsoft.Extensions.DependencyInjection;
 using FluentAssertions;
-using System.Net.Http;
-using System.Text;
+using Microsoft.AspNetCore.Mvc.Testing;
+using System.Net;
 using System.Text.Json;
 using Xunit;
+using ELKH.Models.Api;
+using ELKH.ViewModels;
 
 namespace ELKH.Tests.Integration;
 
-/// <summary>
-/// Integration tests for Product API endpoints.
-/// Tests the full HTTP request/response cycle including authentication and authorization.
-/// </summary>
-public class ProductApiIntegrationTests : IClassFixture<WebApplicationFactory<Program>>
+[Collection("Integration")]
+public class ProductApiIntegrationTests : IClassFixture<ELKHWebApplicationFactory>
 {
-    private readonly WebApplicationFactory<Program> _factory;
+    private static readonly JsonSerializerOptions JsonOptions = new()
+    {
+        PropertyNameCaseInsensitive = true
+    };
+
+    private readonly ELKHWebApplicationFactory _factory;
     private readonly HttpClient _client;
 
-    public ProductApiIntegrationTests(WebApplicationFactory<Program> factory)
+    public ProductApiIntegrationTests(ELKHWebApplicationFactory factory)
     {
         _factory = factory;
-        _client = _factory.CreateClient();
+        _client = factory.CreateClient();
     }
 
     [Fact]
-    public async Task GetProducts_ShouldReturnSuccessAndProducts()
+    public async Task GetProducts_ShouldReturnWrappedPagedProducts()
     {
-        // Act
-        var response = await _client.GetAsync("/api/v1/products");
+        var response = await _client.GetAsync("/api/v1/ProductApi");
 
-        // Assert
         response.EnsureSuccessStatusCode();
-        var content = await response.Content.ReadAsStringAsync();
-        content.Should().NotBeEmpty();
+        var payload = await DeserializeAsync<ApiResponse<PagedResult<ProductApiModel>>>(response);
 
-        var products = JsonSerializer.Deserialize<ProductVM[]>(content, new JsonSerializerOptions
-        {
-            PropertyNamingPolicy = JsonNamingPolicy.CamelCase
-        });
-        products.Should().NotBeNull();
+        payload.Should().NotBeNull();
+        payload!.Success.Should().BeTrue();
+        payload.Data.Should().NotBeNull();
+        payload.Data!.Items.Should().NotBeNull();
+        payload.Data.Page.Should().Be(1);
+        payload.Data.PageSize.Should().Be(20);
     }
 
     [Fact]
-    public async Task GetProductById_WithValidId_ShouldReturnProduct()
+    public async Task GetProductById_WithInvalidId_ShouldReturnStructuredNotFound()
     {
-        // First get a list of products to get a valid ID
-        var listResponse = await _client.GetAsync("/api/v1/products");
-        var listContent = await listResponse.Content.ReadAsStringAsync();
-        var products = JsonSerializer.Deserialize<ProductVM[]>(listContent, new JsonSerializerOptions
-        {
-            PropertyNamingPolicy = JsonNamingPolicy.CamelCase
-        });
+        var response = await _client.GetAsync("/api/v1/ProductApi/999999");
 
-        if (products != null && products.Length > 0)
-        {
-            // Act
-            var response = await _client.GetAsync($"/api/v1/products/{products[0].ProductId}");
-
-            // Assert
-            response.EnsureSuccessStatusCode();
-            var content = await response.Content.ReadAsStringAsync();
-            var product = JsonSerializer.Deserialize<ProductVM>(content, new JsonSerializerOptions
-            {
-                PropertyNamingPolicy = JsonNamingPolicy.CamelCase
-            });
-            product.Should().NotBeNull();
-            product!.ProductId.Should().Be(products[0].ProductId);
-        }
-    }
-
-    [Fact]
-    public async Task GetProductById_WithInvalidId_ShouldReturnNotFound()
-    {
-        // Act
-        var response = await _client.GetAsync("/api/v1/products/999999");
-
-        // Assert
         response.StatusCode.Should().Be(HttpStatusCode.NotFound);
+        var payload = await DeserializeAsync<ApiErrorResponse>(response);
+        payload.Should().NotBeNull();
+        payload!.Success.Should().BeFalse();
+        payload.ErrorCode.Should().Be("PRODUCT_NOT_FOUND");
     }
 
     [Fact]
-    public async Task SearchProducts_WithValidQuery_ShouldReturnResults()
+    public async Task GetProductById_WithValidId_ShouldReturnWrappedProduct()
     {
-        // Act
-        var response = await _client.GetAsync("/api/v1/products/search?q=test");
+        var listResponse = await _client.GetAsync("/api/v1/ProductApi");
+        listResponse.EnsureSuccessStatusCode();
+        var listPayload = await DeserializeAsync<ApiResponse<PagedResult<ProductApiModel>>>(listResponse);
 
-        // Assert
-        response.EnsureSuccessStatusCode();
-        var content = await response.Content.ReadAsStringAsync();
-        var searchResults = JsonSerializer.Deserialize<SearchResultDto[]>(content, new JsonSerializerOptions
+        var firstProduct = listPayload!.Data!.Items.FirstOrDefault();
+        if (firstProduct is null)
         {
-            PropertyNamingPolicy = JsonNamingPolicy.CamelCase
-        });
-        searchResults.Should().NotBeNull();
+            return;
+        }
+
+        var response = await _client.GetAsync($"/api/v1/ProductApi/{firstProduct.Id}");
+
+        response.EnsureSuccessStatusCode();
+        var payload = await DeserializeAsync<ApiResponse<ProductApiModel>>(response);
+        payload.Should().NotBeNull();
+        payload!.Success.Should().BeTrue();
+        payload.Data.Should().NotBeNull();
+        payload.Data!.Id.Should().Be(firstProduct.Id);
     }
 
     [Fact]
-    public async Task GetProductCategories_ShouldReturnCategories()
+    public async Task ProductAvailability_WithValidId_ShouldReturnWrappedAvailability()
     {
-        // Act
-        var response = await _client.GetAsync("/api/v1/products/categories");
+        var listResponse = await _client.GetAsync("/api/v1/ProductApi");
+        listResponse.EnsureSuccessStatusCode();
+        var listPayload = await DeserializeAsync<ApiResponse<PagedResult<ProductApiModel>>>(listResponse);
 
-        // Assert
+        var firstProduct = listPayload!.Data!.Items.FirstOrDefault();
+        if (firstProduct is null)
+        {
+            return;
+        }
+
+        var response = await _client.GetAsync($"/api/v1/ProductApi/{firstProduct.Id}/availability");
+
         response.EnsureSuccessStatusCode();
-        var content = await response.Content.ReadAsStringAsync();
-        content.Should().NotBeEmpty();
+        var payload = await DeserializeAsync<ApiResponse<ProductAvailabilityModel>>(response);
+        payload.Should().NotBeNull();
+        payload!.Success.Should().BeTrue();
+        payload.Data.Should().NotBeNull();
+        payload.Data!.ProductId.Should().Be(firstProduct.Id);
+    }
+
+    [Fact]
+    public async Task SearchSuggestions_WithQuery_ShouldReturnWrappedSuggestions()
+    {
+        var response = await _client.GetAsync("/api/v1/ProductApi/search-suggestions?query=sticker");
+
+        response.EnsureSuccessStatusCode();
+        var payload = await DeserializeAsync<ApiResponse<List<string>>>(response);
+        payload.Should().NotBeNull();
+        payload!.Success.Should().BeTrue();
+        payload.Data.Should().NotBeNull();
+    }
+
+    [Fact]
+    public async Task SearchSuggestions_WithMissingQuery_ShouldReturnEmptySuggestionList()
+    {
+        var response = await _client.GetAsync("/api/v1/ProductApi/search-suggestions");
+
+        response.EnsureSuccessStatusCode();
+        var payload = await DeserializeAsync<ApiResponse<List<string>>>(response);
+        payload.Should().NotBeNull();
+        payload!.Success.Should().BeTrue();
+        payload.Data.Should().NotBeNull();
+        payload.Data.Should().BeEmpty();
+    }
+
+    [Fact]
+    public async Task ProductAvailability_WithInvalidId_ShouldReturnStructuredNotFound()
+    {
+        var response = await _client.GetAsync("/api/v1/ProductApi/999999/availability");
+
+        response.StatusCode.Should().Be(HttpStatusCode.NotFound);
+        var payload = await DeserializeAsync<ApiErrorResponse>(response);
+        payload.Should().NotBeNull();
+        payload!.ErrorCode.Should().Be("PRODUCT_NOT_FOUND");
     }
 
     [Theory]
@@ -114,10 +142,8 @@ public class ProductApiIntegrationTests : IClassFixture<WebApplicationFactory<Pr
     [InlineData("/Wishlist")]
     public async Task PublicPages_ShouldReturnSuccess(string url)
     {
-        // Act
         var response = await _client.GetAsync(url);
 
-        // Assert
         response.StatusCode.Should().BeOneOf(HttpStatusCode.OK, HttpStatusCode.Redirect);
     }
 
@@ -125,12 +151,21 @@ public class ProductApiIntegrationTests : IClassFixture<WebApplicationFactory<Pr
     [InlineData("/Manager")]
     [InlineData("/User")]
     [InlineData("/Order")]
-    public async Task AuthenticatedPages_WithoutAuth_ShouldReturnUnauthorizedOrRedirect(string url)
+    public async Task AuthenticatedPages_WithoutAuth_ShouldReturnUnauthorizedOrRedirect_WithoutFollowingRedirects(string url)
     {
-        // Act
-        var response = await _client.GetAsync(url);
+        using var client = _factory.CreateClient(new WebApplicationFactoryClientOptions
+        {
+            AllowAutoRedirect = false
+        });
+        var response = await client.GetAsync(url);
 
-        // Assert
         response.StatusCode.Should().BeOneOf(HttpStatusCode.Unauthorized, HttpStatusCode.Redirect);
+    }
+
+    private static async Task<T?> DeserializeAsync<T>(HttpResponseMessage response)
+    {
+        var content = await response.Content.ReadAsStringAsync();
+        content.Should().NotBeNullOrWhiteSpace();
+        return JsonSerializer.Deserialize<T>(content, JsonOptions);
     }
 }

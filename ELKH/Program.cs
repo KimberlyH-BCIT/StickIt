@@ -175,7 +175,7 @@ builder.Services.Configure<MvcOptions>(options =>
         Duration = 180, // 3 minutes
         Location = ResponseCacheLocation.Any,
         VaryByHeader = "Accept,Accept-Encoding",
-        VaryByQueryKeys = new[] { "q", "limit" }
+        VaryByQueryKeys = new[] { "q", "query", "limit" }
     });
 });
 
@@ -295,6 +295,10 @@ app.UseApplicationMiddleware(app.Environment);
 
 // Static files AFTER compression so they can be compressed
 app.UseStaticFiles();
+
+// Response caching is required for MVC ResponseCache profiles that vary by query keys.
+// Without this middleware, endpoints using the SearchResults profile throw at runtime.
+app.UseResponseCaching();
 
 // =====================================================================
 // Routing and endpoints
@@ -479,22 +483,29 @@ static async Task<bool> ColumnExistsAsync(DbContext context, string tableName, s
 
 static async Task EnsureGuestOrderSecuritySchemaAsync(ApplicationDbContext db, ILogger logger)
 {
-    if (!await TableExistsAsync(db, "Orders"))
+    try
     {
-        return;
-    }
+        if (!await TableExistsAsync(db, "Orders"))
+        {
+            return;
+        }
 
-    if (!await ColumnExistsAsync(db, "Orders", "GuestAccessTokenHash"))
+        if (!await ColumnExistsAsync(db, "Orders", "GuestAccessTokenHash"))
+        {
+            await db.Database.ExecuteSqlRawAsync("ALTER TABLE Orders ADD COLUMN GuestAccessTokenHash TEXT NULL;");
+            logger.LogInformation("Added Orders.GuestAccessTokenHash column for guest order token security.");
+        }
+
+        await db.Database.ExecuteSqlRawAsync(
+            "UPDATE Orders SET FkRegisteredUserId = NULL WHERE FkRegisteredUserId = 0;");
+
+        await db.Database.ExecuteSqlRawAsync(
+            "CREATE UNIQUE INDEX IF NOT EXISTS IX_Orders_GuestAccessTokenHash ON Orders(GuestAccessTokenHash) WHERE GuestAccessTokenHash IS NOT NULL;");
+    }
+    catch (Microsoft.Data.Sqlite.SqliteException ex) when (ex.SqliteErrorCode == 1 && ex.Message.Contains("no such table: Orders", StringComparison.OrdinalIgnoreCase))
     {
-        await db.Database.ExecuteSqlRawAsync("ALTER TABLE Orders ADD COLUMN GuestAccessTokenHash TEXT NULL;");
-        logger.LogInformation("Added Orders.GuestAccessTokenHash column for guest order token security.");
+        logger.LogDebug("Skipping guest order security schema patch because Orders table is not present in the current database.");
     }
-
-    await db.Database.ExecuteSqlRawAsync(
-        "UPDATE Orders SET FkRegisteredUserId = NULL WHERE FkRegisteredUserId = 0;");
-
-    await db.Database.ExecuteSqlRawAsync(
-        "CREATE UNIQUE INDEX IF NOT EXISTS IX_Orders_GuestAccessTokenHash ON Orders(GuestAccessTokenHash) WHERE GuestAccessTokenHash IS NOT NULL;");
 }
 
 app.Run();

@@ -1,191 +1,35 @@
-# ELKH Sticker Store - Docker Compose Development Stack
-# Complete development environment with database, caching, and monitoring
-
-version: '3.8'
-
 services:
-  # ====================================
-  # Main Application Service
-  # ====================================
   elkh-app:
     build:
       context: .
       dockerfile: Dockerfile
       target: runtime
-    container_name: elkh-stickers-app
+    container_name: elkh-app
     restart: unless-stopped
     ports:
       - "8080:80"
     environment:
-      - ASPNETCORE_ENVIRONMENT=Development
-      - ASPNETCORE_URLS=http://+:80
-      - ConnectionStrings__DefaultConnection=Data Source=/app/Data/elkh_dev.db
-      - Authentication__Google__ClientId=${GOOGLE_CLIENT_ID:-}
-      - Authentication__Google__ClientSecret=${GOOGLE_CLIENT_SECRET:-}
-      - Cache__Redis__ConnectionString=redis:6379
-      - Logging__LogLevel__Default=Information
-      - Logging__LogLevel__Microsoft.AspNetCore=Warning
+      ASPNETCORE_ENVIRONMENT: Development
+      ASPNETCORE_URLS: http://+:80
+      ConnectionStrings__DefaultConnection: ${DEFAULT_CONNECTION_STRING:-Data Source=/app/Data/app.db;Cache=Shared}
+      ConnectionStrings__ImageStoreConnection: ${IMAGESTORE_CONNECTION_STRING:-Data Source=/app/Data/ImageStore.db}
+      Seed__AdminEmail: ${SEED_ADMIN_EMAIL:-}
+      Seed__AdminPass: ${SEED_ADMIN_PASSWORD:-}
+      Authentication__Google__ClientId: ${GOOGLE_CLIENT_ID:-}
+      Authentication__Google__ClientSecret: ${GOOGLE_CLIENT_SECRET:-}
+      PayPal__ClientId: ${PAYPAL_CLIENT_ID:-}
+      PayPal__Secret: ${PAYPAL_SECRET:-}
+      ReCaptcha__SiteKey: ${RECAPTCHA_SITE_KEY:-}
+      ReCaptcha__SecretKey: ${RECAPTCHA_SECRET_KEY:-}
+      Logging__LogLevel__Default: Information
+      Logging__LogLevel__Microsoft.AspNetCore: Warning
     volumes:
-      - ./Data:/app/Data
-      - ./wwwroot/uploads:/app/wwwroot/uploads
-      - elkh-logs:/app/logs
-    depends_on:
-      - redis
-      - postgres
+      - ./ELKH/app.db:/app/Data/app.db
+      - ./ELKH/ImageStore.db:/app/Data/ImageStore.db
+      - ./ELKH/wwwroot:/app/wwwroot
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost/health"]
       interval: 30s
       timeout: 10s
       retries: 3
       start_period: 60s
-    networks:
-      - elkh-network
-
-  # ====================================
-  # PostgreSQL Database (Production-like)
-  # ====================================
-  postgres:
-    image: postgres:16-alpine
-    container_name: elkh-postgres
-    restart: unless-stopped
-    environment:
-      POSTGRES_DB: elkh_dev
-      POSTGRES_USER: elkh_user
-      POSTGRES_PASSWORD: elkh_dev_password
-      POSTGRES_INITDB_ARGS: "--auth-host=scram-sha-256"
-    ports:
-      - "5432:5432"
-    volumes:
-      - postgres-data:/var/lib/postgresql/data
-      - ./scripts/init-db.sql:/docker-entrypoint-initdb.d/init-db.sql:ro
-    healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U elkh_user -d elkh_dev"]
-      interval: 30s
-      timeout: 10s
-      retries: 3
-    networks:
-      - elkh-network
-
-  # ====================================
-  # Redis Cache Service
-  # ====================================
-  redis:
-    image: redis:7-alpine
-    container_name: elkh-redis
-    restart: unless-stopped
-    command: redis-server --appendonly yes --requirepass elkh_redis_password
-    ports:
-      - "6379:6379"
-    volumes:
-      - redis-data:/data
-    healthcheck:
-      test: ["CMD", "redis-cli", "-a", "elkh_redis_password", "ping"]
-      interval: 30s
-      timeout: 10s
-      retries: 3
-    networks:
-      - elkh-network
-
-  # ====================================
-  # Nginx Reverse Proxy (Production-like)
-  # ====================================
-  nginx:
-    image: nginx:alpine
-    container_name: elkh-nginx
-    restart: unless-stopped
-    ports:
-      - "80:80"
-      - "443:443"
-    volumes:
-      - ./nginx/nginx.conf:/etc/nginx/nginx.conf:ro
-      - ./nginx/ssl:/etc/nginx/ssl:ro
-      - elkh-logs:/var/log/nginx
-    depends_on:
-      - elkh-app
-    healthcheck:
-      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost"]
-      interval: 30s
-      timeout: 10s
-      retries: 3
-    networks:
-      - elkh-network
-
-  # ====================================
-  # Monitoring & Observability
-  # ====================================
-  grafana:
-    image: grafana/grafana:latest
-    container_name: elkh-grafana
-    restart: unless-stopped
-    ports:
-      - "3000:3000"
-    environment:
-      - GF_SECURITY_ADMIN_PASSWORD=admin
-    volumes:
-      - grafana-data:/var/lib/grafana
-      - ./monitoring/grafana/dashboards:/etc/grafana/provisioning/dashboards:ro
-      - ./monitoring/grafana/datasources:/etc/grafana/provisioning/datasources:ro
-    networks:
-      - elkh-network
-
-  prometheus:
-    image: prom/prometheus:latest
-    container_name: elkh-prometheus
-    restart: unless-stopped
-    ports:
-      - "9090:9090"
-    volumes:
-      - ./monitoring/prometheus/prometheus.yml:/etc/prometheus/prometheus.yml:ro
-      - prometheus-data:/prometheus
-    command:
-      - '--config.file=/etc/prometheus/prometheus.yml'
-      - '--storage.tsdb.path=/prometheus'
-      - '--web.console.libraries=/etc/prometheus/console_libraries'
-      - '--web.console.templates=/etc/prometheus/consoles'
-    networks:
-      - elkh-network
-
-# ====================================
-# Named Volumes for Data Persistence
-# ====================================
-volumes:
-  postgres-data:
-    driver: local
-  redis-data:
-    driver: local
-  elkh-logs:
-    driver: local
-  grafana-data:
-    driver: local
-  prometheus-data:
-    driver: local
-
-# ====================================
-# Custom Network
-# ====================================
-networks:
-  elkh-network:
-    driver: bridge
-    ipam:
-      config:
-        - subnet: 172.20.0.0/16
-
-# ====================================
-# Usage Instructions
-# ====================================
-# 
-# Development startup:
-# docker-compose up -d
-# 
-# View logs:
-# docker-compose logs -f elkh-app
-# 
-# Scale application:
-# docker-compose up -d --scale elkh-app=3
-# 
-# Production build:
-# docker-compose -f docker-compose.yml -f docker-compose.prod.yml up -d
-# 
-# Cleanup:
-# docker-compose down -v
-#

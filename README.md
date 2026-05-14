@@ -14,7 +14,7 @@
 - Admin, manager, and staff workflows
 - Accessibility-conscious responsive UI
 - Dockerized local environment
-- Unit and integration test infrastructure with coverage targets
+- Unit and integration test infrastructure with measured coverage reporting
 
 ### 🛒 **Core eCommerce**
 - **Product Catalog** - Advanced search with fuzzy matching and filtering
@@ -97,7 +97,7 @@ graph TB
 ## 🚀 Quick Start
 
 ### Prerequisites
-- **[.NET 10 SDK](https://dotnet.microsoft.com/download)** - Latest LTS version
+- **[.NET 10 SDK](https://dotnet.microsoft.com/download)** - Pinned via `global.json` to `10.0.300`
 - **[Visual Studio 2026](https://visualstudio.microsoft.com/)** - Community, Professional, or Enterprise
 - **[Docker Desktop](https://www.docker.com/products/docker-desktop)** - For containerized deployment
 - **[Git](https://git-scm.com/)** - Version control
@@ -131,24 +131,34 @@ graph TB
    - **HTTPS**: https://localhost:5001
    - **Health Checks**: http://localhost:5000/health
 
-### Docker Development
+### Docker Development (supported local container path)
 
 ```bash
-# Build and run the local StickIt container stack
-docker compose up -d
+# Optional: create a local environment file for secrets and overrides
+copy .env.example .env
+
+# Build and run the app with SQLite only
+docker compose up --build
 
 # View logs
-docker compose logs -f stickit-web
+docker compose logs -f elkh-app
 
 # Stop containers
 docker compose down
 ```
 
+This local Docker setup runs a single app container backed by the repository's SQLite files.
+PostgreSQL, Redis, Grafana, Prometheus, and Nginx are not required for the supported local happy path.
+
+After startup, open:
+- **Main Site**: http://localhost:8080
+- **Health Checks**: http://localhost:8080/health
+
 ## 🧪 Testing
 
 ### Run All Tests
 ```bash
-# Unit and integration tests with coverage
+# Unit and integration tests with coverage artifact generation
 dotnet test --collect:"XPlat Code Coverage"
 
 # Run specific test category
@@ -164,12 +174,12 @@ dotnet tool install -g dotnet-reportgenerator-globaltool
 reportgenerator -reports:"./TestResults/**/coverage.cobertura.xml" -targetdir:"./CoverageReport" -reporttypes:Html
 ```
 
-**Coverage Targets:**
-- Line Coverage: 80%+
-- Branch Coverage: 70%+
-- Method Coverage: 85%+
+**Latest measured coverage artifact:**
+- Full-suite artifact: `TestResults/db821130-2eea-4277-96a3-df73b9af58d7/coverage.cobertura.xml`
+- Line coverage: `17.94%`
+- Branch coverage: `9.71%`
 
-These are targets for the test suite, not a claim of verified current coverage across the whole repository.
+This is the current measured baseline from the repository's full `ELKH.Tests` coverage run. The broader suite still contains failing integration tests, so treat these numbers as the latest captured evidence rather than a stability badge.
 
 ## 📦 Deployment
 
@@ -194,17 +204,7 @@ See [Deployment Guide](docs/DEPLOYMENT.md) for detailed instructions.
 
 ## 📊 Monitoring and Diagnostics
 
-The repository includes monitoring-related configuration and health endpoints. Use the linked docs to verify what is wired for your environment.
-
-### Prometheus Metrics
-- **Application Metrics**: http://localhost:9090
-- **Custom Dashboards**: Business and performance metrics
-- **Alerting Rules**: Critical system and business alerts
-
-### Application Insights
-- **Performance Tracking**: Request/response times and dependencies
-- **Error Monitoring**: Exception tracking and debugging
-- **Business Metrics**: User behavior and conversion tracking
+The application includes health checks and optional telemetry hooks. For local development, the supported path is the app itself plus SQLite; additional monitoring infrastructure is documented separately and should be treated as optional deployment tooling rather than part of the default local setup.
 
 ## 🛠️ Development Workflow
 
@@ -242,6 +242,8 @@ ASPNETCORE_ENVIRONMENT=Development
 ConnectionStrings__DefaultConnection="Data Source=elkh.db"
 ApplicationInsights__InstrumentationKey="your-key"
 ```
+
+For Docker, start from `.env.example` and only fill in the integrations you actually want to test locally.
 
 ### User Secrets (Development)
 ```bash

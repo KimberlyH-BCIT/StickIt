@@ -1,12 +1,16 @@
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Mvc.Testing;
+using Microsoft.Data.Sqlite;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.EntityFrameworkCore.Storage;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.DependencyInjection.Extensions;
 using Microsoft.Extensions.Hosting;
 using ELKH.Data;
+using ELKH.Models;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.Extensions.Logging;
+using System.Globalization;
+using System.Text;
 
 namespace ELKH.Tests.Integration;
 
@@ -16,38 +20,54 @@ namespace ELKH.Tests.Integration;
 /// </summary>
 public class ELKHWebApplicationFactory : WebApplicationFactory<Program>
 {
-    // Shared roots ensure the seed provider and the test server use the same InMemory store.
-    private readonly InMemoryDatabaseRoot _dbRoot = new();
-    private readonly InMemoryDatabaseRoot _imageDbRoot = new();
+    private readonly string _appDbConnectionString = $"Data Source=ELKHIntegrationAppDb_{Guid.NewGuid():N};Mode=Memory;Cache=Shared";
+    private readonly string _imageDbConnectionString = $"Data Source=ELKHIntegrationImageDb_{Guid.NewGuid():N};Mode=Memory;Cache=Shared";
+
+    private readonly SqliteConnection _dbKeepAliveConnection;
+    private readonly SqliteConnection _imageDbKeepAliveConnection;
+
+    public ELKHWebApplicationFactory()
+    {
+        _dbKeepAliveConnection = new SqliteConnection(_appDbConnectionString);
+        _imageDbKeepAliveConnection = new SqliteConnection(_imageDbConnectionString);
+        _dbKeepAliveConnection.Open();
+        _imageDbKeepAliveConnection.Open();
+    }
 
     protected override void ConfigureWebHost(IWebHostBuilder builder)
     {
         builder.ConfigureServices(services =>
         {
-            // Remove the real database context and image store context
-            var dbContextDescriptor = services.SingleOrDefault(
-                d => d.ServiceType == typeof(DbContextOptions<ApplicationDbContext>));
+            // Remove the real database registrations so the test host does not end up
+            // with both SQLite and InMemory providers attached to the same DbContext.
+            services.RemoveAll<ApplicationDbContext>();
+            services.RemoveAll<ImageStoreContext>();
+            services.RemoveAll<DbContextOptions<ApplicationDbContext>>();
+            services.RemoveAll<DbContextOptions<ImageStoreContext>>();
 
-            var imageStoreDescriptor = services.SingleOrDefault(
-                d => d.ServiceType == typeof(DbContextOptions<ImageStoreContext>));
+            var dbContextConfigurationDescriptors = services
+                .Where(d => d.ServiceType.IsGenericType
+                            && d.ServiceType.Name.StartsWith("IDbContextOptionsConfiguration", StringComparison.Ordinal)
+                            && (d.ServiceType.GenericTypeArguments[0] == typeof(ApplicationDbContext)
+                                || d.ServiceType.GenericTypeArguments[0] == typeof(ImageStoreContext)))
+                .ToList();
 
-            if (dbContextDescriptor != null)
-                services.Remove(dbContextDescriptor);
+            foreach (var descriptor in dbContextConfigurationDescriptors)
+            {
+                services.Remove(descriptor);
+            }
 
-            if (imageStoreDescriptor != null)
-                services.Remove(imageStoreDescriptor);
-
-            // Add in-memory databases, sharing roots so every resolved instance
-            // (including any separately built provider) hits the same backing store.
+            // Use shared SQLite in-memory connections so the app runs against a single
+            // relational provider during tests and avoids mixed-provider startup conflicts.
             services.AddDbContext<ApplicationDbContext>(options =>
             {
-                options.UseInMemoryDatabase("IntegrationTestDb", _dbRoot);
+                options.UseSqlite(_appDbConnectionString);
                 options.EnableSensitiveDataLogging();
             });
 
             services.AddDbContext<ImageStoreContext>(options =>
             {
-                options.UseInMemoryDatabase("IntegrationTestImageDb", _imageDbRoot);
+                options.UseSqlite(_imageDbConnectionString);
                 options.EnableSensitiveDataLogging();
             });
         });
@@ -181,7 +201,30 @@ public class ELKHWebApplicationFactory : WebApplicationFactory<Program>
         {
             if (!db.Products.Any(p => p.Name == product.Name))
             {
+                product.NameNormalized = NormalizeName(product.Name);
+                product.Tags = "test,integration";
                 db.Products.Add(product);
+            }
+        }
+
+        await db.SaveChangesAsync();
+
+        var seededProducts = await db.Products
+            .Where(p => p.Name.StartsWith("Test Product"))
+            .ToListAsync();
+
+        foreach (var product in seededProducts)
+        {
+            if (!await db.FuzzySuggestions.AnyAsync(f => f.PkProductId == product.PkProductId))
+            {
+                db.FuzzySuggestions.Add(new FuzzySuggestionModel
+                {
+                    PkProductId = product.PkProductId,
+                    Name = product.Name,
+                    NameNormalized = NormalizeName(product.Name),
+                    Price = product.Price,
+                    Thumbnail = string.Empty
+                });
             }
         }
 
@@ -190,6 +233,33 @@ public class ELKHWebApplicationFactory : WebApplicationFactory<Program>
 
     protected override void Dispose(bool disposing)
     {
+        if (disposing)
+        {
+            _dbKeepAliveConnection.Dispose();
+            _imageDbKeepAliveConnection.Dispose();
+        }
+
         base.Dispose(disposing);
+    }
+
+    private static string NormalizeName(string name)
+    {
+        if (string.IsNullOrEmpty(name)) return string.Empty;
+
+        var normalized = name.Normalize(NormalizationForm.FormD);
+        var builder = new StringBuilder();
+
+        foreach (var ch in normalized)
+        {
+            if (CharUnicodeInfo.GetUnicodeCategory(ch) != UnicodeCategory.NonSpacingMark)
+            {
+                builder.Append(ch);
+            }
+        }
+
+        return builder
+            .ToString()
+            .Normalize(NormalizationForm.FormC)
+            .ToLowerInvariant();
     }
 }

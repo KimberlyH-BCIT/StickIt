@@ -236,8 +236,9 @@ public class ProductApiController : ControllerBase
     [HttpGet("search-suggestions")]
     [ResponseCache(CacheProfileName = "SearchResults")]
     [ProducesResponseType(typeof(ApiResponse<List<string>>), 200)]
+    [ProducesResponseType(typeof(ApiErrorResponse), 400)]
     public async Task<IActionResult> GetSearchSuggestions(
-        [FromQuery] string query,
+        [FromQuery] string? query,
         [FromQuery] int limit = 10)
     {
         try

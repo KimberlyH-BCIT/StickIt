@@ -42,6 +42,7 @@ public class ConfigurationValidator
     /// </exception>
     public void ValidateConfiguration()
     {
+        var isNonProductionValidationEnvironment = _env.IsDevelopment() || _env.IsEnvironment("Testing");
         var errors = new List<string>();
 
         // ===================================================================
@@ -84,7 +85,7 @@ public class ConfigurationValidator
         // ===================================================================
         // Email is only required in non-Development environments
         // (Development uses FileEmailSender which writes to disk)
-        if (!_env.IsDevelopment())
+        if (!isNonProductionValidationEnvironment)
         {
             if (string.IsNullOrWhiteSpace(_emailOptions.Host))
             {
@@ -139,7 +140,7 @@ public class ConfigurationValidator
         {
             var errorMessage = string.Join(Environment.NewLine, errors);
 
-            if (_env.IsDevelopment())
+            if (isNonProductionValidationEnvironment)
             {
                 // Development: Log warnings but allow startup
                 _logger.LogWarning(

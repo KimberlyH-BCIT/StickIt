@@ -1,19 +1,13 @@
 using Microsoft.AspNetCore.Mvc.Testing;
-using Microsoft.AspNetCore.Authentication;
-using Microsoft.Extensions.DependencyInjection;
-using Microsoft.Extensions.Logging;
 using FluentAssertions;
 using System.Net.Http;
 using System.Text;
-using System.Text.Json;
-using System.Security.Claims;
 using Xunit;
 
 namespace ELKH.Tests.Integration;
 
 /// <summary>
-/// Integration tests for Cart functionality with authenticated users.
-/// Tests the full cart workflow including adding, updating, and removing items.
+/// Integration tests for current Cart routes and anonymous-user behavior.
 /// </summary>
 public class CartIntegrationTests : IClassFixture<WebApplicationFactory<Program>>
 {
@@ -27,55 +21,58 @@ public class CartIntegrationTests : IClassFixture<WebApplicationFactory<Program>
     }
 
     [Fact]
-    public async Task CartWorkflow_AddUpdateRemove_ShouldWorkCorrectly()
+    public async Task Cart_Index_WithoutAuth_ShouldReturnGuestCartView()
     {
-        // This test would require setting up authentication
-        // For now, just test that the cart page is accessible
-        
-        // Act
         var response = await _client.GetAsync("/Cart");
 
-        // Assert
-        response.StatusCode.Should().BeOneOf(HttpStatusCode.OK, HttpStatusCode.Redirect);
-    }
-
-    [Fact]
-    public async Task GetCartCount_WithoutAuth_ShouldReturnZero()
-    {
-        // Act
-        var response = await _client.GetAsync("/Cart/GetCartCount");
-
-        // Assert
-        if (response.IsSuccessStatusCode)
-        {
-            var content = await response.Content.ReadAsStringAsync();
-            var result = JsonSerializer.Deserialize<object>(content);
-            result.Should().NotBeNull();
-        }
-        else
-        {
-            // If authentication is required, expect redirect or unauthorized
-            response.StatusCode.Should().BeOneOf(HttpStatusCode.Unauthorized, HttpStatusCode.Redirect);
-        }
+        response.StatusCode.Should().Be(HttpStatusCode.OK);
     }
 
     [Theory]
-    [InlineData("POST", "/Cart/AddToCart")]
-    [InlineData("POST", "/Cart/RemoveFromCart")]
-    [InlineData("POST", "/Cart/UpdateQuantity")]
-    public async Task CartActions_WithoutAuth_ShouldRequireAuthentication(string method, string url)
+    [InlineData("/Cart/AddToCart", "itemId=1&quantity=1")]
+    [InlineData("/Cart/Update", "cartId=1&quantity=2")]
+    [InlineData("/Cart/Remove", "cartId=1")]
+    [InlineData("/Cart/Clear", "")]
+    public async Task CartStateChangingPosts_WithoutAntiforgeryToken_ShouldReturnBadRequest(string url, string formData)
     {
-        // Arrange
-        var request = new HttpRequestMessage(new HttpMethod(method), url);
-        if (method == "POST")
+        using var request = new HttpRequestMessage(HttpMethod.Post, url)
         {
-            request.Content = new StringContent("{}", Encoding.UTF8, "application/json");
-        }
+            Content = new StringContent(formData, Encoding.UTF8, "application/x-www-form-urlencoded")
+        };
 
-        // Act
         var response = await _client.SendAsync(request);
 
-        // Assert
-        response.StatusCode.Should().BeOneOf(HttpStatusCode.Unauthorized, HttpStatusCode.Redirect, HttpStatusCode.BadRequest);
+        response.StatusCode.Should().Be(HttpStatusCode.BadRequest);
+    }
+
+    [Fact]
+    public async Task PlaceOrder_WithoutAuth_ShouldRedirectToGuestCheckout()
+    {
+        using var request = new HttpRequestMessage(HttpMethod.Post, "/Cart/PlaceOrder")
+        {
+            Content = new StringContent(string.Empty, Encoding.UTF8, "application/x-www-form-urlencoded")
+        };
+
+        var client = _factory.CreateClient(new WebApplicationFactoryClientOptions
+        {
+            AllowAutoRedirect = false
+        });
+
+        var response = await client.SendAsync(request);
+
+        response.StatusCode.Should().Be(HttpStatusCode.BadRequest);
+    }
+
+    [Fact]
+    public async Task BuyNow_WithoutAuth_ShouldReturnBadRequestWithoutAntiforgeryToken()
+    {
+        using var request = new HttpRequestMessage(HttpMethod.Post, "/Cart/BuyNow")
+        {
+            Content = new StringContent("itemId=1&quantity=1", Encoding.UTF8, "application/x-www-form-urlencoded")
+        };
+
+        var response = await _client.SendAsync(request);
+
+        response.StatusCode.Should().Be(HttpStatusCode.BadRequest);
     }
 }

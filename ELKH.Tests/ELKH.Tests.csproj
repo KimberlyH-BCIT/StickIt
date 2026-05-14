@@ -56,7 +56,8 @@
   </ItemGroup>
 
   <ItemGroup>
-    <Compile Include="**\*.cs" Exclude="$(DefaultItemExcludes);$(DefaultExcludesInProjectFolder);Unit\Controllers\WishlistControllerTests.cs;Performance\PerformanceTests.cs;Performance\Regression\PerformanceRegressionTests.cs;Performance\Benchmarks\ELKHPerformanceBenchmarks.cs" />
+    <Compile Include="**\*.cs"
+             Exclude="$(DefaultItemExcludes);$(DefaultExcludesInProjectFolder);bin\**;obj\**;ELKH.GuestCheckoutTests\**;Unit\Controllers\WishlistControllerTests.cs;Performance\PerformanceTests.cs;Performance\Regression\PerformanceRegressionTests.cs;Performance\Benchmarks\ELKHPerformanceBenchmarks.cs" />
   </ItemGroup>
 
   <ItemGroup>

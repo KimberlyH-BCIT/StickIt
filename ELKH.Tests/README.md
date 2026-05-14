@@ -10,16 +10,18 @@ This directory contains comprehensive test coverage configuration and execution 
 - **ReportGenerator**: Creates reports from coverage data in various formats
 - **Built-in MSBuild Integration**: Automatic coverage collection during test runs
 
-### Coverage Targets
-- **Line Coverage Target**: 80% minimum
-- **Branch Coverage Target**: 70% minimum  
-- **Method Coverage Target**: 85% minimum
+### Current Measured Baseline
+- **Latest full-suite artifact**: `TestResults/db821130-2eea-4277-96a3-df73b9af58d7/coverage.cobertura.xml`
+- **Measured line coverage**: `17.94%`
+- **Measured branch coverage**: `9.71%`
+
+The current `ELKH.Tests` project still enforces higher thresholds in project configuration, but the repository does not currently meet them and the full suite is not green. Keep documentation and badges aligned to measured outputs rather than aspirational goals.
 
 ## Running Tests with Coverage
 
 ### Basic Coverage Collection
 ```bash
-# Run all tests with coverage
+# Run all tests with coverage artifact generation
 dotnet test --collect:"XPlat Code Coverage"
 
 # Run tests with detailed coverage output
@@ -80,8 +82,8 @@ dotnet test --logger console --verbosity normal
 # Complete test suite with coverage
 dotnet test --configuration Release --collect:"XPlat Code Coverage" --logger trx --results-directory ./TestResults
 
-# Fail build if coverage below threshold
-dotnet test --configuration Release --collect:"XPlat Code Coverage" -- DataCollectionRunSettings.DataCollectors.DataCollector.Configuration.Threshold=80
+# Run targeted validation without tripping global coverage thresholds
+dotnet test ELKH.Tests\ELKH.Tests.csproj -p:Threshold=0 --filter "FullyQualifiedName~ELKH.Tests.Unit.Controllers.CheckoutControllerTests|FullyQualifiedName~ELKH.Tests.Unit.Controllers.ProductControllerTests"
 ```
 
 ### Performance Testing
@@ -149,11 +151,10 @@ protected override void SeedDatabase()
     file: ./TestResults/**/coverage.cobertura.xml
 ```
 
-### Quality Gates
-- **Build fails** if any test fails
-- **Build fails** if coverage drops below 75%
-- **Build warns** if coverage drops below 80%
-- **Performance regression** detection for critical paths
+### Current Suite State
+- **Latest full-suite run**: 302 tests executed, 109 failed, 193 passed
+- **Known failure pattern**: several integration tests expect routes/endpoints that currently return 404 or HTML instead of the asserted API payloads
+- **Targeted validation**: checkout and product controller regression set passes (23/23) when run with thresholds disabled for the filtered slice
 
 ## Test Organization Best Practices
 
@@ -236,8 +237,8 @@ dotnet test --logger console --verbosity diagnostic
 ## Metrics and Reporting
 
 ### Coverage Metrics
-- **Current Coverage**: Target 80% line coverage
-- **Trend Analysis**: Track coverage over time
+- **Current measured coverage**: 17.94% line, 9.71% branch
+- **Trend Analysis**: Track coverage over time using saved Cobertura artifacts
 - **Hotspot Identification**: Focus on high-complexity, low-coverage areas
 
 ### Test Metrics
@@ -253,11 +254,11 @@ dotnet test --logger console --verbosity diagnostic
 
 ## Next Steps
 
-1. **Achieve 80% Coverage**: Focus on untested service methods
-2. **Add E2E Tests**: Playwright-based browser testing
-3. **Load Testing**: Stress test critical workflows
-4. **Mutation Testing**: Validate test quality with mutation testing tools
-5. **Security Testing**: Add penetration testing for admin functions
+1. **Stabilize failing integration tests**: Fix route/fixture mismatches such as Product API and cart/auth scenarios
+2. **Expand high-risk workflow tests**: Continue payment, authorization, guest token, and inventory invariants
+3. **Raise measured coverage honestly**: Improve service/controller coverage and regenerate the Cobertura baseline
+4. **Add E2E Tests**: Playwright-based browser testing
+5. **Security Testing**: Add deeper admin and CSRF regression coverage
 
 ---
 
