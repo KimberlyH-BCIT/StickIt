@@ -1,13 +1,17 @@
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Mvc.Testing;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Storage;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.DependencyInjection.Extensions;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Configuration;
 using ELKH.Data;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.Extensions.Logging;
 using System.Data.Common;
+using ELKH.Services;
 
 namespace ELKH.GuestCheckoutTests;
 
@@ -19,6 +23,8 @@ public class ELKHWebApplicationFactory : WebApplicationFactory<Program>
 {
     private bool _seeded = false;
     private readonly object _seedLock = new object();
+    private readonly InMemoryDatabaseRoot _dbRoot = new();
+    private readonly InMemoryDatabaseRoot _imageDbRoot = new();
 
     protected override void ConfigureWebHost(IWebHostBuilder builder)
     {
@@ -41,35 +47,27 @@ public class ELKHWebApplicationFactory : WebApplicationFactory<Program>
 
         builder.ConfigureServices(services =>
         {
-            // Remove ALL database-related service descriptors to prevent conflicts
-            var descriptorsToRemove = services
-                .Where(d => d.ServiceType == typeof(DbContextOptions<ApplicationDbContext>) ||
-                           d.ServiceType == typeof(DbContextOptions<ImageStoreContext>) ||
-                           d.ServiceType == typeof(DbContextOptions) ||
-                           d.ImplementationType?.FullName?.Contains("ApplicationDbContext") == true ||
-                           d.ImplementationType?.FullName?.Contains("ImageStoreContext") == true)
-                .ToList();
-
-            foreach (var descriptor in descriptorsToRemove)
-            {
-                services.Remove(descriptor);
-            }
-
-            // Add in-memory database for testing
-            var dbName = "IntegrationTestDb_" + Guid.NewGuid();
-            var imageDbName = "IntegrationTestImageDb_" + Guid.NewGuid();
+            services.RemoveAll<ApplicationDbContext>();
+            services.RemoveAll<ImageStoreContext>();
+            services.RemoveAll<DbContextOptions<ApplicationDbContext>>();
+            services.RemoveAll<DbContextOptions<ImageStoreContext>>();
+            services.RemoveAll<IDbContextOptionsConfiguration<ApplicationDbContext>>();
+            services.RemoveAll<IDbContextOptionsConfiguration<ImageStoreContext>>();
 
             services.AddDbContext<ApplicationDbContext>(options =>
             {
-                options.UseInMemoryDatabase(dbName);
+                options.UseInMemoryDatabase("GuestCheckoutIntegrationTestDb", _dbRoot);
                 options.EnableSensitiveDataLogging();
             }, ServiceLifetime.Scoped);
 
             services.AddDbContext<ImageStoreContext>(options =>
             {
-                options.UseInMemoryDatabase(imageDbName);
+                options.UseInMemoryDatabase("GuestCheckoutIntegrationImageDb", _imageDbRoot);
                 options.EnableSensitiveDataLogging();
             }, ServiceLifetime.Scoped);
+
+            services.RemoveAll<IPayPalService>();
+            services.AddScoped<IPayPalService, TestPayPalService>();
         });
 
         builder.UseEnvironment("Testing");
@@ -220,5 +218,34 @@ public class ELKHWebApplicationFactory : WebApplicationFactory<Program>
     protected override void Dispose(bool disposing)
     {
         base.Dispose(disposing);
+    }
+
+    private sealed class TestPayPalService : IPayPalService
+    {
+        public Task<string> CreateOrderAsync(decimal amount, string currency = "CAD")
+        {
+            return Task.FromResult($"TEST-ORDER-{Guid.NewGuid():N}");
+        }
+
+        public Task CaptureOrderAsync(string orderId)
+        {
+            return Task.CompletedTask;
+        }
+
+        public Task<PayPalVerificationResult> VerifyCapturedOrderAsync(string payPalOrderId, decimal expectedTotal, string expectedCurrency)
+        {
+            return Task.FromResult(new PayPalVerificationResult
+            {
+                PayPalOrderId = payPalOrderId,
+                CaptureId = $"CAPTURE-{Guid.NewGuid():N}",
+                Status = "COMPLETED",
+                Amount = decimal.Round(expectedTotal, 2, MidpointRounding.AwayFromZero),
+                Currency = expectedCurrency,
+                CapturedAtUtc = DateTime.UtcNow,
+                PayerId = "TEST-PAYER",
+                PayerEmail = "guest@example.com",
+                VerificationSummaryJson = "{}"
+            });
+        }
     }
 }

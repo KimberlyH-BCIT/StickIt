@@ -67,6 +67,13 @@ namespace ELKH.Models
         [Display(Name = "Coupon Discount")]
         public decimal CouponDiscount { get; set; } = 0;
 
+        /// <summary>
+        /// SHA-256 hash of the guest access token used to authorize guest order lookup.
+        /// The raw token is only sent to the guest and is never persisted.
+        /// </summary>
+        [MaxLength(88)]
+        public string? GuestAccessTokenHash { get; set; }
+
         // =====================================================================
         // Relationships
         // =====================================================================
@@ -74,8 +81,8 @@ namespace ELKH.Models
         /// <summary>
         /// Foreign key to the customer who placed the order.
         /// </summary>
-        public int FkRegisteredUserId { get; set; }
-        public RegisteredUserModel RegisteredUser { get; set; }
+        public int? FkRegisteredUserId { get; set; }
+        public RegisteredUserModel? RegisteredUser { get; set; }
 
         /// <summary>
         /// Foreign key to the selected shipping method.

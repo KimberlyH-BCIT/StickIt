@@ -12,12 +12,16 @@ public class OrderEmailService : IOrderEmailService
     public OrderEmailService(IEmailSender email) => _email = email;
 
     /// <inheritdoc />
-    public Task SendOrderConfirmationAsync(string customerEmail, string customerFirstName, int orderId)
+    public Task SendOrderConfirmationAsync(string customerEmail, string customerFirstName, int orderId, string? confirmationLink = null)
     {
         var subject = $"Order #{orderId} confirmed - thanks for your purchase! 🎉";
+        var confirmationLinkMarkup = string.IsNullOrWhiteSpace(confirmationLink)
+            ? string.Empty
+            : $"<p>You can securely view your order confirmation and delivery status anytime using this link: <a href=\"{confirmationLink}\">View your order</a>.</p>";
         var body = $"""
             <p>Hi {customerFirstName},</p>
             <p>We've received your order and payment - <strong>Order #{orderId}</strong> is now being prepared.</p>
+            {confirmationLinkMarkup}
             <p>We'll email you again once your stickers ship.</p>
             <p>Thanks for shopping with ELKH!</p>
             """;

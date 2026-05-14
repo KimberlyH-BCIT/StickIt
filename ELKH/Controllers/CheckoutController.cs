@@ -1,5 +1,7 @@
 using ELKH.Extensions;
 using ELKH.Services;
+using System.Security.Cryptography;
+using System.Text;
 
 namespace ELKH.Controllers;
 
@@ -51,6 +53,7 @@ public class CheckoutController : Controller
     private readonly IConfiguration _configuration;
     private readonly IShippingService _shippingService;
     private readonly IPayPalService _payPalService;
+    private readonly IOrderEmailService _orderEmailService;
     private readonly ILogger<CheckoutController> _logger;
 
     public CheckoutController(
@@ -62,6 +65,7 @@ public class CheckoutController : Controller
         IConfiguration configuration,
         IShippingService shippingService,
         IPayPalService payPalService,
+        IOrderEmailService orderEmailService,
         ILogger<CheckoutController> logger)
     {
         _db = db;
@@ -72,6 +76,7 @@ public class CheckoutController : Controller
         _configuration = configuration;
         _shippingService = shippingService;
         _payPalService = payPalService;
+        _orderEmailService = orderEmailService;
         _logger = logger;
     }
 
@@ -577,6 +582,7 @@ public class CheckoutController : Controller
         try
         {
             var names = (vm.FullName ?? "").Split(' ', 2);
+            var guestAccessToken = GenerateGuestAccessToken();
             var contact = new ContactDetailModel
             {
                 FkRegisteredUserId = null,
@@ -596,14 +602,15 @@ public class CheckoutController : Controller
             var order = new OrderModel
             {
                 FkContactId = contact.PkContactId,
-                FkRegisteredUserId = 0,
+                FkRegisteredUserId = null,
                 OrderStatus = OrderStatus.Paid,
                 TotalAmount = total,
                 CreatedAt = DateTime.UtcNow,
                 DeliveryStatus = DeliveryStatus.Pending,
                 FkShippingMethodId = vm.SelectedShippingMethodId,
                 ShippingMethodName = shippingMethod.Name,
-                ShippingCost = shipping
+                ShippingCost = shipping,
+                GuestAccessTokenHash = HashGuestAccessToken(guestAccessToken)
             };
             _db.Orders.Add(order);
             await _db.SaveChangesAsync();
@@ -633,9 +640,15 @@ public class CheckoutController : Controller
             await _guestCartService.ClearCartAsync();
             await transaction.CommitAsync();
 
+            var guestConfirmationLink = BuildGuestConfirmationLink(guestAccessToken);
+            await _orderEmailService.SendOrderConfirmationAsync(
+                vm.Email,
+                contact.FirstName,
+                order.PkOrderId,
+                guestConfirmationLink);
+
             TempData["Message"] = "success,Order placed successfully! Check your email for order details.";
-            TempData["GuestOrderEmail"] = vm.Email;
-            return RedirectToAction("GuestConfirmation", new { orderId = order.PkOrderId, email = vm.Email });
+            return RedirectToAction(nameof(GuestConfirmation), new { token = guestAccessToken });
         }
         catch (Exception ex)
         {
@@ -714,32 +727,52 @@ public class CheckoutController : Controller
         };
     }
 
+    private static string GenerateGuestAccessToken()
+    {
+        return Microsoft.AspNetCore.WebUtilities.WebEncoders.Base64UrlEncode(RandomNumberGenerator.GetBytes(32));
+    }
+
+    private static string HashGuestAccessToken(string token)
+    {
+        return Convert.ToBase64String(SHA256.HashData(Encoding.UTF8.GetBytes(token)));
+    }
+
+    private string BuildGuestConfirmationLink(string token)
+    {
+        var path = Url.Action(nameof(GuestConfirmation), "Checkout", new { token })
+            ?? $"/Checkout/GuestConfirmation?token={Uri.EscapeDataString(token)}";
+
+        if (!Request.Host.HasValue)
+        {
+            return path;
+        }
+
+        return $"{Request.Scheme}://{Request.Host}{path}";
+    }
+
     /// <summary>
-    /// Displays order confirmation for guest checkout.
-    /// Email-based order lookup for guests without accounts.
+    /// Displays order confirmation for guest checkout using a secure access token.
     /// </summary>
     [HttpGet]
-    public async Task<IActionResult> GuestConfirmation(int orderId, string email)
+    public async Task<IActionResult> GuestConfirmation(string token)
     {
-        // Retrieve order with contact details
+        if (string.IsNullOrWhiteSpace(token))
+        {
+            TempData["Message"] = "error,Invalid guest order access link.";
+            return RedirectToAction("Index", "Home");
+        }
+
+        var tokenHash = HashGuestAccessToken(token);
+
         var order = await _db.Orders
             .Include(o => o.ContactDetail)
             .Include(o => o.OrderItems)
                 .ThenInclude(oi => oi.Product)
-            .FirstOrDefaultAsync(o => o.PkOrderId == orderId);
+            .FirstOrDefaultAsync(o => o.GuestAccessTokenHash == tokenHash && o.FkRegisteredUserId == null);
 
         if (order == null)
         {
-            TempData["Message"] = "error,Order not found.";
-            return RedirectToAction("Index", "Home");
-        }
-
-        // Security: Verify email matches (simple validation for guest orders)
-        // In production, consider more secure token-based approach
-        if (order.ContactDetail?.FirstName == null || 
-            !email.Equals(TempData["GuestOrderEmail"]?.ToString(), StringComparison.OrdinalIgnoreCase))
-        {
-            TempData["Message"] = "error,Unauthorized access.";
+            TempData["Message"] = "error,Invalid guest order access link.";
             return RedirectToAction("Index", "Home");
         }
 

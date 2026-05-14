@@ -350,38 +350,58 @@ await using (var migrationScope = app.Services.CreateAsyncScope())
         var db = sp.GetRequiredService<ApplicationDbContext>();
         var imageDb = sp.GetRequiredService<ImageStoreContext>();
 
-        var appMigrations = db.Database.GetMigrations().ToList();
-        if (appMigrations.Count > 0)
+        if (!db.Database.IsRelational())
         {
-            await db.Database.MigrateAsync();
-            app.Logger.LogInformation("Application database migrations applied successfully.");
-        }
-        else
-        {
-            if (app.Environment.IsDevelopment() &&
-                db.Database.IsSqlite() &&
-                !await TableExistsAsync(db, "Products"))
-            {
-                app.Logger.LogWarning(
-                    "Application database is missing the Products table and no migrations were found. Recreating the local SQLite database.");
-
-                await db.Database.EnsureDeletedAsync();
-            }
-
             await db.Database.EnsureCreatedAsync();
-            app.Logger.LogWarning("No ApplicationDbContext migrations were found. EnsureCreated was used instead.");
-        }
-
-        var imageMigrations = imageDb.Database.GetMigrations().ToList();
-        if (imageMigrations.Count > 0)
-        {
-            await imageDb.Database.MigrateAsync();
-            app.Logger.LogInformation("Image store database migrations applied successfully.");
+            app.Logger.LogInformation("ApplicationDbContext is using a non-relational provider; EnsureCreated was used.");
         }
         else
+        {
+            var appMigrations = db.Database.GetMigrations().ToList();
+            if (appMigrations.Count > 0)
+            {
+                await db.Database.MigrateAsync();
+                app.Logger.LogInformation("Application database migrations applied successfully.");
+            }
+            else
+            {
+                if (app.Environment.IsDevelopment() &&
+                    db.Database.IsSqlite() &&
+                    !await TableExistsAsync(db, "Products"))
+                {
+                    app.Logger.LogWarning(
+                        "Application database is missing the Products table and no migrations were found. Recreating the local SQLite database.");
+
+                    await db.Database.EnsureDeletedAsync();
+                }
+
+                await db.Database.EnsureCreatedAsync();
+                if (db.Database.IsSqlite())
+                {
+                    await EnsureGuestOrderSecuritySchemaAsync(db, app.Logger);
+                }
+                app.Logger.LogWarning("No ApplicationDbContext migrations were found. EnsureCreated was used instead.");
+            }
+        }
+
+        if (!imageDb.Database.IsRelational())
         {
             await imageDb.Database.EnsureCreatedAsync();
-            app.Logger.LogWarning("No ImageStoreContext migrations were found. EnsureCreated was used instead.");
+            app.Logger.LogInformation("ImageStoreContext is using a non-relational provider; EnsureCreated was used.");
+        }
+        else
+        {
+            var imageMigrations = imageDb.Database.GetMigrations().ToList();
+            if (imageMigrations.Count > 0)
+            {
+                await imageDb.Database.MigrateAsync();
+                app.Logger.LogInformation("Image store database migrations applied successfully.");
+            }
+            else
+            {
+                await imageDb.Database.EnsureCreatedAsync();
+                app.Logger.LogWarning("No ImageStoreContext migrations were found. EnsureCreated was used instead.");
+            }
         }
     }
     catch (Exception ex)
@@ -404,11 +424,15 @@ if (runSeeders)
         var db = sp.GetRequiredService<ApplicationDbContext>();
         var userManager = sp.GetRequiredService<UserManager<IdentityUser>>();
         var roleManager = sp.GetRequiredService<RoleManager<IdentityRole>>();
+        var canToggleSqliteForeignKeys = db.Database.IsSqlite();
 
         app.Logger.LogInformation("Starting Seeding...");
 
         // Temporarily disable foreign key constraints for seeding
-        await db.Database.ExecuteSqlRawAsync("PRAGMA foreign_keys=OFF");
+        if (canToggleSqliteForeignKeys)
+        {
+            await db.Database.ExecuteSqlRawAsync("PRAGMA foreign_keys=OFF");
+        }
 
         try
         {
@@ -428,7 +452,10 @@ if (runSeeders)
         finally
         {
             // Re-enable foreign key constraints after seeding
-            await db.Database.ExecuteSqlRawAsync("PRAGMA foreign_keys=ON");
+            if (canToggleSqliteForeignKeys)
+            {
+                await db.Database.ExecuteSqlRawAsync("PRAGMA foreign_keys=ON");
+            }
         }
     }
 }
@@ -452,6 +479,50 @@ static async Task<bool> TableExistsAsync(DbContext context, string tableName)
 
     var result = await command.ExecuteScalarAsync();
     return result is not null and not DBNull;
+}
+
+static async Task<bool> ColumnExistsAsync(DbContext context, string tableName, string columnName)
+{
+    await using var connection = context.Database.GetDbConnection();
+
+    if (connection.State != System.Data.ConnectionState.Open)
+    {
+        await connection.OpenAsync();
+    }
+
+    await using var command = connection.CreateCommand();
+    command.CommandText = $"PRAGMA table_info(\"{tableName}\");";
+
+    await using var reader = await command.ExecuteReaderAsync();
+    while (await reader.ReadAsync())
+    {
+        if (string.Equals(reader[1]?.ToString(), columnName, StringComparison.OrdinalIgnoreCase))
+        {
+            return true;
+        }
+    }
+
+    return false;
+}
+
+static async Task EnsureGuestOrderSecuritySchemaAsync(ApplicationDbContext db, ILogger logger)
+{
+    if (!await TableExistsAsync(db, "Orders"))
+    {
+        return;
+    }
+
+    if (!await ColumnExistsAsync(db, "Orders", "GuestAccessTokenHash"))
+    {
+        await db.Database.ExecuteSqlRawAsync("ALTER TABLE Orders ADD COLUMN GuestAccessTokenHash TEXT NULL;");
+        logger.LogInformation("Added Orders.GuestAccessTokenHash column for guest order token security.");
+    }
+
+    await db.Database.ExecuteSqlRawAsync(
+        "UPDATE Orders SET FkRegisteredUserId = NULL WHERE FkRegisteredUserId = 0;");
+
+    await db.Database.ExecuteSqlRawAsync(
+        "CREATE UNIQUE INDEX IF NOT EXISTS IX_Orders_GuestAccessTokenHash ON Orders(GuestAccessTokenHash) WHERE GuestAccessTokenHash IS NOT NULL;");
 }
 
 app.Run();

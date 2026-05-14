@@ -2,6 +2,7 @@ using FluentAssertions;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Controllers;
+using Microsoft.AspNetCore.Mvc.Routing;
 using Microsoft.AspNetCore.Mvc.ViewFeatures;
 using Microsoft.AspNetCore.Routing;
 using Microsoft.Extensions.Configuration;
@@ -31,6 +32,8 @@ public class CheckoutControllerTests
     private readonly Mock<IConfiguration> _mockConfiguration;
     private readonly Mock<IShippingService> _mockShippingService;
     private readonly Mock<IPayPalService> _mockPayPalService;
+    private readonly Mock<IOrderEmailService> _mockOrderEmailService;
+    private readonly Mock<IUrlHelper> _mockUrlHelper;
     private readonly Mock<ILogger<CheckoutController>> _mockLogger;
     private readonly CheckoutController _controller;
 
@@ -49,6 +52,8 @@ public class CheckoutControllerTests
         _mockConfiguration = new Mock<IConfiguration>();
         _mockShippingService = new Mock<IShippingService>();
         _mockPayPalService = new Mock<IPayPalService>();
+        _mockOrderEmailService = new Mock<IOrderEmailService>();
+        _mockUrlHelper = new Mock<IUrlHelper>();
         _mockLogger = new Mock<ILogger<CheckoutController>>();
 
         // Create controller under test
@@ -61,6 +66,7 @@ public class CheckoutControllerTests
             _mockConfiguration.Object,
             _mockShippingService.Object,
             _mockPayPalService.Object,
+            _mockOrderEmailService.Object,
             _mockLogger.Object);
 
         // Setup controller context
@@ -68,6 +74,8 @@ public class CheckoutControllerTests
         var actionContext = new ActionContext(httpContext, new RouteData(), new ControllerActionDescriptor());
         _controller.ControllerContext = new ControllerContext(actionContext);
         _controller.TempData = new TempDataDictionary(httpContext, Mock.Of<ITempDataProvider>());
+        _mockUrlHelper.Setup(u => u.Action(It.IsAny<UrlActionContext>())).Returns((string?)null);
+        _controller.Url = _mockUrlHelper.Object;
         
         // Setup authenticated user
         SetupAuthenticatedUser("test@example.com");

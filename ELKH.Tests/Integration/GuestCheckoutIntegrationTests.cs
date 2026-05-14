@@ -159,13 +159,13 @@ public class GuestCheckoutIntegrationTests : IClassFixture<ELKHWebApplicationFac
         var verifyDb = verifyScope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
         
         var order = await verifyDb.Orders
-            .Where(o => o.FkRegisteredUserId == 0) // Guest order
+            .Where(o => o.FkRegisteredUserId == null) // Guest order
             .OrderByDescending(o => o.CreatedAt)
             .FirstOrDefaultAsync();
 
         if (order != null)
         {
-            order.FkRegisteredUserId.Should().Be(0); // Guest orders have FkRegisteredUserId = 0
+            order.FkRegisteredUserId.Should().BeNull();
             order.OrderStatus.Should().Be(OrderStatus.Paid);
             order.TotalAmount.Should().BeGreaterThan(0);
         }
@@ -464,7 +464,7 @@ public class GuestCheckoutIntegrationTests : IClassFixture<ELKHWebApplicationFac
         // Note: This assertion depends on whether the feature is fully implemented
         // For now, just verify the checkout succeeded
         var order = await verifyDb.Orders
-            .Where(o => o.FkRegisteredUserId == 0)
+            .Where(o => o.FkRegisteredUserId == null)
             .OrderByDescending(o => o.CreatedAt)
             .FirstOrDefaultAsync();
 

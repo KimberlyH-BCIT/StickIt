@@ -1,11 +1,14 @@
 using FluentAssertions;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Mvc.Routing;
 using Microsoft.AspNetCore.Mvc.ViewFeatures;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
 using Moq;
+using System.Security.Cryptography;
+using System.Text;
 using Xunit;
 using ELKH.Controllers;
 using ELKH.Data;
@@ -29,6 +32,9 @@ public class CheckoutControllerGuestTests : IDisposable
     private readonly Mock<IGuestCartService> _mockGuestCartService;
     private readonly Mock<IConfiguration> _mockConfiguration;
     private readonly Mock<IShippingService> _mockShippingService;
+    private readonly Mock<IPayPalService> _mockPayPalService;
+    private readonly Mock<IOrderEmailService> _mockOrderEmailService;
+    private readonly Mock<IUrlHelper> _mockUrlHelper;
     private readonly Mock<ILogger<CheckoutController>> _mockLogger;
     private readonly CheckoutController _controller;
 
@@ -46,6 +52,9 @@ public class CheckoutControllerGuestTests : IDisposable
         _mockGuestCartService = new Mock<IGuestCartService>();
         _mockConfiguration = new Mock<IConfiguration>();
         _mockShippingService = new Mock<IShippingService>();
+        _mockPayPalService = new Mock<IPayPalService>();
+        _mockOrderEmailService = new Mock<IOrderEmailService>();
+        _mockUrlHelper = new Mock<IUrlHelper>();
         _mockLogger = new Mock<ILogger<CheckoutController>>();
 
         var shippingMethods = new List<ShippingMethodModel>
@@ -74,6 +83,8 @@ public class CheckoutControllerGuestTests : IDisposable
             _mockGuestCartService.Object,
             _mockConfiguration.Object,
             _mockShippingService.Object,
+            _mockPayPalService.Object,
+            _mockOrderEmailService.Object,
             _mockLogger.Object);
 
         SetupControllerContext();
@@ -88,6 +99,8 @@ public class CheckoutControllerGuestTests : IDisposable
             HttpContext = httpContext
         };
         _controller.TempData = new TempDataDictionary(httpContext, Mock.Of<ITempDataProvider>());
+        _mockUrlHelper.Setup(u => u.Action(It.IsAny<UrlActionContext>())).Returns((string?)null);
+        _controller.Url = _mockUrlHelper.Object;
     }
 
     private void SeedTestData()
@@ -118,6 +131,38 @@ public class CheckoutControllerGuestTests : IDisposable
 
         _context.Products.AddRange(products);
         _context.SaveChanges();
+
+        _mockShippingService.Setup(s => s.GetShippingMethodByIdAsync(It.IsAny<int>()))
+            .ReturnsAsync((int id) => new ShippingMethodModel
+            {
+                PkShippingMethodId = id,
+                Name = "Standard",
+                IsActive = true,
+                BasePrice = 7.99m
+            });
+
+        _mockConfiguration.Setup(c => c["PayPal:Currency"]).Returns("CAD");
+    }
+
+    private void SetupVerifiedPayment(decimal amount, string orderId = "PAYPAL-ORDER-1", string captureId = "CAPTURE-1")
+    {
+        _mockPayPalService
+            .Setup(p => p.VerifyCapturedOrderAsync(
+                orderId,
+                It.Is<decimal>(total => decimal.Round(total, 2, MidpointRounding.AwayFromZero) == amount),
+                "CAD"))
+            .ReturnsAsync(new PayPalVerificationResult
+            {
+                PayPalOrderId = orderId,
+                CaptureId = captureId,
+                Status = "COMPLETED",
+                Amount = amount,
+                Currency = "CAD",
+                CapturedAtUtc = DateTime.UtcNow,
+                PayerId = "PAYER-123",
+                PayerEmail = "payer@example.com",
+                VerificationSummaryJson = "{\"status\":\"COMPLETED\"}"
+            });
     }
 
     #region Guest GET Tests
@@ -258,6 +303,7 @@ public class CheckoutControllerGuestTests : IDisposable
     {
         // Arrange
         var validModel = CreateValidGuestCheckoutVM();
+        SetupVerifiedPayment(1790.88m);
 
         var cartItems = new List<CartItemVM>
         {
@@ -280,6 +326,7 @@ public class CheckoutControllerGuestTests : IDisposable
     {
         // Arrange
         var validModel = CreateValidGuestCheckoutVM();
+        SetupVerifiedPayment(43.81m);
 
         var cartItems = new List<CartItemVM>
         {
@@ -306,13 +353,15 @@ public class CheckoutControllerGuestTests : IDisposable
         result.Should().BeOfType<RedirectToActionResult>();
         var redirect = result as RedirectToActionResult;
         redirect!.ActionName.Should().Be("GuestConfirmation");
+        redirect.RouteValues.Should().ContainKey("token");
 
         // Verify order was created
         var order = await _context.Orders.FirstOrDefaultAsync();
         order.Should().NotBeNull();
-        order!.FkRegisteredUserId.Should().Be(0); // Guest order
+        order!.FkRegisteredUserId.Should().BeNull();
         order.OrderStatus.Should().Be(OrderStatus.Paid);
         order.DeliveryStatus.Should().Be(DeliveryStatus.Pending);
+        order.GuestAccessTokenHash.Should().NotBeNullOrWhiteSpace();
 
         // Verify contact detail was created
         var contact = await _context.ContactDetails.FirstOrDefaultAsync();
@@ -331,6 +380,9 @@ public class CheckoutControllerGuestTests : IDisposable
 
         // Verify cart was cleared
         _mockGuestCartService.Verify(g => g.ClearCartAsync(), Times.Once);
+        _mockOrderEmailService.Verify(
+            o => o.SendOrderConfirmationAsync(validModel.Email, "Jane", order.PkOrderId, It.Is<string>(link => link.Contains("/Checkout/GuestConfirmation?token="))),
+            Times.Once);
     }
 
     [Fact]
@@ -338,6 +390,7 @@ public class CheckoutControllerGuestTests : IDisposable
     {
         // Arrange
         var validModel = CreateValidGuestCheckoutVM();
+        SetupVerifiedPayment(43.81m);
 
         var cartItems = new List<CartItemVM>
         {
@@ -365,6 +418,7 @@ public class CheckoutControllerGuestTests : IDisposable
     {
         // Arrange
         var validModel = CreateValidGuestCheckoutVM();
+        SetupVerifiedPayment(62.02m);
 
         var cartItems = new List<CartItemVM>
         {
@@ -387,10 +441,11 @@ public class CheckoutControllerGuestTests : IDisposable
     }
 
     [Fact]
-    public async Task ProcessGuestPayment_ShouldStoreGuestEmailInTempData()
+    public async Task ProcessGuestPayment_ShouldSendSecureConfirmationLinkEmail()
     {
         // Arrange
         var validModel = CreateValidGuestCheckoutVM();
+        SetupVerifiedPayment(25.90m);
 
         var cartItems = new List<CartItemVM>
         {
@@ -401,10 +456,14 @@ public class CheckoutControllerGuestTests : IDisposable
             .ReturnsAsync(cartItems);
 
         // Act
-        await _controller.ProcessGuestPayment(validModel);
+        var result = await _controller.ProcessGuestPayment(validModel);
 
         // Assert
-        _controller.TempData["GuestOrderEmail"].Should().Be("jane.doe@example.com");
+        result.Should().BeOfType<RedirectToActionResult>();
+        _controller.TempData.ContainsKey("GuestOrderEmail").Should().BeFalse();
+        _mockOrderEmailService.Verify(
+            o => o.SendOrderConfirmationAsync(validModel.Email, "Jane", It.IsAny<int>(), It.Is<string>(link => link.Contains("/Checkout/GuestConfirmation?token="))),
+            Times.Once);
     }
 
     #endregion
@@ -412,17 +471,17 @@ public class CheckoutControllerGuestTests : IDisposable
     #region GuestConfirmation Tests
 
     [Fact]
-    public async Task GuestConfirmation_WithInvalidOrderId_ShouldRedirectToHome()
+    public async Task GuestConfirmation_WithInvalidToken_ShouldRedirectToHome()
     {
         // Act
-        var result = await _controller.GuestConfirmation(999, "test@example.com");
+        var result = await _controller.GuestConfirmation("invalid-token");
 
         // Assert
         result.Should().BeOfType<RedirectToActionResult>();
         var redirect = result as RedirectToActionResult;
         redirect!.ActionName.Should().Be("Index");
         redirect.ControllerName.Should().Be("Home");
-        _controller.TempData["Message"]?.ToString().Should().Contain("not found");
+        _controller.TempData["Message"]?.ToString().Should().Contain("Invalid guest order access link");
     }
 
     [Fact]
@@ -447,11 +506,12 @@ public class CheckoutControllerGuestTests : IDisposable
         {
             PkOrderId = 1,
             FkContactId = 1,
-            FkRegisteredUserId = 0, // Guest order
+            FkRegisteredUserId = null,
             OrderStatus = OrderStatus.Paid,
             TotalAmount = 43.81m,
             CreatedAt = DateTime.UtcNow,
-            DeliveryStatus = DeliveryStatus.Pending
+            DeliveryStatus = DeliveryStatus.Pending,
+            GuestAccessTokenHash = HashGuestAccessToken("guest-token")
         };
 
         var product = await _context.Products.FindAsync(1);
@@ -470,10 +530,8 @@ public class CheckoutControllerGuestTests : IDisposable
         _context.OrderItems.Add(orderItem);
         await _context.SaveChangesAsync();
 
-        _controller.TempData["GuestOrderEmail"] = "jane.doe@example.com";
-
         // Act
-        var result = await _controller.GuestConfirmation(1, "jane.doe@example.com");
+        var result = await _controller.GuestConfirmation("guest-token");
 
         // Assert
         result.Should().BeOfType<ViewResult>();
@@ -488,7 +546,7 @@ public class CheckoutControllerGuestTests : IDisposable
     }
 
     [Fact]
-    public async Task GuestConfirmation_WithMismatchedEmail_ShouldRedirectToHome()
+    public async Task GuestConfirmation_WithInvalidTokenForExistingOrder_ShouldRedirectToHome()
     {
         // Arrange
         var contact = new ContactDetailModel
@@ -502,23 +560,22 @@ public class CheckoutControllerGuestTests : IDisposable
         {
             PkOrderId = 1,
             FkContactId = 1,
-            FkRegisteredUserId = 0,
+            FkRegisteredUserId = null,
             OrderStatus = OrderStatus.Paid,
-            TotalAmount = 43.81m
+            TotalAmount = 43.81m,
+            GuestAccessTokenHash = HashGuestAccessToken("expected-token")
         };
 
         _context.ContactDetails.Add(contact);
         _context.Orders.Add(order);
         await _context.SaveChangesAsync();
 
-        _controller.TempData["GuestOrderEmail"] = "correct@example.com";
-
         // Act
-        var result = await _controller.GuestConfirmation(1, "wrong@example.com");
+        var result = await _controller.GuestConfirmation("wrong-token");
 
         // Assert
         result.Should().BeOfType<RedirectToActionResult>();
-        _controller.TempData["Message"]?.ToString().Should().Contain("Unauthorized");
+        _controller.TempData["Message"]?.ToString().Should().Contain("Invalid guest order access link");
     }
 
     #endregion
@@ -530,6 +587,7 @@ public class CheckoutControllerGuestTests : IDisposable
         return new GuestCheckoutVM
         {
             Email = "jane.doe@example.com",
+            PayPalOrderId = "PAYPAL-ORDER-1",
             FullName = "Jane Doe",
             PhoneNumber = "604-555-0100",
             Street = "123 Test St",
@@ -541,6 +599,11 @@ public class CheckoutControllerGuestTests : IDisposable
             SubscribeToNewsletter = false,
             CreateAccount = false
         };
+    }
+
+    private static string HashGuestAccessToken(string token)
+    {
+        return Convert.ToBase64String(SHA256.HashData(Encoding.UTF8.GetBytes(token)));
     }
 
     #endregion

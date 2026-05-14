@@ -1,8 +1,9 @@
 using FluentAssertions;
+using Microsoft.AspNetCore.Mvc.Testing;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using System.Net;
-using System.Net.Http.Headers;
+using System.Text.RegularExpressions;
 using Xunit;
 using ELKH.Data;
 using ELKH.Models;
@@ -23,7 +24,46 @@ public class GuestCheckoutIntegrationTests : IClassFixture<ELKHWebApplicationFac
     {
         _factory = factory;
         _factory.EnsureSeeded(); // Ensure database is seeded before running tests
-        _client = factory.CreateClient();
+        _client = factory.CreateClient(new WebApplicationFactoryClientOptions
+        {
+            AllowAutoRedirect = false
+        });
+    }
+
+    private static string ExtractAntiforgeryToken(string html)
+    {
+        var match = Regex.Match(html, "<input[^>]*name=\"__RequestVerificationToken\"[^>]*value=\"([^\"]+)\"", RegexOptions.IgnoreCase);
+        match.Success.Should().BeTrue("the page should render an antiforgery token for form posts");
+        return match.Groups[1].Value;
+    }
+
+    private async Task PostAddToCartAsync(int productId, int quantity)
+    {
+        var cartPage = await _client.GetAsync("/Cart");
+        var cartContent = await cartPage.Content.ReadAsStringAsync();
+        var token = ExtractAntiforgeryToken(cartContent);
+
+        var addToCartData = new FormUrlEncodedContent(new[]
+        {
+            new KeyValuePair<string, string>("__RequestVerificationToken", token),
+            new KeyValuePair<string, string>("itemId", productId.ToString()),
+            new KeyValuePair<string, string>("quantity", quantity.ToString())
+        });
+
+        var response = await _client.PostAsync("/Cart/AddToCart", addToCartData);
+        response.StatusCode.Should().Be(HttpStatusCode.Redirect);
+    }
+
+    private async Task<HttpResponseMessage> PostGuestCheckoutAsync(Dictionary<string, string> fields)
+    {
+        var guestPage = await _client.GetAsync("/Checkout/Guest");
+        var guestContent = await guestPage.Content.ReadAsStringAsync();
+        var token = ExtractAntiforgeryToken(guestContent);
+
+        var formFields = fields.ToList();
+        formFields.Add(new KeyValuePair<string, string>("__RequestVerificationToken", token));
+
+        return await _client.PostAsync("/Checkout/ProcessGuestPayment", new FormUrlEncodedContent(formFields));
     }
 
     [Fact]
@@ -38,21 +78,10 @@ public class GuestCheckoutIntegrationTests : IClassFixture<ELKHWebApplicationFac
             .FirstAsync();
 
         // Act - Add product to cart as guest (no authentication)
-        var addToCartData = new FormUrlEncodedContent(new[]
-        {
-            new KeyValuePair<string, string>("productId", product.PkProductId.ToString()),
-            new KeyValuePair<string, string>("quantity", "2")
-        });
+        await PostAddToCartAsync(product.PkProductId, 2);
 
-        // Get antiforgery token first
-        var cartPage = await _client.GetAsync("/Cart");
-        var cartContent = await cartPage.Content.ReadAsStringAsync();
-        
-        // For guest users, cart operations should work
-        var response = await _client.PostAsync("/Cart/AddToCart", addToCartData);
-
-        // Assert - Should succeed (either redirect or JSON success depending on request type)
-        response.StatusCode.Should().BeOneOf(HttpStatusCode.OK, HttpStatusCode.Redirect);
+        var response = await _client.GetAsync("/Cart");
+        response.StatusCode.Should().Be(HttpStatusCode.OK);
     }
 
     [Fact]
@@ -66,13 +95,7 @@ public class GuestCheckoutIntegrationTests : IClassFixture<ELKHWebApplicationFac
             .Where(p => p.IsActive && p.StockQuantity > 0)
             .FirstAsync();
 
-        var addToCartData = new FormUrlEncodedContent(new[]
-        {
-            new KeyValuePair<string, string>("productId", product.PkProductId.ToString()),
-            new KeyValuePair<string, string>("quantity", "1")
-        });
-
-        await _client.PostAsync("/Cart/AddToCart", addToCartData);
+        await PostAddToCartAsync(product.PkProductId, 1);
 
         // Act - View cart
         var response = await _client.GetAsync("/Cart");
@@ -82,7 +105,7 @@ public class GuestCheckoutIntegrationTests : IClassFixture<ELKHWebApplicationFac
         var content = await response.Content.ReadAsStringAsync();
         
         // Should display cart items
-        content.Should().Contain("Shopping Cart");
+        content.Should().Contain(product.Name);
     }
 
     [Fact]
@@ -96,13 +119,7 @@ public class GuestCheckoutIntegrationTests : IClassFixture<ELKHWebApplicationFac
             .Where(p => p.IsActive && p.StockQuantity > 0)
             .FirstAsync();
 
-        var addToCartData = new FormUrlEncodedContent(new[]
-        {
-            new KeyValuePair<string, string>("productId", product.PkProductId.ToString()),
-            new KeyValuePair<string, string>("quantity", "1")
-        });
-
-        await _client.PostAsync("/Cart/AddToCart", addToCartData);
+        await PostAddToCartAsync(product.PkProductId, 1);
 
         // Act - Navigate to place order (should redirect to guest checkout)
         var response = await _client.GetAsync("/Checkout/Guest");
@@ -112,7 +129,7 @@ public class GuestCheckoutIntegrationTests : IClassFixture<ELKHWebApplicationFac
         var content = await response.Content.ReadAsStringAsync();
         
         // Should display guest checkout form
-        content.Should().Contain("Guest Checkout");
+        content.Should().Contain("Contact Information");
         content.Should().Contain("Email");
         content.Should().Contain("Full Name");
     }
@@ -128,47 +145,42 @@ public class GuestCheckoutIntegrationTests : IClassFixture<ELKHWebApplicationFac
             .Where(p => p.IsActive && p.StockQuantity > 5)
             .FirstAsync();
 
-        var addToCartData = new FormUrlEncodedContent(new[]
-        {
-            new KeyValuePair<string, string>("productId", product.PkProductId.ToString()),
-            new KeyValuePair<string, string>("quantity", "2")
-        });
-
-        await _client.PostAsync("/Cart/AddToCart", addToCartData);
+        await PostAddToCartAsync(product.PkProductId, 2);
 
         // Act - Submit guest checkout form
-        var checkoutData = new FormUrlEncodedContent(new[]
+        var response = await PostGuestCheckoutAsync(new Dictionary<string, string>
         {
-            new KeyValuePair<string, string>("Email", "guesttest@example.com"),
-            new KeyValuePair<string, string>("FullName", "Guest Tester"),
-            new KeyValuePair<string, string>("PhoneNumber", "555-1234"),
-            new KeyValuePair<string, string>("Street", "123 Test St"),
-            new KeyValuePair<string, string>("City", "Vancouver"),
-            new KeyValuePair<string, string>("Province", "BC"),
-            new KeyValuePair<string, string>("PostalCode", "V5K 0A1"),
-            new KeyValuePair<string, string>("Country", "Canada"),
-            new KeyValuePair<string, string>("PayPalOrderId", "TEST-ORDER-" + Guid.NewGuid().ToString())
+            ["Email"] = "guesttest@example.com",
+            ["FullName"] = "Guest Tester",
+            ["PhoneNumber"] = "6045551234",
+            ["Street"] = "123 Test St",
+            ["City"] = "Vancouver",
+            ["Province"] = "BC",
+            ["PostalCode"] = "V5K 0A1",
+            ["Country"] = "Canada",
+            ["SelectedShippingMethodId"] = "1",
+            ["PayPalOrderId"] = "TEST-ORDER-" + Guid.NewGuid().ToString()
         });
 
-        var response = await _client.PostAsync("/Checkout/ProcessGuestPayment", checkoutData);
-
         // Assert - Should redirect to confirmation
-        response.StatusCode.Should().BeOneOf(HttpStatusCode.OK, HttpStatusCode.Redirect);
+        response.StatusCode.Should().Be(HttpStatusCode.Redirect);
+        response.Headers.Location?.ToString().Should().Contain("/Checkout/GuestConfirmation?token=");
 
         // Verify order was created in database
         using var verifyScope = _factory.Services.CreateScope();
         var verifyDb = verifyScope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
         
         var order = await verifyDb.Orders
-            .Where(o => o.FkRegisteredUserId == 0) // Guest order
+            .Where(o => o.FkRegisteredUserId == null) // Guest order
             .OrderByDescending(o => o.CreatedAt)
             .FirstOrDefaultAsync();
 
         if (order != null)
         {
-            order.FkRegisteredUserId.Should().Be(0); // Guest orders have FkRegisteredUserId = 0
+            order.FkRegisteredUserId.Should().BeNull();
             order.OrderStatus.Should().Be(OrderStatus.Paid);
             order.TotalAmount.Should().BeGreaterThan(0);
+            order.GuestAccessTokenHash.Should().NotBeNullOrWhiteSpace();
         }
     }
 
@@ -187,29 +199,22 @@ public class GuestCheckoutIntegrationTests : IClassFixture<ELKHWebApplicationFac
         var orderQuantity = 3;
 
         // Add to cart
-        var addToCartData = new FormUrlEncodedContent(new[]
-        {
-            new KeyValuePair<string, string>("productId", product.PkProductId.ToString()),
-            new KeyValuePair<string, string>("quantity", orderQuantity.ToString())
-        });
-
-        await _client.PostAsync("/Cart/AddToCart", addToCartData);
+        await PostAddToCartAsync(product.PkProductId, orderQuantity);
 
         // Act - Complete guest checkout
-        var checkoutData = new FormUrlEncodedContent(new[]
+        await PostGuestCheckoutAsync(new Dictionary<string, string>
         {
-            new KeyValuePair<string, string>("Email", "inventory-test@example.com"),
-            new KeyValuePair<string, string>("FullName", "Inventory Tester"),
-            new KeyValuePair<string, string>("PhoneNumber", "555-5678"),
-            new KeyValuePair<string, string>("Street", "456 Stock St"),
-            new KeyValuePair<string, string>("City", "Vancouver"),
-            new KeyValuePair<string, string>("Province", "BC"),
-            new KeyValuePair<string, string>("PostalCode", "V5K 0A1"),
-            new KeyValuePair<string, string>("Country", "Canada"),
-            new KeyValuePair<string, string>("PayPalOrderId", "TEST-INV-" + Guid.NewGuid().ToString())
+            ["Email"] = "inventory-test@example.com",
+            ["FullName"] = "Inventory Tester",
+            ["PhoneNumber"] = "6045555678",
+            ["Street"] = "456 Stock St",
+            ["City"] = "Vancouver",
+            ["Province"] = "BC",
+            ["PostalCode"] = "V5K 0A1",
+            ["Country"] = "Canada",
+            ["SelectedShippingMethodId"] = "1",
+            ["PayPalOrderId"] = "TEST-INV-" + Guid.NewGuid().ToString()
         });
-
-        await _client.PostAsync("/Checkout/ProcessGuestPayment", checkoutData);
 
         // Assert - Inventory should be decremented
         using var verifyScope = _factory.Services.CreateScope();
@@ -235,30 +240,23 @@ public class GuestCheckoutIntegrationTests : IClassFixture<ELKHWebApplicationFac
             .Where(p => p.IsActive && p.StockQuantity > 0)
             .FirstAsync();
 
-        var addToCartData = new FormUrlEncodedContent(new[]
-        {
-            new KeyValuePair<string, string>("productId", product.PkProductId.ToString()),
-            new KeyValuePair<string, string>("quantity", "1")
-        });
-
-        await _client.PostAsync("/Cart/AddToCart", addToCartData);
+        await PostAddToCartAsync(product.PkProductId, 1);
 
         // Act - Submit guest checkout with contact info
         var testEmail = $"contact-test-{Guid.NewGuid()}@example.com";
-        var checkoutData = new FormUrlEncodedContent(new[]
+        await PostGuestCheckoutAsync(new Dictionary<string, string>
         {
-            new KeyValuePair<string, string>("Email", testEmail),
-            new KeyValuePair<string, string>("FullName", "Contact Detail Test"),
-            new KeyValuePair<string, string>("PhoneNumber", "555-9999"),
-            new KeyValuePair<string, string>("Street", "789 Contact Ave"),
-            new KeyValuePair<string, string>("City", "Burnaby"),
-            new KeyValuePair<string, string>("Province", "BC"),
-            new KeyValuePair<string, string>("PostalCode", "V5H 1A1"),
-            new KeyValuePair<string, string>("Country", "Canada"),
-            new KeyValuePair<string, string>("PayPalOrderId", "TEST-CONTACT-" + Guid.NewGuid().ToString())
+            ["Email"] = testEmail,
+            ["FullName"] = "Contact Detail Test",
+            ["PhoneNumber"] = "6045559999",
+            ["Street"] = "789 Contact Ave",
+            ["City"] = "Burnaby",
+            ["Province"] = "BC",
+            ["PostalCode"] = "V5H 1A1",
+            ["Country"] = "Canada",
+            ["SelectedShippingMethodId"] = "1",
+            ["PayPalOrderId"] = "TEST-CONTACT-" + Guid.NewGuid().ToString()
         });
-
-        await _client.PostAsync("/Checkout/ProcessGuestPayment", checkoutData);
 
         // Assert - Contact detail should be created
         using var verifyScope = _factory.Services.CreateScope();
@@ -287,29 +285,22 @@ public class GuestCheckoutIntegrationTests : IClassFixture<ELKHWebApplicationFac
             .Where(p => p.IsActive && p.StockQuantity > 0)
             .FirstAsync();
 
-        var addToCartData = new FormUrlEncodedContent(new[]
-        {
-            new KeyValuePair<string, string>("productId", product.PkProductId.ToString()),
-            new KeyValuePair<string, string>("quantity", "1")
-        });
-
-        await _client.PostAsync("/Cart/AddToCart", addToCartData);
+        await PostAddToCartAsync(product.PkProductId, 1);
 
         // Act - Complete checkout
-        var checkoutData = new FormUrlEncodedContent(new[]
+        await PostGuestCheckoutAsync(new Dictionary<string, string>
         {
-            new KeyValuePair<string, string>("Email", "clear-cart-test@example.com"),
-            new KeyValuePair<string, string>("FullName", "Clear Cart Test"),
-            new KeyValuePair<string, string>("PhoneNumber", "555-7777"),
-            new KeyValuePair<string, string>("Street", "999 Clear St"),
-            new KeyValuePair<string, string>("City", "Vancouver"),
-            new KeyValuePair<string, string>("Province", "BC"),
-            new KeyValuePair<string, string>("PostalCode", "V5K 0A1"),
-            new KeyValuePair<string, string>("Country", "Canada"),
-            new KeyValuePair<string, string>("PayPalOrderId", "TEST-CLEAR-" + Guid.NewGuid().ToString())
+            ["Email"] = "clear-cart-test@example.com",
+            ["FullName"] = "Clear Cart Test",
+            ["PhoneNumber"] = "6045557777",
+            ["Street"] = "999 Clear St",
+            ["City"] = "Vancouver",
+            ["Province"] = "BC",
+            ["PostalCode"] = "V5K 0A1",
+            ["Country"] = "Canada",
+            ["SelectedShippingMethodId"] = "1",
+            ["PayPalOrderId"] = "TEST-CLEAR-" + Guid.NewGuid().ToString()
         });
-
-        await _client.PostAsync("/Checkout/ProcessGuestPayment", checkoutData);
 
         // Assert - View cart should now be empty
         var cartResponse = await _client.GetAsync("/Cart");
@@ -318,6 +309,7 @@ public class GuestCheckoutIntegrationTests : IClassFixture<ELKHWebApplicationFac
         // Cart should be empty or show empty message
         // (Exact assertion depends on how empty cart is displayed)
         cartResponse.StatusCode.Should().Be(HttpStatusCode.OK);
+        cartContent.Should().Contain("Your cart is empty");
     }
 
     [Fact]
@@ -331,51 +323,44 @@ public class GuestCheckoutIntegrationTests : IClassFixture<ELKHWebApplicationFac
             .Where(p => p.IsActive && p.StockQuantity > 0)
             .FirstAsync();
 
-        var addToCartData = new FormUrlEncodedContent(new[]
-        {
-            new KeyValuePair<string, string>("productId", product.PkProductId.ToString()),
-            new KeyValuePair<string, string>("quantity", "1")
-        });
-
-        await _client.PostAsync("/Cart/AddToCart", addToCartData);
+        await PostAddToCartAsync(product.PkProductId, 1);
 
         // Act - Submit with invalid email
-        var checkoutData = new FormUrlEncodedContent(new[]
+        var response = await PostGuestCheckoutAsync(new Dictionary<string, string>
         {
-            new KeyValuePair<string, string>("Email", "invalid-email"), // Invalid format
-            new KeyValuePair<string, string>("FullName", "Test User"),
-            new KeyValuePair<string, string>("PhoneNumber", "555-1234"),
-            new KeyValuePair<string, string>("Street", "123 Test St"),
-            new KeyValuePair<string, string>("City", "Vancouver"),
-            new KeyValuePair<string, string>("Province", "BC"),
-            new KeyValuePair<string, string>("PostalCode", "V5K 0A1"),
-            new KeyValuePair<string, string>("Country", "Canada"),
-            new KeyValuePair<string, string>("PayPalOrderId", "TEST-INVALID")
+            ["Email"] = "invalid-email",
+            ["FullName"] = "Test User",
+            ["PhoneNumber"] = "6045551234",
+            ["Street"] = "123 Test St",
+            ["City"] = "Vancouver",
+            ["Province"] = "BC",
+            ["PostalCode"] = "V5K 0A1",
+            ["Country"] = "Canada",
+            ["SelectedShippingMethodId"] = "1",
+            ["PayPalOrderId"] = "TEST-INVALID"
         });
 
-        var response = await _client.PostAsync("/Checkout/ProcessGuestPayment", checkoutData);
-
         // Assert - Should return to form with validation error
+        response.StatusCode.Should().Be(HttpStatusCode.OK);
         var content = await response.Content.ReadAsStringAsync();
-        content.Should().Contain("Email"); // Form should be redisplayed
+        content.Should().Contain("Please enter a valid email address");
     }
 
     [Fact]
     public async Task GuestCheckout_WithEmptyCart_RedirectsToCart()
     {
         // Arrange - Start with empty cart (create new client to ensure clean session)
-        var newClient = _factory.CreateClient();
+        var newClient = _factory.CreateClient(new WebApplicationFactoryClientOptions
+        {
+            AllowAutoRedirect = false
+        });
 
         // Act - Try to access guest checkout with empty cart
         var response = await newClient.GetAsync("/Checkout/Guest");
 
         // Assert - Should redirect to cart or show empty cart message
-        response.StatusCode.Should().BeOneOf(HttpStatusCode.OK, HttpStatusCode.Redirect);
-        
-        if (response.StatusCode == HttpStatusCode.Redirect)
-        {
-            response.Headers.Location?.ToString().Should().Contain("Cart");
-        }
+        response.StatusCode.Should().Be(HttpStatusCode.Redirect);
+        response.Headers.Location?.ToString().Should().Contain("/Cart");
     }
 
     [Fact]
@@ -392,13 +377,7 @@ public class GuestCheckoutIntegrationTests : IClassFixture<ELKHWebApplicationFac
 
         foreach (var product in products)
         {
-            var addToCartData = new FormUrlEncodedContent(new[]
-            {
-                new KeyValuePair<string, string>("productId", product.PkProductId.ToString()),
-                new KeyValuePair<string, string>("quantity", "1")
-            });
-
-            await _client.PostAsync("/Cart/AddToCart", addToCartData);
+            await PostAddToCartAsync(product.PkProductId, 1);
         }
 
         // Act - View guest checkout page
@@ -406,8 +385,8 @@ public class GuestCheckoutIntegrationTests : IClassFixture<ELKHWebApplicationFac
         var content = await response.Content.ReadAsStringAsync();
 
         // Assert - Should display pricing
-        content.Should().Contain("Subtotal");
-        content.Should().Contain("Tax");
+        content.Should().Contain("Contact Information");
+        content.Should().Contain("Order Summary");
         content.Should().Contain("Total");
         
         // Pricing rules: 12% tax, $7.99 shipping for orders under $50
@@ -425,33 +404,28 @@ public class GuestCheckoutIntegrationTests : IClassFixture<ELKHWebApplicationFac
             .Where(p => p.IsActive && p.StockQuantity > 0)
             .FirstAsync();
 
-        var addToCartData = new FormUrlEncodedContent(new[]
-        {
-            new KeyValuePair<string, string>("productId", product.PkProductId.ToString()),
-            new KeyValuePair<string, string>("quantity", "1")
-        });
-
-        await _client.PostAsync("/Cart/AddToCart", addToCartData);
+        await PostAddToCartAsync(product.PkProductId, 1);
 
         // Act - Submit checkout with account creation
         var testEmail = $"create-account-{Guid.NewGuid()}@example.com";
-        var checkoutData = new FormUrlEncodedContent(new[]
+        var response = await PostGuestCheckoutAsync(new Dictionary<string, string>
         {
-            new KeyValuePair<string, string>("Email", testEmail),
-            new KeyValuePair<string, string>("FullName", "Account Creation Test"),
-            new KeyValuePair<string, string>("PhoneNumber", "555-8888"),
-            new KeyValuePair<string, string>("Street", "111 Account St"),
-            new KeyValuePair<string, string>("City", "Vancouver"),
-            new KeyValuePair<string, string>("Province", "BC"),
-            new KeyValuePair<string, string>("PostalCode", "V5K 0A1"),
-            new KeyValuePair<string, string>("Country", "Canada"),
-            new KeyValuePair<string, string>("CreateAccount", "true"),
-            new KeyValuePair<string, string>("Password", "TestPassword123!"),
-            new KeyValuePair<string, string>("ConfirmPassword", "TestPassword123!"),
-            new KeyValuePair<string, string>("PayPalOrderId", "TEST-ACCOUNT-" + Guid.NewGuid().ToString())
+            ["Email"] = testEmail,
+            ["FullName"] = "Account Creation Test",
+            ["PhoneNumber"] = "6045558888",
+            ["Street"] = "111 Account St",
+            ["City"] = "Vancouver",
+            ["Province"] = "BC",
+            ["PostalCode"] = "V5K 0A1",
+            ["Country"] = "Canada",
+            ["CreateAccount"] = "true",
+            ["Password"] = "TestPassword123!",
+            ["ConfirmPassword"] = "TestPassword123!",
+            ["SelectedShippingMethodId"] = "1",
+            ["PayPalOrderId"] = "TEST-ACCOUNT-" + Guid.NewGuid().ToString()
         });
 
-        await _client.PostAsync("/Checkout/ProcessGuestPayment", checkoutData);
+        response.StatusCode.Should().Be(HttpStatusCode.Redirect);
 
         // Assert - User account should be created (if feature is implemented)
         // This test validates the optional account creation workflow
@@ -465,7 +439,7 @@ public class GuestCheckoutIntegrationTests : IClassFixture<ELKHWebApplicationFac
         // Note: This assertion depends on whether the feature is fully implemented
         // For now, just verify the checkout succeeded
         var order = await verifyDb.Orders
-            .Where(o => o.FkRegisteredUserId == 0)
+            .Where(o => o.FkRegisteredUserId == null)
             .OrderByDescending(o => o.CreatedAt)
             .FirstOrDefaultAsync();
 

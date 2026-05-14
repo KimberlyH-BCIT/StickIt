@@ -241,6 +241,12 @@ namespace ELKH.Data
                 .HasForeignKey<TransactionModel>(t => t.FkOrderId)
                 .OnDelete(DeleteBehavior.Cascade); // Remove transaction when order is deleted
 
+            modelBuilder.Entity<OrderModel>()
+                .HasOne(o => o.RegisteredUser)
+                .WithMany(u => u.Orders)
+                .HasForeignKey(o => o.FkRegisteredUserId)
+                .OnDelete(DeleteBehavior.SetNull);
+
             #endregion
 
             #region Performance Optimization Indexes
@@ -258,6 +264,11 @@ namespace ELKH.Data
             modelBuilder.Entity<FuzzySuggestionModel>()
                 .HasIndex(f => f.NameNormalized)
                 .HasDatabaseName("IX_FuzzySuggestions_NameNormalized");
+
+            modelBuilder.Entity<OrderModel>()
+                .HasIndex(o => o.GuestAccessTokenHash)
+                .IsUnique()
+                .HasDatabaseName("IX_Orders_GuestAccessTokenHash");
 
             #endregion
 
