@@ -42,10 +42,10 @@ public class HomeControllerTests
     public async Task Index_ShouldReturnViewWithStoreReviews()
     {
         // Arrange
-        var reviews = new List<StoreReview>
+        var reviews = new List<StoreReviewModel>
         {
-            new StoreReview { Id = 1, ReviewText = "Great store!", Rating = 5, IsApproved = true },
-            new StoreReview { Id = 2, ReviewText = "Good service!", Rating = 4, IsApproved = true }
+            new StoreReviewModel { PkStoreReviewId = 1, Description = "Great store!", Rating = 5, Approved = true },
+            new StoreReviewModel { PkStoreReviewId = 2, Description = "Good service!", Rating = 4, Approved = true }
         };
 
         _mockStoreReviewService.Setup(s => s.GetApprovedReviewsAsync(10))
@@ -64,7 +64,7 @@ public class HomeControllerTests
     public async Task Index_WithNoReviews_ShouldReturnViewWithEmptyReviews()
     {
         // Arrange
-        var emptyReviews = new List<StoreReview>();
+        var emptyReviews = new List<StoreReviewModel>();
         _mockStoreReviewService.Setup(s => s.GetApprovedReviewsAsync(10))
                               .ReturnsAsync(emptyReviews);
 
@@ -99,7 +99,7 @@ public class HomeControllerTests
 
         // Assert
         var viewResult = result.Should().BeOfType<ViewResult>().Subject;
-        var model = viewResult.Model.Should().BeOfType<ErrorViewModel>().Subject;
+        var model = viewResult.Model.Should().BeOfType<ErrorVM>().Subject;
         model.RequestId.Should().Be("test-trace-id");
     }
 
@@ -116,7 +116,7 @@ public class HomeControllerTests
 
         // Assert
         var viewResult = result.Should().BeOfType<ViewResult>().Subject;
-        var model = viewResult.Model.Should().BeOfType<ErrorViewModel>().Subject;
+        var model = viewResult.Model.Should().BeOfType<ErrorVM>().Subject;
         model.RequestId.Should().BeNull();
     }
 }

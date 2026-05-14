@@ -62,9 +62,25 @@ self.addEventListener('install', event => {
   
   event.waitUntil(
     caches.open(STATIC_CACHE_NAME)
-      .then(cache => {
+      .then(async cache => {
         console.log('Service Worker: Caching static assets');
-        return cache.addAll(STATIC_ASSETS);
+
+        const results = await Promise.all(
+          STATIC_ASSETS.map(async asset => {
+            try {
+              await cache.add(new Request(asset, { cache: 'reload' }));
+              return true;
+            } catch (error) {
+              console.warn('Service Worker: Failed to precache asset', asset, error);
+              return false;
+            }
+          })
+        );
+
+        const failedCount = results.filter(result => !result).length;
+        if (failedCount > 0) {
+          console.warn(`Service Worker: ${failedCount} static assets failed during install precache`);
+        }
       })
       .then(() => {
         console.log('Service Worker: Installation complete');
@@ -243,10 +259,19 @@ async function handleNavigationRequest(request) {
     );
     
     if (isOfflineRoute) {
-      return caches.match('/offline.html');
+      const offlinePage = await caches.match('/offline.html');
+      if (offlinePage) {
+        return offlinePage;
+      }
     }
-    
-    throw error;
+
+    const homePage = await caches.match('/');
+    if (homePage) {
+      return homePage;
+    }
+
+    console.warn('Service Worker: Navigation request failed, returning offline fallback response', request.url, error);
+    return createOfflineNavigationResponse();
   }
 }
 
@@ -266,8 +291,19 @@ async function handleDynamicRequest(request) {
     if (cachedResponse) {
       return cachedResponse;
     }
-    
-    throw error;
+
+    if (isNavigationRequest(request)) {
+      const offlinePage = await caches.match('/offline.html');
+      if (offlinePage) {
+        return offlinePage;
+      }
+    }
+
+    return new Response('Offline content unavailable.', {
+      status: 503,
+      statusText: 'Service Unavailable',
+      headers: { 'Content-Type': 'text/plain' }
+    });
   }
 }
 
@@ -307,6 +343,56 @@ function isCacheExpired(response) {
   
   const age = Date.now() - parseInt(cacheTimestamp);
   return age > CACHE_DURATION;
+}
+
+function createOfflineNavigationResponse() {
+  return new Response(`
+    <!DOCTYPE html>
+    <html lang="en">
+    <head>
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width, initial-scale=1">
+      <title>StickIt is temporarily unavailable</title>
+      <style>
+        body {
+          font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+          margin: 0;
+          min-height: 100vh;
+          display: grid;
+          place-items: center;
+          background: #fff7fb;
+          color: #2d1b2e;
+        }
+
+        main {
+          max-width: 32rem;
+          padding: 2rem;
+          text-align: center;
+        }
+
+        h1 {
+          margin-bottom: 0.75rem;
+        }
+
+        p {
+          line-height: 1.5;
+          margin-bottom: 0.75rem;
+        }
+      </style>
+    </head>
+    <body>
+      <main>
+        <h1>StickIt is temporarily unavailable</h1>
+        <p>The app could not be reached and no cached page was available.</p>
+        <p>Please retry in a moment after the application finishes starting.</p>
+      </main>
+    </body>
+    </html>
+  `, {
+    status: 503,
+    statusText: 'Service Unavailable',
+    headers: { 'Content-Type': 'text/html; charset=utf-8' }
+  });
 }
 
 // =====================================================================

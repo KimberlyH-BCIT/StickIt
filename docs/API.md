@@ -1,15 +1,15 @@
-# 📡 ELKH API Documentation
+# 📡 StickIt API Documentation
 
 ## Overview
 
-ELKH provides a comprehensive REST API built on ASP.NET Core 10 MVC controllers with Razor Pages. The API supports all core e-commerce functionality with proper authentication, authorization, and error handling.
+StickIt provides a comprehensive REST API built on ASP.NET Core 10 MVC controllers with Razor Pages. The API supports all core e-commerce functionality with proper authentication, authorization, and error handling.
 
 ## 🚀 Quick Start
 
 ### Base URLs
 - **Development**: `https://localhost:5001`
-- **Staging**: `https://elkh-staging.azurewebsites.net`
-- **Production**: `https://elkh.example.com`
+- **Staging**: `https://stickit-staging.azurewebsites.net`
+- **Production**: `https://stickit.example.com`
 
 ### Authentication
 All authenticated endpoints require a valid session cookie or bearer token.

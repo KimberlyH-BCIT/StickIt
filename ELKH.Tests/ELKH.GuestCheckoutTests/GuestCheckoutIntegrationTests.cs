@@ -167,7 +167,7 @@ public class GuestCheckoutIntegrationTests : IClassFixture<ELKHWebApplicationFac
         if (order != null)
         {
             order.FkRegisteredUserId.Should().Be(0); // Guest orders have FkRegisteredUserId = 0
-            order.OrderStatus.Should().Be("Paid");
+            order.OrderStatus.Should().Be(OrderStatus.Paid);
             order.TotalAmount.Should().BeGreaterThan(0);
         }
     }

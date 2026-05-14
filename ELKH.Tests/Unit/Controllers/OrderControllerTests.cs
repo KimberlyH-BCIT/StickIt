@@ -9,9 +9,12 @@ using Moq;
 using System.Security.Claims;
 using Xunit;
 using ELKH.Controllers;
+using ELKH.Data;
+using ELKH.Repositories;
 using ELKH.Services;
 using ELKH.ViewModels;
 using ELKH.Models;
+using Microsoft.EntityFrameworkCore;
 
 namespace ELKH.Tests.Unit.Controllers;
 
@@ -24,7 +27,7 @@ public class OrderControllerTests
     private readonly Mock<IOrderManagementRepo> _mockOrderManagementRepo;
     private readonly Mock<IProductService> _mockProductService;
     private readonly Mock<IUserService> _mockUserService;
-    private readonly Mock<ApplicationDbContext> _mockDbContext;
+    private readonly ApplicationDbContext _dbContext;
     private readonly OrderController _controller;
 
     public OrderControllerTests()
@@ -38,14 +41,14 @@ public class OrderControllerTests
         var options = new DbContextOptionsBuilder<ApplicationDbContext>()
             .UseInMemoryDatabase(databaseName: Guid.NewGuid().ToString())
             .Options;
-        _mockDbContext = new Mock<ApplicationDbContext>(options);
+        _dbContext = new ApplicationDbContext(options);
 
         // Create controller under test
         _controller = new OrderController(
             _mockOrderManagementRepo.Object,
             _mockProductService.Object,
             _mockUserService.Object,
-            _mockDbContext.Object);
+            _dbContext);
 
         // Setup controller context
         var httpContext = new DefaultHttpContext();
@@ -62,10 +65,10 @@ public class OrderControllerTests
     {
         // Arrange
         SetupAdminUser("admin@example.com", "Admin");
-        var orders = new List<OrderModel>
+        var orders = new List<OrderDetailsVM>
         {
-            new OrderModel { PkOrderId = 1, TotalAmount = 25.99m, CreatedAt = DateTime.UtcNow },
-            new OrderModel { PkOrderId = 2, TotalAmount = 45.99m, CreatedAt = DateTime.UtcNow.AddDays(-1) }
+            new OrderDetailsVM { OrderId = 1, TotalOrderAmount = 25.99m, UserEmail = "admin@example.com" },
+            new OrderDetailsVM { OrderId = 2, TotalOrderAmount = 45.99m, UserEmail = "other@example.com" }
         };
 
         _mockOrderManagementRepo.Setup(o => o.GetAllOrdersAsync())
@@ -76,7 +79,7 @@ public class OrderControllerTests
 
         // Assert
         var viewResult = result.Should().BeOfType<ViewResult>().Subject;
-        var model = viewResult.Model.Should().BeAssignableToType<IEnumerable<OrderModel>>().Subject;
+        var model = viewResult.Model.Should().BeAssignableTo<IEnumerable<OrderDetailsVM>>().Subject;
         model.Should().HaveCount(2);
     }
 
@@ -134,7 +137,7 @@ public class OrderControllerTests
         { 
             PkOrderId = 1, 
             TotalAmount = 29.99m,
-            RegisteredUser = new RegisteredUserProfile { Email = "test@example.com" }
+            RegisteredUser = new RegisteredUserModel { Email = "test@example.com" }
         };
 
         _mockOrderManagementRepo.Setup(o => o.GetOrderWithDetailsAsync(1))
@@ -172,7 +175,7 @@ public class OrderControllerTests
         { 
             PkOrderId = 1, 
             TotalAmount = 29.99m,
-            RegisteredUser = new RegisteredUserProfile { Email = "other@example.com" }  // Different user
+            RegisteredUser = new RegisteredUserModel { Email = "other@example.com" }  // Different user
         };
 
         _mockOrderManagementRepo.Setup(o => o.GetOrderWithDetailsAsync(1))

@@ -213,7 +213,7 @@ public class CartControllerGuestTests
         };
 
         _mockCartService.Setup(c => c.AddToCartAsync("test@example.com", 1, 2))
-            .ReturnsAsync(true);
+            .Returns(Task.CompletedTask);
         _mockCartService.Setup(c => c.GetCartItemsAsync("test@example.com"))
             .ReturnsAsync(cartItems);
 
@@ -309,7 +309,7 @@ public class CartControllerGuestTests
         SetupControllerContext(isAuthenticated: true, email: "test@example.com");
 
         _mockCartService.Setup(c => c.UpdateQuantityAsync("test@example.com", 1, 5))
-            .ReturnsAsync(true);
+            .Returns(Task.CompletedTask);
 
         // Act
         var result = await _controller.Update(1, 5);
@@ -371,7 +371,7 @@ public class CartControllerGuestTests
         SetupControllerContext(isAuthenticated: true, email: "test@example.com");
 
         _mockCartService.Setup(c => c.RemoveFromCartAsync("test@example.com", 1))
-            .ReturnsAsync(true);
+            .Returns(Task.CompletedTask);
 
         // Act
         var result = await _controller.Remove(1);
@@ -413,7 +413,7 @@ public class CartControllerGuestTests
         SetupControllerContext(isAuthenticated: true, email: "test@example.com");
 
         _mockCartService.Setup(c => c.ClearCartAsync("test@example.com"))
-            .ReturnsAsync(true);
+            .Returns(Task.CompletedTask);
 
         // Act
         var result = await _controller.Clear();

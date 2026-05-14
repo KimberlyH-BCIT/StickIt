@@ -82,18 +82,15 @@ public class GlobalExceptionMiddleware
 {
     private readonly RequestDelegate _next;
     private readonly ILogger<GlobalExceptionMiddleware> _logger;
-    private readonly TelemetryClient? _telemetryClient;
     private readonly IWebHostEnvironment _environment;
 
     public GlobalExceptionMiddleware(
         RequestDelegate next,
         ILogger<GlobalExceptionMiddleware> logger,
-        TelemetryClient? telemetryClient,
         IWebHostEnvironment environment)
     {
         _next = next;
         _logger = logger;
-        _telemetryClient = telemetryClient;
         _environment = environment;
     }
 
@@ -118,6 +115,7 @@ public class GlobalExceptionMiddleware
         var userId = context.User?.Identity?.Name ?? "Anonymous";
         var requestPath = context.Request.Path.Value ?? "Unknown";
         var method = context.Request.Method;
+        var telemetryClient = context.RequestServices.GetService<TelemetryClient>();
 
         // Log the exception with structured logging
         structuredLogging.LogSystemEvent(
@@ -137,7 +135,7 @@ public class GlobalExceptionMiddleware
             });
 
         // Send telemetry to Application Insights
-        if (_telemetryClient != null)
+        if (telemetryClient != null)
         {
             var exceptionTelemetry = new ExceptionTelemetry(exception)
             {
@@ -150,7 +148,7 @@ public class GlobalExceptionMiddleware
             exceptionTelemetry.Properties["Method"] = method;
             exceptionTelemetry.Properties["ErrorCategory"] = CategorizeException(exception);
             
-            _telemetryClient.TrackException(exceptionTelemetry);
+            telemetryClient.TrackException(exceptionTelemetry);
         }
 
         // Determine response based on exception type and request

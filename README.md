@@ -1,13 +1,20 @@
-# 🏷️ ELKH - Premium Sticker eCommerce Platform
+# 🏷️ StickIt - Sticker eCommerce Portfolio Project
 
 [![Build Status](https://github.com/Velyene/StickIt/actions/workflows/dotnet-ci.yml/badge.svg)](https://github.com/Velyene/StickIt/actions)
-[![Quality Gate](https://img.shields.io/badge/quality-enterprise-green.svg)](docs/ARCHITECTURE.md)
-[![Coverage](https://img.shields.io/badge/coverage-80%2B-success.svg)](ELKH.Tests/README.md)
 [![Docker](https://img.shields.io/badge/docker-ready-blue.svg)](docs/DEPLOYMENT.md)
 
-> A modern, scalable eCommerce platform built with ASP.NET Core 10 Razor Pages, featuring advanced search, comprehensive monitoring, and enterprise-grade architecture.
+> ASP.NET Core e-commerce platform for custom stickers.
 
 ## ✨ Key Features
+
+- Product catalog with search and filtering
+- Shopping cart and checkout flows
+- User accounts, profiles, addresses, and order history
+- Ratings and reviews
+- Admin, manager, and staff workflows
+- Accessibility-conscious responsive UI
+- Dockerized local environment
+- Unit and integration test infrastructure with coverage targets
 
 ### 🛒 **Core eCommerce**
 - **Product Catalog** - Advanced search with fuzzy matching and filtering
@@ -23,20 +30,26 @@
 ### ⚡ **Performance & Scalability**
 - **Optimized Database** - SQLite with EF Core 10 and query optimization
 - **Image Processing** - Automatic image optimization and compression
-- **Caching Strategy** - Multi-level caching for enhanced performance
+- **Caching Strategy** - In-app caching to support common storefront flows
 - **Background Services** - Async processing for heavy operations
 
 ### 📊 **Monitoring & Observability**
-- **Application Insights** - Comprehensive telemetry and performance tracking
-- **Prometheus Metrics** - Business and infrastructure monitoring
-- **Health Checks** - Database and service health monitoring
-- **Structured Logging** - Detailed application logging and error tracking
+- **Application Insights** - Telemetry integration present in the application
+- **Prometheus Metrics** - Metrics endpoints and related code paths are included
+- **Health Checks** - Database and service health endpoints are configured
+- **Structured Logging** - Application logging support is built into the project
 
 ### 🎨 **Modern Architecture**
-- **Clean Architecture** - Decomposed controllers and separation of concerns
-- **SOLID Principles** - Maintainable and extensible codebase
-- **Dependency Injection** - Comprehensive service registration
-- **Docker Ready** - Containerized deployment with multi-stage builds
+- **Layered Design** - Decomposed controllers and separation of concerns
+- **Dependency Injection** - Service registration across application layers
+- **Dockerized Setup** - Container support and deployment documentation
+
+## 🖼️ Screenshots
+
+| Surface | Preview |
+|---------|---------|
+| App logo | ![StickIt logo](ELKH/wwwroot/logo-stickit.png) |
+| Landing page artwork | ![StickIt landing artwork](ELKH/wwwroot/welcome-sticker-removebg.png) |
 
 ## 🏗️ Architecture Overview
 
@@ -121,14 +134,14 @@ graph TB
 ### Docker Development
 
 ```bash
-# Build and run with Docker Compose
-docker-compose up -d
+# Build and run the local StickIt container stack
+docker compose up -d
 
 # View logs
-docker-compose logs -f elkh-app
+docker compose logs -f stickit-web
 
 # Stop containers
-docker-compose down
+docker compose down
 ```
 
 ## 🧪 Testing
@@ -151,21 +164,23 @@ dotnet tool install -g dotnet-reportgenerator-globaltool
 reportgenerator -reports:"./TestResults/**/coverage.cobertura.xml" -targetdir:"./CoverageReport" -reporttypes:Html
 ```
 
-**Test Coverage Targets:**
+**Coverage Targets:**
 - Line Coverage: 80%+
 - Branch Coverage: 70%+
 - Method Coverage: 85%+
 
+These are targets for the test suite, not a claim of verified current coverage across the whole repository.
+
 ## 📦 Deployment
 
-### Production Deployment with Docker
+### Docker Workflow
 
 ```bash
 # Build production image
-docker build -f Dockerfile -t elkh-app:latest .
+docker build -f Dockerfile -t stickit-web:latest .
 
 # Run production stack
-docker-compose -f docker-compose.prod.yml up -d
+docker compose -f docker-compose.prod.yml up -d
 ```
 
 ### Azure Deployment
@@ -177,7 +192,9 @@ docker-compose -f docker-compose.prod.yml up -d
 
 See [Deployment Guide](docs/DEPLOYMENT.md) for detailed instructions.
 
-## 📊 Monitoring
+## 📊 Monitoring and Diagnostics
+
+The repository includes monitoring-related configuration and health endpoints. Use the linked docs to verify what is wired for your environment.
 
 ### Prometheus Metrics
 - **Application Metrics**: http://localhost:9090
@@ -206,10 +223,10 @@ ELKH/
 ```
 
 ### Branching Strategy
-- **main** - Production-ready code
+- **main** - Primary branch
 - **develop** - Integration branch
 - **feature/** - Feature branches
-- **hotfix/** - Production fixes
+- **hotfix/** - Targeted fixes
 
 ### Code Standards
 - **C# 14** features and nullable reference types
@@ -242,20 +259,29 @@ dotnet user-secrets set "ApplicationInsights:InstrumentationKey" "your-key"
 - **[Contributing Guidelines](docs/CONTRIBUTING.md)** - Development workflow and standards
 - **[Testing Guide](ELKH.Tests/README.md)** - Test coverage and execution
 
+## 🧭 Portfolio Positioning
+
+- **Public name:** StickIt
+- **Internal project name:** ELKH
+- **What this repository demonstrates:** storefront architecture work, UI polish, role-based workflows, deployment documentation, and ongoing hardening of a .NET eCommerce project
+- **Intended audience:** recruiters, instructors, and collaborators reviewing full-stack application work
+
 ## 🤝 Contributing
 
 1. **Fork the Repository**
 2. **Create Feature Branch** - `git checkout -b feature/amazing-feature`
-3. **Write Tests** - Maintain 80%+ coverage
+3. **Write Tests** - Add or update relevant coverage for your changes
 4. **Commit Changes** - Use conventional commits
 5. **Push Branch** - `git push origin feature/amazing-feature`
 6. **Create Pull Request** - Include tests and documentation
 
 See [Contributing Guidelines](docs/CONTRIBUTING.md) for detailed information.
 
-## 👥 Team
+## 👥 Original Team Credits
 
-**ELKH** is an acronym of the team members' first names. Built for the Systems Project course.
+Originally built as a group systems project; this fork/branch includes my portfolio hardening and architecture work.
+
+`ELKH` is the original team acronym derived from the members' first names.
 
 | Member | Commits | Primary Contributions |
 |--------|---------|----------------------|
@@ -276,12 +302,12 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 
 ## 🏆 Project Highlights
 
-- ✅ **Enterprise Architecture** - Clean, maintainable, and scalable design
-- ✅ **80%+ Test Coverage** - Comprehensive unit and integration tests
-- ✅ **Production Ready** - Docker deployment and monitoring
-- ✅ **Modern Stack** - .NET 10, Entity Framework Core, Application Insights
-- ✅ **Performance Optimized** - Caching, image optimization, database tuning
-- ✅ **Security Focused** - Authentication, authorization, and data protection
+- ✅ **Core Commerce Flows** - Catalog, cart, checkout, accounts, and reviews
+- ✅ **Role-Based Features** - Customer, staff, manager, and admin paths
+- ✅ **Dockerized Local Setup** - Local container workflow and deployment docs
+- ✅ **Modern .NET Stack** - .NET 10, Entity Framework Core, ASP.NET Core Identity
+- ✅ **Accessibility-Conscious UI** - Responsive layouts and accessibility-focused styling work
+- ✅ **Test Infrastructure** - Unit and integration test structure with coverage goals
 
 ---
 

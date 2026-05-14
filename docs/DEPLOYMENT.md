@@ -1,6 +1,6 @@
-# 🚀 ELKH Deployment Guide
+# 🚀 StickIt Deployment Guide
 
-This guide covers deployment options for ELKH, from local development to production deployment on Azure with Docker containerization.
+This guide covers deployment options for StickIt, from local development to production deployment on Azure with Docker containerization. The repository still uses `ELKH` as the internal project folder and assembly name.
 
 ## 📋 Deployment Overview
 
@@ -92,13 +92,13 @@ dotnet user-secrets set "ApplicationInsights:InstrumentationKey" "dev-key" --pro
 #### Single Container
 ```bash
 # Build development image
-docker build -f Dockerfile -t elkh-app:dev --target development .
+docker build -f Dockerfile -t stickit-web:dev --target development .
 
 # Run with development database
 docker run -p 5000:8080 -p 5001:8081 \
   -e ASPNETCORE_ENVIRONMENT=Development \
   -v $(pwd)/Data:/app/Data \
-  elkh-app:dev
+  stickit-web:dev
 ```
 
 #### Docker Compose Development
@@ -106,7 +106,7 @@ docker run -p 5000:8080 -p 5001:8081 \
 # docker-compose.yml
 version: '3.8'
 services:
-  elkh-app:
+  stickit-web:
     build:
       context: .
       dockerfile: Dockerfile
@@ -224,26 +224,26 @@ services:
       - ./nginx/nginx.prod.conf:/etc/nginx/nginx.conf:ro
       - ./certs:/etc/ssl/certs:ro
     depends_on:
-      - elkh-app
+      - stickit-web
     restart: unless-stopped
 ```
 
 ### Docker Commands Reference
 ```bash
 # Build production image
-docker build -f Dockerfile -t elkh-app:latest .
+docker build -f Dockerfile -t stickit-web:latest .
 
 # Run production stack
-docker-compose -f docker-compose.prod.yml up -d
+docker compose -f docker-compose.prod.yml up -d
 
 # View logs
-docker-compose logs -f elkh-app
+docker compose logs -f stickit-web
 
 # Scale application
-docker-compose up --scale elkh-app=3
+docker compose up --scale stickit-web=3
 
 # Stop services
-docker-compose down
+docker compose down
 
 # Clean up
 docker system prune -a
@@ -290,7 +290,7 @@ az deployment group create `
 # Deploy application
 az webapp deployment source config-zip `
   --resource-group $ResourceGroup `
-  --name "elkh-app-$Environment" `
+  --name "stickit-web-$Environment" `
   --src "../publish.zip"
 ```
 
@@ -311,10 +311,10 @@ az webapp deployment source config-zip `
     }
   },
   "variables": {
-    "appName": "[concat('elkh-app-', parameters('environment'))]",
-    "appServicePlanName": "[concat('elkh-plan-', parameters('environment'))]",
-    "storageAccountName": "[concat('elkhstorage', parameters('environment'))]",
-    "applicationInsightsName": "[concat('elkh-insights-', parameters('environment'))]"
+    "appName": "[concat('stickit-web-', parameters('environment'))]",
+    "appServicePlanName": "[concat('stickit-plan-', parameters('environment'))]",
+    "storageAccountName": "[concat('stickitstorage', parameters('environment'))]",
+    "applicationInsightsName": "[concat('stickit-insights-', parameters('environment'))]"
   },
   "resources": [
     {

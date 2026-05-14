@@ -12,6 +12,7 @@ public class CartServiceTests
     private readonly ApplicationDbContext _context;
     private readonly Mock<IUserService> _mockUserService;
     private readonly Mock<IContactDetailRepo> _mockContactDetailRepo;
+    private readonly Mock<IShippingService> _mockShippingService;
     private readonly CartService _cartService;
 
     public CartServiceTests()
@@ -25,12 +26,14 @@ public class CartServiceTests
         // Setup mocks
         _mockUserService = new Mock<IUserService>();
         _mockContactDetailRepo = new Mock<IContactDetailRepo>();
+        _mockShippingService = new Mock<IShippingService>();
 
         // Create service under test
         _cartService = new CartService(
             _context,
             _mockUserService.Object,
-            _mockContactDetailRepo.Object);
+            _mockContactDetailRepo.Object,
+            _mockShippingService.Object);
 
         SeedTestData();
     }
@@ -64,11 +67,9 @@ public class CartServiceTests
                        .ReturnsAsync(new RegisteredUserModel { PkRegisteredUserId = 1, Email = "test@example.com" });
 
         // Act
-        var result = await _cartService.AddToCartAsync("test@example.com", 1, 2);
+        await _cartService.AddToCartAsync("test@example.com", 1, 2);
 
         // Assert
-        result.Should().BeTrue();
-        
         var cartItem = await _context.Carts.FirstOrDefaultAsync(c => c.FkRegisteredUserId == 1 && c.FkProductID == 1);
         cartItem.Should().NotBeNull();
         cartItem!.Quantity.Should().Be(2);
@@ -92,27 +93,25 @@ public class CartServiceTests
                        .ReturnsAsync(new RegisteredUserModel { PkRegisteredUserId = 1, Email = "test@example.com" });
 
         // Act
-        var result = await _cartService.AddToCartAsync("test@example.com", 1, 2);
+        await _cartService.AddToCartAsync("test@example.com", 1, 2);
 
         // Assert
-        result.Should().BeTrue();
-        
         var cartItem = await _context.Carts.FirstOrDefaultAsync(c => c.FkRegisteredUserId == 1 && c.FkProductID == 1);
         cartItem!.Quantity.Should().Be(3); // 1 + 2
     }
 
     [Fact]
-    public async Task AddToCartAsync_WithInsufficientStock_ShouldReturnFalse()
+    public async Task AddToCartAsync_WithInsufficientStock_ShouldThrowInvalidOperationException()
     {
         // Arrange
         _mockUserService.Setup(u => u.GetByEmailAsync("test@example.com", It.IsAny<CancellationToken>()))
                        .ReturnsAsync(new RegisteredUserModel { PkRegisteredUserId = 1, Email = "test@example.com" });
 
         // Act
-        var result = await _cartService.AddToCartAsync("test@example.com", 1, 20); // More than available stock
+        var action = () => _cartService.AddToCartAsync("test@example.com", 1, 20); // More than available stock
 
         // Assert
-        result.Should().BeFalse();
+        await action.Should().ThrowAsync<InvalidOperationException>();
         
         var cartItem = await _context.Carts.FirstOrDefaultAsync(c => c.FkRegisteredUserId == 1 && c.FkProductID == 1);
         cartItem.Should().BeNull();
@@ -134,11 +133,9 @@ public class CartServiceTests
         await _context.SaveChangesAsync();
 
         // Act
-        var result = await _cartService.RemoveFromCartAsync(1);
+        await _cartService.RemoveFromCartAsync("test@example.com", 1);
 
         // Assert
-        result.Should().BeTrue();
-        
         var deletedItem = await _context.Carts.FindAsync(1);
         deletedItem.Should().BeNull();
     }
@@ -185,11 +182,9 @@ public class CartServiceTests
                        .ReturnsAsync(new RegisteredUserModel { PkRegisteredUserId = 1, Email = "test@example.com" });
 
         // Act
-        var result = await _cartService.ClearCartAsync("test@example.com");
+        await _cartService.ClearCartAsync("test@example.com");
 
         // Assert
-        result.Should().BeTrue();
-        
         var remainingItems = await _context.Carts.Where(c => c.FkRegisteredUserId == 1).ToListAsync();
         remainingItems.Should().BeEmpty();
         

@@ -190,15 +190,15 @@ public class ManagerControllerTests
         // Create realistic product catalog for metrics calculation
         var products = new List<ProductModel>
         {
-            new ProductModel { PkProductId = 1, ProductName = "Product 1", IsActive = true },
-            new ProductModel { PkProductId = 2, ProductName = "Product 2", IsActive = true }
+            new ProductModel { PkProductId = 1, Name = "Product 1", IsActive = true },
+            new ProductModel { PkProductId = 2, Name = "Product 2", IsActive = true }
         }.AsQueryable();
 
         // Create transaction history for financial metrics
         var transactions = new List<TransactionModel>
         {
-            new TransactionModel { PkTransactionId = 1, TotalAmount = 25.99m, TransactionDate = DateTime.UtcNow },
-            new TransactionModel { PkTransactionId = 2, TotalAmount = 45.99m, TransactionDate = DateTime.UtcNow.AddDays(-1) }
+            new TransactionModel { PkTransactionId = 1, Amount = 25.99m, TransactionDate = DateTime.UtcNow },
+            new TransactionModel { PkTransactionId = 2, Amount = 45.99m, TransactionDate = DateTime.UtcNow.AddDays(-1) }
         }.AsQueryable();
 
         // Configure complex IQueryable provider mocking for LINQ query support
@@ -254,8 +254,8 @@ public class ManagerControllerTests
 
         var products = new List<ProductModel>
         {
-            new ProductModel { PkProductId = 1, ProductName = "Product 1", Price = 19.99m, IsActive = true },
-            new ProductModel { PkProductId = 2, ProductName = "Product 2", Price = 29.99m, IsActive = false }
+            new ProductModel { PkProductId = 1, Name = "Product 1", Price = 19.99m, IsActive = true },
+            new ProductModel { PkProductId = 2, Name = "Product 2", Price = 29.99m, IsActive = false }
         }.AsQueryable();
 
         SetupMockDbSet(_mockProductSet, products);
@@ -264,14 +264,14 @@ public class ManagerControllerTests
 
         #region Act - Retrieve product management view
 
-        var result = await _controller.ListOfProducts();
+        var result = await _controller.ListOfProducts(string.Empty, string.Empty, string.Empty, 1);
 
         #endregion
 
         #region Assert - Validate product catalog display
 
         var viewResult = result.Should().BeOfType<ViewResult>().Subject;
-        var model = viewResult.Model.Should().BeAssignableToType<IEnumerable<ProductModel>>().Subject;
+        var model = viewResult.Model.Should().BeAssignableTo<IEnumerable<ProductVM>>().Subject;
         model.Should().HaveCount(2);
         model.First().ProductName.Should().Be("Product 1");
 
@@ -299,8 +299,8 @@ public class ManagerControllerTests
 
         var products = new List<ProductModel>
         {
-            new ProductModel { PkProductId = 1, ProductName = "Laptop Computer", Price = 999.99m, IsActive = true },
-            new ProductModel { PkProductId = 2, ProductName = "Wireless Mouse", Price = 29.99m, IsActive = true }
+            new ProductModel { PkProductId = 1, Name = "Laptop Computer", Price = 999.99m, IsActive = true },
+            new ProductModel { PkProductId = 2, Name = "Wireless Mouse", Price = 29.99m, IsActive = true }
         }.AsQueryable();
 
         SetupMockDbSet(_mockProductSet, products);
@@ -309,14 +309,14 @@ public class ManagerControllerTests
 
         #region Act - Execute filtered product search
 
-        var result = await _controller.ListOfProducts("Laptop");
+        var result = await _controller.ListOfProducts("Laptop", string.Empty, string.Empty, 1);
 
         #endregion
 
         #region Assert - Validate search result accuracy
 
         var viewResult = result.Should().BeOfType<ViewResult>().Subject;
-        var model = viewResult.Model.Should().BeAssignableToType<IEnumerable<ProductModel>>().Subject;
+        var model = viewResult.Model.Should().BeAssignableTo<IEnumerable<ProductVM>>().Subject;
         model.Should().HaveCount(1);
         model.First().ProductName.Should().Contain("Laptop");
 
@@ -347,7 +347,7 @@ public class ManagerControllerTests
     {
         #region Arrange - Setup product with current active state
 
-        var product = new ProductModel { PkProductId = 1, ProductName = "Test Product", IsActive = true };
+        var product = new ProductModel { PkProductId = 1, Name = "Test Product", IsActive = true };
 
         _mockDbContext.Setup(d => d.Products.FindAsync(1))
                      .ReturnsAsync(product);
@@ -471,7 +471,7 @@ public class ManagerControllerTests
         #region Assert - Validate financial data display
 
         var viewResult = result.Should().BeOfType<ViewResult>().Subject;
-        var model = viewResult.Model.Should().BeAssignableToType<IEnumerable<TransactionModel>>().Subject;
+        var model = viewResult.Model.Should().BeAssignableTo<IEnumerable<TransactionModel>>().Subject;
         model.Should().HaveCount(2);
         model.First().TransactionStatus.Should().Be("Completed");
 
@@ -522,7 +522,7 @@ public class ManagerControllerTests
         #region Assert - Validate filtering accuracy and completeness
 
         var viewResult = result.Should().BeOfType<ViewResult>().Subject;
-        var model = viewResult.Model.Should().BeAssignableToType<IEnumerable<TransactionModel>>().Subject;
+        var model = viewResult.Model.Should().BeAssignableTo<IEnumerable<TransactionModel>>().Subject;
         model.Should().HaveCount(2);
         model.All(t => t.TransactionStatus == "Completed").Should().BeTrue();
 

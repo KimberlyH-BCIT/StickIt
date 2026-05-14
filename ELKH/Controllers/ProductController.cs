@@ -446,6 +446,7 @@ namespace ELKH.Controllers
         /// </summary>
         /// <returns>The create view initialized with an empty <see cref="ProductVM"/>.</returns>
         // GET: Product/Create
+        [Authorize(Roles = "Admin,Manager")]
         public async Task<IActionResult> Create()
         {
             var options = await BuildCategoryOptionsAsync();
@@ -464,6 +465,7 @@ namespace ELKH.Controllers
         /// </returns>
         // POST: Product/Create
         [HttpPost]
+        [Authorize(Roles = "Admin,Manager")]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Create(ProductVM vm)
         {
@@ -498,6 +500,7 @@ namespace ELKH.Controllers
         /// <see cref="Index"/> with a warning if no product with <paramref name="id"/> exists.
         /// </returns>
         // GET: Product/Edit
+        [Authorize(Roles = "Admin,Manager")]
         public async Task<IActionResult> Edit(int id)
         {
             var vm = await _productService.GetByIdAsync(id);
@@ -525,6 +528,7 @@ namespace ELKH.Controllers
         /// </returns>
         // POST: Product/Edit
         [HttpPost]
+        [Authorize(Roles = "Admin,Manager")]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Edit(ProductVM vm)
         {
@@ -566,6 +570,7 @@ namespace ELKH.Controllers
         /// if no product with <paramref name="id"/> exists.
         /// </returns>
         // GET: Product/Delete
+        [Authorize(Roles = "Admin,Manager")]
         public async Task<IActionResult> Delete(int id)
         {
             var vm = await _productService.GetByIdAsync(id);
@@ -589,6 +594,7 @@ namespace ELKH.Controllers
         /// </returns>
         // POST: Product/Delete
         [HttpPost, ActionName("Delete")]
+        [Authorize(Roles = "Admin,Manager")]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> DeleteConfirmed(int id)
         {

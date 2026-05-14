@@ -166,7 +166,7 @@ public class GuestCheckoutIntegrationTests : IClassFixture<ELKHWebApplicationFac
         if (order != null)
         {
             order.FkRegisteredUserId.Should().Be(0); // Guest orders have FkRegisteredUserId = 0
-            order.OrderStatus.Should().Be("Paid");
+            order.OrderStatus.Should().Be(OrderStatus.Paid);
             order.TotalAmount.Should().BeGreaterThan(0);
         }
     }
@@ -219,7 +219,7 @@ public class GuestCheckoutIntegrationTests : IClassFixture<ELKHWebApplicationFac
         if (updatedProduct != null)
         {
             // Inventory should be reduced by the order quantity
-            updatedProduct.StockQuantity.Should().BeLessThan(initialStock);
+            updatedProduct.StockQuantity.Should().BeLessThan(initialStock.Value);
         }
     }
 

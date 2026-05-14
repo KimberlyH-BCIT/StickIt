@@ -84,7 +84,7 @@ public class PerformanceIntegrationTests : IClassFixture<ELKHWebApplicationFacto
         // Test 3: Product search simulation
         stopwatch.Restart();
         var searchResults = await db.Products
-            .Where(p => p.ProductName.Contains("Test"))
+            .Where(p => p.Name.Contains("Test"))
             .Take(10)
             .ToListAsync();
         stopwatch.Stop();
@@ -125,7 +125,7 @@ public class PerformanceIntegrationTests : IClassFixture<ELKHWebApplicationFacto
 
         // Act & Assert
         stopwatch.Start();
-        var searchResults = await searchService.SearchProductsAsync("Test", 1, 10);
+        var searchResults = await searchService.SearchNames("Test");
         stopwatch.Stop();
 
         stopwatch.ElapsedMilliseconds.Should().BeLessThan(1000, "Search service should return results in under 1 second");

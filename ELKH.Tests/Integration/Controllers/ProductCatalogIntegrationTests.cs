@@ -168,12 +168,12 @@ public class ProductCatalogIntegrationTests : IClassFixture<ELKHWebApplicationFa
         var product = await db.Products.FirstAsync();
 
         // Act
-        var response = await _client.GetAsync($"/Product/QuickView/{product.ProductId}");
+        var response = await _client.GetAsync($"/Product/QuickView/{product.PkProductId}");
 
         // Assert
         response.StatusCode.Should().Be(HttpStatusCode.OK);
         var content = await response.Content.ReadAsStringAsync();
-        content.Should().Contain(product.ProductName);
+        content.Should().Contain(product.Name);
     }
 
     [Fact]
@@ -185,7 +185,7 @@ public class ProductCatalogIntegrationTests : IClassFixture<ELKHWebApplicationFa
         var product = await db.Products.FirstAsync();
 
         // Act
-        var response = await _client.GetAsync($"/Product/Related/{product.ProductId}");
+        var response = await _client.GetAsync($"/Product/Related/{product.PkProductId}");
 
         // Assert
         response.StatusCode.Should().Be(HttpStatusCode.OK);
@@ -200,7 +200,7 @@ public class ProductCatalogIntegrationTests : IClassFixture<ELKHWebApplicationFa
         var product = await db.Products.FirstAsync();
 
         // Act
-        var response = await _client.GetAsync($"/Product/CheckAvailability/{product.ProductId}");
+        var response = await _client.GetAsync($"/Product/CheckAvailability/{product.PkProductId}");
 
         // Assert
         response.StatusCode.Should().Be(HttpStatusCode.OK);

@@ -4,6 +4,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.ViewFeatures;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.Logging;
 using Moq;
 using Xunit;
 using ELKH.Controllers;
@@ -27,6 +28,8 @@ public class CheckoutControllerGuestTests : IDisposable
     private readonly Mock<ICartService> _mockCartService;
     private readonly Mock<IGuestCartService> _mockGuestCartService;
     private readonly Mock<IConfiguration> _mockConfiguration;
+    private readonly Mock<IShippingService> _mockShippingService;
+    private readonly Mock<ILogger<CheckoutController>> _mockLogger;
     private readonly CheckoutController _controller;
 
     public CheckoutControllerGuestTests()
@@ -42,6 +45,26 @@ public class CheckoutControllerGuestTests : IDisposable
         _mockCartService = new Mock<ICartService>();
         _mockGuestCartService = new Mock<IGuestCartService>();
         _mockConfiguration = new Mock<IConfiguration>();
+        _mockShippingService = new Mock<IShippingService>();
+        _mockLogger = new Mock<ILogger<CheckoutController>>();
+
+        var shippingMethods = new List<ShippingMethodModel>
+        {
+            new()
+            {
+                PkShippingMethodId = 1,
+                Name = "Standard",
+                IsActive = true,
+                BasePrice = 7.99m
+            }
+        };
+
+        _mockShippingService.Setup(s => s.GetAvailableShippingMethodsAsync())
+            .ReturnsAsync(shippingMethods);
+        _mockShippingService.Setup(s => s.GetShippingMethodByIdAsync(1))
+            .ReturnsAsync(shippingMethods[0]);
+        _mockShippingService.Setup(s => s.CalculateShippingCostAsync(It.IsAny<int>(), It.IsAny<decimal>(), It.IsAny<decimal>()))
+            .ReturnsAsync((int _, decimal subtotal, decimal threshold) => subtotal >= threshold ? 0m : 7.99m);
 
         _controller = new CheckoutController(
             _context,
@@ -49,7 +72,9 @@ public class CheckoutControllerGuestTests : IDisposable
             _mockContactDetailRepo.Object,
             _mockCartService.Object,
             _mockGuestCartService.Object,
-            _mockConfiguration.Object);
+            _mockConfiguration.Object,
+            _mockShippingService.Object,
+            _mockLogger.Object);
 
         SetupControllerContext();
         SeedTestData();
@@ -112,7 +137,7 @@ public class CheckoutControllerGuestTests : IDisposable
         var redirect = result as RedirectToActionResult;
         redirect!.ActionName.Should().Be("Index");
         redirect.ControllerName.Should().Be("Cart");
-        _controller.TempData["Message"].Should().Contain("empty");
+        _controller.TempData["Message"]?.ToString().Should().Contain("empty");
     }
 
     [Fact]
@@ -225,7 +250,7 @@ public class CheckoutControllerGuestTests : IDisposable
 
         // Assert
         result.Should().BeOfType<RedirectToActionResult>();
-        _controller.TempData["Message"].Should().Contain("empty");
+        _controller.TempData["Message"]?.ToString().Should().Contain("empty");
     }
 
     [Fact]
@@ -247,7 +272,7 @@ public class CheckoutControllerGuestTests : IDisposable
 
         // Assert
         result.Should().BeOfType<RedirectToActionResult>();
-        _controller.TempData["Message"].Should().Contain("out of stock");
+        _controller.TempData["Message"]?.ToString().Should().Contain("out of stock");
     }
 
     [Fact]
@@ -286,8 +311,8 @@ public class CheckoutControllerGuestTests : IDisposable
         var order = await _context.Orders.FirstOrDefaultAsync();
         order.Should().NotBeNull();
         order!.FkRegisteredUserId.Should().Be(0); // Guest order
-        order.OrderStatus.Should().Be("Paid");
-        order.DeliveryStatus.Should().Be("Pending");
+        order.OrderStatus.Should().Be(OrderStatus.Paid);
+        order.DeliveryStatus.Should().Be(DeliveryStatus.Pending);
 
         // Verify contact detail was created
         var contact = await _context.ContactDetails.FirstOrDefaultAsync();
@@ -397,7 +422,7 @@ public class CheckoutControllerGuestTests : IDisposable
         var redirect = result as RedirectToActionResult;
         redirect!.ActionName.Should().Be("Index");
         redirect.ControllerName.Should().Be("Home");
-        _controller.TempData["Message"].Should().Contain("not found");
+        _controller.TempData["Message"]?.ToString().Should().Contain("not found");
     }
 
     [Fact]
@@ -423,10 +448,10 @@ public class CheckoutControllerGuestTests : IDisposable
             PkOrderId = 1,
             FkContactId = 1,
             FkRegisteredUserId = 0, // Guest order
-            OrderStatus = "Paid",
+            OrderStatus = OrderStatus.Paid,
             TotalAmount = 43.81m,
             CreatedAt = DateTime.UtcNow,
-            DeliveryStatus = "Pending"
+            DeliveryStatus = DeliveryStatus.Pending
         };
 
         var product = await _context.Products.FindAsync(1);
@@ -478,7 +503,7 @@ public class CheckoutControllerGuestTests : IDisposable
             PkOrderId = 1,
             FkContactId = 1,
             FkRegisteredUserId = 0,
-            OrderStatus = "Paid",
+            OrderStatus = OrderStatus.Paid,
             TotalAmount = 43.81m
         };
 
@@ -493,7 +518,7 @@ public class CheckoutControllerGuestTests : IDisposable
 
         // Assert
         result.Should().BeOfType<RedirectToActionResult>();
-        _controller.TempData["Message"].Should().Contain("Unauthorized");
+        _controller.TempData["Message"]?.ToString().Should().Contain("Unauthorized");
     }
 
     #endregion
@@ -512,6 +537,7 @@ public class CheckoutControllerGuestTests : IDisposable
             Province = "BC",
             PostalCode = "V6B 1A1",
             Country = "Canada",
+            SelectedShippingMethodId = 1,
             SubscribeToNewsletter = false,
             CreateAccount = false
         };

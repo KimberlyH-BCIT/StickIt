@@ -127,10 +127,7 @@ public class ELKHWebApplicationFactory : WebApplicationFactory<Program>
                     // Create corresponding RegisteredUser record
                     var registeredUser = new ELKH.Models.RegisteredUserModel
                     {
-                        Email = testUser.Email,
-                        FirstName = "Test",
-                        LastName = "User",
-                        CreatedAt = DateTime.UtcNow
+                        Email = testUser.Email
                     };
                     
                     db.RegisteredUsers.Add(registeredUser);

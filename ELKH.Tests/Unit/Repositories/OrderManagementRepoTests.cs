@@ -178,21 +178,21 @@ public class OrderManagementRepoTests : IDisposable
             { 
                 FkRegisteredUserId = user1.PkRegisteredUserId,
                 TotalAmount = 100.00m,
-                OrderStatus = "Completed",
+                OrderStatus = OrderStatus.Paid,
                 CreatedAt = DateTime.UtcNow.AddDays(-3)
             },
             new OrderModel 
             { 
                 FkRegisteredUserId = user1.PkRegisteredUserId,
                 TotalAmount = 75.50m,
-                OrderStatus = "Completed",
+                OrderStatus = OrderStatus.Paid,
                 CreatedAt = DateTime.UtcNow.AddDays(-1)
             },
             new OrderModel 
             { 
                 FkRegisteredUserId = user2.PkRegisteredUserId,
                 TotalAmount = 150.25m,
-                OrderStatus = "Pending",
+                OrderStatus = OrderStatus.Pending,
                 CreatedAt = DateTime.UtcNow
             }
         };

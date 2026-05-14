@@ -1,5 +1,6 @@
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging.Abstractions;
+using Microsoft.Extensions.Options;
 
 namespace ELKH.Tests.Unit.Services;
 
@@ -28,7 +29,7 @@ public class UserServiceTests
         _userService = new UserService(
             _context,
             _mockCache.Object,
-            NullLogger<UserService>.Instance);
+            Options.Create(new ELKH.Configuration.CacheOptions()));
 
         SeedTestData();
     }
@@ -38,16 +39,13 @@ public class UserServiceTests
         var user = new RegisteredUserModel
         {
             PkRegisteredUserId = 1,
-            Email = "test@example.com",
-            FirstName = "John",
-            LastName = "Doe"
+            Email = "test@example.com"
         };
 
         var wishlist = new WishListModel
         {
             PkWishListId = 1,
-            FkUserId = 1,
-            CreatedAt = DateTime.UtcNow
+            FkUserId = 1
         };
 
         var product = new ProductModel
@@ -60,8 +58,7 @@ public class UserServiceTests
         var wishlistItem = new WishListItemModel
         {
             FkWishListId = 1,
-            FkProductId = 1,
-            CreatedAt = DateTime.UtcNow
+            FkProductId = 1
         };
 
         _context.RegisteredUsers.Add(user);
@@ -83,8 +80,7 @@ public class UserServiceTests
         // Assert
         result.Should().NotBeNull();
         result!.Email.Should().Be(email);
-        result.FirstName.Should().Be("John");
-        result.LastName.Should().Be("Doe");
+        result.PkRegisteredUserId.Should().Be(1);
     }
 
     [Fact]

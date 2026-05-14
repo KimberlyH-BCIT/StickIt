@@ -5,6 +5,7 @@ using Microsoft.AspNetCore.Mvc.Controllers;
 using Microsoft.AspNetCore.Mvc.ViewFeatures;
 using Microsoft.AspNetCore.Routing;
 using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.Logging;
 using Moq;
 using System.Security.Claims;
 using Xunit;
@@ -28,6 +29,8 @@ public class CheckoutControllerTests
     private readonly Mock<ICartService> _mockCartService;
     private readonly Mock<IGuestCartService> _mockGuestCartService;
     private readonly Mock<IConfiguration> _mockConfiguration;
+    private readonly Mock<IShippingService> _mockShippingService;
+    private readonly Mock<ILogger<CheckoutController>> _mockLogger;
     private readonly CheckoutController _controller;
 
     public CheckoutControllerTests()
@@ -43,6 +46,8 @@ public class CheckoutControllerTests
         _mockCartService = new Mock<ICartService>();
         _mockGuestCartService = new Mock<IGuestCartService>();
         _mockConfiguration = new Mock<IConfiguration>();
+        _mockShippingService = new Mock<IShippingService>();
+        _mockLogger = new Mock<ILogger<CheckoutController>>();
 
         // Create controller under test
         _controller = new CheckoutController(
@@ -51,7 +56,9 @@ public class CheckoutControllerTests
             _mockContactDetailRepo.Object,
             _mockCartService.Object,
             _mockGuestCartService.Object,
-            _mockConfiguration.Object);
+            _mockConfiguration.Object,
+            _mockShippingService.Object,
+            _mockLogger.Object);
 
         // Setup controller context
         var httpContext = new DefaultHttpContext();

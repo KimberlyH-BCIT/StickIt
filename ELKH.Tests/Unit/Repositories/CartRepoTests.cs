@@ -5,6 +5,7 @@ using ELKH.Repositories;
 using ELKH.Data;
 using ELKH.Models;
 using ELKH.ViewModels;
+using Microsoft.Extensions.Logging.Abstractions;
 
 namespace ELKH.Tests.Unit.Repositories;
 
@@ -27,7 +28,7 @@ public class CartRepoTests : IDisposable
             .Options;
 
         _context = new ApplicationDbContext(options);
-        _cartRepo = new CartRepo(_context);
+        _cartRepo = new CartRepo(_context, NullLogger<CartRepo>.Instance);
     }
 
     [Fact]

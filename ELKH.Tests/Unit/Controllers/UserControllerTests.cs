@@ -4,22 +4,20 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Controllers;
 using Microsoft.AspNetCore.Mvc.ViewFeatures;
 using Microsoft.AspNetCore.Routing;
-using Microsoft.Extensions.Logging.Abstractions;
+using Microsoft.Extensions.Logging;
 using Moq;
 using System.Security.Claims;
 using Xunit;
 using ELKH.Controllers;
-using ELKH.Services;
+using ELKH.Data;
 using ELKH.Repositories;
+using ELKH.Services;
 using ELKH.ViewModels;
 using ELKH.Models;
+using Microsoft.EntityFrameworkCore;
 
 namespace ELKH.Tests.Unit.Controllers;
 
-/// <summary>
-/// Unit tests for UserController functionality.
-/// Tests user profile management, address book, and account operations.
-/// </summary>
 public class UserControllerTests
 {
     private readonly Mock<IRegisteredUserProfileRepo> _mockUserProfileRepo;
@@ -27,242 +25,248 @@ public class UserControllerTests
     private readonly Mock<IContactDetailRepo> _mockContactDetailRepo;
     private readonly Mock<IRatingService> _mockRatingService;
     private readonly Mock<IStoreReviewService> _mockStoreReviewService;
+    private readonly Mock<IUserService> _mockUserService;
+    private readonly ApplicationDbContext _db;
     private readonly UserController _controller;
 
     public UserControllerTests()
     {
-        // Setup mocks
         _mockUserProfileRepo = new Mock<IRegisteredUserProfileRepo>();
         _mockUserLogRepo = new Mock<IRegisteredUserLogRepo>();
         _mockContactDetailRepo = new Mock<IContactDetailRepo>();
         _mockRatingService = new Mock<IRatingService>();
         _mockStoreReviewService = new Mock<IStoreReviewService>();
+        _mockUserService = new Mock<IUserService>();
 
-        // Create controller under test
+        var options = new DbContextOptionsBuilder<ApplicationDbContext>()
+            .UseInMemoryDatabase(Guid.NewGuid().ToString())
+            .Options;
+        _db = new ApplicationDbContext(options);
+
         _controller = new UserController(
             _mockUserProfileRepo.Object,
             _mockUserLogRepo.Object,
             _mockContactDetailRepo.Object,
             _mockRatingService.Object,
             _mockStoreReviewService.Object,
-            NullLogger<UserController>.Instance);
+            _mockUserService.Object,
+            Mock.Of<ILogger<UserController>>(),
+            _db);
 
-        // Setup controller context
         var httpContext = new DefaultHttpContext();
         var actionContext = new ActionContext(httpContext, new RouteData(), new ControllerActionDescriptor());
         _controller.ControllerContext = new ControllerContext(actionContext);
         _controller.TempData = new TempDataDictionary(httpContext, Mock.Of<ITempDataProvider>());
-        
-        // Setup authenticated user
+
         SetupAuthenticatedUser("test@example.com");
+        _mockUserService.Setup(u => u.GetByEmailAsync("test@example.com", It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new RegisteredUserModel { PkRegisteredUserId = 1, Email = "test@example.com" });
     }
 
     [Fact]
     public async Task Index_ShouldReturnViewWithUserDashboard()
     {
-        // Arrange
-        var userProfile = new RegisteredUserProfile
+        var profile = new UserProfileModel
         {
-            Id = 1,
-            Email = "test@example.com",
+            PkEmail = "test@example.com",
             FirstName = "John",
             LastName = "Doe"
         };
 
-        _mockUserProfileRepo.Setup(u => u.GetByEmailAsync("test@example.com"))
-                           .ReturnsAsync(userProfile);
+        var dashboard = new DashboardData(
+            2,
+            new WishlistSectionVM(),
+            new OrderSectionVM(),
+            new OrderSectionVM());
 
-        // Act
+        _mockUserProfileRepo.Setup(r => r.GetById("test@example.com")).Returns(profile);
+        _mockUserService.Setup(u => u.GetDashboardDataAsync(1, It.IsAny<CancellationToken>())).ReturnsAsync(dashboard);
+
         var result = await _controller.Index();
 
-        // Assert
-        result.Should().BeOfType<ViewResult>();
-        _mockUserProfileRepo.Verify(u => u.GetByEmailAsync("test@example.com"), Times.Once);
+        var viewResult = result.Should().BeOfType<ViewResult>().Subject;
+        var model = viewResult.Model.Should().BeOfType<UserDashboardVM>().Subject;
+        model.Profile.Should().NotBeNull();
+        model.Profile!.FirstName.Should().Be("John");
+        model.WishlistCount.Should().Be(2);
     }
 
     [Fact]
-    public async Task Profile_Get_ShouldReturnViewWithUserProfile()
+    public async Task EditProfile_Get_ShouldReturnViewWithUserProfilePageModel()
     {
-        // Arrange
-        var userProfile = new RegisteredUserProfile
+        var profile = new UserProfileModel
         {
-            Id = 1,
-            Email = "test@example.com",
+            PkEmail = "test@example.com",
             FirstName = "John",
             LastName = "Doe"
         };
 
-        _mockUserProfileRepo.Setup(u => u.GetByEmailAsync("test@example.com"))
-                           .ReturnsAsync(userProfile);
+        _mockUserProfileRepo.Setup(r => r.GetById("test@example.com")).Returns(profile);
+        _mockContactDetailRepo.Setup(r => r.GetAllByUserIdAsync(1)).ReturnsAsync(new List<ContactDetailModel>());
 
-        // Act
-        var result = await _controller.Profile();
+        var result = await _controller.EditProfile();
 
-        // Assert
         var viewResult = result.Should().BeOfType<ViewResult>().Subject;
-        var model = viewResult.Model.Should().BeOfType<RegisteredUserProfile>().Subject;
-        model.Email.Should().Be("test@example.com");
-        model.FirstName.Should().Be("John");
+        var model = viewResult.Model.Should().BeOfType<UserProfilePageVM>().Subject;
+        model.Profile.PkEmail.Should().Be("test@example.com");
+        model.Profile.FirstName.Should().Be("John");
     }
 
     [Fact]
-    public async Task Profile_Post_WithValidModel_ShouldUpdateProfile()
+    public async Task EditProfile_Post_WithValidModel_ShouldUpdateProfile()
     {
-        // Arrange
-        var profileVM = new UserProfileVM
+        var existingProfile = new UserProfileModel
         {
-            FirstName = "John Updated",
-            LastName = "Doe Updated",
-            PhoneNumber = "123-456-7890"
+            PkEmail = "test@example.com",
+            FirstName = "John",
+            LastName = "Doe"
         };
 
-        _mockUserProfileRepo.Setup(u => u.UpdateProfileAsync("test@example.com", It.IsAny<UserProfileVM>()))
-                           .ReturnsAsync(true);
+        var vm = new UserProfilePageVM
+        {
+            Profile = new UserProfileVM
+            {
+                PkEmail = "test@example.com",
+                FirstName = "John Updated",
+                LastName = "Doe Updated"
+            }
+        };
 
-        // Act
-        var result = await _controller.Profile(profileVM);
+        _mockUserProfileRepo.Setup(r => r.GetById("test@example.com")).Returns(existingProfile);
+        _mockUserProfileRepo.Setup(r => r.UpdateAndSaveAsync(existingProfile)).ReturnsAsync(true);
 
-        // Assert
+        var result = await _controller.EditProfile(vm);
+
         var redirectResult = result.Should().BeOfType<RedirectToActionResult>().Subject;
-        redirectResult.ActionName.Should().Be("Profile");
-        
-        _mockUserProfileRepo.Verify(u => u.UpdateProfileAsync("test@example.com", 
-            It.Is<UserProfileVM>(p => p.FirstName == "John Updated")), Times.Once);
+        redirectResult.ActionName.Should().Be("EditProfile");
+        existingProfile.FirstName.Should().Be("John Updated");
+        _mockUserProfileRepo.Verify(r => r.UpdateAndSaveAsync(existingProfile), Times.Once);
     }
 
     [Fact]
-    public async Task Profile_Post_WithInvalidModel_ShouldReturnViewWithErrors()
+    public async Task EditProfile_Post_WithInvalidModel_ShouldReturnViewWithErrors()
     {
-        // Arrange
-        var profileVM = new UserProfileVM(); // Invalid model
-        _controller.ModelState.AddModelError("FirstName", "First name is required");
+        var vm = new UserProfilePageVM
+        {
+            Profile = new UserProfileVM()
+        };
+        _controller.ModelState.AddModelError("Profile.FirstName", "First name is required");
+        _mockContactDetailRepo.Setup(r => r.GetAllByUserIdAsync(1)).ReturnsAsync(new List<ContactDetailModel>());
 
-        // Act
-        var result = await _controller.Profile(profileVM);
+        var result = await _controller.EditProfile(vm);
 
-        // Assert
         var viewResult = result.Should().BeOfType<ViewResult>().Subject;
-        viewResult.Model.Should().Be(profileVM);
-        _mockUserProfileRepo.Verify(u => u.UpdateProfileAsync(It.IsAny<string>(), It.IsAny<UserProfileVM>()), 
-                                   Times.Never);
+        viewResult.Model.Should().Be(vm);
+        _mockUserProfileRepo.Verify(r => r.UpdateAndSaveAsync(It.IsAny<UserProfileModel>()), Times.Never);
     }
 
     [Fact]
     public async Task Addresses_ShouldReturnViewWithUserAddresses()
     {
-        // Arrange
         var addresses = new List<ContactDetailModel>
         {
-            new ContactDetailModel { PkContactId = 1, Street = "123 Test St", City = "Vancouver" },
-            new ContactDetailModel { PkContactId = 2, Street = "456 Main Ave", City = "Surrey" }
+            new() { PkContactId = 1, FirstName = "John", LastName = "Doe", Street = "123 Test St", City = "Vancouver", Province = "BC", PostCode = "V1A 2B3", Country = "Canada" },
+            new() { PkContactId = 2, FirstName = "John", LastName = "Doe", Street = "456 Main Ave", City = "Surrey", Province = "BC", PostCode = "V2B 3C4", Country = "Canada" }
         };
 
-        _mockContactDetailRepo.Setup(c => c.GetByEmailAsync("test@example.com"))
-                             .ReturnsAsync(addresses);
+        _mockContactDetailRepo.Setup(r => r.GetAllByUserIdAsync(1)).ReturnsAsync(addresses);
 
-        // Act
         var result = await _controller.Addresses();
 
-        // Assert
         var viewResult = result.Should().BeOfType<ViewResult>().Subject;
-        var model = viewResult.Model.Should().BeAssignableToType<IEnumerable<ContactDetailModel>>().Subject;
+        var model = viewResult.Model.Should().BeAssignableTo<IEnumerable<ContactDetailVM>>().Subject;
         model.Should().HaveCount(2);
-        model.First().Address.Should().Be("123 Test St");
+        model.First().Street.Should().Be("123 Test St");
     }
 
     [Fact]
     public async Task AddAddress_Post_WithValidAddress_ShouldCreateAddress()
     {
-        // Arrange
         var addressVM = new ContactDetailVM
         {
-            Address = "789 New St",
+            FirstName = "John",
+            LastName = "Doe",
+            PhoneNumber = "123-456-7890",
+            Street = "789 New St",
             City = "Vancouver",
-            PostalCode = "V1A 2B3"
+            Province = "BC",
+            PostalCode = "V1A 2B3",
+            Country = "Canada"
         };
 
-        _mockContactDetailRepo.Setup(c => c.CreateAsync(It.IsAny<ContactDetailModel>()))
-                             .ReturnsAsync(new ContactDetailModel { PkContactId = 1 });
+        _mockContactDetailRepo.Setup(r => r.AddAndSaveAsync(It.IsAny<ContactDetailModel>())).ReturnsAsync(true);
 
-        // Act
         var result = await _controller.AddAddress(addressVM);
 
-        // Assert
         var redirectResult = result.Should().BeOfType<RedirectToActionResult>().Subject;
-        redirectResult.ActionName.Should().Be("Addresses");
-        
-        _mockContactDetailRepo.Verify(c => c.CreateAsync(It.Is<ContactDetailModel>(cd => 
-            cd.Street == "789 New St")), Times.Once);
+        redirectResult.ActionName.Should().Be("EditProfile");
+        _mockContactDetailRepo.Verify(r => r.AddAndSaveAsync(It.Is<ContactDetailModel>(c => c.Street == "789 New St" && c.FkRegisteredUserId == 1)), Times.Once);
     }
 
     [Fact]
     public async Task DeleteAddress_WithValidId_ShouldReturnConfirmationView()
     {
-        // Arrange
-        var address = new ContactDetailModel 
-        { 
-            PkContactId = 1, 
-            Street = "123 Test St", 
-            FkRegisteredUserId = 1 
+        var address = new ContactDetailModel
+        {
+            PkContactId = 1,
+            FirstName = "John",
+            LastName = "Doe",
+            PhoneNumber = "123-456-7890",
+            Street = "123 Test St",
+            City = "Vancouver",
+            Province = "BC",
+            PostCode = "V1A 2B3",
+            Country = "Canada",
+            FkRegisteredUserId = 1
         };
 
-        _mockContactDetailRepo.Setup(c => c.GetByIdAsync(1))
-                             .ReturnsAsync(address);
+        _mockContactDetailRepo.Setup(r => r.GetByIdAsync(1)).ReturnsAsync(address);
 
-        // Act
         var result = await _controller.DeleteAddress(1);
 
-        // Assert
         var viewResult = result.Should().BeOfType<ViewResult>().Subject;
-        var model = viewResult.Model.Should().BeOfType<ContactDetailModel>().Subject;
+        var model = viewResult.Model.Should().BeOfType<ContactDetailVM>().Subject;
         model.Street.Should().Be("123 Test St");
     }
 
     [Fact]
-    public async Task DeleteAddress_WithInvalidId_ShouldReturnNotFound()
+    public async Task DeleteAddress_WithInvalidId_ShouldRedirectToAddresses()
     {
-        // Arrange
-        _mockContactDetailRepo.Setup(c => c.GetByIdAsync(999))
-                             .ReturnsAsync((ContactDetailModel?)null);
+        _mockContactDetailRepo.Setup(r => r.GetByIdAsync(999)).ReturnsAsync((ContactDetailModel?)null);
 
-        // Act
         var result = await _controller.DeleteAddress(999);
 
-        // Assert
-        result.Should().BeOfType<NotFoundResult>();
+        var redirectResult = result.Should().BeOfType<RedirectToActionResult>().Subject;
+        redirectResult.ActionName.Should().Be("Addresses");
     }
 
     [Fact]
-    public async Task DeleteAddress_WithUnauthorizedUser_ShouldReturnUnauthorized()
+    public async Task DeleteAddress_WithUnauthorizedUser_ShouldRedirectToAddresses()
     {
-        // Arrange
-        var address = new ContactDetailModel 
-        { 
-            PkContactId = 1, 
-            Street = "123 Test St", 
-            FkRegisteredUserId = 2  // Different user
+        var address = new ContactDetailModel
+        {
+            PkContactId = 1,
+            Street = "123 Test St",
+            FkRegisteredUserId = 2
         };
 
-        _mockContactDetailRepo.Setup(c => c.GetByIdAsync(1))
-                             .ReturnsAsync(address);
+        _mockContactDetailRepo.Setup(r => r.GetByIdAsync(1)).ReturnsAsync(address);
 
-        // Act
         var result = await _controller.DeleteAddress(1);
 
-        // Assert
-        result.Should().BeOfType<UnauthorizedResult>();
+        var redirectResult = result.Should().BeOfType<RedirectToActionResult>().Subject;
+        redirectResult.ActionName.Should().Be("Addresses");
     }
 
     private void SetupAuthenticatedUser(string email)
     {
         var claims = new List<Claim>
         {
-            new Claim(ClaimTypes.Name, email),
-            new Claim(ClaimTypes.NameIdentifier, "1")
+            new(ClaimTypes.Name, email),
+            new(ClaimTypes.NameIdentifier, "1")
         };
         var identity = new ClaimsIdentity(claims, "Test");
         var principal = new ClaimsPrincipal(identity);
-
         _controller.ControllerContext.HttpContext.User = principal;
     }
 }

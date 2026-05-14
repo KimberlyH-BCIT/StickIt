@@ -1,6 +1,6 @@
-# 📚 ELKH Documentation Index
+# 📚 StickIt Documentation Index
 
-Welcome to the comprehensive documentation for the ELKH premium sticker eCommerce platform. This index provides quick access to all documentation resources organized by audience and purpose.
+Welcome to the comprehensive documentation for StickIt, a portfolio-focused sticker eCommerce platform. This index provides quick access to all documentation resources organized by audience and purpose.
 
 ## 🎯 Quick Navigation
 
@@ -229,15 +229,15 @@ Welcome to the comprehensive documentation for the ELKH premium sticker eCommerc
 
 ### Essential Links
 - **Main Repository**: [GitHub - StickIt](https://github.com/Velyene/StickIt)
-- **Live Application**: [ELKH Platform](https://elkh.example.com)
-- **Health Checks**: [System Health](https://elkh.example.com/health)
-- **API Endpoint**: [API Base URL](https://elkh.example.com/api)
+- **Live Application**: [StickIt Demo](https://stickit.example.com)
+- **Health Checks**: [System Health](https://stickit.example.com/health)
+- **API Endpoint**: [API Base URL](https://stickit.example.com/api)
 
 ### Emergency Contacts
-- **Technical Issues**: technical-support@elkh.com
-- **Security Concerns**: security@elkh.com
+- **Technical Issues**: technical-support@stickit.example.com
+- **Security Concerns**: security@stickit.example.com
 - **Documentation Team**: docs@elkh.com
-- **On-Call Support**: +1-800-ELKH-HELP
+- **On-Call Support**: +1-800-STICKIT
 
 ---
 

@@ -1,4 +1,4 @@
-# ELKH Sticker Store - Production Container
+# StickIt - Production Container
 # Multi-stage build for optimized production deployment
 # Features: Security hardening, minimal runtime, optimized image size
 
@@ -89,17 +89,17 @@ ENTRYPOINT ["dotnet", "ELKH.dll"]
 # ====================================
 # 
 # Development build:
-# docker build -t elkh-stickers:dev .
-# docker run -p 8080:80 elkh-stickers:dev
+# docker build -t stickit-web:dev .
+# docker run -p 8080:80 stickit-web:dev
 #
 # Production build with environment variables:
 # docker run -p 80:80 \
 #   -e ConnectionStrings__DefaultConnection="your-connection-string" \
 #   -e Authentication__Google__ClientId="your-client-id" \
-#   elkh-stickers:latest
+#   stickit-web:latest
 #
 # With volume mounts for data persistence:
 # docker run -p 80:80 \
-#   -v elkh-data:/app/Data \
-#   -v elkh-uploads:/app/wwwroot/uploads \
-#   elkh-stickers:latest
+#   -v stickit-data:/app/Data \
+#   -v stickit-uploads:/app/wwwroot/uploads \
+#   stickit-web:latest

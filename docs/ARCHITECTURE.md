@@ -1,8 +1,8 @@
-# 🏗️ ELKH Architecture Guide
+# 🏗️ StickIt Architecture Guide
 
 ## Overview
 
-ELKH follows **Clean Architecture** principles with clear separation of concerns, ensuring maintainability, testability, and scalability. The architecture is designed to support both current e-commerce requirements and future growth.
+StickIt follows **Clean Architecture** principles with clear separation of concerns, ensuring maintainability, testability, and scalability. The architecture is designed to support both current e-commerce requirements and future growth.
 
 ## 🎯 Architecture Principles
 

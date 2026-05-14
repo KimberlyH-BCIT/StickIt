@@ -39,6 +39,8 @@
 				<!-- Enable comprehensive XML documentation analysis -->
 				<DocumentationAnalysisMode>Comprehensive</DocumentationAnalysisMode>
 				<DocumentationCoverageReporting>true</DocumentationCoverageReporting>
+        <AssemblyTitle>StickIt</AssemblyTitle>
+        <Description>StickIt is a portfolio-ready sticker eCommerce application built with ASP.NET Core 10 and Razor Pages.</Description>
     </PropertyGroup>
 
 
@@ -49,10 +51,10 @@
     <PackageReference Include="Microsoft.AspNetCore.Diagnostics.EntityFrameworkCore" Version="10.0.8" />
     <PackageReference Include="Microsoft.AspNetCore.Identity.EntityFrameworkCore" Version="10.0.8" />
     <PackageReference Include="Microsoft.AspNetCore.Identity.UI" Version="10.0.8" />
-    <PackageReference Include="Microsoft.AspNetCore.Mvc.Versioning" Version="5.1.0" />
-    <PackageReference Include="Microsoft.AspNetCore.Mvc.Versioning.ApiExplorer" Version="5.1.0" />
+    <PackageReference Include="Asp.Versioning.Mvc" Version="10.0.0" />
+    <PackageReference Include="Asp.Versioning.Mvc.ApiExplorer" Version="10.0.0" />
     <PackageReference Include="Microsoft.EntityFrameworkCore.Sqlite" Version="10.0.8" />
-    <PackageReference Include="Microsoft.OpenApi" Version="2.4.1" />
+    <PackageReference Include="Microsoft.OpenApi" Version="3.5.3" />
     <PackageReference Include="Microsoft.Kiota.Abstractions" Version="2.0.0" />
     <PackageReference Include="NuGet.Packaging" Version="7.6.0" />
     <PackageReference Include="NuGet.Protocol" Version="7.6.0" />

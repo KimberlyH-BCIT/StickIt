@@ -1,8 +1,10 @@
 using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc.Controllers;
 using Microsoft.AspNetCore.Mvc.ViewFeatures;
 using Microsoft.AspNetCore.Routing;
 using Microsoft.Extensions.Logging.Abstractions;
+using System.Reflection;
 using System.Text.Json;
 using ELKH.Services;
 
@@ -142,7 +144,7 @@ public class ProductControllerTests
 
         #region Act - Execute catalog retrieval
 
-        var result = await _controller.Index();
+        var result = await _controller.Index(null, null, "name_asc");
 
         #endregion
 
@@ -180,8 +182,8 @@ public class ProductControllerTests
                           .ReturnsAsync(product);
 
         // Setup rating service to provide social proof data
-        _mockRatingService.Setup(r => r.GetRatingsForProductAsync(1))
-                         .ReturnsAsync(new List<ProductRatingModel>());
+        _mockRatingService.Setup(r => r.GetPagedApprovedReviewsAsync(1, 1, "date_new", It.IsAny<CancellationToken>()))
+                         .ReturnsAsync(new ReviewPageVM());
 
         #endregion
 
@@ -304,7 +306,7 @@ public class ProductControllerTests
 
         // Verify immediate empty result without service calls
         var jsonResult = result.Should().BeOfType<JsonResult>().Subject;
-        var model = jsonResult.Value.Should().BeAssignableToType<Array>().Subject;
+        var model = jsonResult.Value.Should().BeAssignableTo<IEnumerable<object>>().Subject;
         model.Should().BeEmpty();
 
         // Confirm search service was never invoked (performance optimization)
@@ -745,9 +747,39 @@ public class ProductControllerTests
         #endregion
     }
 
+    /// <summary>
+    /// Verifies that all administrative product-management actions are explicitly protected
+    /// by the Admin/Manager role requirement.
+    /// </summary>
+    [Fact]
+    public void ProductManagementActions_ShouldRequireAdminOrManagerRole()
+    {
+        AssertAdminManagerAuthorization(GetAction(nameof(ProductController.Create), Type.EmptyTypes));
+        AssertAdminManagerAuthorization(GetAction(nameof(ProductController.Create), typeof(ProductVM)));
+        AssertAdminManagerAuthorization(GetAction(nameof(ProductController.Edit), typeof(int)));
+        AssertAdminManagerAuthorization(GetAction(nameof(ProductController.Edit), typeof(ProductVM)));
+        AssertAdminManagerAuthorization(GetAction(nameof(ProductController.Delete), typeof(int)));
+        AssertAdminManagerAuthorization(GetAction(nameof(ProductController.DeleteConfirmed), typeof(int)));
+    }
+
     #endregion
 
     #region Helper Methods & Utilities
+
+    private static MethodInfo GetAction(string methodName, params Type[] parameterTypes)
+    {
+        var method = typeof(ProductController).GetMethod(methodName, parameterTypes);
+        method.Should().NotBeNull($"Expected to find ProductController.{methodName}.");
+        return method!;
+    }
+
+    private static void AssertAdminManagerAuthorization(MethodInfo method)
+    {
+        var authorizeAttribute = method.GetCustomAttribute<AuthorizeAttribute>();
+
+        authorizeAttribute.Should().NotBeNull($"{method.Name} should require explicit role authorization.");
+        authorizeAttribute!.Roles.Should().Be("Admin,Manager");
+    }
 
     /// <summary>
     /// Creates a test product with default or specified values to reduce test data redundancy.

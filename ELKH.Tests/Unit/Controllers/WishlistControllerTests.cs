@@ -1,235 +1,141 @@
 using FluentAssertions;
+using ELKH.Controllers;
+using ELKH.Data;
+using ELKH.Models;
+using ELKH.Services;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Controllers;
 using Microsoft.AspNetCore.Mvc.ViewFeatures;
 using Microsoft.AspNetCore.Routing;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging.Abstractions;
 using Moq;
 using System.Security.Claims;
 using Xunit;
-using ELKH.Controllers;
-using ELKH.Services;
-using ELKH.ViewModels;
 
 namespace ELKH.Tests.Unit.Controllers;
 
-/// <summary>
-/// Unit tests for WishlistController functionality.
-/// Tests wishlist operations and user interactions.
-/// </summary>
 public class WishlistControllerTests
 {
-    private readonly Mock<IWishlistService> _mockWishlistService;
-    private readonly Mock<IUserService> _mockUserService;
-    private readonly Mock<ApplicationDbContext> _mockDbContext;
-    private readonly Mock<ILogger<WishlistController>> _mockLogger;
+    private readonly Mock<IWishlistService> _mockWishlistService = new();
+    private readonly Mock<IUserService> _mockUserService = new();
+    private readonly ApplicationDbContext _db;
     private readonly WishlistController _controller;
 
     public WishlistControllerTests()
     {
-        // Setup mocks
-        _mockWishlistService = new Mock<IWishlistService>();
-        _mockUserService = new Mock<IUserService>();
-        _mockLogger = new Mock<ILogger<WishlistController>>();
-
         var options = new DbContextOptionsBuilder<ApplicationDbContext>()
-            .UseInMemoryDatabase(databaseName: Guid.NewGuid().ToString())
+            .UseInMemoryDatabase(Guid.NewGuid().ToString())
             .Options;
-        _mockDbContext = new Mock<ApplicationDbContext>(options);
+        _db = new ApplicationDbContext(options);
 
-        // Create controller under test
         _controller = new WishlistController(
             _mockWishlistService.Object,
             _mockUserService.Object,
-            _mockLogger.Object,
-            _mockDbContext.Object);
+            NullLogger<WishlistController>.Instance,
+            _db);
 
-        // Setup controller context
         var httpContext = new DefaultHttpContext();
         var actionContext = new ActionContext(httpContext, new RouteData(), new ControllerActionDescriptor());
         _controller.ControllerContext = new ControllerContext(actionContext);
         _controller.TempData = new TempDataDictionary(httpContext, Mock.Of<ITempDataProvider>());
-        
-        // Setup authenticated user
+
         SetupAuthenticatedUser("test@example.com");
     }
 
     [Fact]
     public async Task Index_ShouldReturnViewWithWishlistItems()
     {
-        // Arrange
-        var wishlistItems = new List<WishlistVM>
+        var wishlistItems = new List<WishListItemModel>
         {
-            new WishlistVM { ProductId = 1, ProductName = "Product 1", Price = 10.99m },
-            new WishlistVM { ProductId = 2, ProductName = "Product 2", Price = 15.99m }
+            new()
+            {
+                FkProductId = 1,
+                Product = new ProductModel { Name = "Product 1", Price = 10.99m }
+            },
+            new()
+            {
+                FkProductId = 2,
+                Product = new ProductModel { Name = "Product 2", Price = 15.99m }
+            }
         };
 
-        _mockWishlistService.Setup(w => w.GetWishlistItemsAsync("test@example.com"))
-                           .ReturnsAsync(wishlistItems);
+        _mockWishlistService.Setup(w => w.GetItemsAsync("test@example.com", "date_desc"))
+            .ReturnsAsync(wishlistItems);
 
-        // Act
         var result = await _controller.Index();
 
-        // Assert
         var viewResult = result.Should().BeOfType<ViewResult>().Subject;
-        var model = viewResult.Model.Should().BeAssignableToType<IEnumerable<WishlistVM>>().Subject;
+        var model = viewResult.Model.Should().BeAssignableTo<IEnumerable<WishListItemModel>>().Subject;
         model.Should().HaveCount(2);
-        model.First().ProductName.Should().Be("Product 1");
+        model.First().Product.Name.Should().Be("Product 1");
     }
 
     [Fact]
-    public async Task AddToWishlist_WithValidProductId_ShouldReturnSuccessJson()
+    public async Task AddAjax_WithValidProductId_ShouldReturnSuccessJson()
     {
-        // Arrange
-        _mockWishlistService.Setup(w => w.AddToWishlistAsync("test@example.com", 1))
-                           .ReturnsAsync(true);
+        _mockWishlistService.Setup(w => w.AddAsync("test@example.com", 1))
+            .ReturnsAsync(new WishlistResult { Success = true, Message = "Added", Count = 1 });
 
-        // Act
-        var result = await _controller.AddToWishlist(1);
+        var result = await _controller.AddAjax(1);
 
-        // Assert
         var jsonResult = result.Should().BeOfType<JsonResult>().Subject;
-        var value = jsonResult.Value;
-        value.Should().NotBeNull();
-        
-        var successProperty = value!.GetType().GetProperty("success");
-        successProperty.Should().NotBeNull();
-        successProperty!.GetValue(value).Should().Be(true);
+        var value = jsonResult.Value.Should().NotBeNull().Subject;
+        value.GetType().GetProperty("Success")!.GetValue(value).Should().Be(true);
+        value.GetType().GetProperty("Count")!.GetValue(value).Should().Be(1);
     }
 
     [Fact]
-    public async Task AddToWishlist_WithInvalidProductId_ShouldReturnFailureJson()
+    public async Task RemoveAjax_WithValidProductId_ShouldReturnSuccessJson()
     {
-        // Arrange
-        _mockWishlistService.Setup(w => w.AddToWishlistAsync("test@example.com", 999))
-                           .ReturnsAsync(false);
+        _mockWishlistService.Setup(w => w.RemoveAsync("test@example.com", 1))
+            .ReturnsAsync(new WishlistResult { Success = true, Message = "Removed", Count = 0 });
 
-        // Act
-        var result = await _controller.AddToWishlist(999);
+        var result = await _controller.RemoveAjax(1);
 
-        // Assert
         var jsonResult = result.Should().BeOfType<JsonResult>().Subject;
-        var value = jsonResult.Value;
-        value.Should().NotBeNull();
-        
-        var successProperty = value!.GetType().GetProperty("success");
-        successProperty!.GetValue(value).Should().Be(false);
+        var value = jsonResult.Value.Should().NotBeNull().Subject;
+        value.GetType().GetProperty("Success")!.GetValue(value).Should().Be(true);
+        value.GetType().GetProperty("Count")!.GetValue(value).Should().Be(0);
     }
 
     [Fact]
-    public async Task RemoveFromWishlist_WithValidId_ShouldReturnSuccessJson()
+    public async Task Add_ShouldRedirectAndSetSuccessMessage()
     {
-        // Arrange
-        _mockWishlistService.Setup(w => w.RemoveFromWishlistAsync(1))
-                           .ReturnsAsync(true);
+        _controller.ControllerContext.HttpContext.Request.Headers["Referer"] = "/Product/Details/1";
+        _mockWishlistService.Setup(w => w.AddAsync("test@example.com", 1))
+            .ReturnsAsync(new WishlistResult { Success = true, Count = 1 });
 
-        // Act
-        var result = await _controller.RemoveFromWishlist(1);
+        var result = await _controller.Add(1);
 
-        // Assert
-        var jsonResult = result.Should().BeOfType<JsonResult>().Subject;
-        var value = jsonResult.Value;
-        value.Should().NotBeNull();
-        
-        var successProperty = value!.GetType().GetProperty("success");
-        successProperty!.GetValue(value).Should().Be(true);
+        var redirectResult = result.Should().BeOfType<RedirectResult>().Subject;
+        redirectResult.Url.Should().Be("/Product/Details/1");
+        _controller.TempData["Message"].Should().Be("success, Product added to your wishlist");
     }
 
     [Fact]
-    public async Task RemoveFromWishlist_WithInvalidId_ShouldReturnFailureJson()
+    public async Task Remove_ShouldRedirectToIndexAndSetSuccessMessage()
     {
-        // Arrange
-        _mockWishlistService.Setup(w => w.RemoveFromWishlistAsync(999))
-                           .ReturnsAsync(false);
+        _mockWishlistService.Setup(w => w.RemoveAsync("test@example.com", 1))
+            .ReturnsAsync(new WishlistResult { Success = true, Count = 0 });
 
-        // Act
-        var result = await _controller.RemoveFromWishlist(999);
+        var result = await _controller.Remove(1);
 
-        // Assert
-        var jsonResult = result.Should().BeOfType<JsonResult>().Subject;
-        var value = jsonResult.Value;
-        value.Should().NotBeNull();
-        
-        var successProperty = value!.GetType().GetProperty("success");
-        successProperty!.GetValue(value).Should().Be(false);
-    }
-
-    [Fact]
-    public async Task CheckIsInWishlist_WithProductInWishlist_ShouldReturnTrue()
-    {
-        // Arrange
-        _mockWishlistService.Setup(w => w.IsInWishlistAsync("test@example.com", 1))
-                           .ReturnsAsync(true);
-
-        // Act
-        var result = await _controller.CheckIsInWishlist(1);
-
-        // Assert
-        var jsonResult = result.Should().BeOfType<JsonResult>().Subject;
-        var value = jsonResult.Value;
-        value.Should().NotBeNull();
-        
-        var isInWishlistProperty = value!.GetType().GetProperty("isInWishlist");
-        isInWishlistProperty.Should().NotBeNull();
-        isInWishlistProperty!.GetValue(value).Should().Be(true);
-    }
-
-    [Fact]
-    public async Task CheckIsInWishlist_WithProductNotInWishlist_ShouldReturnFalse()
-    {
-        // Arrange
-        _mockWishlistService.Setup(w => w.IsInWishlistAsync("test@example.com", 1))
-                           .ReturnsAsync(false);
-
-        // Act
-        var result = await _controller.CheckIsInWishlist(1);
-
-        // Assert
-        var jsonResult = result.Should().BeOfType<JsonResult>().Subject;
-        var value = jsonResult.Value;
-        value.Should().NotBeNull();
-        
-        var isInWishlistProperty = value!.GetType().GetProperty("isInWishlist");
-        isInWishlistProperty!.GetValue(value).Should().Be(false);
-    }
-
-    [Fact]
-    public async Task GetWishlistCount_ShouldReturnCorrectCount()
-    {
-        // Arrange
-        var wishlistItems = new List<WishlistVM>
-        {
-            new WishlistVM(),
-            new WishlistVM(),
-            new WishlistVM()
-        };
-
-        _mockWishlistService.Setup(w => w.GetWishlistItemsAsync("test@example.com"))
-                           .ReturnsAsync(wishlistItems);
-
-        // Act
-        var result = await _controller.GetWishlistCount();
-
-        // Assert
-        var jsonResult = result.Should().BeOfType<JsonResult>().Subject;
-        var value = jsonResult.Value;
-        value.Should().NotBeNull();
-        
-        var countProperty = value!.GetType().GetProperty("count");
-        countProperty!.GetValue(value).Should().Be(3);
+        var redirectResult = result.Should().BeOfType<RedirectToActionResult>().Subject;
+        redirectResult.ActionName.Should().Be(nameof(WishlistController.Index));
+        _controller.TempData["Message"].Should().Be("success, Product removed from your wishlist");
     }
 
     private void SetupAuthenticatedUser(string email)
     {
         var claims = new List<Claim>
         {
-            new Claim(ClaimTypes.Name, email),
-            new Claim(ClaimTypes.NameIdentifier, "1")
+            new(ClaimTypes.Name, email),
+            new(ClaimTypes.Email, email),
+            new(ClaimTypes.NameIdentifier, "1")
         };
-        var identity = new ClaimsIdentity(claims, "Test");
-        var principal = new ClaimsPrincipal(identity);
-        
-        _controller.ControllerContext.HttpContext.User = principal;
+
+        _controller.ControllerContext.HttpContext.User = new ClaimsPrincipal(new ClaimsIdentity(claims, "Test"));
     }
 }

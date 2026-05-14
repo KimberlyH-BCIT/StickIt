@@ -143,7 +143,7 @@ public class EcommerceWorkflowIntegrationTests : IClassFixture<ELKHWebApplicatio
         healthData.GetProperty("status").GetString().Should().Be("Healthy");
 
         // Step 2: Check if individual health checks are reported
-        healthData.GetProperty("results").Should().ValueKind.Should().Be(JsonValueKind.Object);
+        healthData.GetProperty("results").ValueKind.Should().Be(JsonValueKind.Object);
     }
 
     [Fact]

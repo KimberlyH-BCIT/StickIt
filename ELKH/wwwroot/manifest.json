@@ -1,7 +1,7 @@
 {
-  "name": "ELKH - Sticker Store",
-  "short_name": "ELKH",
-  "description": "Your favorite online sticker store with a wide selection of kawaii and decorative stickers",
+  "name": "StickIt - Sticker Storefront",
+  "short_name": "StickIt",
+  "description": "StickIt is a modern sticker storefront with polished browsing, checkout, and portfolio-ready eCommerce architecture.",
   "start_url": "/",
   "display": "standalone",
   "background_color": "#ffffff",

@@ -3,6 +3,7 @@ using Microsoft.EntityFrameworkCore;
 using ELKH.Data;
 using ELKH.Models;
 using ELKH.Services;
+using Microsoft.Extensions.Logging.Abstractions;
 
 namespace ELKH.Tests.Unit.Services
 {
@@ -22,7 +23,7 @@ namespace ELKH.Tests.Unit.Services
                 .Options;
 
             _context = new ApplicationDbContext(options);
-            _shippingService = new ShippingService(_context);
+            _shippingService = new ShippingService(_context, NullLogger<ShippingService>.Instance);
 
             // Seed test data
             SeedTestData();
@@ -115,7 +116,7 @@ namespace ELKH.Tests.Unit.Services
                 .UseInMemoryDatabase(databaseName: Guid.NewGuid().ToString())
                 .Options);
             
-            var emptyService = new ShippingService(emptyContext);
+            var emptyService = new ShippingService(emptyContext, NullLogger<ShippingService>.Instance);
 
             // Act
             var result = await emptyService.GetAvailableShippingMethodsAsync();

@@ -4,6 +4,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.ViewFeatures;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.Logging;
 using Moq;
 using Xunit;
 using ELKH.Controllers;
@@ -27,6 +28,8 @@ public class CheckoutControllerGuestTests : IDisposable
     private readonly Mock<ICartService> _mockCartService;
     private readonly Mock<IGuestCartService> _mockGuestCartService;
     private readonly Mock<IConfiguration> _mockConfiguration;
+    private readonly Mock<IShippingService> _mockShippingService;
+    private readonly Mock<ILogger<CheckoutController>> _mockLogger;
     private readonly CheckoutController _controller;
 
     public CheckoutControllerGuestTests()
@@ -42,6 +45,8 @@ public class CheckoutControllerGuestTests : IDisposable
         _mockCartService = new Mock<ICartService>();
         _mockGuestCartService = new Mock<IGuestCartService>();
         _mockConfiguration = new Mock<IConfiguration>();
+        _mockShippingService = new Mock<IShippingService>();
+        _mockLogger = new Mock<ILogger<CheckoutController>>();
 
         _controller = new CheckoutController(
             _context,
@@ -49,7 +54,9 @@ public class CheckoutControllerGuestTests : IDisposable
             _mockContactDetailRepo.Object,
             _mockCartService.Object,
             _mockGuestCartService.Object,
-            _mockConfiguration.Object);
+            _mockConfiguration.Object,
+            _mockShippingService.Object,
+            _mockLogger.Object);
 
         SetupControllerContext();
         SeedTestData();
@@ -287,8 +294,8 @@ public class CheckoutControllerGuestTests : IDisposable
         var order = await _context.Orders.FirstOrDefaultAsync();
         order.Should().NotBeNull();
         order!.FkRegisteredUserId.Should().Be(0); // Guest order
-        order.OrderStatus.Should().Be("Paid");
-        order.DeliveryStatus.Should().Be("Pending");
+        order.OrderStatus.Should().Be(OrderStatus.Paid);
+        order.DeliveryStatus.Should().Be(DeliveryStatus.Pending);
 
         // Verify contact detail was created
         var contact = await _context.ContactDetails.FirstOrDefaultAsync();
@@ -428,10 +435,10 @@ public class CheckoutControllerGuestTests : IDisposable
             PkOrderId = 1,
             FkContactId = contact.PkContactId, // Use the generated PK
             FkRegisteredUserId = 0, // Guest order
-            OrderStatus = "Paid",
+            OrderStatus = OrderStatus.Paid,
             TotalAmount = 43.81m,
             CreatedAt = DateTime.UtcNow,
-            DeliveryStatus = "Pending",
+            DeliveryStatus = DeliveryStatus.Pending,
             ContactDetail = contact // Set navigation property
         };
 
@@ -487,7 +494,7 @@ public class CheckoutControllerGuestTests : IDisposable
             PkOrderId = 1,
             FkContactId = 1,
             FkRegisteredUserId = 0,
-            OrderStatus = "Paid",
+            OrderStatus = OrderStatus.Paid,
             TotalAmount = 43.81m
         };
 

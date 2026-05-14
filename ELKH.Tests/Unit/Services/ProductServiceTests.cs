@@ -54,7 +54,7 @@ public class ProductServiceTests
             Price = p.Price
         }).ToList();
 
-        _mockMapper.Setup(m => m.ToViewModels(It.IsAny<IEnumerable<ProductModel>>()))
+        _mockMapper.Setup(m => m.ToViewModels(It.IsAny<List<ProductModel>>()))
                   .Returns(expectedViewModels);
 
         // Act
@@ -63,7 +63,7 @@ public class ProductServiceTests
         // Assert
         result.Should().NotBeNull();
         result.Should().HaveCount(2);
-        _mockMapper.Verify(m => m.ToViewModels(It.IsAny<IEnumerable<ProductModel>>()), Times.Once);
+        _mockMapper.Verify(m => m.ToViewModels(It.IsAny<List<ProductModel>>()), Times.Once);
     }
 
     [Fact]
@@ -118,7 +118,7 @@ public class ProductServiceTests
         var searchQuery = "test";
         var expectedResults = new List<SearchResultDto>
         {
-            new SearchResultDto { Id = 1, Name = "Test Product", Score = 0.9 }
+            new SearchResultDto { Id = 1, Name = "Test Product", Price = 19.99m }
         };
 
         _mockSearchService.Setup(s => s.SearchNames(searchQuery))
@@ -130,7 +130,7 @@ public class ProductServiceTests
         // Assert
         result.Should().NotBeNull();
         result.Should().HaveCount(1);
-        result.First().ProductName.Should().Be("Test Product");
+        result.First().Name.Should().Be("Test Product");
         _mockSearchService.Verify(s => s.SearchNames(searchQuery), Times.Once);
     }
 

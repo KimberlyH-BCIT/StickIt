@@ -8,10 +8,10 @@ using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Localization;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.AspNetCore.Identity.UI.Services;
-using Microsoft.AspNetCore.Mvc.Versioning;
+using Asp.Versioning;
+using Asp.Versioning.ApiExplorer;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Filters;
-using Microsoft.AspNetCore.Mvc.ApiExplorer;
 using System.Globalization;
 
 // =====================================================================
@@ -90,21 +90,32 @@ builder.Services.AddHealthChecks()
 builder.Services.AddSwaggerDocumentation();
 
 // -- Application Insights & Monitoring
-// Azure Application Insights for telemetry, performance monitoring, and diagnostics
-builder.Services.AddApplicationInsightsTelemetry(options =>
+// Azure Application Insights for telemetry, performance monitoring, and diagnostics.
+// Only enable the exporter when a connection string is configured so local startup
+// does not fail in environments that don't provision Azure Monitor.
+var applicationInsightsConnectionString =
+    builder.Configuration.GetConnectionString("ApplicationInsights") ??
+    builder.Configuration["APPLICATIONINSIGHTS_CONNECTION_STRING"];
+
+var isApplicationInsightsConfigured = !string.IsNullOrWhiteSpace(applicationInsightsConnectionString);
+
+if (isApplicationInsightsConfigured)
 {
-    options.ConnectionString = builder.Configuration.GetConnectionString("ApplicationInsights");
-    options.EnableQuickPulseMetricStream = true;
-    options.EnableAuthenticationTrackingJavaScript = true;
-    options.EnableDependencyTrackingTelemetryModule = true;
-    options.EnablePerformanceCounterCollectionModule = true;
-    options.EnableRequestTrackingTelemetryModule = true;
-});
+    builder.Services.AddApplicationInsightsTelemetry(options =>
+    {
+        options.ConnectionString = applicationInsightsConnectionString;
+        options.EnableQuickPulseMetricStream = true;
+        options.EnableAuthenticationTrackingJavaScript = true;
+        options.EnableDependencyTrackingTelemetryModule = true;
+        options.EnablePerformanceCounterCollectionModule = true;
+        options.EnableRequestTrackingTelemetryModule = true;
+    });
+}
 
 // Add API versioning
 builder.Services.AddApiVersioning(options =>
 {
-    options.DefaultApiVersion = new Microsoft.AspNetCore.Mvc.ApiVersion(1, 0);
+    options.DefaultApiVersion = new ApiVersion(1, 0);
     options.AssumeDefaultVersionWhenUnspecified = true;
     options.ApiVersionReader = ApiVersionReader.Combine(
         new QueryStringApiVersionReader("v"),
@@ -112,9 +123,9 @@ builder.Services.AddApiVersioning(options =>
         new UrlSegmentApiVersionReader()
     );
     options.ReportApiVersions = true;
-});
-
-builder.Services.AddVersionedApiExplorer(setup =>
+})
+.AddMvc()
+.AddApiExplorer(setup =>
 {
     setup.GroupNameFormat = "'v'VVV";
     setup.SubstituteApiVersionInUrl = true;
@@ -245,6 +256,12 @@ builder.Services.AddHttpContextAccessor(); // Required for CorrelationId access 
 // =====================================================================
 var app = builder.Build();
 
+if (!isApplicationInsightsConfigured)
+{
+    app.Logger.LogWarning(
+        "Application Insights telemetry is disabled because no ApplicationInsights connection string was configured.");
+}
+
 // =======================================================================
 // CONFIGURATION VALIDATION
 // Validate all required secrets and configuration at startup to fail fast
@@ -333,10 +350,39 @@ await using (var migrationScope = app.Services.CreateAsyncScope())
         var db = sp.GetRequiredService<ApplicationDbContext>();
         var imageDb = sp.GetRequiredService<ImageStoreContext>();
 
-        
-        await db.Database.MigrateAsync();
-        await imageDb.Database.MigrateAsync();
-        app.Logger.LogInformation("Migrations applied successfully.");
+        var appMigrations = db.Database.GetMigrations().ToList();
+        if (appMigrations.Count > 0)
+        {
+            await db.Database.MigrateAsync();
+            app.Logger.LogInformation("Application database migrations applied successfully.");
+        }
+        else
+        {
+            if (app.Environment.IsDevelopment() &&
+                db.Database.IsSqlite() &&
+                !await TableExistsAsync(db, "Products"))
+            {
+                app.Logger.LogWarning(
+                    "Application database is missing the Products table and no migrations were found. Recreating the local SQLite database.");
+
+                await db.Database.EnsureDeletedAsync();
+            }
+
+            await db.Database.EnsureCreatedAsync();
+            app.Logger.LogWarning("No ApplicationDbContext migrations were found. EnsureCreated was used instead.");
+        }
+
+        var imageMigrations = imageDb.Database.GetMigrations().ToList();
+        if (imageMigrations.Count > 0)
+        {
+            await imageDb.Database.MigrateAsync();
+            app.Logger.LogInformation("Image store database migrations applied successfully.");
+        }
+        else
+        {
+            await imageDb.Database.EnsureCreatedAsync();
+            app.Logger.LogWarning("No ImageStoreContext migrations were found. EnsureCreated was used instead.");
+        }
     }
     catch (Exception ex)
     {
@@ -385,6 +431,27 @@ if (runSeeders)
             await db.Database.ExecuteSqlRawAsync("PRAGMA foreign_keys=ON");
         }
     }
+}
+
+static async Task<bool> TableExistsAsync(DbContext context, string tableName)
+{
+    await using var connection = context.Database.GetDbConnection();
+
+    if (connection.State != System.Data.ConnectionState.Open)
+    {
+        await connection.OpenAsync();
+    }
+
+    await using var command = connection.CreateCommand();
+    command.CommandText = "SELECT 1 FROM sqlite_master WHERE type = 'table' AND name = $tableName LIMIT 1;";
+
+    var parameter = command.CreateParameter();
+    parameter.ParameterName = "$tableName";
+    parameter.Value = tableName;
+    command.Parameters.Add(parameter);
+
+    var result = await command.ExecuteScalarAsync();
+    return result is not null and not DBNull;
 }
 
 app.Run();
