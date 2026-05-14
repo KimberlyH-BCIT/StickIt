@@ -10,12 +10,12 @@ This directory contains comprehensive test coverage configuration and execution 
 - **ReportGenerator**: Creates reports from coverage data in various formats
 - **Built-in MSBuild Integration**: Automatic coverage collection during test runs
 
-### Current Measured Baseline
+## Current measured baseline
 - **Latest full-suite artifact**: `TestResults/db821130-2eea-4277-96a3-df73b9af58d7/coverage.cobertura.xml`
 - **Measured line coverage**: `17.94%`
 - **Measured branch coverage**: `9.71%`
 
-The current `ELKH.Tests` project still enforces higher thresholds in project configuration, but the repository does not currently meet them and the full suite is not green. Keep documentation and badges aligned to measured outputs rather than aspirational goals.
+The current `ELKH.Tests` project still enforces higher thresholds in project configuration, but coverage and threshold expectations should be documented separately from pass/fail suite status.
 
 ## Running Tests with Coverage
 
@@ -151,10 +151,15 @@ protected override void SeedDatabase()
     file: ./TestResults/**/coverage.cobertura.xml
 ```
 
-### Current Suite State
-- **Latest full-suite run**: 302 tests executed, 109 failed, 193 passed
-- **Known failure pattern**: several integration tests expect routes/endpoints that currently return 404 or HTML instead of the asserted API payloads
-- **Targeted validation**: checkout and product controller regression set passes (23/23) when run with thresholds disabled for the filtered slice
+### Current suite state
+- **Latest full integration run**: 91 integration tests executed, 0 failed, 91 passed
+- **Latest targeted catalog/API integration run**: 34 tests executed, 0 failed, 34 passed
+- **Verification commands used**:
+
+```bash
+dotnet test "ELKH.Tests\ELKH.Tests.csproj" -p:Threshold=0 --filter "FullyQualifiedName~ELKH.Tests.Integration"
+dotnet test "ELKH.Tests\ELKH.Tests.csproj" -p:Threshold=0 --filter "FullyQualifiedName~ProductCatalogIntegrationTests|FullyQualifiedName~ProductApiIntegrationTests"
+```
 
 ## Test Organization Best Practices
 

@@ -1,322 +1,271 @@
-# 🏷️ StickIt - Sticker eCommerce Portfolio Project
+# StickIt
 
-[![Build Status](https://github.com/Velyene/StickIt/actions/workflows/dotnet-ci.yml/badge.svg)](https://github.com/Velyene/StickIt/actions)
-[![Docker](https://img.shields.io/badge/docker-ready-blue.svg)](docs/DEPLOYMENT.md)
+StickIt is a portfolio eCommerce app for selling custom stickers, built with ASP.NET Core on .NET 10.
 
-> ASP.NET Core e-commerce platform for custom stickers.
+It started as a group systems project under the internal name `ELKH`. This branch is the portfolio-facing version where I focused on hardening the app, tightening the architecture, improving the UI, documenting the tradeoffs, and stabilizing the test suite.
 
-## ✨ Key Features
+## What is this?
 
-- Product catalog with search and filtering
-- Shopping cart and checkout flows
-- User accounts, profiles, addresses, and order history
-- Ratings and reviews
-- Admin, manager, and staff workflows
-- Accessibility-conscious responsive UI
-- Dockerized local environment
-- Unit and integration test infrastructure with measured coverage reporting
+A full-stack web application with:
+- storefront browsing and search
+- cart and checkout flows
+- authentication and role-based areas
+- admin / manager / staff workflows
+- seeded demo data for local exploration
+- unit and integration tests
 
-### 🛒 **Core eCommerce**
-- **Product Catalog** - Advanced search with fuzzy matching and filtering
-- **Shopping Cart** - Real-time cart management with session persistence  
-- **Order Management** - Complete order lifecycle with status tracking
-- **User Accounts** - Registration, profiles, address book, order history
+## What can it do?
 
-### 🔐 **Security & Authentication**
-- **ASP.NET Core Identity** - Secure user authentication and authorization
-- **Role-based Access** - Admin, Manager, Staff, Customer roles
-- **Security Middleware** - Rate limiting, CORS, and data protection
+### Customer-facing flows
+- Browse a product catalog with search, filters, and product details
+- Add items to cart and move through checkout flows
+- Register, sign in, manage profile data, and view order history
+- Leave ratings and reviews
 
-### ⚡ **Performance & Scalability**
-- **Optimized Database** - SQLite with EF Core 10 and query optimization
-- **Image Processing** - Automatic image optimization and compression
-- **Caching Strategy** - In-app caching to support common storefront flows
-- **Background Services** - Async processing for heavy operations
+### Back-office flows
+- Admin, manager, and staff roles with separate workflows
+- Product and inventory management paths
+- Order and transaction views
+- User and role management
 
-### 📊 **Monitoring & Observability**
-- **Application Insights** - Telemetry integration present in the application
-- **Prometheus Metrics** - Metrics endpoints and related code paths are included
-- **Health Checks** - Database and service health endpoints are configured
-- **Structured Logging** - Application logging support is built into the project
+### Engineering-focused features
+- EF Core + SQLite local setup
+- ASP.NET Core Identity for auth and roles
+- Health checks and optional monitoring hooks
+- Docker-based local run path
+- Integration test host with isolated SQLite in-memory databases
 
-### 🎨 **Modern Architecture**
-- **Layered Design** - Decomposed controllers and separation of concerns
-- **Dependency Injection** - Service registration across application layers
-- **Dockerized Setup** - Container support and deployment documentation
+## UI walkthrough and portfolio evidence
 
-## 🖼️ Screenshots
+This repo still needs real product screenshots before it is presentation-ready. I have added a capture checklist so the README can point to the exact assets that should exist for a proper portfolio pass.
 
-| Surface | Preview |
-|---------|---------|
-| App logo | ![StickIt logo](ELKH/wwwroot/logo-stickit.png) |
-| Landing page artwork | ![StickIt landing artwork](ELKH/wwwroot/welcome-sticker-removebg.png) |
+### Screenshots and demo assets to capture
 
-## 🏗️ Architecture Overview
+| Surface | Planned asset | Why it matters |
+|---|---|---|
+| Homepage | `docs/assets/portfolio/homepage-desktop.png` | Shows the visual language and first-run experience |
+| Product catalog | `docs/assets/portfolio/catalog-desktop.png` | Shows search, filtering, and intentional sample data |
+| Cart | `docs/assets/portfolio/cart-desktop.png` | Shows cart summary and pricing flow |
+| Checkout | `docs/assets/portfolio/checkout-desktop.png` | Shows form design and checkout UX |
+| Admin dashboard | `docs/assets/portfolio/admin-dashboard-desktop.png` | Shows role-based back-office workflows |
+| Staff order screen | `docs/assets/portfolio/staff-orders-desktop.png` | Shows operational workflow beyond the storefront |
+| Demo GIF | `docs/assets/portfolio/storefront-flow.gif` | Short browse-to-cart or browse-to-checkout flow |
+| Responsive views | `docs/assets/portfolio/homepage-mobile.png`, `docs/assets/portfolio/catalog-tablet.png` | Shows the app does not only work at desktop width |
 
-```mermaid
-graph TB
-    subgraph "Presentation Layer"
-        UI[Razor Pages]
-        API[Controllers]
-    end
+Current visual assets already in the repo:
 
-    subgraph "Business Logic"
-        Services[Services]
-        Repos[Repositories]
-    end
+| Preview | Asset |
+|---|---|
+| Logo | ![StickIt logo](ELKH/wwwroot/logo-stickit.png) |
+| Architecture | ![Architecture overview](docs/assets/architecture-overview.svg) |
 
-    subgraph "Data Layer"
-        EF[Entity Framework]
-        DB[(SQLite Database)]
-    end
+Capture checklist: [docs/assets/portfolio/README.md](docs/assets/portfolio/README.md)
 
-    subgraph "Infrastructure"
-        Cache[Memory Cache]
-        Search[Fuzzy Search]
-        Monitor[Monitoring]
-    end
+## What I personally built / improved
 
-    UI --> Services
-    API --> Services
-    Services --> Repos
-    Repos --> EF
-    EF --> DB
-    Services --> Cache
-    Services --> Search
-    Services --> Monitor
-```
+This branch is intended to show my portfolio contributions, especially around:
+- refactoring and hardening the storefront architecture
+- product catalog search and filter behavior
+- checkout and guest-checkout stabilization
+- role-based workflow cleanup
+- integration-test reliability and shared-host isolation
+- Docker and local-environment simplification
+- documentation cleanup and portfolio positioning
+- UI polish, accessibility-minded improvements, and design-system cleanup
 
-### Controller Architecture
-- **UserProfileController** - Dashboard, profile management, avatar upload
-- **UserAddressController** - Address book CRUD operations
-- **UserReviewController** - Product ratings and store testimonials
-- **AdminUserController** - User management and role administration
-- **AdminAnalyticsController** - Sales analytics and business intelligence
-- **AdminSystemController** - System management and maintenance
+The original team credits are preserved later in this README.
 
-## 🚀 Quick Start
+## Run it in 5 minutes
 
 ### Prerequisites
-- **[.NET 10 SDK](https://dotnet.microsoft.com/download)** - Pinned via `global.json` to `10.0.300`
-- **[Visual Studio 2026](https://visualstudio.microsoft.com/)** - Community, Professional, or Enterprise
-- **[Docker Desktop](https://www.docker.com/products/docker-desktop)** - For containerized deployment
-- **[Git](https://git-scm.com/)** - Version control
+- .NET 10 SDK (`global.json` pins `10.0.300`)
+- SQLite support via the normal .NET local workflow
+- Optional: Docker Desktop for the container path
 
-### Local Development Setup
-
-1. **Clone the Repository**
-   ```bash
-   git clone https://github.com/Velyene/StickIt.git
-   cd StickIt
-   ```
-
-2. **Restore Dependencies**
-   ```bash
-   dotnet restore
-   ```
-
-3. **Setup Database**
-   ```bash
-   # Apply migrations and seed test data
-   dotnet ef database update --project ELKH
-   ```
-
-4. **Run the Application**
-   ```bash
-   dotnet run --project ELKH
-   ```
-
-5. **Access the Application**
-   - **Main Site**: http://localhost:5000
-   - **HTTPS**: https://localhost:5001
-   - **Health Checks**: http://localhost:5000/health
-
-### Docker Development (supported local container path)
+### Local app run
 
 ```bash
-# Optional: create a local environment file for secrets and overrides
+git clone https://github.com/Velyene/StickIt.git
+cd StickIt
+dotnet restore
+dotnet ef database update --project ELKH
+dotnet run --project ELKH
+```
+
+Then open:
+- App: `https://localhost:5001` or `http://localhost:5000`
+- Health check: `https://localhost:5001/health`
+
+### Local Docker run
+
+```bash
 copy .env.example .env
-
-# Build and run the app with SQLite only
 docker compose up --build
-
-# View logs
-docker compose logs -f elkh-app
-
-# Stop containers
-docker compose down
 ```
 
-This local Docker setup runs a single app container backed by the repository's SQLite files.
-PostgreSQL, Redis, Grafana, Prometheus, and Nginx are not required for the supported local happy path.
+Then open:
+- App: `http://localhost:8080`
+- Health check: `http://localhost:8080/health`
 
-After startup, open:
-- **Main Site**: http://localhost:8080
-- **Health Checks**: http://localhost:8080/health
+## Demo logins
 
-## 🧪 Testing
+The app seeds local demo accounts through `ELKH/Data/DbSeeder.Users.cs`.
 
-### Run All Tests
-```bash
-# Unit and integration tests with coverage artifact generation
-dotnet test --collect:"XPlat Code Coverage"
+| Role | Email | Password |
+|---|---|---|
+| Admin | `admin@stickit.dev` | `Admin@2025!` |
+| Manager | `manager@stickit.dev` | `Manager@2025!` |
+| Staff | `staff@stickit.dev` | `Staff@2025!` |
 
-# Run specific test category
-dotnet test --filter Category=Unit
-```
+The customer seeder also generates many demo customer accounts with `@home.com` emails and `Demo@2025!##` style passwords for local and demo exploration.
 
-### Generate Coverage Report
-```bash
-# Install ReportGenerator (one-time)
-dotnet tool install -g dotnet-reportgenerator-globaltool
+## Sample data that looks intentional
 
-# Generate HTML coverage report
-reportgenerator -reports:"./TestResults/**/coverage.cobertura.xml" -targetdir:"./CoverageReport" -reporttypes:Html
-```
+The seeded catalog is not just placeholder rows. It includes themed sticker sets with names, prices, discounts, stock levels, and categories that are easy to demo in screenshots.
 
-**Latest measured coverage artifact:**
-- Full-suite artifact: `TestResults/db821130-2eea-4277-96a3-df73b9af58d7/coverage.cobertura.xml`
-- Line coverage: `17.94%`
-- Branch coverage: `9.71%`
+Examples from the seeded catalog:
+- `Maple Leaf Pride Sticker`
+- `Kawaii Panda Sticker`
+- `Santa Claus Face Sticker`
+- `Pizza Slice Sticker`
+- `Toronto Skyline Sticker`
+- `Quokka Smile Sticker`
 
-This is the current measured baseline from the repository's full `ELKH.Tests` coverage run. The broader suite still contains failing integration tests, so treat these numbers as the latest captured evidence rather than a stability badge.
+That makes it possible to capture portfolio screenshots that look curated instead of fake or auto-generated.
 
-## 📦 Deployment
+## Technical decisions worth noticing
 
-### Docker Workflow
+### 1. Razor-first app with layered organization
+The workspace contains Razor Pages support, MVC controllers, services, repositories, and EF Core-backed models. The project is not trying to be a microservices system; it is a layered monolith designed to be understandable in one repo.
 
-```bash
-# Build production image
-docker build -f Dockerfile -t stickit-web:latest .
+### 2. SQLite for the local happy path
+I kept the supported local path simple. You can run the app with SQLite and the seeded data without provisioning a full external stack.
 
-# Run production stack
-docker compose -f docker-compose.prod.yml up -d
-```
+### 3. Test-host isolation for integration reliability
+A major part of the portfolio hardening work was stabilizing the integration suite by isolating the shared host and aligning fragile tests with real runtime behavior.
 
-### Azure Deployment
+### 4. Design-system separation
+Customer-facing visual polish lives mainly in `kawaii-theme.css`, while `site.css` holds site-level utilities, accessibility helpers, and compatibility styling.
 
-```bash
-# Deploy to Azure using provided scripts
-./Infrastructure/deploy.ps1 -Environment Production
-```
+### 5. Optional infrastructure, not mandatory local complexity
+Monitoring, deployment, and cloud-oriented docs exist, but the supported local path is intentionally much smaller than the full aspirational infrastructure story.
 
-See [Deployment Guide](docs/DEPLOYMENT.md) for detailed instructions.
+## Accessibility receipts
 
-## 📊 Monitoring and Diagnostics
+I do not want to leave accessibility at the level of “WCAG compliant” marketing copy, so here are concrete implementation examples already present in the codebase:
 
-The application includes health checks and optional telemetry hooks. For local development, the supported path is the app itself plus SQLite; additional monitoring infrastructure is documented separately and should be treated as optional deployment tooling rather than part of the default local setup.
+- Skip links in the shared layout for keyboard users (`ELKH/Views/Shared/_Layout.cshtml`)
+- Search autocomplete wired as a listbox/combobox with keyboard navigation and ARIA state updates (`ELKH/wwwroot/js/site.js`)
+- Live region and alert behavior in cart and checkout feedback (`ELKH/Views/Cart/Index.cshtml`, `ELKH/wwwroot/js/cart-ajax.js`)
+- Form validation messaging using `role="alert"` and `aria-live="polite"` patterns across auth and checkout flows
+- Reduced-motion and focus-visible styling support in the theme and site CSS
 
-## 🛠️ Development Workflow
+What is still missing for a stronger portfolio presentation:
+- committed axe or Lighthouse screenshots/results
+- a short keyboard-only walkthrough GIF
+- mobile screenshots showing touch target sizing and responsive layout behavior
 
-### Code Organization
-```
+Accessibility notes and references: [docs/ACCESSIBILITY.md](docs/ACCESSIBILITY.md)
+
+## Architecture at a glance
+
+![Architecture overview](docs/assets/architecture-overview.svg)
+
+## Repo map
+
+```text
 ELKH/
-├── Controllers/           # Decomposed feature controllers
-├── Services/             # Business logic services
-├── Repositories/         # Data access layer
-├── Models/              # Domain models and DTOs
-├── Views/               # Razor views and layouts
-├── Data/                # DbContext and migrations
-├── Telemetry/           # Application Insights processors
-├── Middleware/          # Custom middleware components
-└── Extensions/          # Service and app extensions
+├── Controllers/      MVC and API endpoints
+├── Views/            Razor views and shared layouts
+├── Areas/Identity/   Identity UI and account flows
+├── Services/         Business logic
+├── Repositories/     Data access abstractions
+├── Data/             DbContext, migrations, seeders
+├── Middleware/       HTTP pipeline behavior
+├── Extensions/       Service/app startup extensions
+└── wwwroot/          CSS, JS, images, static assets
 ```
 
-### Branching Strategy
-- **main** - Primary branch
-- **develop** - Integration branch
-- **feature/** - Feature branches
-- **hotfix/** - Targeted fixes
+## Testing
 
-### Code Standards
-- **C# 14** features and nullable reference types
-- **Clean Code** principles and SOLID design
-- **XML Documentation** for public APIs
-- **Unit Tests** for all business logic
+Run the full test project:
 
-## 🔧 Configuration
-
-### Environment Variables
 ```bash
-ASPNETCORE_ENVIRONMENT=Development
-ConnectionStrings__DefaultConnection="Data Source=elkh.db"
-ApplicationInsights__InstrumentationKey="your-key"
+dotnet test ELKH.Tests/ELKH.Tests.csproj
 ```
 
-For Docker, start from `.env.example` and only fill in the integrations you actually want to test locally.
+Current validated integration state on this branch:
+- full integration suite passing (`91/91`)
+- targeted catalog + product API integration slice passing (`34/34`)
 
-### User Secrets (Development)
+Latest verification commands used on this branch:
+
 ```bash
-dotnet user-secrets set "SmtpSettings:Password" "your-password"
-dotnet user-secrets set "ApplicationInsights:InstrumentationKey" "your-key"
+dotnet test "ELKH.Tests\ELKH.Tests.csproj" -p:Threshold=0 --filter "FullyQualifiedName~ELKH.Tests.Integration"
+dotnet test "ELKH.Tests\ELKH.Tests.csproj" -p:Threshold=0 --filter "FullyQualifiedName~ProductCatalogIntegrationTests|FullyQualifiedName~ProductApiIntegrationTests"
 ```
 
-## 📚 Documentation
+There is also coverage and reporting infrastructure in the repo, but this README is focused on how to run and inspect the app quickly instead of presenting the project like a product brochure.
 
-- **[Architecture Guide](docs/ARCHITECTURE.md)** - System design and patterns
-- **[API Documentation](docs/API.md)** - Endpoint reference and examples
-- **[Deployment Guide](docs/DEPLOYMENT.md)** - Docker and Azure deployment
-- **[Monitoring Guide](docs/MONITORING.md)** - Application Insights, Prometheus, and maintenance
-- **[User Guide](docs/USER_GUIDE.md)** - Customer, staff, and admin user documentation
-- **[Contributing Guidelines](docs/CONTRIBUTING.md)** - Development workflow and standards
-- **[Testing Guide](ELKH.Tests/README.md)** - Test coverage and execution
+## Known limitations
 
-## 🧭 Portfolio Positioning
+This is a portfolio project, not a production deployment blueprint.
 
-- **Public name:** StickIt
-- **Internal project name:** ELKH
-- **What this repository demonstrates:** storefront architecture work, UI polish, role-based workflows, deployment documentation, and ongoing hardening of a .NET eCommerce project
-- **Intended audience:** recruiters, instructors, and collaborators reviewing full-stack application work
+Intentionally not production-ready or not fully finished:
+- real payment and external-service integrations should be treated as demo and development paths unless fully configured
+- seeded demo credentials are suitable for local use only
+- real UI screenshots, responsive captures, and a short demo GIF still need to be committed
+- some docs describe optional or aspirational infrastructure beyond the supported local happy path
+- local SQLite is the easiest supported run path, but not a claim of production-scale persistence strategy
+- vendor and dev-tool browser warnings, for example CSS Hot Reload skips, may appear during local development and are not app defects
+- no committed axe/Lighthouse audit artifacts are in the repo yet
 
-## 🤝 Contributing
+## Roadmap / future improvements
 
-1. **Fork the Repository**
-2. **Create Feature Branch** - `git checkout -b feature/amazing-feature`
-3. **Write Tests** - Add or update relevant coverage for your changes
-4. **Commit Changes** - Use conventional commits
-5. **Push Branch** - `git push origin feature/amazing-feature`
-6. **Create Pull Request** - Include tests and documentation
+- add the planned homepage/catalog/cart/checkout/admin/staff screenshots
+- add a short storefront demo GIF and responsive screenshots
+- add a small scripted demo-data reset flow for portfolio reviewers
+- tighten README screenshots, demo narrative, and before and after architecture notes
+- improve coverage on high-value business logic and critical UI flows
+- continue trimming documentation that reads more enterprise platform than portfolio project
+- document a cleaner production-readiness checklist separating current reality from future work
+- add committed accessibility audit artifacts such as axe or Lighthouse captures
 
-See [Contributing Guidelines](docs/CONTRIBUTING.md) for detailed information.
+## Detailed docs
 
-## 👥 Original Team Credits
+The `docs/` folder is intentionally larger than this README. Use the README for the quick portfolio tour, then go deeper as needed.
 
-Originally built as a group systems project; this fork/branch includes my portfolio hardening and architecture work.
+- [Docs index](docs/README.md)
+- [Architecture guide](docs/ARCHITECTURE.md)
+- [API guide](docs/API.md)
+- [Deployment notes](docs/DEPLOYMENT.md)
+- [Monitoring notes](docs/MONITORING.md)
+- [User guide](docs/USER_GUIDE.md)
+- [Test project readme](ELKH.Tests/README.md)
+
+## My contributions vs. original team work
+
+This repo began as a group systems project. I kept the team credits visible while using this branch to highlight my own follow-up work.
+
+### Portfolio branch emphasis
+- architecture cleanup
+- integration-test stabilization
+- local-run simplification
+- documentation polish
+- UI and accessibility refinement
+- practical portfolio presentation
+
+### Original team credits
 
 `ELKH` is the original team acronym derived from the members' first names.
 
 | Member | Commits | Primary Contributions |
 |--------|---------|----------------------|
 | **Evan Hao** ([@Evlazy](https://github.com/Evlazy)) | 21 | Inventory management system, database schema and EF Core migrations, product image upload and delete, order and transaction history for staff, product data models |
-| **Lovedeep Kaur**([@Love-082] https://github.com/Love-082))| 24 | Admin role management (create, edit, delete, assign roles), admin dashboard, sales analytics, manager product management (list, add, edit, soft-delete/restore), staff accounts view, manager transactions list |
-| **Kimberly Hilliker** ([@Velyene](https://github.com/Velyene)) | 159 | Core application architecture, product catalog with fuzzy search and filtering, shopping cart, checkout and PayPal sandbox integration, user profiles and address book, ratings and reviews, shared layouts, kawaii design system and WCAG accessibility compliance, Docker infrastructure, background services, monitoring |
+| **Lovedeep Kaur** ([@Love-082](https://github.com/Love-082)) | 24 | Admin role management, admin dashboard, sales analytics, manager product management, staff account views, manager transaction lists |
+| **Kimberly Hilliker** ([@Velyene](https://github.com/Velyene)) | 159 | Core application architecture, product catalog with fuzzy search and filtering, shopping cart, checkout and PayPal sandbox integration, user profiles and address book, ratings and reviews, shared layouts, kawaii design system and WCAG accessibility work, Docker infrastructure, background services, monitoring |
 | **Harry Yu** ([@yyu150](https://github.com/yyu150)) | 11 | Cart controller and cart views, checkout flow and order confirmation pages, guest checkout, order processing, home page |
 
-## 📄 License
+## License
 
-This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
-
-## 🆘 Support
-
-- **Documentation**: [docs/](docs/)
-- **Issues**: [GitHub Issues](https://github.com/Velyene/StickIt/issues)
-- **Health Checks**: http://localhost:5000/health
-
-## 🏆 Project Highlights
-
-- ✅ **Core Commerce Flows** - Catalog, cart, checkout, accounts, and reviews
-- ✅ **Role-Based Features** - Customer, staff, manager, and admin paths
-- ✅ **Dockerized Local Setup** - Local container workflow and deployment docs
-- ✅ **Modern .NET Stack** - .NET 10, Entity Framework Core, ASP.NET Core Identity
-- ✅ **Accessibility-Conscious UI** - Responsive layouts and accessibility-focused styling work
-- ✅ **Test Infrastructure** - Unit and integration test structure with coverage goals
-
----
-
-<div align="center">
-
-**[⭐ Star this repository](https://github.com/Velyene/StickIt)** if you find it helpful!
-
-*Built with ❤️ using ASP.NET Core*
-
-</div>
+This project is licensed under the MIT License. See [LICENSE](LICENSE).

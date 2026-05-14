@@ -1,13 +1,28 @@
-# ELKH Sticker Store - Accessibility Documentation
+# StickIt accessibility implementation notes
 
 ## Overview
-This application is designed to meet **WCAG 2.1 Level AA** accessibility standards, ensuring an inclusive experience for all users, including those using assistive technologies.
+This document is meant to show the accessibility work that is present in the codebase today.
 
-## Compliance Status
-✅ **WCAG 2.1 AA Compliant**
+It is not a formal certification report. Instead, it collects:
+- implemented accessibility patterns
+- code references worth reviewing
+- manual checks that should be run for portfolio review
+- current evidence gaps and follow-up work
 
-Last Audit: 2025
-Conformance Level: AA
+## Accessibility target
+
+The project is aiming for **WCAG 2.1 Level AA** patterns in the customer-facing experience, but this repository does not currently include a full third-party audit package or committed axe/Lighthouse artifacts proving complete conformance.
+
+What is evidenced in the repo today:
+- semantic layout and skip links
+- keyboard-aware navigation patterns
+- ARIA usage in search, forms, and live feedback
+- focus styling and reduced-motion support
+
+What is still missing as portfolio evidence:
+- committed screenshots of axe or Lighthouse results
+- screen-reader test notes tied to specific builds
+- a concise pass/fail checklist captured after a real UI review session
 
 ---
 
@@ -24,7 +39,7 @@ Conformance Level: AA
 
 ---
 
-## Navigation & Keyboard Access
+## Navigation & keyboard access
 
 ### Skip Links
 Skip links are provided on all major pages for keyboard navigation:
@@ -35,8 +50,8 @@ Skip links are provided on all major pages for keyboard navigation:
 
 **Implementation:** `Views/Shared/_Layout.cshtml` lines 270-275
 
-### Keyboard Navigation
-All interactive elements are keyboard accessible:
+### Keyboard navigation
+Implemented and intended patterns:
 - **Tab order** follows logical reading order
 - **Focus indicators**: 2px outline + box-shadow on all interactive elements
 - **Escape key**: Closes modals and dropdowns
@@ -57,17 +72,17 @@ All interactive elements are keyboard accessible:
 
 ---
 
-## Forms & Input Controls
+## Forms & input controls
 
-### Form Accessibility Features
-All forms include:
+### Form accessibility features
+Examples implemented in the app:
 - ✅ Explicit `<label>` elements with `for` attribute matching input `id`
 - ✅ Required fields marked with visual indicator (*) and `aria-required="true"`
 - ✅ Help text associated via `aria-describedby`
 - ✅ Error messages with `role="alert"` and `aria-live="polite"`
 - ✅ Autocomplete attributes for common fields (email, name, address)
 
-### Enhanced Forms
+### Enhanced forms
 - **Product Create/Edit**: Full accessibility with required indicators, validation feedback, and help text
 - **Contact Form**: Enhanced with aria-required, aria-describedby for all fields
 - **Login/Register**: Comprehensive ARIA attributes, password toggle with screen reader text
@@ -87,7 +102,7 @@ All forms include:
 
 ---
 
-## Interactive Components
+## Interactive components
 
 ### Buttons
 All buttons include:
@@ -120,7 +135,7 @@ All buttons include:
 
 ---
 
-## Semantic HTML Structure
+## Semantic HTML structure
 
 ### Landmark Regions
 - **Banner**: `<header role="banner">` - Site header with logo and main navigation
@@ -151,7 +166,7 @@ Proper heading structure maintained throughout:
 
 ---
 
-## Images & Media
+## Images & media
 
 ### Image Accessibility
 All images include appropriate alternative text:
@@ -184,10 +199,12 @@ User profile pictures include descriptive alt text:
 
 ---
 
-## Color & Visual Design
+## Color & visual design
 
-### Color Contrast
-All text meets WCAG AA contrast requirements:
+### Color contrast
+The design system defines darker text tokens and contrast-oriented focus styles, but this document should be read as implementation evidence rather than a blanket claim that every rendered screen has been exhaustively measured.
+
+Targets being designed toward:
 - **Normal text**: 4.5:1 minimum contrast ratio
 - **Large text** (18pt+): 3:1 minimum contrast ratio
 - **UI components**: 3:1 minimum contrast ratio
@@ -245,7 +262,7 @@ Respects user preferences for reduced motion:
 
 ---
 
-## Dynamic Content & Live Regions
+## Dynamic content & live regions
 
 ### ARIA Live Regions
 
@@ -305,9 +322,9 @@ cartLink.setAttribute('aria-label',
 
 ---
 
-## Testing & Tools
+## Testing & tools
 
-### Manual Testing Checklist
+### Manual testing checklist
 - [ ] Keyboard-only navigation (no mouse)
 - [ ] Screen reader testing (NVDA, JAWS, VoiceOver)
 - [ ] Browser zoom to 200%
@@ -315,37 +332,42 @@ cartLink.setAttribute('aria-label',
 - [ ] Reduced motion preferences
 - [ ] Mobile touch target sizes
 
-### Automated Testing Tools
-Recommended tools for continuous testing:
+### Automated testing tools
+Recommended tools for repeatable portfolio evidence:
 - **axe DevTools**: Browser extension for accessibility auditing
 - **WAVE**: Web accessibility evaluation tool
 - **Lighthouse**: Chrome DevTools accessibility audit
 - **Pa11y**: Automated accessibility testing CLI
 
-### Screen Reader Testing
-Application tested with:
-- **NVDA** (Windows) - Primary testing
-- **JAWS** (Windows) - Enterprise standard
-- **VoiceOver** (macOS/iOS) - Apple devices
-- **TalkBack** (Android) - Mobile testing
+### Current evidence status
+At the time of this branch update, the repository documents the intended testing approach but does not yet include committed output files or screenshots from:
+- NVDA
+- JAWS
+- VoiceOver
+- TalkBack
+
+Until those artifacts are captured, treat screen-reader support here as an implementation goal supported by code patterns, not as a fully evidenced certification statement.
 
 ---
 
-## Known Issues & Roadmap
+## Known issues & roadmap
 
-### Current Known Issues
-None identified in the latest audit.
+### Current known issues
+- No committed axe or Lighthouse result captures yet
+- No screenshot set yet showing keyboard focus states across the main storefront flows
+- No short accessibility walkthrough GIF yet for the portfolio README
 
-### Future Enhancements
+### Future enhancements
 - [ ] Add ARIA landmarks to product grid sections
 - [ ] Implement keyboard shortcuts for common actions
 - [ ] Add skip links within long product lists
 - [ ] Enhance mobile touch target sizes on complex forms
 - [ ] Add voice command support
+- [ ] Commit real audit artifacts and responsive accessibility screenshots
 
 ---
 
-## Developer Guidelines
+## Developer guidelines
 
 ### Adding New Features
 When adding new features, ensure:
@@ -421,16 +443,16 @@ When adding new features, ensure:
 
 ---
 
-## Support & Contact
+## Support & contact
 
 For accessibility questions or to report issues:
 - **Email**: support@stickit.dev
 - **GitHub Issues**: Tag with [accessibility] label
 
-We are committed to maintaining WCAG 2.1 AA compliance and continuously improving accessibility for all users.
+The direction of the project is toward stronger WCAG-aligned behavior, but this document should be maintained as evidence-backed implementation notes, not boilerplate compliance marketing.
 
 ---
 
-**Last Updated**: January 2025  
-**Next Review**: July 2025  
-**Compliance Standard**: WCAG 2.1 Level AA
+**Last Updated**: May 2026  
+**Target Standard**: WCAG 2.1 Level AA patterns where implemented  
+**Evidence Status**: Partial implementation evidence, additional audit artifacts still needed

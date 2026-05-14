@@ -1,0 +1,81 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="980" height="560" viewBox="0 0 980 560" role="img" aria-labelledby="title desc">
+  <title id="title">StickIt architecture overview</title>
+  <desc id="desc">A layered view of the StickIt application showing presentation, application, data, and infrastructure concerns.</desc>
+  <defs>
+	<style>
+	  .bg { fill: #fff7fb; }
+	  .panel { fill: #ffffff; stroke: #d9c8f7; stroke-width: 2; rx: 18; }
+	  .title { font: 700 24px 'Segoe UI', Arial, sans-serif; fill: #4a3b5c; }
+	  .subtitle { font: 600 17px 'Segoe UI', Arial, sans-serif; fill: #6a4fa3; }
+	  .text { font: 500 14px 'Segoe UI', Arial, sans-serif; fill: #4a3b5c; }
+	  .muted { font: 500 13px 'Segoe UI', Arial, sans-serif; fill: #72688a; }
+	  .chip-pink { fill: #f694c1; }
+	  .chip-sky { fill: #a9def9; }
+	  .chip-mint { fill: #d3ffe4; }
+	  .chip-butter { fill: #f2e6a3; }
+	  .arrow { stroke: #7b5fb6; stroke-width: 3; fill: none; marker-end: url(#arrowhead); }
+	  .small { font: 600 12px 'Segoe UI', Arial, sans-serif; fill: #4a3b5c; }
+	</style>
+	<marker id="arrowhead" markerWidth="10" markerHeight="7" refX="9" refY="3.5" orient="auto">
+	  <polygon points="0 0, 10 3.5, 0 7" fill="#7b5fb6" />
+	</marker>
+  </defs>
+
+  <rect class="bg" x="0" y="0" width="980" height="560" />
+  <text class="title" x="36" y="46">StickIt architecture overview</text>
+  <text class="muted" x="36" y="72">Portfolio branch focus: layered monolith, Razor UI, EF Core, seeded demo data, and integration-test stabilization.</text>
+
+  <rect class="panel" x="36" y="110" width="260" height="170" />
+  <text class="subtitle" x="56" y="142">Presentation</text>
+  <rect class="chip-sky" x="56" y="160" width="220" height="34" rx="10" />
+  <text class="text" x="70" y="182">Razor Pages and MVC views</text>
+  <rect class="chip-sky" x="56" y="204" width="220" height="34" rx="10" />
+  <text class="text" x="70" y="226">Controllers and role-based routes</text>
+  <rect class="chip-sky" x="56" y="248" width="220" height="34" rx="10" />
+  <text class="text" x="70" y="270">CSS, JS, kawaii theme, static assets</text>
+
+  <rect class="panel" x="360" y="110" width="260" height="170" />
+  <text class="subtitle" x="380" y="142">Application layer</text>
+  <rect class="chip-pink" x="380" y="160" width="220" height="34" rx="10" />
+  <text class="text" x="394" y="182">Services and business workflows</text>
+  <rect class="chip-pink" x="380" y="204" width="220" height="34" rx="10" />
+  <text class="text" x="394" y="226">Search, checkout, reviews, carts</text>
+  <rect class="chip-pink" x="380" y="248" width="220" height="34" rx="10" />
+  <text class="text" x="394" y="270">Validation, auth rules, app logic</text>
+
+  <rect class="panel" x="684" y="110" width="260" height="170" />
+  <text class="subtitle" x="704" y="142">Data layer</text>
+  <rect class="chip-mint" x="704" y="160" width="220" height="34" rx="10" />
+  <text class="text" x="718" y="182">EF Core DbContext and models</text>
+  <rect class="chip-mint" x="704" y="204" width="220" height="34" rx="10" />
+  <text class="text" x="718" y="226">Repositories and compiled queries</text>
+  <rect class="chip-mint" x="704" y="248" width="220" height="34" rx="10" />
+  <text class="text" x="718" y="270">SQLite and seeded demo records</text>
+
+  <rect class="panel" x="36" y="332" width="908" height="164" />
+  <text class="subtitle" x="56" y="364">Cross-cutting concerns</text>
+
+  <rect class="chip-butter" x="56" y="388" width="180" height="34" rx="10" />
+  <text class="text" x="70" y="410">ASP.NET Core Identity</text>
+
+  <rect class="chip-butter" x="256" y="388" width="180" height="34" rx="10" />
+  <text class="text" x="270" y="410">Health checks and logging</text>
+
+  <rect class="chip-butter" x="456" y="388" width="180" height="34" rx="10" />
+  <text class="text" x="470" y="410">Caching and background services</text>
+
+  <rect class="chip-butter" x="656" y="388" width="248" height="34" rx="10" />
+  <text class="text" x="670" y="410">Docker path and optional monitoring hooks</text>
+
+  <rect class="chip-butter" x="56" y="438" width="848" height="34" rx="10" />
+  <text class="text" x="70" y="460">Test infrastructure: isolated WebApplicationFactory, integration collection, SQLite in-memory host, seeded identities and products</text>
+
+  <path class="arrow" d="M296 195 L360 195" />
+  <path class="arrow" d="M620 195 L684 195" />
+  <path class="arrow" d="M166 280 L166 332" />
+  <path class="arrow" d="M490 280 L490 332" />
+  <path class="arrow" d="M814 280 L814 332" />
+
+  <text class="small" x="316" y="186">HTTP requests</text>
+  <text class="small" x="640" y="186">queries / persistence</text>
+</svg>

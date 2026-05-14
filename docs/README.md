@@ -1,6 +1,8 @@
-# 📚 StickIt Documentation Index
+# StickIt documentation index
 
-Welcome to the comprehensive documentation for StickIt, a portfolio-focused sticker eCommerce platform. This index provides quick access to all documentation resources organized by audience and purpose.
+This folder holds the longer-form reference material behind the portfolio README.
+
+Use the root `README.md` for the fast project tour. Use this index when you want more detail about architecture, API shape, deployment notes, monitoring hooks, and user flows.
 
 ## 🎯 Quick Navigation
 
@@ -11,86 +13,75 @@ Welcome to the comprehensive documentation for StickIt, a portfolio-focused stic
 | **End Users** | [User Guide](USER_GUIDE.md) | [API](API.md) |
 | **Managers/Stakeholders** | [User Guide](USER_GUIDE.md) • [Architecture](ARCHITECTURE.md) | [Monitoring](MONITORING.md) • [Deployment](DEPLOYMENT.md) |
 
-## 📖 Documentation Catalog
+## Documentation catalog
 
-### 🏗️ Technical Documentation
+### Technical documentation
 
 #### [Architecture Guide](ARCHITECTURE.md)
-**Purpose**: Comprehensive system design and architectural patterns  
+**Purpose**: Architectural overview and implementation notes  
 **Audience**: Developers, Architects, Technical Leads  
 **Contents**:
-- Clean Architecture principles and implementation
-- Controller decomposition strategy
-- Data layer design and Entity Framework patterns
-- Security architecture and role-based access
-- Performance optimization and caching strategies
-- Monitoring and observability architecture
-- Scalability considerations and future roadmap
+- Layering and separation-of-concerns decisions
+- Controller and service organization
+- Data access patterns and EF Core usage
+- Role-based access patterns
+- Caching, search, and supporting infrastructure notes
+- Tradeoffs and future cleanup opportunities
 
 #### [API Documentation](API.md)
-**Purpose**: Complete API reference and integration guide  
+**Purpose**: API reference and integration notes  
 **Audience**: Developers, API Consumers, Third-party Integrators  
 **Contents**:
-- RESTful API endpoints with examples
-- Authentication and authorization flows
-- Request/response schemas and data models
-- Error handling and status codes
-- Rate limiting and API usage guidelines
-- Integration examples and SDKs
+- API endpoints with examples
+- Authentication and authorization notes
+- Request and response shapes
+- Error handling patterns and status codes
+- Usage notes for local exploration
 
 #### [Testing Guide](../ELKH.Tests/README.md)
-**Purpose**: Test coverage strategy and execution procedures  
+**Purpose**: Test strategy, structure, and execution notes  
 **Audience**: Developers, QA Engineers, CI/CD Administrators  
 **Contents**:
-- Unit, integration, and end-to-end testing strategies
-- Test coverage requirements and metrics
-- Testing tools and frameworks configuration
-- Performance testing and benchmarking
-- Test data management and factories
-- CI/CD integration and automated testing
+- Unit and integration testing strategy
+- Test execution and coverage tooling
+- Test host and seeded data notes
+- Performance-test experiments and limitations
 
-### 🚀 Operations Documentation
+### Operations documentation
 
 #### [Deployment Guide](DEPLOYMENT.md)
-**Purpose**: Complete deployment procedures for all environments  
+**Purpose**: Deployment options and setup notes  
 **Audience**: DevOps Engineers, System Administrators, Release Managers  
 **Contents**:
-- Local development setup and configuration
-- Docker containerization and orchestration
-- Azure deployment with App Service and Container Instances
-- Kubernetes deployment manifests and scaling
-- CI/CD pipeline configuration
-- Production security and SSL setup
-- Rollback procedures and disaster recovery
+- Local development setup
+- Docker-based workflows
+- Azure-oriented deployment notes
+- Production-oriented ideas that may need additional hardening
 
 #### [Monitoring Guide](MONITORING.md)
-**Purpose**: Monitoring, alerting, and maintenance procedures  
+**Purpose**: Monitoring and observability notes  
 **Audience**: Site Reliability Engineers, DevOps Teams, Support Staff  
 **Contents**:
-- Application Insights configuration and custom telemetry
-- Prometheus metrics collection and Grafana dashboards
-- Health checks and dependency monitoring
-- Alert rules and incident response procedures
-- Performance tuning and optimization
-- Routine maintenance tasks and troubleshooting
+- Application Insights hooks and telemetry notes
+- Metrics and health-check coverage
+- Troubleshooting and tuning references
+- Optional monitoring paths rather than mandatory local setup
 
-### 👥 User Documentation
+### User documentation
 
 #### [User Guide](USER_GUIDE.md)
-**Purpose**: Comprehensive user instructions for all platform roles  
+**Purpose**: Role-based workflow reference  
 **Audience**: Customers, Staff, Administrators, Support Teams  
 **Contents**:
-- Customer shopping workflows and account management
-- Staff order processing and customer support procedures
-- Administrator system management and analytics
-- Platform feature explanations and best practices
-- Troubleshooting and self-service resources
-- Quick reference and shortcuts
+- Customer shopping workflows
+- Staff and admin paths
+- Feature notes and quick references
+- Troubleshooting guidance
 
-### 🤝 Contributor Documentation
+### Contributor documentation
 
 #### [Contributing Guidelines](CONTRIBUTING.md)
-**Purpose**: Development workflow and contribution standards  
+**Purpose**: Contribution workflow and standards  
 **Audience**: Contributing Developers, Open Source Contributors, Team Members  
 **Contents**:
 - Development environment setup and prerequisites
@@ -100,59 +91,46 @@ Welcome to the comprehensive documentation for StickIt, a portfolio-focused stic
 - Issue reporting and feature request processes
 - Community guidelines and code of conduct
 
-## 📊 Documentation Quality Metrics
+## Notes on scope
 
-### Coverage Assessment
-- ✅ **Architecture Coverage**: Complete system design documentation
-- ✅ **API Coverage**: All endpoints documented with examples
-- ✅ **Deployment Coverage**: All environments and platforms covered
-- ✅ **User Coverage**: All user roles and workflows documented
-- ✅ **Operations Coverage**: Complete monitoring and maintenance procedures
+This documentation set is useful, but it should be read as project reference material, not as a guarantee that every area is exhaustive or production-ready.
 
-### Documentation Standards
+Some guides describe:
+- the supported local path
+- optional infrastructure or deployment ideas
+- implementation intent that may still be evolving
+
+## Current verification snapshot
+
+Latest validated integration evidence on this branch:
+- full integration suite passing: `91/91`
+- targeted product catalog + product API slice passing: `34/34`
+
+This is the current observed test state, not a promise that future changes will preserve it without re-validation.
+
+### Documentation standards
 - **Format**: Markdown with consistent structure and styling
 - **Diagrams**: Mermaid diagrams for visual representation
 - **Code Examples**: Syntax-highlighted code blocks with explanations
-- **Cross-References**: Comprehensive linking between related documents
-- **Maintenance**: Regular updates aligned with code changes
+- **Cross-References**: Links between related documents where helpful
+- **Maintenance**: Updated as the portfolio branch changes
 
-## 🔄 Documentation Maintenance
+## Maintenance
 
-### Update Frequency
-- **Critical Updates**: Immediate (security, breaking changes)
-- **Feature Updates**: Within 1 sprint of feature release
-- **Routine Updates**: Monthly review and updates
-- **Annual Review**: Complete documentation audit and restructuring
+When the code changes, the related docs should be updated too, especially for:
+1. setup steps
+2. public routes and API behavior
+3. seeded demo credentials or user flows
+4. architecture and deployment tradeoffs
 
-### Change Management
-1. **Code Changes** → Update related documentation
-2. **API Changes** → Update API documentation and examples
-3. **Deployment Changes** → Update deployment and monitoring guides
-4. **User Experience Changes** → Update user guide and screenshots
+## Documentation roadmap
 
-### Quality Assurance
-- **Link Validation**: Monthly check of all internal and external links
-- **Content Review**: Quarterly review for accuracy and completeness
-- **User Feedback**: Incorporate user feedback and support questions
-- **Technical Review**: Annual technical accuracy review by senior developers
+- Add real screenshots and short demos that match the current UI
+- Keep trimming enterprise-sounding wording from portfolio-facing docs
+- Clarify which deployment and monitoring paths are optional versus supported locally
+- Add more concise “start here” pointers for reviewers
 
-## 🎯 Documentation Roadmap
-
-### Planned Enhancements
-- **Interactive API Explorer** - Swagger UI integration
-- **Video Tutorials** - User workflow demonstrations
-- **Localization** - Multi-language documentation support
-- **Search Integration** - Full-text search across all documentation
-- **Feedback System** - In-document feedback and improvement suggestions
-
-### Future Documentation
-- **Security Guide** - Comprehensive security policies and procedures
-- **Performance Guide** - Detailed performance optimization strategies
-- **Migration Guide** - Upgrade and migration procedures
-- **Training Materials** - Structured learning paths for different roles
-- **Troubleshooting Database** - Searchable issue resolution database
-
-## 🔧 Internal Development Documentation
+## Internal development documentation
 
 ### 📝 [Developer Documentation Guidelines](development/DEVELOPER-DOCUMENTATION-GUIDELINES.md)
 **Purpose**: Practical guide for creating and maintaining professional code documentation  
@@ -181,7 +159,7 @@ Welcome to the comprehensive documentation for StickIt, a portfolio-focused stic
 - Quality metrics and compliance tracking
 - Maintenance procedures and responsibilities
 
-## 🔍 Internal Project Analysis
+## Internal project analysis
 
 ### 📋 [Documentation Compliance Audit](internal/audits/PROJECT-WIDE-DOCUMENTATION-AUDIT.md)
 **Purpose**: Comprehensive documentation compliance verification and remediation plan  
@@ -210,45 +188,28 @@ Welcome to the comprehensive documentation for StickIt, a portfolio-focused stic
 - Documentation standardization impact and metrics
 - Future improvement recommendations and roadmap
 
-## 📞 Documentation Support
+## Contributing to documentation
 
-### Getting Help
+### Getting help
 - **GitHub Issues**: Report documentation issues or request improvements
-- **Discussion Forum**: Ask questions and share documentation feedback
 - **Pull Requests**: Contribute documentation improvements
-- **Support Email**: Contact documentation team directly
 
-### Contributing to Documentation
+### Contributing steps
 1. **Identify Gap** - Notice missing or outdated information
 2. **Create Issue** - Describe the documentation need or problem
 3. **Fork Repository** - Create your own copy for editing
 4. **Make Changes** - Follow documentation standards and style guide
 5. **Submit PR** - Request review and integration of your changes
 
-## 📋 Quick Reference
+## Quick reference
 
-### Essential Links
+### Essential links
 - **Main Repository**: [GitHub - StickIt](https://github.com/Velyene/StickIt)
-- **Live Application**: [StickIt Demo](https://stickit.example.com)
-- **Health Checks**: [System Health](https://stickit.example.com/health)
-- **API Endpoint**: [API Base URL](https://stickit.example.com/api)
-
-### Emergency Contacts
-- **Technical Issues**: technical-support@stickit.example.com
-- **Security Concerns**: security@stickit.example.com
-- **Documentation Team**: docs@elkh.com
-- **On-Call Support**: +1-800-STICKIT
+- **Portfolio README**: [../README.md](../README.md)
+- **Test project docs**: [../ELKH.Tests/README.md](../ELKH.Tests/README.md)
 
 ---
 
-## 📈 Documentation Analytics
+## Status
 
-Last Updated: **March 2026**  
-Total Documents: **6 comprehensive guides**  
-Total Pages: **2,000+ pages of documentation**  
-Coverage: **Complete platform coverage**  
-Maintenance Status: **✅ Up to date**
-
----
-
-*This documentation index is automatically updated when new documentation is added or existing documents are modified. For the most current version, always refer to the main repository.*
+Last updated for the current portfolio branch. Treat this index as a map to the detailed docs, not as a claim of exhaustive or enterprise-grade coverage in every area.
