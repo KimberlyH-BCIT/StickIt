@@ -12,86 +12,6 @@ namespace ELKH.Controllers
     /// Controller responsible for user account related operations: profile management,
     /// address book CRUD and login history. All actions require an authenticated user.
     /// </summary>
-    /// <remarks>
-    /// TABLE OF CONTENTS (771 lines)
-    /// ================================================================================
-    /// 1. Constructor and Dependencies ................................... Lines   55-75
-    ///    - IRegisteredUserProfileRepo, IRegisteredUserLogRepo, IContactDetailRepo
-    ///    - IRatingService, IStoreReviewService, ILogger injection
-    /// 
-    /// 2. User Dashboard and Profile Management ......................... Lines   77-200
-    ///    - Index()                               // GET: User dashboard with activity summary
-    ///    - Profile()                             // GET: View/edit profile form
-    ///    - Profile() POST                        // POST: Update profile with validation
-    ///    - GetProfileData()                      // AJAX: Profile data for dynamic updates
-    /// 
-    /// 3. Account History and Analytics .................................. Lines  202-280
-    ///    - History()                             // GET: Login history and activity tracking
-    ///    - LoginActivity()                       // GET: Detailed login analytics
-    ///    - AccountSummary()                      // GET: Account metrics and statistics
-    /// 
-    /// 4. Address Management (Full CRUD) ............................... Lines  282-500
-    ///    - Addresses()                           // GET: List all user addresses
-    ///    - AddAddress() GET                      // GET: New address form
-    ///    - AddAddress() POST                     // POST: Create address with validation
-    ///    - EditAddress(id) GET                   // GET: Edit address form
-    ///    - EditAddress(id) POST                  // POST: Update address
-    ///    - DeleteAddress(id) GET                 // GET: Delete confirmation page
-    ///    - DeleteAddressConfirmed() POST         // POST: Confirm address deletion
-    ///    - SetDefaultAddress() POST              // POST: Set primary address
-    /// 
-    /// 5. Order History and Management ................................... Lines  502-620
-    ///    - OrderHistory()                        // GET: User's order history with pagination
-    ///    - OrderDetails(id)                      // GET: Detailed order view
-    ///    - TrackOrder(id)                        // GET: Order tracking information
-    ///    - CancelOrder() POST                    // POST: Order cancellation requests
-    /// 
-    /// 6. Wishlist and Preferences ...................................... Lines  622-720
-    ///    - WishlistManagement()                  // GET: Wishlist items and management
-    ///    - UpdatePreferences() POST              // POST: User preferences and settings
-    ///    - NotificationSettings()                // GET/POST: Email and SMS preferences
-    /// 
-    /// 7. Private Helper Methods ....................................... Lines  722-771
-    ///    - GetCurrentUserIdAsync()               // Get authenticated user's ID from claims
-    ///    - ValidateUserAccess()                  // Ensure user owns requested resource
-    ///    - BuildBreadcrumbs()                    // Navigation breadcrumb generation
-    ///    - LogUserActivity()                     // Activity tracking and audit logging
-    /// ================================================================================
-    /// 
-    /// SECURITY & ACCESS CONTROL:
-    /// • All actions require authentication (inherited from AuthenticatedControllerBase)
-    /// • Resource ownership validation prevents users from accessing others' data
-    /// • Input validation and XSS protection on all form submissions
-    /// • CSRF protection on all state-changing operations
-    /// • Rate limiting on sensitive operations to prevent abuse
-    /// 
-    /// PERFORMANCE OPTIMIZATIONS:
-    /// • Efficient pagination for order history and address listings
-    /// • Selective data loading to minimize database round trips
-    /// • Caching strategies for frequently accessed profile data
-    /// • Optimized queries with proper indexing on user-related lookups
-    /// 
-    /// USER EXPERIENCE FEATURES:
-    /// • Rich dashboard with activity summaries and quick actions
-    /// • Comprehensive address management with primary address designation
-    /// • Detailed order tracking with real-time status updates
-    /// • Customizable notification preferences and privacy settings
-    /// • Responsive design optimized for mobile account management
-    /// 
-    /// BUSINESS LOGIC COORDINATION:
-    /// • Controller keeps actions thin with validation and security enforcement
-    /// • Business logic delegated to repositories and services for maintainability
-    /// • Per-request presentation preferences (culture/currency) application
-    /// • Activity logging for user behavior analytics and security monitoring
-    /// 
-    /// INTEGRATION POINTS:
-    /// • IRegisteredUserProfileRepo for profile data operations
-    /// • IContactDetailRepo for address book management
-    /// • IRatingService for review and rating history
-    /// • IStoreReviewService for store feedback management
-    /// • Notification services for user communications
-    /// • Audit logging services for security and compliance tracking
-    /// </remarks>
     public class UserController : AuthenticatedControllerBase
     {
         private readonly IRegisteredUserProfileRepo _profileRepository;
@@ -254,7 +174,7 @@ namespace ELKH.Controllers
             return RedirectToAction(nameof(EditProfile));
         }
 
-        // GET: User/GetAvatar  – returns the current user's avatar image
+        // GET: User/GetAvatar  â€“ returns the current user's avatar image
         [HttpGet]
         public IActionResult GetAvatar()
         {
@@ -489,7 +409,7 @@ namespace ELKH.Controllers
             var userId = await GetCurrentUserIdAsync();
             var contact = await _contactRepository.GetByIdAsync(id);
 
-            // Security check here ✅
+            // Security check here âœ…
             if (contact is null || contact.FkRegisteredUserId != userId.Value)
             {
                 SetWarningMessage("Address not found");
@@ -574,7 +494,7 @@ namespace ELKH.Controllers
 
             var contact = await _contactRepository.GetByIdAsync(id);
 
-            // Same security check ✅
+            // Same security check âœ…
             if (contact is null || contact.FkRegisteredUserId != userId.Value)
             {
                 SetWarningMessage("Address not found");

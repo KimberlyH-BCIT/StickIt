@@ -10,39 +10,6 @@ namespace ELKH.Controllers;
 /// - Authenticated users: cart summary, address selection, order pricing, PayPal processing
 /// - Guest users: simplified checkout with contact detail collection
 /// </summary>
-/// <remarks>
-/// This controller combines features from two development branches:
-/// - Saved addresses functionality (allows users to select from previously used addresses)
-/// - Simplified PayPal integration (client-side capture, no backend API calls)
-/// - Guest checkout support (session-based cart, email-only order tracking)
-///
-/// Pricing rules applied in Index() and re-verified server-side in ProcessPayment():
-/// - Tax:      12% of subtotal (BC PST 7% + GST 5% composite rate).
-/// - Shipping: $7.99 flat rate; waived when the subtotal reaches $50.00 or more.
-///
-/// TABLE OF CONTENTS
-/// ==================
-/// 1. Constructor & Dependencies (lines 34-46)
-/// 2. GET /Checkout/Index - Display Checkout Page
-///    - Load cart items (lines 59-61)
-///    - Load saved addresses (lines 63-103)
-///    - Calculate totals (lines 105-109)
-///    - Configure PayPal (lines 111-114)
-/// 3. POST /Checkout/ProcessPayment - Complete Order
-///    - Validate form data (lines 122-126)
-///    - Authenticate user (lines 128-133)
-///    - Recalculate totals server-side (lines 138-142)
-///    - Verify inventory (lines 144-152)
-///    - Handle contact details (lines 154-180)
-///    - Create order & order items (lines 182-208)
-///    - Clear cart (lines 210-211)
-///
-/// Security Notes:
-/// - All prices recalculated server-side to prevent tampering
-/// - Inventory checked before order creation
-/// - PayPal payment captured client-side, order status set to "Paid"
-/// - Rate limiting applied via RateLimitPolicies.Checkout
-/// </remarks>
 public class CheckoutController : Controller
 {
     private readonly ApplicationDbContext _db;

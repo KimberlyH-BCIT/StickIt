@@ -3,63 +3,6 @@ namespace ELKH.Services;
     /// Service for fuzzy product search with multi-tier fallback strategy.
     /// Provides fast autocomplete and search results using precomputed suggestions, FTS, and fuzzy matching.
     /// </summary>
-    /// <remarks>
-    /// TABLE OF CONTENTS (354 lines)
-    /// ================================================================================
-    /// 1. Fields & Constructor ......................................... Lines   47-75
-    ///    - ApplicationDbContext, FuzzyHelperService, IMemoryCache injection
-    ///    - Performance constants configuration
-    /// 
-    /// 2. Public Search Methods ........................................ Lines   77-130
-    ///    - SearchNames()                         // Multi-tier search strategy entry point
-    ///    - Public API for product name searching with caching
-    /// 
-    /// 3. Multi-Tier Search Strategy Implementation ................... Lines  132-280
-    ///    Step 1: Cache Lookup                    // Lines 134-140: O(1) hash lookup
-    ///    Step 2: Precomputed Suggestions        // Lines 142-175: O(log n) indexed query
-    ///    Step 2.5: Tag-Based Search             // Lines 177-210: O(log n) tag matching
-    ///    Step 3: FTS Full-Text Search           // Lines 212-250: O(log n) FTS5 prefix matching
-    ///    Step 4: Fuzzy Fallback Scoring         // Lines 252-280: O(n) comprehensive fuzzy matching
-    /// 
-    /// 4. Search Result Processing ..................................... Lines  282-320
-    ///    - Result aggregation and deduplication
-    ///    - Score-based ranking and result limiting
-    ///    - Cache population for future requests
-    /// 
-    /// 5. Private Helper Methods ....................................... Lines  322-354
-    ///    - NormalizeName()                       // String normalization for consistent matching
-    ///    - ScoreNormalization()                  // Fuzzy score processing utilities
-    ///    - CacheKeyGeneration()                  // Cache key management
-    /// ================================================================================
-    /// 
-    /// SEARCH OPTIMIZATION STRATEGY:
-    /// The service implements a performance-optimized multi-tier search approach:
-    /// • Results cached for 5 minutes (sliding expiration) to avoid repeated computation
-    /// • Precomputed suggestions checked first (fastest - indexed lookup)
-    /// • Tag-based search provides additional product discovery path
-    /// • FTS used for exact/prefix matching (very fast via SQLite FTS5 index)
-    /// • Fuzzy scoring as comprehensive fallback (more expensive but complete coverage)
-    /// 
-    /// PERFORMANCE CHARACTERISTICS BY TIER:
-    /// • Tier 1 (Cache): O(1) hash lookup with 5-minute sliding expiration
-    /// • Tier 2 (Suggestions): O(log n) indexed query, capped at TopResults (default 10)
-    /// • Tier 2.5 (Tags): O(log n) indexed query on Tags field for discovery
-    /// • Tier 3 (FTS): O(log n) via SQLite FTS5 index with prefix matching
-    /// • Tier 4 (Fuzzy): O(n) candidate scan limited to CandidateLimit (default 200)
-    /// 
-    /// CACHING STRATEGY:
-    /// • Search results cached by normalized query string
-    /// • 5-minute sliding expiration balances freshness with performance
-    /// • Cache warming for common queries during low-traffic periods
-    /// • Memory pressure-aware eviction policies
-    /// 
-    /// INTEGRATION POINTS:
-    /// • FuzzyHelperService for TokenSetRatio scoring algorithms
-    /// • ApplicationDbContext for database query execution
-    /// • IMemoryCache for result caching and performance optimization
-    /// • ProductFTS virtual table for full-text search capabilities
-    /// • PrecomputedSuggestions table for fast autocomplete responses
-    /// </remarks>
     public class SearchService : ISearchService
     {
         #region Fields & Constructor

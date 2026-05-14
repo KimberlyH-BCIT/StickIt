@@ -20,34 +20,6 @@ using Microsoft.Extensions.Logging;
 
 namespace ELKH.Areas.Identity.Pages.Account
 {
-    /*
-     * ┌────────────────────────────────────────────────────────────────────────────┐
-     * │ TABLE OF CONTENTS - ExternalLogin.cshtml.cs                                │
-     * ├────────────────────────────────────────────────────────────────────────────┤
-     * │ 1. Properties & Dependencies ............................ Lines  26-87     │
-     * │    - Dependency injection fields                                           │
-     * │    - InputModel (email for account association)                            │
-     * │    - ProviderDisplayName, ReturnUrl, ErrorMessage                          │
-     * │                                                                            │
-     * │ 2. Initial GET/POST Handlers ............................ Lines  89-97     │
-     * │    - OnGet: Redirect to Login page                                         │
-     * │    - OnPost: Initiate OAuth challenge                                      │
-     * │                                                                            │
-     * │ 3. OAuth Callback Handler ............................... Lines  99-139    │
-     * │    - OnGetCallbackAsync: Process OAuth provider response                   │
-     * │    - Existing user: Sign in automatically                                  │
-     * │    - New user: Prompt for email confirmation                               │
-     * │                                                                            │
-     * │ 4. Account Creation Handler ............................. Lines 141-198    │
-     * │    - OnPostConfirmationAsync: Create account from OAuth data               │
-     * │    - Link external login to new IdentityUser                               │
-     * │    - Send email confirmation                                               │
-     * │                                                                            │
-     * │ 5. Helper Methods ....................................... Lines 200-220    │
-     * │    - CreateUser(): Factory for IdentityUser                                │
-     * │    - GetEmailStore(): Validates email support                              │
-     * └────────────────────────────────────────────────────────────────────────────┘
-     */
 
     /// <summary>
     /// Razor Page model for external authentication (OAuth) login flow.
@@ -56,7 +28,7 @@ namespace ELKH.Areas.Identity.Pages.Account
     /// <remarks>
     /// <para><strong>OAuth Flow (Multi-Stage Process):</strong></para>
     /// <list type="number">
-    /// <item><strong>Initiation (OnPost):</strong> User clicks external provider button → Redirect to provider's OAuth page</item>
+    /// <item><strong>Initiation (OnPost):</strong> User clicks external provider button â†’ Redirect to provider's OAuth page</item>
     /// <item><strong>Callback (OnGetCallbackAsync):</strong> Provider redirects back with authentication result
     ///   <list type="bullet">
     ///   <item>If user has existing linked account: Sign in immediately</item>
@@ -86,7 +58,7 @@ namespace ELKH.Areas.Identity.Pages.Account
     {
         #region Properties & Dependencies
 
-        // ── ASP.NET Core Identity Services ───────────────────────────────────────────────
+        // â”€â”€ ASP.NET Core Identity Services â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
         private readonly SignInManager<IdentityUser> _signInManager;
         private readonly UserManager<IdentityUser> _userManager;
         private readonly IUserStore<IdentityUser> _userStore;
@@ -118,7 +90,7 @@ namespace ELKH.Areas.Identity.Pages.Account
         }
 
         // ==============================================================================
-        // ║ Page Properties                                                            ║
+        // â•‘ Page Properties                                                            â•‘
         // ==============================================================================
 
         /// <summary>
@@ -187,7 +159,7 @@ namespace ELKH.Areas.Identity.Pages.Account
         /// </remarks>
         public IActionResult OnPost(string provider, string returnUrl = null)
         {
-            // ── Configure OAuth Challenge Properties ─────────────────────────────────────
+            // â”€â”€ Configure OAuth Challenge Properties â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
             // Sets callback URL and provider-specific authentication properties.
             var redirectUrl = Url.Page("./ExternalLogin", pageHandler: "Callback", values: new { returnUrl });
             var properties = _signInManager.ConfigureExternalAuthenticationProperties(provider, redirectUrl);
@@ -215,8 +187,8 @@ namespace ELKH.Areas.Identity.Pages.Account
         /// <remarks>
         /// <para><strong>Decision Tree:</strong></para>
         /// <list type="number">
-        /// <item>Check for remote errors from provider → Redirect to Login if error</item>
-        /// <item>Retrieve external login info (email claim, provider key) → Error if missing</item>
+        /// <item>Check for remote errors from provider â†’ Redirect to Login if error</item>
+        /// <item>Retrieve external login info (email claim, provider key) â†’ Error if missing</item>
         /// <item>Attempt external login sign-in:
         ///   <list type="bullet">
         ///   <item>Success: Log event and redirect to returnUrl</item>
@@ -232,7 +204,7 @@ namespace ELKH.Areas.Identity.Pages.Account
             returnUrl = returnUrl ?? Url.Content("~/");
 
             // ==========================================================================
-            // ║ PHASE 1: Error Handling                                                ║
+            // â•‘ PHASE 1: Error Handling                                                â•‘
             // ==========================================================================
             if (remoteError != null)
             {
@@ -241,7 +213,7 @@ namespace ELKH.Areas.Identity.Pages.Account
             }
 
             // ==========================================================================
-            // ║ PHASE 2: Retrieve OAuth Data                                           ║
+            // â•‘ PHASE 2: Retrieve OAuth Data                                           â•‘
             // ==========================================================================
             var info = await _signInManager.GetExternalLoginInfoAsync();
             if (info == null)
@@ -251,7 +223,7 @@ namespace ELKH.Areas.Identity.Pages.Account
             }
 
             // ==========================================================================
-            // ║ PHASE 3: Attempt Sign-In (Existing User)                               ║
+            // â•‘ PHASE 3: Attempt Sign-In (Existing User)                               â•‘
             // ==========================================================================
             // Try signing in with this external login provider if user already has linked account.
             // TwoFactor bypassed since external provider already authenticated the user.
@@ -271,7 +243,7 @@ namespace ELKH.Areas.Identity.Pages.Account
             else
             {
                 // ======================================================================
-                // ║ PHASE 4: Prompt for Account Creation (New User)                   ║
+                // â•‘ PHASE 4: Prompt for Account Creation (New User)                   â•‘
                 // ======================================================================
                 // User doesn't have an account - show email confirmation form.
                 // Pre-fill email from OAuth provider's email claim if available.
@@ -321,7 +293,7 @@ namespace ELKH.Areas.Identity.Pages.Account
             returnUrl = returnUrl ?? Url.Content("~/");
 
             // ==========================================================================
-            // ║ Retrieve External Login Info                                           ║
+            // â•‘ Retrieve External Login Info                                           â•‘
             // ==========================================================================
             var info = await _signInManager.GetExternalLoginInfoAsync();
             if (info == null)
@@ -333,7 +305,7 @@ namespace ELKH.Areas.Identity.Pages.Account
             if (ModelState.IsValid)
             {
                 // ======================================================================
-                // ║ Create New Identity User                                           ║
+                // â•‘ Create New Identity User                                           â•‘
                 // ======================================================================
                 var user = CreateUser();
 
@@ -344,7 +316,7 @@ namespace ELKH.Areas.Identity.Pages.Account
                 if (result.Succeeded)
                 {
                     // ==================================================================
-                    // ║ Link External Login to New User                                ║
+                    // â•‘ Link External Login to New User                                â•‘
                     // ==================================================================
                     result = await _userManager.AddLoginAsync(user, info);
                     if (result.Succeeded)
@@ -352,7 +324,7 @@ namespace ELKH.Areas.Identity.Pages.Account
                         _logger.LogInformation("User created an account using {Name} provider.", info.LoginProvider);
 
                         // ==============================================================
-                        // ║ Send Email Confirmation                                    ║
+                        // â•‘ Send Email Confirmation                                    â•‘
                         // ==============================================================
                         var userId = await _userManager.GetUserIdAsync(user);
                         var code = await _userManager.GenerateEmailConfirmationTokenAsync(user);
@@ -367,7 +339,7 @@ namespace ELKH.Areas.Identity.Pages.Account
                             $"Please confirm your account by <a href='{HtmlEncoder.Default.Encode(callbackUrl)}'>clicking here</a>.");
 
                         // ==============================================================
-                        // ║ Conditional Sign-In or Confirmation Redirect               ║
+                        // â•‘ Conditional Sign-In or Confirmation Redirect               â•‘
                         // ==============================================================
                         if (_userManager.Options.SignIn.RequireConfirmedAccount)
                         {
@@ -379,7 +351,7 @@ namespace ELKH.Areas.Identity.Pages.Account
                     }
                 }
 
-                // ── Add Identity Validation Errors to ModelState ─────────────────────────
+                // â”€â”€ Add Identity Validation Errors to ModelState â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
                 foreach (var error in result.Errors)
                 {
                     ModelState.AddModelError(string.Empty, error.Description);

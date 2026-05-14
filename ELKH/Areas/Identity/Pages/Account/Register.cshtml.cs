@@ -28,33 +28,6 @@ using static ELKH.Extensions.RateLimitPolicies;
 
 namespace ELKH.Areas.Identity.Pages.Account
 {
-    /*
-     * ┌────────────────────────────────────────────────────────────────────────────┐
-     * │ TABLE OF CONTENTS - Register.cshtml.cs                                    │
-     * ├────────────────────────────────────────────────────────────────────────────┤
-     * │ 1. Properties & Input Model ............................ Lines  43-174    │
-     * │    - Dependency injection fields                                           │
-     * │    - InputModel: Email, Password, Name, Address fields                     │
-     * │    - ReCaptcha configuration                                               │
-     * │                                                                            │
-     * │ 2. GET Handler: OnGetAsync ............................. Lines 177-182    │
-     * │    - Load external authentication schemes                                  │
-     * │    - Store return URL for post-registration redirect                       │
-     * │                                                                            │
-     * │ 3. POST Handler: OnPostAsync ........................... Lines 184-269    │
-     * │    - Create IdentityUser with email/password                               │
-     * │    - Create RegisteredUserModel (links Identity to app data)               │
-     * │    - Create UserProfileModel (first/last name for UI)                      │
-     * │    - Create ContactDetailModel (default shipping address)                  │
-     * │    - Send email confirmation link                                          │
-     * │    - Sign in or redirect to confirmation page                              │
-     * │    - Rate limited via [EnableRateLimiting(Auth)]                           │
-     * │                                                                            │
-     * │ 4. Helper Methods ...................................... Lines 249-269    │
-     * │    - CreateUser(): Factory for IdentityUser                                │
-     * │    - GetEmailStore(): Validates email support in UserManager               │
-     * └────────────────────────────────────────────────────────────────────────────┘
-     */
 
     /// <summary>
     /// Razor Page model for new user registration with extended profile creation.
@@ -90,7 +63,7 @@ namespace ELKH.Areas.Identity.Pages.Account
     {
         #region Properties & Dependencies
 
-        // ── ASP.NET Core Identity Services ───────────────────────────────────────
+        // â”€â”€ ASP.NET Core Identity Services â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
         private readonly SignInManager<IdentityUser> _signInManager;
         private readonly UserManager<IdentityUser> _userManager;
         private readonly IUserStore<IdentityUser> _userStore;
@@ -98,11 +71,11 @@ namespace ELKH.Areas.Identity.Pages.Account
         private readonly ILogger<RegisterModel> _logger;
         private readonly IEmailSender _emailSender;
 
-        // ── Application Services ─────────────────────────────────────────────────
+        // â”€â”€ Application Services â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
         private readonly ApplicationDbContext _context;
         private readonly IContactDetailRepo _contactRepository;
 
-        // ── ReCaptcha Configuration ──────────────────────────────────────────────
+        // â”€â”€ ReCaptcha Configuration â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
         private readonly ReCaptchaOptions _reCaptchaOptions;
 
         /// <summary>
@@ -148,7 +121,7 @@ namespace ELKH.Areas.Identity.Pages.Account
         }
 
         // ==========================================================================
-        // ║ Input Model & View Properties                                          ║
+        // â•‘ Input Model & View Properties                                          â•‘
         // ==========================================================================
 
         /// <summary>
@@ -185,7 +158,7 @@ namespace ELKH.Areas.Identity.Pages.Account
         /// </remarks>
         public class InputModel
         {
-            // ── Identity Fields ──────────────────────────────────────────────────
+            // â”€â”€ Identity Fields â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
             /// <summary>User's email address (also used as username).</summary>
             [Required]
             [EmailAddress]
@@ -205,7 +178,7 @@ namespace ELKH.Areas.Identity.Pages.Account
             [Compare("Password", ErrorMessage = "The password and confirmation password do not match.")]
             public string ConfirmPassword { get; set; }
 
-            // ── Profile Fields ───────────────────────────────────────────────────
+            // â”€â”€ Profile Fields â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
             /// <summary>User's first name (displayed in profile header and account pages).</summary>            [Required]
             [MaxLength(100)]
             [Display(Name = "First Name")]
@@ -216,7 +189,7 @@ namespace ELKH.Areas.Identity.Pages.Account
             [Display(Name = "Last Name")]
             public string LastName { get; set; }
 
-            // ── Contact & Shipping Address Fields ────────────────────────────────
+            // â”€â”€ Contact & Shipping Address Fields â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
             /// <summary>User's phone number (used for order notifications and shipping contact).</summary>
             [Required]
             [Phone]
@@ -298,7 +271,7 @@ namespace ELKH.Areas.Identity.Pages.Account
             if (ModelState.IsValid)
             {
                 // ==================================================================
-                // ║ PHASE 1: Create Identity Account                              ║
+                // â•‘ PHASE 1: Create Identity Account                              â•‘
                 // ==================================================================
                 var user = CreateUser();
 
@@ -309,7 +282,7 @@ namespace ELKH.Areas.Identity.Pages.Account
                 if (result.Succeeded)
                 {
                     // ==============================================================
-                    // ║ PHASE 2: Create Application-Level User Records           ║
+                    // â•‘ PHASE 2: Create Application-Level User Records           â•‘
                     // ==============================================================
 
                     // 2a. RegisteredUserModel: Links Identity user to app business logic
@@ -349,7 +322,7 @@ namespace ELKH.Areas.Identity.Pages.Account
                     await _contactRepository.AddAndSaveAsync(contact);
 
                     // ==============================================================
-                    // ║ PHASE 3: Role Assignment (Placeholder)                    ║
+                    // â•‘ PHASE 3: Role Assignment (Placeholder)                    â•‘
                     // ==============================================================
                     // NOTE: Customer role assignment may be handled by seeder or middleware.
                     // Uncomment below to assign role immediately:
@@ -358,7 +331,7 @@ namespace ELKH.Areas.Identity.Pages.Account
                     _logger.LogInformation("User created a new account with password.");
 
                     // ==============================================================
-                    // ║ PHASE 4: Email Confirmation                               ║
+                    // â•‘ PHASE 4: Email Confirmation                               â•‘
                     // ==============================================================
 
                     // Generate email confirmation token and build callback URL
@@ -374,7 +347,7 @@ namespace ELKH.Areas.Identity.Pages.Account
                     await _emailSender.SendEmailAsync(Input.Email, "Confirm your email",
                         $"Please confirm your account by <a href='{HtmlEncoder.Default.Encode(callbackUrl)}'>clicking here</a>.");
 
-                    // ── Conditional Sign-In or Redirect to Confirmation ────────────────────────
+                    // â”€â”€ Conditional Sign-In or Redirect to Confirmation â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
                     // If RequireConfirmedAccount=true: User must click email link before signing in.
                     // If false: Sign in immediately and redirect to product catalog.
                     if (_userManager.Options.SignIn.RequireConfirmedAccount)
@@ -389,7 +362,7 @@ namespace ELKH.Areas.Identity.Pages.Account
                     }
                 }
 
-                // ── Add Identity Validation Errors to ModelState ────────────────────────────────
+                // â”€â”€ Add Identity Validation Errors to ModelState â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
                 foreach (var error in result.Errors)
                 {
                     ModelState.AddModelError(string.Empty, error.Description);

@@ -11,30 +11,6 @@ namespace ELKH.Repositories
     /// Handles product listing, stock adjustments, image upload/deletion,
     /// category retrieval, and product review removal.
     /// </summary>
-    /// <remarks>
-    /// TABLE OF CONTENTS
-    /// ================================================================================
-    /// 1. Constructor &amp; Dependencies .................................... Lines   9-21
-    ///    - InventoryRepo()    // ApplicationDbContext, ImageStoreContext, RoleManager
-    ///
-    /// 2. Product Listing .............................................. Lines  23-121
-    ///    - GetAllProduct (sort+filter)   // Paginated list with sort and stock filter
-    ///    - GetAllProduct (search-only)   // Simple search overload
-    ///
-    /// 3. Product Read/Write ........................................... Lines 123-160
-    ///    - GetProductById         // Full product with category and ratings included
-    ///    - EditProductQuantity    // Stock count adjustment
-    ///    - DeleteProductReview    // Hard-delete a product rating record
-    ///
-    /// 4. Category Lookup .............................................. Lines 162-167
-    ///    - GetAllCategories       // Full unfiltered category list
-    ///
-    /// 5. Image Management ............................................. Lines 169-214
-    ///    - GetProductImages       // List all images for a given product
-    ///    - UploadImage            // Validate and persist a new product image
-    ///    - DeleteImage            // Remove an image by ID from the image store
-    /// ================================================================================
-    /// </remarks>
     public class InventoryRepo : IInventoryRepo
     {
         private readonly ApplicationDbContext _context;

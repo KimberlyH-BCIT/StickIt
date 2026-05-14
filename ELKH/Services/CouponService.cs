@@ -3,50 +3,6 @@ namespace ELKH.Services;
 /// <summary>
 /// Service for managing discount coupons and promotional campaigns with comprehensive business logic.
 /// </summary>
-/// <remarks>
-/// TABLE OF CONTENTS (280 lines)
-/// ================================================================================
-/// 1. Constructor & Dependencies ................................. Lines   30-40
-///    - Database context and logger injection for coupon operations
-/// 
-/// 2. Coupon Validation & Application ............................ Lines   42-120
-///    - ValidateCouponAsync()           // Core validation with business rules
-///    - CalculateDiscountAmount()       // Discount calculation with caps/limits
-///    - ApplyBusinessRules()            // Helper for complex validation logic
-/// 
-/// 3. Usage Tracking & Audit ..................................... Lines  122-160
-///    - RecordCouponUsageAsync()        // Track usage and increment counters
-///    - GetCouponUsageStatsAsync()      // Analytics for campaign effectiveness
-/// 
-/// 4. Coupon Management Operations ................................ Lines  162-240
-///    - GetActiveCouponsAsync()         // Customer-facing available coupons
-///    - GetAllCouponsAsync()            // Management dashboard with filters
-///    - GetCouponByIdAsync()            // Single coupon retrieval
-///    - CreateCouponAsync()             // Create with validation and normalization
-///    - UpdateCouponAsync()             // Update with business rule enforcement
-///    - DeactivateCouponAsync()         // Soft delete for audit trail preservation
-/// 
-/// 5. Helper Methods & Utilities .................................. Lines  242-280
-///    - NormalizeCouponCode()           // Code standardization (uppercase)
-///    - IsExpired()                     // Time-based validation helper
-///    - HasUsageRemaining()             // Usage limit validation helper
-///    - ValidateDiscountConfiguration() // Business rule validation
-/// ================================================================================
-/// 
-/// BUSINESS RULES ENFORCED:
-/// • Coupon codes normalized to uppercase for case-insensitive matching
-/// • Usage limits prevent abuse and control promotional budgets
-/// • Time-based validation ensures expired coupons cannot be used
-/// • Minimum order values protect against micro-transaction abuse
-/// • Maximum discount caps prevent excessive percentage-based discounts
-/// • Audit trail maintained through OrderCoupon junction records
-/// 
-/// DISCOUNT CALCULATION LOGIC:
-/// • Percentage: (Subtotal × Percentage / 100) capped at MaxDiscountAmount
-/// • FixedAmount: Flat dollar reduction up to order subtotal
-/// • FreeShipping: Shipping cost waived regardless of order value
-/// • Future: Category-specific, user-tier, BOGO implementations
-/// </remarks>
 public class CouponService(ApplicationDbContext context, ILogger<CouponService> logger) : ICouponService
 {
     #region Validation & Application

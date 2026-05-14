@@ -9,73 +9,6 @@ namespace ELKH.Services;
 /// - Image dimension validation
 /// - File size limits
 /// </summary>
-/// <remarks>
-/// TABLE OF CONTENTS
-/// ================================================================================
-/// 1. Constants & Configuration .................................. Lines [31-62]
-///    - MagicBytes[]                   // File signature definitions
-///    - AllowedExtensions[]            // Permitted file extensions
-///    - AllowedMimeTypes[]             // Valid content types
-///    - Security limits                // File size/dimension constraints
-/// 
-/// 2. Constructor & Dependencies .................................. Lines [60-63]
-///    - ImageValidationService()       // Service initialization
-/// 
-/// 3. Core Validation Methods ..................................... Lines [65-181]
-///    - ValidateImageAsync()           // Main validation orchestration
-///    - Multi-layer security checks    // Six validation stages
-/// 
-/// 4. Security Helper Methods ..................................... Lines [183-242]
-///    - ValidateMagicBytes()           // File signature verification
-///    - SanitizeFileName()             // Filename security sanitization
-/// 
-/// 5. Result Data Transfer Object ................................. Lines [245-267]
-///    - ImageValidationResult          // Validation outcome container
-/// ================================================================================
-/// 
-/// ARCHITECTURAL CONTEXT:
-/// • Security-first service implementing OWASP recommendations for file uploads
-/// • Stateless service with dependency injection for logging
-/// • Uses SixLabors.ImageSharp for reliable image processing and validation
-/// • Implements defense-in-depth strategy with multiple validation layers
-/// • Part of the ELKH platform's media management security infrastructure
-/// 
-/// SECURITY IMPLEMENTATION:
-/// This service addresses critical file upload vulnerabilities by implementing
-/// six layers of validation that must ALL pass:
-/// 1. File existence & size limits (prevent DoS)
-/// 2. Extension whitelisting (block executables) 
-/// 3. MIME type validation (prevent type confusion)
-/// 4. Magic byte verification (detect disguised files)
-/// 5. Image dimension validation (prevent memory exhaustion)
-/// 6. Filename sanitization (prevent path traversal)
-/// 
-/// BUSINESS LOGIC & USAGE:
-/// • Used by product image uploads, user avatars, and content management
-/// • Enforces business rules: 5MB max size, 4096x4096 max dimensions
-/// • Returns detailed error messages for user feedback
-/// • Sanitizes filenames to prevent filesystem attacks
-/// • Logs security violations for monitoring and alerting
-/// 
-/// INTEGRATION POINTS:
-/// • Depends on: ILogger for security event logging
-/// • Depends on: SixLabors.ImageSharp for image processing
-/// • Used by: ProductController, UserProfileController, AdminController
-/// • Result consumed by: File storage services, image processing pipeline
-/// 
-/// PERFORMANCE CONSIDERATIONS:
-/// • Validates files in-memory without temporary storage
-/// • Uses streams efficiently to minimize memory footprint
-/// • Magic byte validation is O(1) for performance
-/// • Image loading is lazy and only for dimension checking
-/// • Logging is structured for performance monitoring
-/// 
-/// SECURITY MONITORING:
-/// • Failed validation attempts are logged for security monitoring
-/// • Suspicious patterns (repeated failures) can trigger alerts
-/// • Magic byte failures indicate potential malicious uploads
-/// • All security-relevant events include file metadata
-/// </remarks>
 public class ImageValidationService
 {
     private readonly ILogger<ImageValidationService> _logger;
@@ -551,9 +484,9 @@ public class ImageValidationService
     /// 
     /// <para><strong>Example Transformations:</strong></para>
     /// <list type="bullet">
-    /// <item>"My Photo.jpg" → "My_Photo"</item>
-    /// <item>"../../malicious" → "image_[guid]"</item>
-    /// <item>"Product@#$%Image" → "ProductImage"</item>
+    /// <item>"My Photo.jpg" â†’ "My_Photo"</item>
+    /// <item>"../../malicious" â†’ "image_[guid]"</item>
+    /// <item>"Product@#$%Image" â†’ "ProductImage"</item>
     /// </list>
     /// </remarks>
     private string SanitizeFileName(string fileName)

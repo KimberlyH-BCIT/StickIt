@@ -14,34 +14,6 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Filters;
 using System.Globalization;
 
-// =====================================================================
-// PROGRAM.CS - APPLICATION STARTUP AND CONFIGURATION
-// =====================================================================
-//
-// TABLE OF CONTENTS
-// ==================
-// 1. Service Registration (lines 17-111)
-//    - Database & Identity (lines 17-46)
-//    - Health Checks (lines 48-50)
-//    - MVC / Razor Pages (lines 52-74)
-//    - Caching & Compression (lines 76-82)
-//    - Rate Limiting (lines 84)
-//    - Configuration Options (lines 86)
-//    - Payment & Security Services (lines 88-94)
-//    - Repository Registration (lines 96-102)
-//    - Mapping (ProductMapper instead of AutoMapper) (lines 104-114)
-//
-// 2. Application Build & Configuration (lines 116-169)
-//    - Allowed Hosts Validation (lines 121-132)
-//    - HTTP Request Pipeline (lines 134-159)
-//    - Routing & Endpoints (lines 161-165)
-//
-// 3. Database Migration & Seeding (lines 167-189)
-//    - Migration Strategy (controlled by config)
-//    - Idempotent Seeding (products, admin, customers)
-//
-// =====================================================================
-
 var builder = WebApplication.CreateBuilder(args);
 
 // Configure logging to avoid EventLog disposal issues

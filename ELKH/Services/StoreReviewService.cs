@@ -13,26 +13,6 @@ namespace ELKH.Services
     /// Service for managing store reviews (reviews about the website/store itself).
     /// Handles submission, retrieval, verified buyer validation, and review updates.
     /// </summary>
-    /// <remarks>
-    /// TABLE OF CONTENTS (181 lines)
-    /// ================================================================================
-    /// 1. Constructor ................................................... Lines  18-25
-    ///    - StoreReviewService()   // ApplicationDbContext, ILogger injection
-    ///
-    /// 2. Review Submission &amp; Retrieval ................................ Lines  27-96
-    ///    - SubmitReviewAsync          // Create new review (duplicate + verified buyer checks)
-    ///    - GetApprovedReviewsAsync    // Approved homepage testimonials
-    ///    - IsVerifiedBuyerAsync       // Delivered/shipped order check for verification
-    ///    - GetUserReviewAsync         // Retrieve a user's active review
-    ///
-    /// 3. Review Editing &amp; Moderation .................................. Lines  98-181
-    ///    - UpdateReviewAsync          // Edit content (resets Approved flag)
-    ///    - DeleteReviewAsync          // User-initiated soft-delete
-    ///    - GetPendingReviewsAsync     // Moderation queue (Approved=false)
-    ///    - ApproveAsync               // Staff approve for homepage display
-    ///    - AdminDeleteAsync           // Staff/admin soft-delete
-    /// ================================================================================
-    /// </remarks>
     public class StoreReviewService : IStoreReviewService
     {
         private readonly ApplicationDbContext _db;

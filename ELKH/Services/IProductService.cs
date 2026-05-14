@@ -19,6 +19,18 @@ namespace ELKH.Services
         Task<IEnumerable<ProductVM>> GetAllAsync(CancellationToken ct = default);
 
         /// <summary>
+        /// Returns a single page of active catalog products with filtering, sorting, and counting
+        /// executed in the database.
+        /// </summary>
+        Task<PagedResult<ProductVM>> GetPagedCatalogAsync(
+            string? search,
+            int? categoryId,
+            string sort,
+            int skip,
+            int take,
+            CancellationToken ct = default);
+
+        /// <summary>
         /// Returns a single product by primary key with its category loaded,
         /// or <see langword="null"/> if no product with <paramref name="id"/> exists.
         /// Uses a compiled EF Core query for reduced translation overhead on this hot path.
@@ -46,7 +58,7 @@ namespace ELKH.Services
         Task UpdateAsync(ProductVM vm, CancellationToken ct = default);
 
         /// <summary>
-        /// Permanently removes a product from the catalog.
+        /// Soft-deletes a product from the catalog by marking it deleted and inactive.
         /// No-ops silently if the product no longer exists.
         /// </summary>
         Task DeleteAsync(int id, CancellationToken ct = default);

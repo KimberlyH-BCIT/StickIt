@@ -8,67 +8,6 @@ namespace ELKH.Data;
 /// Database seeding operations for user accounts and role management.
 /// Handles creation of administrative accounts, roles, and security setup.
 /// </summary>
-/// <remarks>
-/// TABLE OF CONTENTS
-/// ================================================================================
-/// 1. SeedUsersAndRolesAsync Method ............................... Lines [13-70]
-///    - Configuration validation      // Ensure credentials are configured
-///    - Role creation                // Admin, Manager, Staff, Customer roles
-///    - Account setup               // Administrative user accounts
-/// 
-/// 2. Role Creation Logic ......................................... Lines [50-85]
-///    - Admin role                  // Full system access
-///    - Manager role               // Operational management
-///    - Staff role                 // Content and order management
-///    - Customer role              // Standard user access
-/// 
-/// 3. Administrative Account Creation ............................. Lines [87-140]
-///    - Admin account              // Primary administrative access
-///    - Manager account            // Store management access
-///    - Staff account              // Content management access
-/// 
-/// 4. Security Configuration ..................................... Lines [142-158]
-///    - Email confirmation         // Bypass for seeded accounts
-///    - Role assignment           // Proper authorization setup
-///    - Credential validation     // Secure password requirements
-/// ================================================================================
-/// 
-/// ARCHITECTURAL CONTEXT:
-/// • Critical component of ELKH's security and authorization infrastructure
-/// • Implements role-based access control (RBAC) for administrative functions
-/// • Integrates with ASP.NET Core Identity for authentication and authorization
-/// • Provides secure foundation for multi-tier user management
-/// • Environment-aware configuration using user secrets and environment variables
-/// 
-/// SECURITY IMPLEMENTATION:
-/// This seeder establishes the complete authorization hierarchy:
-/// 1. Admin role - Full system access including user management and configuration
-/// 2. Manager role - Operational access including order and product management
-/// 3. Staff role - Content management access for products, reviews, and content
-/// 4. Customer role - Standard user access for purchasing and account management
-/// 5. Secure credential management via configuration providers
-/// 
-/// DATA SEEDING STRATEGY:
-/// • Idempotent operations - safe to run multiple times without duplication
-/// • Configuration-driven account creation using secure credential providers
-/// • Comprehensive role hierarchy supporting granular access control
-/// • Email confirmation bypass for administrative seeded accounts
-/// • Fallback security warnings for missing credential configuration
-/// 
-/// INTEGRATION POINTS:
-/// • Depends on: ASP.NET Core Identity (UserManager, RoleManager)
-/// • Depends on: IConfiguration for secure credential retrieval
-/// • Creates: Complete role hierarchy and administrative user accounts
-/// • Integrates with: Authorization policies and controller access control
-/// • Used by: Application startup, deployment pipelines, and environment setup
-/// 
-/// SECURITY CONSIDERATIONS:
-/// • Credentials must be configured via user secrets or environment variables
-/// • No hardcoded passwords or sensitive data in source code
-/// • Comprehensive role separation for principle of least privilege
-/// • Email confirmation bypass only for trusted seeded accounts
-/// • Strong password requirements enforced through Identity configuration
-/// </remarks>
 public static partial class DbSeeder
 {
     #region Users & Roles Seeding
@@ -88,7 +27,7 @@ public static partial class DbSeeder
     /// </list>
     /// </param>
     /// <remarks>
-    /// <para><strong>⚠️ SECURITY WARNING:</strong></para>
+    /// <para><strong>âš ï¸ SECURITY WARNING:</strong></para>
     /// Credentials must be configured via <c>dotnet user-secrets</c> in development
     /// or environment variables/Azure Key Vault in production. The fallback defaults
     /// (admin@stickit.dev / Admin@2025!) are intentionally weak and suitable ONLY for
@@ -122,8 +61,8 @@ public static partial class DbSeeder
         const string customerRole = "Customer";
 
         // ======================================================================
-        // ║ Load Credentials from Configuration                                ║
-        // ║ Fallback to weak defaults only for local development.              ║
+        // â•‘ Load Credentials from Configuration                                â•‘
+        // â•‘ Fallback to weak defaults only for local development.              â•‘
         // ======================================================================
         // Read from user-secrets / environment variables.
         // IsNullOrWhiteSpace guards against empty-string values in appsettings.json,
@@ -144,8 +83,8 @@ public static partial class DbSeeder
         if (string.IsNullOrWhiteSpace(staffPass))  staffPass  = "Staff@2025!";
 
         // ======================================================================
-        // ║ Ensure Roles Exist                                                 ║
-        // ║ Create all four roles regardless of whether users exist.           ║
+        // â•‘ Ensure Roles Exist                                                 â•‘
+        // â•‘ Create all four roles regardless of whether users exist.           â•‘
         // ======================================================================
         string[] allRoles = { adminRole, managerRole, staffRole, customerRole };
         foreach (var role in allRoles)
@@ -155,11 +94,11 @@ public static partial class DbSeeder
         }
 
         // ======================================================================
-        // ║ Seed Administrative Accounts                                       ║
-        // ║ Create admin, manager, and staff accounts with proper roles.       ║
+        // â•‘ Seed Administrative Accounts                                       â•‘
+        // â•‘ Create admin, manager, and staff accounts with proper roles.       â•‘
         // ======================================================================
 
-        // ── Seed Admin Account ───────────────────────────────────────────────
+        // â”€â”€ Seed Admin Account â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
         var admin = await userManager.FindByEmailAsync(adminEmail);
 
         if (admin is null)
@@ -182,7 +121,7 @@ public static partial class DbSeeder
         // Create app-level records so admin can use all features (cart, wishlist, profile, etc.)
         await EnsureAppUserRecordsAsync(db, admin, adminEmail, "Admin", "User", wwwRootPath);
 
-        // ── Seed Manager Account ─────────────────────────────────────────────
+        // â”€â”€ Seed Manager Account â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
         var manager = await userManager.FindByEmailAsync(managerEmail);
 
         if (manager is null)
@@ -205,7 +144,7 @@ public static partial class DbSeeder
         // Create app-level records so manager can use all features
         await EnsureAppUserRecordsAsync(db, manager, managerEmail, "Manager", "User", wwwRootPath);
 
-        // ── Seed Staff Account ───────────────────────────────────────────────
+        // â”€â”€ Seed Staff Account â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
         var staff = await userManager.FindByEmailAsync(staffEmail);
 
         if (staff is null)
@@ -231,7 +170,7 @@ public static partial class DbSeeder
 
     /// <summary>
     /// Ensures a RegisteredUserModel, UserProfileModel, and ContactDetailModel exist
-    /// for the given Identity user. Idempotent — skips creation if records already exist.
+    /// for the given Identity user. Idempotent â€” skips creation if records already exist.
     /// </summary>
     private static async Task EnsureAppUserRecordsAsync(
         ApplicationDbContext db,

@@ -6,51 +6,6 @@ namespace ELKH.Data;
 /// Product seed data partial class containing 416 sticker products across 11 themed categories.
 /// This file is part of the database seeding strategy used during application initialization.
 /// </summary>
-/// <remarks>
-/// TABLE OF CONTENTS - PRODUCT CATEGORIES
-/// ================================================================================
-/// Category Name         | Product Count | Lines        | Description
-/// ---------------------|---------------|--------------|---------------------------
-/// CANADIAN             | 40 products   | 29-69        | Canadian-themed stickers
-/// CHRISTMAS            | 43 products   | 71-115       | Christmas & holiday stickers
-/// ANIMALS              | 52 products   | 117-170      | Wildlife & pet stickers
-/// EASTER               | 34 products   | 172-207      | Easter & spring stickers
-/// FOOD & DRINK         | 49 products   | 209-259      | Food-themed stickers
-/// HALLOWEEN            | 38 products   | 261-300      | Halloween & spooky stickers
-/// LUNAR NEW YEAR       | 24 products   | 302-327      | Lunar New Year stickers
-/// NATURE & OUTDOORS    | 43 products   | 329-373      | Nature & landscape stickers
-/// NEW YEAR             | 22 products   | 375-398      | New Year celebration stickers
-/// THANKSGIVING         | 31 products   | 400-432      | Thanksgiving & autumn stickers
-/// MISCELLANEOUS        | 40 products   | 434-475      | General & novelty stickers
-/// ================================================================================
-///
-/// USAGE:
-/// Called by DbSeeder.SeedProducts() during application startup to populate the
-/// Products table if it's empty. Each product includes:
-/// - Name, Description, Price, Discount%, Stock Quantity
-/// - Category assignment
-/// - Search tags for discovery
-///
-/// PRICING STRATEGY:
-/// - Base price range: $1.99 - $4.99
-/// - Discount percentages: 0%, 10%, 15%, 20%, 25%
-/// - Out-of-stock items (0 quantity) strategically placed for testing
-///
-/// STOCK MANAGEMENT:
-/// - Most items: 100-320 units in stock
-/// - Low stock items: 15-95 units (testing low-stock alerts)
-/// - Out of stock: 0 units (testing sold-out behavior)
-///
-/// SEARCH OPTIMIZATION:
-/// Each product tagged with 4 comma-separated keywords for:
-/// - Fuzzy search matching
-/// - Category filtering
-/// - Related product discovery
-///
-/// HELPER METHOD:
-/// P() - Shorthand factory method to create ProductModel instances
-///      Parameters: name, description, price, discount%, stock, category, tags
-/// </remarks>
 public static partial class DbSeeder
 {
     private static List<ProductModel> GetProducts(

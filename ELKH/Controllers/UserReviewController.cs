@@ -6,80 +6,12 @@ using Microsoft.AspNetCore.Mvc;
 
 namespace ELKH.Controllers;
 
-// ╔===============================================================================================╗
-// ║                           USER REVIEW CONTROLLER - TABLE OF CONTENTS                         ║
-// ╚===============================================================================================╝
-// 
-// OVERVIEW:
-// Comprehensive user review and rating management controller handling both product ratings
-// and store testimonials with authentication, verification, and moderation workflows.
-// 
-// TABLE OF CONTENTS:
-// ┌─ Section 1: Controller Setup & Dependencies .......................................... Line 48
-// │  ├─ Constructor with dependency injection
-// │  ├─ Service integrations (IRatingService, IStoreReviewService)
-// │  └─ Base class inheritance from UserControllerBase
-// ├─ Section 2: Product Ratings & Reviews .............................................. Line 50
-// │  ├─ MyRatings() - Display user's existing product ratings
-// │  ├─ RateProducts() - List products available for rating
-// │  ├─ SubmitRating() - Submit new product rating (POST)
-// │  ├─ UpdateRating() - Update existing rating (POST)
-// │  └─ Verified buyer validation and rating eligibility checks
-// └─ Section 3: Store Reviews & Testimonials ........................................... Line 190
-//    ├─ StoreReview() - Display/edit store review form (GET)
-//    ├─ StoreReview() - Submit/update store review (POST)
-//    ├─ DeleteStoreReview() - Remove user's store review (POST)
-//    ├─ Verified buyer status integration
-//    └─ Review moderation and approval workflow
-//
-// ARCHITECTURE NOTES:
-// • Extracted from monolithic UserController for focused review management
-// • Inherits from UserControllerBase for common user operations and authentication
-// • Uses IRatingService for product rating business logic and verification
-// • Uses IStoreReviewService for store testimonial management and moderation
-//
-// BUSINESS LOGIC:
-// • Product ratings require authentication and purchase verification
-// • Store reviews support both authenticated and anonymous submission
-// • All reviews go through moderation workflow before public display
-// • Verified buyer status provides enhanced credibility for reviews
-// • Users can edit/update their existing reviews with proper validation
-//
-// SECURITY IMPLEMENTATION:
-// • [Authorize] attribute requires authentication for all actions
-// • Anti-forgery token validation on all POST operations
-// • User ID validation ensures users can only modify their own reviews
-// • Purchase verification prevents fake product ratings
-// • Input validation and sanitization for review content
-//
-// USER EXPERIENCE:
-// • MyRatings displays comprehensive view of user's rating history
-// • RateProducts provides eligible products based on purchase history
-// • Store review form pre-populates with existing review data
-// • Ajax-based rating submission for smooth user interaction
-// • Clear success/error messaging for all review operations
-
 /// <summary>
 /// Controller responsible for user review and rating management.
 /// Handles product ratings and store testimonials from authenticated users.
 /// </summary>
 /// <remarks>
-/// <para><strong>Extracted from UserController</strong></para>
-/// This controller handles all review-related functionality that was previously
-/// in the monolithic UserController, providing focused review management.
-/// 
-/// <para><strong>Responsibilities:</strong></para>
-/// <list type="bullet">
-/// <item>Display user's product ratings and reviews</item>
-/// <item>List products available for review</item>
-/// <item>Store review creation and editing</item>
-/// <item>Verified buyer status checking</item>
-/// <item>Review moderation and approval workflow</item>
-/// </list>
-/// 
-/// <para><strong>Security:</strong></para>
-/// Product ratings require authentication and purchase verification.
-/// Store reviews support both authenticated and anonymous submission with return URL handling.
+/// Keeps review-related behavior isolated from the broader user account flows.
 /// </remarks>
 public class UserReviewController : UserControllerBase
 {

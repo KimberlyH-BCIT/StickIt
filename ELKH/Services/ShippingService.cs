@@ -8,32 +8,6 @@ namespace ELKH.Services;
 /// <summary>
 /// Service for managing shipping methods and calculating shipping costs with business logic.
 /// </summary>
-/// <remarks>
-/// TABLE OF CONTENTS (130 lines)
-/// ================================================================================
-/// 1. Constructor & Dependencies ................................. Lines   25-32
-///    - Database context and logger injection
-/// 
-/// 2. GetAvailableShippingMethodsAsync ........................... Lines   34-56
-///    - Retrieves active shipping methods
-///    - Ordered by DisplayOrder for consistent UI presentation
-/// 
-/// 3. CalculateShippingCostAsync ................................. Lines   58-100
-///    - Applies free shipping threshold logic
-///    - Standard shipping becomes free when threshold exceeded
-///    - Returns base price for non-Standard methods
-/// 
-/// 4. GetShippingMethodByIdAsync ................................. Lines  102-130
-///    - Retrieves specific shipping method
-///    - Used for order processing and validation
-/// ================================================================================
-/// 
-/// BUSINESS RULES:
-/// • Free shipping applies to Standard Shipping only when cart subtotal ≥ $50
-/// • Express and Priority shipping always charge full price regardless of subtotal
-/// • Only active shipping methods are shown to customers
-/// • Display order determines sort order in UI (lower numbers first)
-/// </remarks>
 public class ShippingService : IShippingService
 {
     private readonly ApplicationDbContext _context;
@@ -79,14 +53,14 @@ public class ShippingService : IShippingService
     /// <returns>The calculated shipping cost (0 if free shipping applies to Standard).</returns>
     /// <remarks>
     /// <para><strong>Free Shipping Logic:</strong></para>
-    /// • Applies ONLY to "Standard Shipping" method
-    /// • Requires cart subtotal >= threshold ($50 by default)
-    /// • Express and Priority always charge full base price
+    /// â€¢ Applies ONLY to "Standard Shipping" method
+    /// â€¢ Requires cart subtotal >= threshold ($50 by default)
+    /// â€¢ Express and Priority always charge full base price
     /// 
     /// <para><strong>Example Scenarios:</strong></para>
-    /// • Cart $60 + Standard → $0 (free shipping)
-    /// • Cart $60 + Express → $12.99 (no free shipping for expedited)
-    /// • Cart $30 + Standard → $5.99 (below threshold)
+    /// â€¢ Cart $60 + Standard â†’ $0 (free shipping)
+    /// â€¢ Cart $60 + Express â†’ $12.99 (no free shipping for expedited)
+    /// â€¢ Cart $30 + Standard â†’ $5.99 (below threshold)
     /// </remarks>
     public async Task<decimal> CalculateShippingCostAsync(int shippingMethodId, decimal cartSubtotal, decimal freeShippingThreshold = 50m)
     {

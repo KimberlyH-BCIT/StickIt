@@ -11,69 +11,75 @@ namespace ELKH.Services
     /// Delegates search operations to <see cref="ISearchService"/> and uses
     /// <see cref="CompiledQueries"/> for hot-path single-product lookups.
     /// </summary>
-    /// <remarks>
-    /// TABLE OF CONTENTS
-    /// ================================================================================
-    /// 1. Constructor & Dependencies
-    ///    - ApplicationDbContext, ISearchService, IProductMapper, ILogger injection
-    /// 
-    /// 2. Product Retrieval Operations
-    ///    - GetAllAsync()                         // Fetch all products with category eagerly loaded
-    ///    - GetByIdAsync()                        // Single product lookup with compiled query (includes category)
-    ///    - GetByIdsAsync()                       // Batch fetch for cart/order enrichment
-    /// 
-    /// 3. Product Search Integration
-    ///    - SearchNames()                         // Fuzzy name search delegation to ISearchService
-    /// 
-    /// 4. Product CRUD Operations
-    ///    - CreateAsync()                         // Add new product with name normalization
-    ///    - UpdateAsync()                         // Update existing product with validation
-    ///    - DeleteAsync()                         // Hard delete (not soft delete)
-    /// 
-    /// 5. Category & Promotional Operations
-    ///    - GetCategoriesAsync()                  // Retrieve all categories for dropdowns
-    ///    - GetPromotionalProductsAsync()         // Products with discounts or active coupons
-    /// 
-    /// 6. Search Index Management
-    ///    - ReindexFTSAsync()                     // Rebuild full-text search index coordination
-    ///    - FTS table maintenance and optimization
-    /// 
-    /// 7. Private Helper Methods
-    ///    - NormalizeName()                       // String normalization for consistent storage
-    /// ================================================================================
-    /// 
-    /// PERFORMANCE OPTIMIZATIONS:
-    /// • Compiled queries for frequently accessed single-product lookups
-    /// • Efficient batch operations for cart and order processing
-    /// • Delegated search operations to specialized ISearchService
-    /// • Eager loading of category relationships to minimize round trips
-    /// 
-    /// DATA ACCESS PATTERNS:
-    /// • Repository pattern implementation with service layer abstraction
-    /// • Manual DTO mapping for precise control over data transfer
-    /// • Optimistic concurrency handling for product updates
-    /// • Transactional operations for data consistency
-    /// 
-    /// INTEGRATION POINTS:
-    /// • ISearchService for fuzzy product name searching capabilities
-    /// • ApplicationDbContext for Entity Framework data operations
-    /// • ILogger for operation tracking and performance monitoring
-    /// • FTS index coordination for search functionality
-    /// 
-    /// BUSINESS LOGIC:
-    /// • Product name normalization for consistent searching
-    /// • Category relationship management and validation
-    /// • Hard delete implementation (no soft delete)
-    /// • Audit trail support for FTS reindexing operations
-    /// </remarks>
     public class ProductService(ApplicationDbContext db, ISearchService searchService, IProductMapper mapper, ILogger<ProductService> logger) : IProductService
     {
         /// <inheritdoc/>
         public async Task<IEnumerable<ProductVM>> GetAllAsync(CancellationToken ct = default)
         {
             // Include Category so the mapper can populate CategoryName without a second query.
-            var products = await db.Products.Include(p => p.Category).ToListAsync(ct);
+            var products = await db.Products
+                .Where(p => !p.IsDeleted)
+                .Include(p => p.Category)
+                .ToListAsync(ct);
             return mapper.ToViewModels(products);
+        }
+
+        /// <inheritdoc/>
+        public async Task<PagedResult<ProductVM>> GetPagedCatalogAsync(
+            string? search,
+            int? categoryId,
+            string sort,
+            int skip,
+            int take,
+            CancellationToken ct = default)
+        {
+            skip = Math.Max(0, skip);
+            take = Math.Max(1, take);
+
+            IQueryable<ProductModel> query = db.Products
+                .AsNoTracking()
+                .Where(p => p.IsActive && !p.IsDeleted);
+
+            if (!string.IsNullOrWhiteSpace(search))
+            {
+                var term = search.Trim();
+                query = query.Where(p => p.Name.Contains(term) || p.Description.Contains(term));
+            }
+
+            if (categoryId.HasValue)
+            {
+                query = query.Where(p => p.FkCategoryId == categoryId.Value);
+            }
+
+            query = sort switch
+            {
+                "name_desc" => query.OrderByDescending(p => p.Name).ThenByDescending(p => p.PkProductId),
+                "price_low" => query.OrderBy(p => p.Price).ThenBy(p => p.PkProductId),
+                "price_high" => query.OrderByDescending(p => p.Price).ThenByDescending(p => p.PkProductId),
+                "newest" => query.OrderByDescending(p => p.DateAdded).ThenByDescending(p => p.PkProductId),
+                "oldest" => query.OrderBy(p => p.DateAdded).ThenBy(p => p.PkProductId),
+                _ => query.OrderBy(p => p.Name).ThenBy(p => p.PkProductId)
+            };
+
+            var totalCount = await query.CountAsync(ct);
+
+            var products = await query
+                .Include(p => p.Category)
+                .Skip(skip)
+                .Take(take)
+                .ToListAsync(ct);
+
+            var page = (skip / take) + 1;
+            var totalPages = totalCount == 0 ? 0 : (int)Math.Ceiling(totalCount / (double)take);
+
+            return new PagedResult<ProductVM>
+            {
+                Items = mapper.ToViewModels(products),
+                TotalCount = totalCount,
+                TotalPages = totalPages,
+                Page = page,
+                PageSize = take
+            };
         }
 
         /// <inheritdoc/>
@@ -103,7 +109,7 @@ namespace ELKH.Services
             var products = await db.Products
                 .AsNoTracking()
                 .Include(p => p.Category)
-                .Where(p => idList.Contains(p.PkProductId))
+                .Where(p => idList.Contains(p.PkProductId) && !p.IsDeleted)
                 .ToListAsync(ct);
 
             var viewModels = mapper.ToViewModels(products);
@@ -146,7 +152,8 @@ namespace ELKH.Services
             var entity = await db.Products.FindAsync(new object[] { id }, ct);
             if (entity != null)
             {
-                db.Products.Remove(entity);
+                entity.IsDeleted = true;
+                entity.IsActive = false;
                 await db.SaveChangesAsync(ct);
             }
         }
@@ -193,7 +200,7 @@ WHERE PkProductId NOT IN (SELECT rowid FROM ProductFTS);
 
             // Get products with direct discounts or all products if there are active coupons
             var promotionalProducts = await db.Products
-                .Where(p => p.IsActive && (
+                .Where(p => !p.IsDeleted && p.IsActive && (
                     p.DiscountPercent > 0 || // Products with direct discounts
                     hasActiveCoupons         // All products are eligible if there are active coupons
                 ))

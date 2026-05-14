@@ -12,47 +12,6 @@ namespace ELKH.Repositories;
 /// logging, and transaction management. Supports both individual item operations
 /// and bulk cart management for optimal user experience.
 /// </summary>
-/// <remarks>
-/// TABLE OF CONTENTS (120 lines)
-/// ================================================================================
-/// 1. Constructor & Dependencies ................................... Lines   35-45
-///    - ApplicationDbContext, ILogger injection for data access and monitoring
-/// 
-/// 2. Cart Retrieval Operations .................................... Lines   47-65
-///    - GetByUserIdAsync()                    // Complete user cart with product details
-///    - GetByUserAndProductAsync()            // Specific cart item lookup for updates
-/// 
-/// 3. Cart Modification Operations ................................. Lines   67-120
-///    - AddAsync()                            // Add new cart item with error handling
-///    - UpdateAsync()                         // Modify quantity and pricing
-///    - RemoveAsync()                         // Delete individual cart item
-///    - ClearByUserIdAsync()                  // Empty entire user cart
-/// ================================================================================
-/// 
-/// PERFORMANCE OPTIMIZATIONS:
-/// • Include() statements load related product and image data in single query
-/// • Efficient single-item lookups using composite key matching
-/// • Batch operations for cart clearing minimize database round trips
-/// • Proper async/await patterns prevent thread blocking
-/// 
-/// ERROR HANDLING STRATEGY:
-/// • DbUpdateException logging for database constraint violations
-/// • Boolean return values indicate operation success/failure
-/// • Structured logging with user and cart identifiers for debugging
-/// • Graceful degradation on database errors without throwing exceptions
-/// 
-/// DATA CONSISTENCY GUARANTEES:
-/// • Entity Framework change tracking ensures data integrity
-/// • Atomic operations through DbContext transaction management
-/// • Proper foreign key relationships prevent orphaned cart items
-/// • Cart item validation through repository pattern abstraction
-/// 
-/// BUSINESS RULES ENFORCED:
-/// • User-scoped cart access prevents cross-user data leakage
-/// • Cart item quantities and pricing validated at service layer
-/// • Product availability checks delegated to business logic layer
-/// • Cart persistence supports multiple browser sessions and devices
-/// </remarks>
 public class CartRepo : ICartRepo
 {
     #region Constructor & Dependencies
@@ -82,14 +41,14 @@ public class CartRepo : ICartRepo
     /// <returns>Complete cart with products and images eagerly loaded</returns>
     /// <remarks>
     /// PERFORMANCE OPTIMIZATION:
-    /// • Include() loads products and images in single database query
-    /// • ThenInclude() prevents N+1 query issues for product images
-    /// • AsNoTracking could be added for read-only scenarios
+    /// â€¢ Include() loads products and images in single database query
+    /// â€¢ ThenInclude() prevents N+1 query issues for product images
+    /// â€¢ AsNoTracking could be added for read-only scenarios
     /// 
     /// BUSINESS VALUE:
-    /// • Provides complete cart data for checkout calculations
-    /// • Enables rich cart display with product images and details
-    /// • Supports cart total calculations and tax computations
+    /// â€¢ Provides complete cart data for checkout calculations
+    /// â€¢ Enables rich cart display with product images and details
+    /// â€¢ Supports cart total calculations and tax computations
     /// </remarks>
     public async Task<IEnumerable<CartModel>> GetByUserIdAsync(int registeredUserId) =>
         await _context.Carts
@@ -106,13 +65,13 @@ public class CartRepo : ICartRepo
     /// <returns>Existing cart item if found, null if no match</returns>
     /// <remarks>
     /// BUSINESS LOGIC SUPPORT:
-    /// • Enables "add to cart" quantity increments for existing items
-    /// • Prevents duplicate cart entries for same product
-    /// • Supports cart item updates and modifications
+    /// â€¢ Enables "add to cart" quantity increments for existing items
+    /// â€¢ Prevents duplicate cart entries for same product
+    /// â€¢ Supports cart item updates and modifications
     /// 
     /// PERFORMANCE NOTE:
-    /// • Efficient composite key lookup using indexed foreign keys
-    /// • No eager loading needed for existence checks and updates
+    /// â€¢ Efficient composite key lookup using indexed foreign keys
+    /// â€¢ No eager loading needed for existence checks and updates
     /// </remarks>
     public async Task<CartModel?> GetByUserAndProductAsync(int registeredUserId, int productId) =>
         await _context.Carts
@@ -128,14 +87,14 @@ public class CartRepo : ICartRepo
     /// <returns>True if successfully added, false if database error occurred</returns>
     /// <remarks>
     /// ERROR HANDLING:
-    /// • DbUpdateException caught and logged for debugging
-    /// • Foreign key constraint violations logged with context
-    /// • Graceful failure prevents application crashes
+    /// â€¢ DbUpdateException caught and logged for debugging
+    /// â€¢ Foreign key constraint violations logged with context
+    /// â€¢ Graceful failure prevents application crashes
     /// 
     /// BUSINESS RULES:
-    /// • Service layer should validate product availability before calling
-    /// • Service layer should check for existing cart items to increment instead
-    /// • Cart item pricing should be calculated by service layer
+    /// â€¢ Service layer should validate product availability before calling
+    /// â€¢ Service layer should check for existing cart items to increment instead
+    /// â€¢ Cart item pricing should be calculated by service layer
     /// </remarks>
     public async Task<bool> AddAsync(CartModel cart)
     {
@@ -160,14 +119,14 @@ public class CartRepo : ICartRepo
     /// <returns>True if successfully updated, false if item not found or database error</returns>
     /// <remarks>
     /// UPDATE STRATEGY:
-    /// • Find existing entity first to ensure it exists and track changes
-    /// • Selective property updates preserve audit fields and timestamps
-    /// • Change tracking automatically detects modifications for efficient updates
+    /// â€¢ Find existing entity first to ensure it exists and track changes
+    /// â€¢ Selective property updates preserve audit fields and timestamps
+    /// â€¢ Change tracking automatically detects modifications for efficient updates
     /// 
     /// BUSINESS VALIDATION:
-    /// • Quantity validation should occur at service layer
-    /// • Price recalculation should be handled by business logic
-    /// • Inventory checks delegated to service layer
+    /// â€¢ Quantity validation should occur at service layer
+    /// â€¢ Price recalculation should be handled by business logic
+    /// â€¢ Inventory checks delegated to service layer
     /// </remarks>
     public async Task<bool> UpdateAsync(CartModel cart)
     {
@@ -202,9 +161,9 @@ public class CartRepo : ICartRepo
     /// <returns>True if successfully removed, false if item not found or database error</returns>
     /// <remarks>
     /// DELETION STRATEGY:
-    /// • Hard delete removes cart items completely (no audit trail needed for temporary cart data)
-    /// • Find first to ensure item exists before attempting removal
-    /// • Graceful handling of concurrent deletion scenarios
+    /// â€¢ Hard delete removes cart items completely (no audit trail needed for temporary cart data)
+    /// â€¢ Find first to ensure item exists before attempting removal
+    /// â€¢ Graceful handling of concurrent deletion scenarios
     /// </remarks>
     public async Task<bool> RemoveAsync(int cartId)
     {
@@ -235,14 +194,14 @@ public class CartRepo : ICartRepo
     /// <returns>True if successfully cleared, false if database error occurred</returns>
     /// <remarks>
     /// BULK OPERATION OPTIMIZATION:
-    /// • Batch retrieval and removal minimizes database round trips
-    /// • RemoveRange() efficiently handles multiple deletions
-    /// • Single SaveChangesAsync() call for atomic transaction
+    /// â€¢ Batch retrieval and removal minimizes database round trips
+    /// â€¢ RemoveRange() efficiently handles multiple deletions
+    /// â€¢ Single SaveChangesAsync() call for atomic transaction
     /// 
     /// BUSINESS SCENARIOS:
-    /// • Called after successful order placement
-    /// • Used for "clear cart" user functionality
-    /// • Supports cart abandonment cleanup processes
+    /// â€¢ Called after successful order placement
+    /// â€¢ Used for "clear cart" user functionality
+    /// â€¢ Supports cart abandonment cleanup processes
     /// </remarks>
     public async Task<bool> ClearByUserIdAsync(int registeredUserId)
     {

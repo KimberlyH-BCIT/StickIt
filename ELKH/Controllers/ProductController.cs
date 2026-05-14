@@ -9,77 +9,8 @@ namespace ELKH.Controllers
 {
     /// <summary>
     /// Product catalog management controller.
-    /// Handles public product listing/details and admin CRUD operations with caching and search.
+    /// Handles public product browsing, ratings, and admin product management.
     /// </summary>
-    /// <remarks>
-    /// TABLE OF CONTENTS (620 lines)
-    /// ================================================================================
-    /// 1. Fields & Constructor ......................................... Lines   65-95
-    ///    - Dependency injection for services, repositories, and mappers
-    /// 
-    /// 2. Public Endpoints (No Auth Required) ......................... Lines   97-280
-    ///    - Index()                               // List all products (cached 5 min)
-    ///    - Details(id)                           // Product details + reviews (cached 2 min)  
-    ///    - GetPrice(id)                          // AJAX price polling for dynamic updates
-    ///    - SearchNames(q)                        // GET: Autocomplete search with fuzzy matching
-    /// 
-    /// 3. Rating Operations (Authenticated Users) ..................... Lines  282-420
-    ///    - CreateRating()                        // POST: Submit new product rating
-    ///    - EditRating()                          // POST: Update existing user rating
-    ///    - DeleteRating()                        // POST: Soft-delete rating with audit trail
-    ///    - Rating eligibility validation and business rules
-    /// 
-    /// 4. Product CRUD Operations (Admin Role Required) ............... Lines  422-550
-    ///    - Create() GET/POST                     // Create new product with validation
-    ///    - Edit(id) GET/POST                     // Update product with optimistic locking
-    ///    - Delete(id) GET/POST                   // Soft delete with dependency checks
-    /// 
-    /// 5. Private Helper Methods ....................................... Lines  552-620
-    ///    - BuildCategoryOptions()                // Category dropdown for forms
-    ///    - MapToVM() / MapToEntity()             // ViewModel/Entity mapping utilities  
-    ///    - ValidateProductData()                 // Business rule validation
-    ///    - CacheKeyGeneration()                  // Cache key management utilities
-    /// ================================================================================
-    /// 
-    /// CACHING STRATEGY:
-    /// • Product listings cached for 5 minutes with tag-based invalidation
-    /// • Individual product details cached for 2 minutes to balance freshness
-    /// • Price polling endpoint bypasses cache for real-time updates
-    /// • Cache tags enable targeted invalidation on product updates
-    /// 
-    /// PERFORMANCE OPTIMIZATIONS:
-    /// • Compiled queries for frequently accessed product lookups
-    /// • Paginated results with efficient counting strategies
-    /// • Lazy loading for related entities (categories, ratings)
-    /// • Response compression for large product catalogs
-    /// 
-    /// SECURITY CONSIDERATIONS:
-    /// • CSRF protection on all state-changing operations
-    /// • Role-based access control for admin functions
-    /// • Rate limiting on search endpoints to prevent abuse
-    /// • Input validation and XSS protection on all user inputs
-    /// 
-    /// INTEGRATION POINTS:
-    /// • IProductService for business logic and data access
-    /// • ISearchService for fuzzy product name searching
-    /// • IRatingService for product rating management
-    /// • IMemoryCache for performance optimization
-    /// • Output caching middleware for response caching
-    /// </remarks>
-    /// 
-    /// Admin endpoints (require admin authentication):
-    /// - GET /Product/Create - Display product creation form
-    /// - POST /Product/Create - Save new product and invalidate cache
-    /// - GET /Product/Edit/{id} - Display product edit form
-    /// - POST /Product/Edit/{id} - Update product and invalidate cache
-    /// - POST /Product/Delete/{id} - Delete product and invalidate cache
-    /// 
-    /// Admin Utilities (MOVED to AdminController):
-    /// - POST /Admin/ReindexFTS - Rebuild search index
-    /// - GET /Admin/CacheStats - Cache statistics
-    /// - GET /Admin/ReindexHealth - Background job status
-    /// - POST /Admin/ClearFuzzyCache - Clear search cache
-    /// 
     /// Caching strategy:
     /// - Product listings cached for 5 minutes with "products" tag
     /// - Product details cached for 2 minutes with "products" tag
@@ -97,17 +28,20 @@ namespace ELKH.Controllers
         private readonly ELKH.Services.IProductService _productService;
         private readonly ELKH.Services.IRatingService _ratingService;
         private readonly ELKH.Services.IUserService _userService;
+        private readonly ELKH.Services.IStockNotificationService _stockNotificationService;
 
         public ProductController(
             ELKH.Services.ISearchService searchService,
             ELKH.Services.IProductService productService,
             ELKH.Services.IRatingService ratingService,
-            ELKH.Services.IUserService userService)
+            ELKH.Services.IUserService userService,
+            ELKH.Services.IStockNotificationService stockNotificationService)
         {
             _searchService = searchService;
             _productService = productService;
             _ratingService = ratingService;
             _userService = userService;
+            _stockNotificationService = stockNotificationService;
         }
         #endregion
 
@@ -122,41 +56,17 @@ namespace ELKH.Controllers
         {
             const int pageSize = 12;
 
-            var allProducts = (await _productService.GetAllAsync()).AsEnumerable();
-
-            // Apply filters in-memory on the cached product list.
-            if (!string.IsNullOrWhiteSpace(search))
-                allProducts = allProducts.Where(p =>
-                    p.ProductName.Contains(search, StringComparison.OrdinalIgnoreCase) ||
-                    p.Description.Contains(search, StringComparison.OrdinalIgnoreCase));
-
-            if (categoryId.HasValue)
-                allProducts = allProducts.Where(p => p.CategoryId == categoryId.Value);
-
-            // Apply sorting
-            allProducts = sort switch
-            {
-                "name_desc"   => allProducts.OrderByDescending(p => p.ProductName, StringComparer.OrdinalIgnoreCase),
-                "price_low"   => allProducts.OrderBy(p => p.Price),
-                "price_high"  => allProducts.OrderByDescending(p => p.Price),
-                "newest"      => allProducts.OrderByDescending(p => p.DateAdded),
-                "oldest"      => allProducts.OrderBy(p => p.DateAdded),
-                _             => allProducts.OrderBy(p => p.ProductName, StringComparer.OrdinalIgnoreCase) // name_asc
-            };
-
-            var filtered    = allProducts.ToList();
-            var pageItems   = filtered.Take(pageSize).ToList();
-
-            var categories  = await _productService.GetCategoriesAsync();
+            var pagedProducts = await _productService.GetPagedCatalogAsync(search, categoryId, sort, 0, pageSize);
+            var categories = await _productService.GetCategoriesAsync();
 
             ViewBag.Search     = search;
             ViewBag.CategoryId = categoryId;
             ViewBag.Sort       = sort;
-            ViewBag.Total      = filtered.Count;
-            ViewBag.HasMore    = filtered.Count > pageSize;
+            ViewBag.Total      = pagedProducts.TotalCount;
+            ViewBag.HasMore    = pagedProducts.TotalCount > pageSize;
             ViewBag.Categories = new SelectList(categories, "PkCategoryId", "CategoryName", categoryId);
 
-            return View(pageItems);
+            return View(pagedProducts.Items);
         }
 
         /// <summary>
@@ -168,30 +78,9 @@ namespace ELKH.Controllers
         {
             const int batchSize = 12;
 
-            var allProducts = (await _productService.GetAllAsync()).AsEnumerable();
+            var pagedProducts = await _productService.GetPagedCatalogAsync(search, categoryId, sort, offset, batchSize);
 
-            if (!string.IsNullOrWhiteSpace(search))
-                allProducts = allProducts.Where(p =>
-                    p.ProductName.Contains(search, StringComparison.OrdinalIgnoreCase) ||
-                    p.Description.Contains(search, StringComparison.OrdinalIgnoreCase));
-
-            if (categoryId.HasValue)
-                allProducts = allProducts.Where(p => p.CategoryId == categoryId.Value);
-
-            allProducts = sort switch
-            {
-                "name_desc"   => allProducts.OrderByDescending(p => p.ProductName, StringComparer.OrdinalIgnoreCase),
-                "price_low"   => allProducts.OrderBy(p => p.Price),
-                "price_high"  => allProducts.OrderByDescending(p => p.Price),
-                "newest"      => allProducts.OrderByDescending(p => p.DateAdded),
-                "oldest"      => allProducts.OrderBy(p => p.DateAdded),
-                _             => allProducts.OrderBy(p => p.ProductName, StringComparer.OrdinalIgnoreCase)
-            };
-
-            var filtered = allProducts.ToList();
-            var batch    = filtered.Skip(offset).Take(batchSize).ToList();
-
-            return PartialView("_ProductCardBatch", batch);
+            return PartialView("_ProductCardBatch", pagedProducts.Items);
         }
 
         /// <summary>
@@ -583,13 +472,15 @@ namespace ELKH.Controllers
         }
 
         /// <summary>
-        /// Permanently removes a product from the database after the user confirms deletion.
+        /// Soft-deletes a product after the user confirms deletion.
+        /// The product is marked inactive and hidden from the public catalog while remaining
+        /// available for historical orders and admin restoration.
         /// The <see cref="ActionNameAttribute"/> allows this POST action to share the
         /// <c>/Product/Delete/{id}</c> route with the GET confirmation action above.
         /// </summary>
         /// <param name="id">Primary key of the product to delete.</param>
         /// <returns>
-        /// Redirects to <see cref="Index"/> with a success message on deletion, or a warning
+        /// Redirects to <see cref="Index"/> with a success message on soft deletion, or a warning
         /// message if the product no longer exists at the time of the request.
         /// </returns>
         // POST: Product/Delete
@@ -602,7 +493,7 @@ namespace ELKH.Controllers
             if (exists is not null)
             {
                 await _productService.DeleteAsync(id);
-                TempData["Message"] = "success, Product deleted successfully";
+                TempData["Message"] = "success, Product archived successfully";
             }
             else
             {
@@ -632,10 +523,7 @@ namespace ELKH.Controllers
             var user = await _userService.GetByEmailAsync(email);
             if (user is null) return Forbid();
 
-            // Inject IStockNotificationService
-            var stockService = HttpContext.RequestServices.GetRequiredService<ELKH.Services.IStockNotificationService>();
-
-            var success = await stockService.RequestNotificationAsync(user.PkRegisteredUserId, productId);
+            var success = await _stockNotificationService.RequestNotificationAsync(user.PkRegisteredUserId, productId);
 
             if (success)
             {

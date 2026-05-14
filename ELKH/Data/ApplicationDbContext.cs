@@ -6,72 +6,8 @@ namespace ELKH.Data
 { 
     /// <summary>
     /// Entity Framework Core database context for the StickIt e-commerce application.
-    /// 
-    /// This context manages all entity sets, relationships, indexes, and custom model configuration
-    /// for the complete e-commerce platform. Inherits from IdentityDbContext to support 
-    /// ASP.NET Core Identity features for authentication and authorization.
+    /// Manages entity sets, relationships, indexes, and Identity integration.
     /// </summary>
-    /// <remarks>
-    /// TABLE OF CONTENTS (185 lines)
-    /// ================================================================================
-    /// 1. Constructor & Initialization ................................. Lines   35-42
-    ///    - DbContext configuration with Identity integration
-    /// 
-    /// 2. Entity Set Declarations ...................................... Lines   44-60
-    ///    - Product catalog entities (Products, Categories, Images)
-    ///    - User management entities (RegisteredUsers, Profiles, Logs)
-    ///    - Commerce entities (Carts, Orders, OrderItems, Transactions)
-    ///    - Review and rating entities (ProductRatings, StoreReviews)
-    ///    - Wishlist entities (WishLists, WishListItems)
-    ///    - Search and caching entities (FuzzySuggestions, CachedKeys)
-    ///    - Audit and notification entities
-    /// 
-    /// 3. Entity Relationship Configuration ............................ Lines   62-140
-    ///    - One-to-one relationships (User↔Wishlist, Order↔Transaction)
-    ///    - Many-to-many relationships (Wishlist↔Products via WishListItems)
-    ///    - Foreign key constraints and cascade behaviors
-    ///    - Navigation property configuration
-    /// 
-    /// 4. Performance Optimization Indexes ............................. Lines  142-160
-    ///    - Product name normalization index for fuzzy search
-    ///    - Fuzzy suggestion name index for autocomplete performance
-    ///    - User lookup indexes for authentication optimization
-    ///    - Order and transaction indexes for reporting queries
-    /// 
-    /// 5. Table Mapping & Schema Configuration ......................... Lines  162-185
-    ///    - Custom table names for infrastructure entities
-    ///    - Audit trail table configuration
-    ///    - Search infrastructure table mapping
-    ///    - Stock notification entity configuration
-    /// ================================================================================
-    /// 
-    /// ENTITY RELATIONSHIP OVERVIEW:
-    /// • Products: Core catalog with categories, images, and ratings
-    /// • Users: Identity integration with profiles and activity logging
-    /// • Commerce: Cart → Order → Transaction workflow with line items
-    /// • Social: Product ratings and store reviews with moderation
-    /// • Personalization: User-specific wishlists with many-to-many product relationships
-    /// • Search: Fuzzy suggestion system with cached key optimization
-    /// • Infrastructure: Audit logging and performance monitoring
-    /// 
-    /// PERFORMANCE CONSIDERATIONS:
-    /// • Strategic indexing on frequently queried columns (normalized names, user emails)
-    /// • Optimized foreign key relationships to minimize join overhead
-    /// • Cascade delete behaviors configured for data consistency
-    /// • Efficient many-to-many mappings through explicit junction entities
-    /// 
-    /// BUSINESS RULES ENFORCED:
-    /// • Each user has exactly one wishlist (one-to-one relationship)
-    /// • Each order has exactly one payment transaction
-    /// • Soft deletes supported where business continuity requires historical data
-    /// • Referential integrity maintained through proper foreign key constraints
-    /// 
-    /// SECURITY & COMPLIANCE:
-    /// • ASP.NET Core Identity integration for authentication and authorization
-    /// • Audit trail support for regulatory compliance and security monitoring
-    /// • User data protection through proper relationship configuration
-    /// • Transaction integrity maintained through database constraints
-    /// </remarks>
     public class ApplicationDbContext : IdentityDbContext
     {
         #region Constructor & Initialization

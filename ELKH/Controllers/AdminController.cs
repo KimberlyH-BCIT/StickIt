@@ -19,61 +19,6 @@ namespace ELKH.Controllers
     /// sales analytics, and search index maintenance.
     /// All actions require the Admin role for access.
     /// </summary>
-    /// <remarks>
-    /// TABLE OF CONTENTS (643 lines)
-    /// ================================================================================
-    /// 1. Fields & Constructor ......................................... Lines   55-75
-    ///    - Dependency injection setup for services and context
-    /// 
-    /// 2. Dashboard & Analytics ........................................ Lines   77-150
-    ///    - Index()                               // GET: Admin dashboard with metrics
-    ///    - ManageSales()                         // GET: Sales analytics and charts
-    /// 
-    /// 3. User Management .............................................. Lines  152-350
-    ///    - ListUsers()                           // GET: Paginated user list with filtering
-    ///    - AccountDetails(id)                    // GET: User account details
-    ///    - RemoveRole()                          // POST: Remove role from user
-    ///    - User role assignment and management operations
-    /// 
-    /// 4. Search Index Management ...................................... Lines  352-450
-    ///    - ReindexFTS()                          // POST: Rebuild full-text search index
-    ///    - ReindexHealth()                       // GET: Background service health status
-    ///    - FTS table maintenance and optimization
-    /// 
-    /// 5. Cache Management ............................................. Lines  452-550
-    ///    - CacheStats()                          // GET: Cache statistics
-    ///    - ClearFuzzyCache()                     // POST: Clear fuzzy search cache
-    ///    - Memory cache operations and registry cleanup
-    /// 
-    /// 6. System Health & Monitoring .................................. Lines  552-600
-    ///    - Background service status monitoring
-    ///    - Performance metrics collection
-    ///    - System health dashboard integration
-    /// 
-    /// 7. Payload Models ............................................... Lines  602-643
-    ///    - ReindexPayload                        // Request model for reindex operation
-    ///    - ClearCachePayload                     // Request model for cache clearing
-    ///    - Audit trail and validation models
-    /// ================================================================================
-    /// 
-    /// SECURITY & COMPLIANCE:
-    /// • All endpoints require [Authorize(Roles = "Admin")] for access control
-    /// • State-changing operations use [ValidateAntiForgeryToken] for CSRF protection
-    /// • All administrative actions are audited to the AuditEntries table
-    /// • Rate limiting applied to prevent abuse of system operations
-    /// 
-    /// PERFORMANCE CONSIDERATIONS:
-    /// • User listing uses server-side filtering to minimize memory usage
-    /// • Role lookups are performed only on paginated results
-    /// • Cache operations are optimized for minimal impact on active users
-    /// • Background service coordination prevents operation conflicts
-    /// 
-    /// INTEGRATION POINTS:
-    /// • Coordinates with AdminSystemController for specialized operations
-    /// • Integrates with IFuzzyReindexService for search maintenance
-    /// • Uses IMemoryCache for performance optimization
-    /// • Logs all operations through ILogger for monitoring
-    /// </remarks>
     /// - Sales analytics fetches data in bulk and processes in-memory
     /// - Cache operations include error handling to prevent service disruption
     /// </remarks>
@@ -182,14 +127,14 @@ namespace ELKH.Controllers
             var weeklyTx = allTransactions.Where(t => t.TransactionDate.Date >= weekStart).ToList();
             var monthlyTx = allTransactions.Where(t => t.TransactionDate >= monthStart).ToList();
 
-            // ── Summary card metrics ──────────────────────────────────────
+            // â”€â”€ Summary card metrics â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
             decimal weeklyGross = weeklyTx.Count > 0 ? weeklyTx.Sum(t => t.Amount) : 0m;
             decimal monthlyGross = monthlyTx.Count > 0 ? monthlyTx.Sum(t => t.Amount) : 0m;
             int weeklyOrders = weeklyTx.Count;
             int monthlyOrders = monthlyTx.Count;
             int totalOrders = await _context.Orders.CountAsync();
 
-            // ── Weekly chart data: last 7 days ────────────────────────────
+            // â”€â”€ Weekly chart data: last 7 days â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
             var weeklyLabels = new List<string>();
             var weeklySalesData = new List<decimal>();
 
@@ -201,7 +146,7 @@ namespace ELKH.Controllers
                 weeklySalesData.Add(dayTx.Count > 0 ? dayTx.Sum(t => t.Amount) : 0m);
             }
 
-            // ── Monthly chart data: last 12 months ────────────────────────
+            // â”€â”€ Monthly chart data: last 12 months â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
             var monthlyLabels = new List<string>();
             var monthlySalesData = new List<decimal>();
 
@@ -216,7 +161,7 @@ namespace ELKH.Controllers
                 monthlySalesData.Add(monthTx.Count > 0 ? monthTx.Sum(t => t.Amount) : 0m);
             }
 
-            // ── Top 5 products by revenue ─────────────────────────────────
+            // â”€â”€ Top 5 products by revenue â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
             var orderItems = await _context.OrderItems
                 .Include(oi => oi.Product)
                 .Select(oi => new
@@ -314,7 +259,7 @@ namespace ELKH.Controllers
                 .Take(pageSize)
                 .ToList();
 
-            // Fetch roles only for the paged users (≤ pageSize lookups)
+            // Fetch roles only for the paged users (â‰¤ pageSize lookups)
             var userList = new List<UserListVM>(pageUsers.Count);
             foreach (var user in pageUsers)
             {

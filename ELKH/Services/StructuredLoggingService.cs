@@ -42,26 +42,6 @@ public interface IStructuredLoggingService
 /// Service for structured logging with correlation IDs and rich context
 /// Provides consistent logging patterns across the application
 /// </summary>
-/// <remarks>
-/// TABLE OF CONTENTS
-/// ================================================================================
-/// 1. Fields & Constructor                                         (lines 45-55)
-/// 2. User Action Logging                                          (lines 57-80)
-///    - LogUserAction()                       // Log user interactions with context
-/// 3. System Event Logging                                         (lines 82-105)
-///    - LogSystemEvent()                      // Log system events and operations
-/// 4. Performance Logging                                          (lines 107-135)
-///    - LogPerformanceMetric()                // Log timing and performance data
-/// 5. Business Event Logging                                       (lines 137-165)
-///    - LogBusinessEvent()                    // Log business domain events
-/// 6. Error Logging                                                (lines 167-190)
-///    - LogError()                            // Log exceptions with full context
-/// ================================================================================
-/// 
-/// CORRELATION ID INTEGRATION:
-/// All logging methods automatically include correlation IDs from the current HTTP context
-/// for distributed tracing and request flow tracking across the application.
-/// </remarks>
 public class StructuredLoggingService : IStructuredLoggingService
 {
     private readonly ILogger<StructuredLoggingService> _logger;

@@ -12,80 +12,6 @@ namespace ELKH.Controllers
     /// Admin controller for ASP.NET Core Identity role management.
     /// Provides CRUD operations for roles and role-assignment for individual users.
     /// </summary>
-    /// <remarks>
-    /// TABLE OF CONTENTS (520 lines)
-    /// ================================================================================
-    /// 1. Constructor & Dependencies ................................... Lines   51-65
-    ///    - RoleManager, UserManager, IRoleRepository injection
-    ///    - ILogger for administrative action tracking
-    /// 
-    /// 2. Role Listing & Overview ...................................... Lines   67-120
-    ///    - ListRoles()                          // GET: All roles with user counts
-    ///    - RoleStatistics()                     // GET: Role usage analytics
-    ///    - Role activity summaries and dashboard metrics
-    /// 
-    /// 3. Role Creation & Setup ........................................ Lines  122-180
-    ///    - CreateRole() GET                     // GET: New role creation form
-    ///    - CreateRole() POST                    // POST: Persist new role with validation
-    ///    - Role name validation and uniqueness checks
-    /// 
-    /// 4. Role Editing & Management .................................... Lines  182-250
-    ///    - EditRole(roleId) GET                 // GET: Edit role form with current data
-    ///    - EditRole(model) POST                 // POST: Persist role name changes
-    ///    - Role property updates and audit logging
-    /// 
-    /// 5. User-Role Assignment & Management ............................ Lines  252-380
-    ///    - AssignRoles(userId, returnTo, roleId) GET  // GET: Assignment form (context-aware)
-    ///    - AssignRoles(model) POST              // POST: Assign role to user by email
-    ///    - ReloadRoles(model)                   // Helper: Repopulate role dropdown
-    ///    - BulkRoleAssignment()                 // POST: Bulk user role operations
-    /// 
-    /// 6. Role Users Management & Viewing .............................. Lines  382-450
-    ///    - RoleUsers(roleId) GET                // GET: View all users in role with pagination
-    ///    - RemoveUserFromRole() POST            // POST: Remove user from role
-    ///    - User role history and activity tracking
-    /// 
-    /// 7. Role Deletion & Cleanup ...................................... Lines  452-520
-    ///    - DeleteRole(roleId) GET               // GET: Deletion confirmation with impact analysis
-    ///    - DeleteRole(model) POST               // POST: Delete role with validation
-    ///    - Safe deletion with user reassignment options
-    /// ================================================================================
-    ///
-    /// SECURITY & ACCESS CONTROL:
-    /// • All endpoints require Admin role for access ([Authorize(Roles = "Admin")])
-    /// • Role mutations delegate to RoleManager for ASP.NET Core Identity validation
-    /// • Comprehensive audit logging for all role management operations
-    /// • Input validation and CSRF protection on all state-changing operations
-    /// • Rate limiting on bulk operations to prevent system abuse
-    /// 
-    /// ROLE MANAGEMENT BUSINESS RULES:
-    /// • Role deletion prevented if any users are assigned to the role
-    /// • Role name uniqueness enforced through Identity validation
-    /// • Concurrency handled by Identity's optimistic concurrency control
-    /// • System roles (Admin, User) protected from accidental deletion
-    /// • Role hierarchy validation for complex permission structures
-    /// 
-    /// WORKFLOW & USER EXPERIENCE:
-    /// • AssignRoles supports context-aware navigation (returnTo parameter)
-    /// • Role locking when assigning from RoleUsers view (prevents role switching)
-    /// • Email pre-filling when assigning from UserDetails view
-    /// • Bulk operations for efficient large-scale role management
-    /// • Real-time validation feedback for role operations
-    /// 
-    /// PERFORMANCE OPTIMIZATIONS:
-    /// • Efficient pagination for role-user listings in large systems
-    /// • Cached role lookups for frequently accessed role data
-    /// • Optimized queries for role statistics and user counts
-    /// • Batch processing for bulk role assignment operations
-    /// 
-    /// INTEGRATION POINTS:
-    /// • RoleManager for ASP.NET Core Identity role operations
-    /// • UserManager for user lookup and role assignment
-    /// • IRoleRepository for custom role data and statistics
-    /// • ILogger for comprehensive administrative action tracking
-    /// • Audit services for compliance and security monitoring
-    /// • Notification services for role change communications
-    /// </remarks>
     [Authorize(Roles = "Admin")]
     public class AdminRoleController : Controller
     {
@@ -262,9 +188,9 @@ public async Task<IActionResult> CreateRole(RoleVM model)
 /// </remarks>
 public async Task<IActionResult> AssignRoles(string? userId, string? returnTo, string? roleId)
 {
-    // ─────────────────────────────────────────────────────────────
+    // â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
     // STEP 1: Pre-fill email when navigating from UserDetails
-    // ─────────────────────────────────────────────────────────────
+    // â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
     string? prefilledEmail = null;
     if (!string.IsNullOrEmpty(userId))
     {
@@ -273,10 +199,10 @@ public async Task<IActionResult> AssignRoles(string? userId, string? returnTo, s
         prefilledEmail = user.Email;
     }
 
-    // ─────────────────────────────────────────────────────────────
+    // â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
     // STEP 2: Lock role when navigating from RoleUsers page
     // Prevents changing the role while assigning users to it
-    // ─────────────────────────────────────────────────────────────
+    // â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
     bool isRoleLocked = returnTo == "RoleDetails" && !string.IsNullOrEmpty(roleId);
     string? preselectedRoleName = null;
     if (isRoleLocked)
@@ -285,9 +211,9 @@ public async Task<IActionResult> AssignRoles(string? userId, string? returnTo, s
         preselectedRoleName = role?.Name;
     }
 
-    // ─────────────────────────────────────────────────────────────
+    // â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
     // STEP 3: Build view model with navigation context
-    // ─────────────────────────────────────────────────────────────
+    // â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
     var model = new AssignRoleVM
     {
         UserId       = userId,
@@ -317,9 +243,9 @@ public async Task<IActionResult> AssignRoles(string? userId, string? returnTo, s
 /// 4. Identity role assignment with error capture
 /// 
 /// NAVIGATION:
-/// - UserDetails context → Returns to Admin/AccountDetails
-/// - RoleDetails context → Returns to RoleUsers
-/// - Default → Returns to ListRoles
+/// - UserDetails context â†’ Returns to Admin/AccountDetails
+/// - RoleDetails context â†’ Returns to RoleUsers
+/// - Default â†’ Returns to ListRoles
 /// </remarks>
 [HttpPost]
 [ValidateAntiForgeryToken]
@@ -328,9 +254,9 @@ public async Task<IActionResult> AssignRoles(AssignRoleVM model)
     // Remove Roles collection from validation (repopulated on error)
     ModelState.Remove("Roles");
 
-    // ─────────────────────────────────────────────────────────────
+    // â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
     // STEP 1: Validate email presence
-    // ─────────────────────────────────────────────────────────────
+    // â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
     if (string.IsNullOrEmpty(model.Email))
     {
         ModelState.AddModelError("", "Please enter user email.");
@@ -338,9 +264,9 @@ public async Task<IActionResult> AssignRoles(AssignRoleVM model)
         return View(model);
     }
 
-    // ─────────────────────────────────────────────────────────────
+    // â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
     // STEP 2: Validate role selection
-    // ─────────────────────────────────────────────────────────────
+    // â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
     if (string.IsNullOrEmpty(model.RoleName))
     {
         ModelState.AddModelError("", "Please select a role.");
@@ -348,9 +274,9 @@ public async Task<IActionResult> AssignRoles(AssignRoleVM model)
         return View(model);
     }
 
-    // ─────────────────────────────────────────────────────────────
+    // â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
     // STEP 3: Verify user exists
-    // ─────────────────────────────────────────────────────────────
+    // â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
     var user = await _userManager.FindByEmailAsync(model.Email);
     if (user == null)
     {
@@ -359,9 +285,9 @@ public async Task<IActionResult> AssignRoles(AssignRoleVM model)
         return View(model);
     }
 
-    // ─────────────────────────────────────────────────────────────
+    // â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
     // STEP 4: Prevent duplicate role assignment
-    // ─────────────────────────────────────────────────────────────
+    // â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
     if (await _userManager.IsInRoleAsync(user, model.RoleName!))
     {
         ModelState.AddModelError("", "User is already assigned to this role.");
@@ -369,18 +295,18 @@ public async Task<IActionResult> AssignRoles(AssignRoleVM model)
         return View(model);
     }
 
-    // ─────────────────────────────────────────────────────────────
+    // â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
     // STEP 5: Assign role via Identity manager
-    // ─────────────────────────────────────────────────────────────
+    // â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
     var result = await _userManager.AddToRoleAsync(user, model.RoleName);
 
     if (result.Succeeded)
     {
         TempData["Success"] = "Role assigned successfully.";
 
-        // ─────────────────────────────────────────────────────────
+        // â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
         // STEP 6: Context-aware navigation after success
-        // ─────────────────────────────────────────────────────────
+        // â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
         if (model.ReturnTo == "UserDetails" && !string.IsNullOrEmpty(model.UserId))
             return RedirectToAction("AccountDetails", "Admin", new { id = model.UserId });
 
@@ -515,9 +441,9 @@ private async Task ReloadRoles(AssignRoleVM model)
         {
             try
             {
-                // ─────────────────────────────────────────────────────────
+                // â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
                 // STEP 1: Verify role exists
-                // ─────────────────────────────────────────────────────────
+                // â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
                 var role = await _roleManager.FindByIdAsync(model.RoleId);
                 if (role == null)
                 {
@@ -525,10 +451,10 @@ private async Task ReloadRoles(AssignRoleVM model)
                     return RedirectToAction("ListRoles");
                 }
 
-                // ─────────────────────────────────────────────────────────
+                // â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
                 // STEP 2: Prevent deletion if users are assigned
                 // Enforces referential integrity at application level
-                // ─────────────────────────────────────────────────────────
+                // â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
                 var usersInRole = await _userManager.GetUsersInRoleAsync(role.Name!);
                 if (usersInRole.Any())
                 {
@@ -536,9 +462,9 @@ private async Task ReloadRoles(AssignRoleVM model)
                     return RedirectToAction("ListRoles");
                 }
 
-                // ─────────────────────────────────────────────────────────
+                // â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
                 // STEP 3: Delete role via Identity manager
-                // ─────────────────────────────────────────────────────────
+                // â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
                 var result = await _roleManager.DeleteAsync(role);
                 TempData[result.Succeeded ? "Success" : "Error"] = result.Succeeded
                     ? "Role deleted successfully."

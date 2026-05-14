@@ -10,8 +10,8 @@
                 <h5 class="mb-0 font-heading"><i class="bi bi-exclamation-triangle-fill me-2"></i>Confirm Delete</h5>
             </div>
             <div class="card-body p-4">
-                <p class="lead">Are you sure you want to delete <strong>@Model.ProductName</strong>?</p>
-                <p class="hierarchy-tertiary small">This action cannot be undone.</p>
+                <p class="lead">Are you sure you want to archive <strong>@Model.ProductName</strong>?</p>
+                <p class="hierarchy-tertiary small">This will hide the product from the public catalog and mark it inactive. You can restore it later from the deleted products screen.</p>
 
                 <table class="table table-sm">
                     <tr><th>Name</th><td>@Model.ProductName</td></tr>
@@ -24,7 +24,7 @@
                     <form asp-action="Delete" asp-route-id="@Model.ProductId" method="post">
                         @Html.AntiForgeryToken()
                         <button type="submit" class="btn-kawaii btn-primary-kawaii" style="background: #dc3545; border-color: #dc3545;">
-                            <i class="bi bi-trash me-1"></i>Yes, Delete
+                            <i class="bi bi-archive me-1"></i>Yes, Archive
                         </button>
                     </form>
                     <a asp-action="Details" asp-route-id="@Model.ProductId" class="btn-kawaii btn-outline-kawaii">Cancel</a>

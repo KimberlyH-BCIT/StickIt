@@ -13,80 +13,6 @@ namespace ELKH.Controllers;
 /// Admin controller responsible for user account management and role administration.
 /// Handles user listing, account details, and role assignments.
 /// </summary>
-/// <remarks>
-/// TABLE OF CONTENTS (396 lines)
-/// ================================================================================
-/// 1. Constructor & Dependencies ................................. Lines   39-48
-///    - IRoleRepository, ApplicationDbContext, UserManager, ILogger injection
-///    - Inherits from AdminControllerBase for common admin functionality
-/// 
-/// 2. User Listing & Search ...................................... Lines   50-138
-///    - Index()                            // Paginated user list with filtering
-///    - Performance-optimized role filtering and email search
-///    - Server-side filtering to minimize memory usage
-/// 
-/// 3. User Details & Profile Management .......................... Lines  140-213
-///    - Details()                          // Complete user profile view
-///    - Loads identity user, registered user, profile, roles, recent orders
-///    - Contact details aggregation for comprehensive user view
-/// 
-/// 4. Role Management Operations ................................. Lines  215-348
-///    - RemoveRole()                       // Remove role assignment from user
-///    - AddRole()                          // Add role assignment to user
-///    - Role validation and audit logging for administrative actions
-/// 
-/// 5. User Statistics & Analytics ................................ Lines  350-396
-///    - Statistics()                       // User metrics and role distribution
-///    - Recent registrations tracking and role distribution analysis
-/// ================================================================================
-/// 
-/// ARCHITECTURAL CONTEXT:
-/// • Extracted from AdminController for focused user administration responsibility
-/// • Inherits AdminControllerBase providing audit logging and common admin features
-/// • Integrates with ASP.NET Core Identity for user and role management
-/// • Uses Entity Framework for additional user profile and order data access
-/// 
-/// PERFORMANCE OPTIMIZATIONS:
-/// • Server-side role filtering using UserManager.GetUsersInRoleAsync()
-/// • Database-level email filtering when no role filter is applied
-/// • Role lookups performed only on paginated result slice to minimize queries
-/// • Efficient aggregation for statistics with targeted database queries
-/// 
-/// BUSINESS LOGIC:
-/// • Comprehensive user management covering identity and extended profile data
-/// • Role-based filtering for administrative organization and security
-/// • Audit trail for all administrative actions (role changes, user viewing)
-/// • Recent activity tracking for user engagement analysis
-/// 
-/// SECURITY & AUTHORIZATION:
-/// • Requires Admin role inheritance from AdminControllerBase
-/// • Anti-forgery token validation for all POST operations
-/// • Input validation for user IDs and role names
-/// • Comprehensive error handling with user-friendly messages
-/// 
-/// INTEGRATION POINTS:
-/// • ASP.NET Core Identity for user and role management
-/// • ApplicationDbContext for extended user profile and order data
-/// • IRoleRepository for role-related operations
-/// • AdminControllerBase for shared admin functionality and audit logging
-/// 
-/// <para><strong>Extracted from AdminController</strong></para>
-/// This controller handles all user management functionality that was previously
-/// in the monolithic AdminController, providing focused user administration.
-/// 
-/// <para><strong>Responsibilities:</strong></para>
-/// <list type="bullet">
-/// <item>Paginated user listing with filtering</item>
-/// <item>User account details and profile information</item>
-/// <item>Role assignment and removal</item>
-/// <item>User search and role-based filtering</item>
-/// <item>Order history and contact details for users</item>
-/// </list>
-/// 
-/// <para><strong>Performance:</strong></para>
-/// Uses server-side filtering to minimize memory usage and performs role lookups
-/// only on paginated results for optimal performance.
-/// </remarks>
 public class AdminUserController : AdminControllerBase
 {
     private readonly IRoleRepo _roleRepo;
@@ -132,7 +58,7 @@ public class AdminUserController : AdminControllerBase
     /// <list type="bullet">
     /// <item>Role filtering is done server-side via UserManager.GetUsersInRoleAsync() for efficiency</item>
     /// <item>Email search uses database-level filtering when no role filter is active</item>
-    /// <item>Role lookups (GetRolesAsync) are performed only on the current page slice (≤5 users)</item>
+    /// <item>Role lookups (GetRolesAsync) are performed only on the current page slice (â‰¤5 users)</item>
     /// <item>Pagination prevents loading all users into memory at once</item>
     /// </list>
     /// 
@@ -182,7 +108,7 @@ public class AdminUserController : AdminControllerBase
             .Take(pageSize)
             .ToList();
 
-        // Fetch roles only for the paged users (≤ pageSize lookups)
+        // Fetch roles only for the paged users (â‰¤ pageSize lookups)
         var userList = new List<UserListVM>(pageUsers.Count);
         foreach (var user in pageUsers)
         {

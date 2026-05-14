@@ -16,30 +16,6 @@ using Microsoft.Extensions.Logging;
 
 namespace ELKH.Areas.Identity.Pages.Account.Manage
 {
-    /*
-     * ┌────────────────────────────────────────────────────────────────────────────┐
-     * │ TABLE OF CONTENTS - EnableAuthenticator.cshtml.cs                        │
-     * ├────────────────────────────────────────────────────────────────────────────┤
-     * │ 1. Properties & Input Model ............................ Lines  21-85     │
-     * │    - TOTP URI format constant                                              │
-     * │    - SharedKey, AuthenticatorUri, RecoveryCodes                            │
-     * │    - InputModel: Verification code (6-7 digits)                            │
-     * │                                                                            │
-     * │ 2. GET Handler: OnGetAsync ............................. Lines  87-98     │
-     * │    - Load or generate authenticator key                                    │
-     * │    - Generate QR code URI for scanning                                     │
-     * │                                                                            │
-     * │ 3. POST Handler: OnPostAsync ........................... Lines 100-143    │
-     * │    - Verify TOTP code from authenticator app                               │
-     * │    - Enable 2FA for user account                                           │
-     * │    - Generate recovery codes (10 codes)                                    │
-     * │                                                                            │
-     * │ 4. Helper Methods ................................... Lines 145-177    │
-     * │    - LoadSharedKeyAndQrCodeUriAsync: Key generation/formatting             │
-     * │    - FormatKey: Human-readable key formatting (groups of 4)                │
-     * │    - GenerateQrCodeUri: TOTP URI for QR code                               │
-     * └────────────────────────────────────────────────────────────────────────────┘
-     */
 
     /// <summary>
     /// Razor Page model for enabling two-factor authentication (2FA) using TOTP authenticator apps.
@@ -80,7 +56,7 @@ namespace ELKH.Areas.Identity.Pages.Account.Manage
     {
         #region Properties & Dependencies
 
-        // ── ASP.NET Core Identity Services ───────────────────────────────────────────────
+        // â”€â”€ ASP.NET Core Identity Services â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
         private readonly UserManager<IdentityUser> _userManager;
         private readonly ILogger<EnableAuthenticatorModel> _logger;
         private readonly UrlEncoder _urlEncoder;
@@ -118,7 +94,7 @@ namespace ELKH.Areas.Identity.Pages.Account.Manage
         }
 
         // ==============================================================================
-        // ║ Page Properties                                                            ║
+        // â•‘ Page Properties                                                            â•‘
         // ==============================================================================
 
         /// <summary>
@@ -236,7 +212,7 @@ namespace ELKH.Areas.Identity.Pages.Account.Manage
             }
 
             // ==========================================================================
-            // ║ PHASE 1: Verify TOTP Code                                             ║
+            // â•‘ PHASE 1: Verify TOTP Code                                             â•‘
             // ==========================================================================
             // Users may enter code with spaces or hyphens (e.g., "123 456" or "123-456")
             var verificationCode = Input.Code.Replace(" ", string.Empty).Replace("-", string.Empty);
@@ -252,7 +228,7 @@ namespace ELKH.Areas.Identity.Pages.Account.Manage
             }
 
             // ==========================================================================
-            // ║ PHASE 2: Enable 2FA                                                   ║
+            // â•‘ PHASE 2: Enable 2FA                                                   â•‘
             // ==========================================================================
             await _userManager.SetTwoFactorEnabledAsync(user, true);
             var userId = await _userManager.GetUserIdAsync(user);
@@ -261,7 +237,7 @@ namespace ELKH.Areas.Identity.Pages.Account.Manage
             StatusMessage = "Your authenticator app has been verified.";
 
             // ==========================================================================
-            // ║ PHASE 3: Generate Recovery Codes (if needed)                         ║
+            // â•‘ PHASE 3: Generate Recovery Codes (if needed)                         â•‘
             // ==========================================================================
             // If user has no recovery codes, generate 10 new ones
             if (await _userManager.CountRecoveryCodesAsync(user) == 0)
@@ -296,7 +272,7 @@ namespace ELKH.Areas.Identity.Pages.Account.Manage
         /// </remarks>
         private async Task LoadSharedKeyAndQrCodeUriAsync(IdentityUser user)
         {
-            // ── Load or Generate Authenticator Key ───────────────────────────────────────
+            // â”€â”€ Load or Generate Authenticator Key â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
             var unformattedKey = await _userManager.GetAuthenticatorKeyAsync(user);
             if (string.IsNullOrEmpty(unformattedKey))
             {
@@ -305,7 +281,7 @@ namespace ELKH.Areas.Identity.Pages.Account.Manage
                 unformattedKey = await _userManager.GetAuthenticatorKeyAsync(user);
             }
 
-            // ── Format Key and Generate URI ──────────────────────────────────────────────
+            // â”€â”€ Format Key and Generate URI â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
             SharedKey = FormatKey(unformattedKey);
 
             var email = await _userManager.GetEmailAsync(user);

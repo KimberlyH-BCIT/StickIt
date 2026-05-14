@@ -9,52 +9,6 @@ namespace ELKH.Controllers
     /// Category controller for displaying products organized by categories.
     /// Provides category-specific views for better product organization and discovery.
     /// </summary>
-    /// <remarks>
-    /// TABLE OF CONTENTS
-    /// ================================================================================
-    /// 1. Constructor & Dependencies ................................. Lines [16-19]
-    ///    - CategoryController()           // Service injection setup
-    /// 
-    /// 2. ByCategory Action ........................................... Lines [22-87]
-    ///    - Category product listing       // Paginated product display by category
-    ///    - Sorting implementation         // Multiple sort options
-    ///    - Output caching                 // Performance optimization
-    /// 
-    /// 3. Index Action ................................................ Lines [89-108]
-    ///    - Categories overview            // All categories with product counts
-    ///    - Category statistics           // Product count calculation
-    /// 
-    /// 4. Promotions Action ........................................... Lines [110-178]
-    ///    - Promotional products           // Category-filtered promotional items
-    ///    - Discount-focused sorting       // Promotion-specific sort options
-    /// ================================================================================
-    /// 
-    /// ARCHITECTURAL CONTEXT:
-    /// • ASP.NET Core MVC controller implementing category-based product navigation
-    /// • Uses output caching for performance optimization on product listings
-    /// • Integrates with ProductService for data access and business logic
-    /// • Part of ELKH's e-commerce product discovery and browsing system
-    /// • Supports both regular and promotional product views
-    /// 
-    /// BUSINESS LOGIC & FEATURES:
-    /// • Category-based product filtering with comprehensive sorting options
-    /// • Pagination support for large product catalogs (12 items per page)
-    /// • Product count statistics for category overview
-    /// • Promotional product display with discount-focused sorting
-    /// • Error handling with user-friendly messages and redirects
-    /// 
-    /// PERFORMANCE OPTIMIZATIONS:
-    /// • Output caching on ByCategory action using "ProductList" policy
-    /// • Efficient product filtering using LINQ with minimal database calls
-    /// • Pagination to limit data transfer and rendering time
-    /// • Strategic product count calculations for category statistics
-    /// 
-    /// INTEGRATION POINTS:
-    /// • Depends on: IProductService for all product and category data access
-    /// • Used by: Category navigation, product browsing, promotional campaigns
-    /// • ViewModels: ProductSortingVM, PaginationVM for partial view integration
-    /// • Views: ByCategory, Index, Promotions with corresponding Razor templates
-    /// </remarks>
     public class CategoryController : Controller
     {
         private readonly IProductService _productService;

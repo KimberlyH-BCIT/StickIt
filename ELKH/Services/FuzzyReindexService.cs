@@ -12,27 +12,6 @@ using ELKH.Configuration;
 
 namespace ELKH.Services
 {
-    /*
-     * ┌────────────────────────────────────────────────────────────────────────────┐
-     * │ TABLE OF CONTENTS - FuzzyReindexService.cs                                 │
-     * ├────────────────────────────────────────────────────────────────────────────┤
-     * │ 1. Constructor & Configuration ............................ Lines  56-72   │
-     * │    - Dependency injection                                                  │
-     * │    - Configurable reindex interval                                         │
-     * │    - Thread-safe metrics initialization                                    │
-     * │                                                                            │
-     * │ 2. Background Service Execution ....................... Lines  74-99    │
-     * │    - ExecuteAsync: Startup + periodic execution loop                       │
-     * │    - Cancellation token support                                            │
-     * │    - Error handling and logging                                            │
-     * │                                                                            │
-     * │ 3. Reindexing Logic ................................... Lines 101-177   │
-     * │    - ReindexOnce: FTS5 virtual table management                            │
-     * │    - Precomputed suggestions with transactions                             │
-     * │    - SQLite-specific error handling                                        │
-     * │    - Thread-safe metrics tracking                                          │
-     * └────────────────────────────────────────────────────────────────────────────┘
-     */
 
     /// <summary>
     /// Background service responsible for periodically rebuilding search-related
@@ -65,11 +44,11 @@ namespace ELKH.Services
         private readonly SearchOptions.ReindexOptions _options;
         private TimeSpan _interval = TimeSpan.FromHours(6);
 
-        // ┌──────────────────────────────────────────────────────────────────────┐
-        // │ Thread-Safe Metrics                                                  │
-        // │ Lock guards _lastRun, _lastDuration and _runCount which are written  │
-        // │ from the background thread and read from HTTP request threads.       │
-        // └──────────────────────────────────────────────────────────────────────┘
+        // â”Œâ”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”
+        // â”‚ Thread-Safe Metrics                                                  â”‚
+        // â”‚ Lock guards _lastRun, _lastDuration and _runCount which are written  â”‚
+        // â”‚ from the background thread and read from HTTP request threads.       â”‚
+        // â””â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”˜
         private readonly object _metricsLock = new();
         private DateTime? _lastRun;
         private TimeSpan? _lastDuration;
@@ -95,7 +74,7 @@ namespace ELKH.Services
             _logger = logger;
             _options = searchOptions.Value.Reindex;
 
-            // ── Configuration: Prioritize new structured config, fallback to legacy ──────
+            // â”€â”€ Configuration: Prioritize new structured config, fallback to legacy â”€â”€â”€â”€â”€â”€
             // Priority: 1) Search:Reindex:IntervalMinutes, 2) Search:ReindexIntervalMinutes (legacy), 3) Default from options
             var minutes = _options.IntervalMinutes;
             var legacyMinutes = configuration.GetValue<int?>("Search:ReindexIntervalMinutes");
@@ -189,7 +168,7 @@ namespace ELKH.Services
         {
             _logger.LogInformation("FuzzyReindexService starting up with interval: {Interval} minutes", _interval.TotalMinutes);
 
-            // ── Startup Reindex ────────────────────────────────────────────────────
+            // â”€â”€ Startup Reindex â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
             // Run once immediately on application startup to ensure search index is current.
             try
             {
@@ -207,7 +186,7 @@ namespace ELKH.Services
                 _logger.LogError(ex, "Initial fuzzy reindex failed. Service will continue with periodic reindexing.");
             }
 
-            // ── Periodic Reindex Loop ──────────────────────────────────────────────
+            // â”€â”€ Periodic Reindex Loop â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
             // Continue running until application shutdown (stoppingToken canceled).
             while (!stoppingToken.IsCancellationRequested)
             {
@@ -247,7 +226,7 @@ namespace ELKH.Services
         /// <summary>
         /// Returns <see langword="true"/> when the <c>Products</c> table is present in the
         /// SQLite schema.  Uses a direct <c>sqlite_master</c> query through raw ADO.NET so
-        /// that the check never reaches EF Core's query pipeline — EF Core logs every failed
+        /// that the check never reaches EF Core's query pipeline â€” EF Core logs every failed
         /// SQL command at <c>fail</c> level before the exception propagates, which produces
         /// alarming noise even when the code handles the exception gracefully.
         /// </summary>
@@ -298,7 +277,7 @@ namespace ELKH.Services
 
             await ExecuteWithRetryAsync(async () =>
             {
-                // ── Scoped DbContext Creation ──────────────────────────────────────────
+                // â”€â”€ Scoped DbContext Creation â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
                 // Create a new scope to get a fresh DbContext (background services are singletons).
                 using var scope = _services.CreateScope();
                 var db = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
@@ -306,7 +285,7 @@ namespace ELKH.Services
                 // Configure database timeout
                 db.Database.SetCommandTimeout(TimeSpan.FromSeconds(_options.DatabaseTimeoutSeconds));
 
-                // ── Migration guard ────────────────────────────────────────────────────
+                // â”€â”€ Migration guard â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
                 // Query sqlite_master via raw ADO.NET rather than EF Core so that a
                 // missing table never reaches the EF Core query pipeline (which logs
                 // every failed command at fail level before the exception can be caught).
@@ -316,17 +295,17 @@ namespace ELKH.Services
                     return;
                 }
 
-                // ╔======================================================================╗
-                // ║ PHASE 1: FTS5 Virtual Table Rebuild                                  ║
-                // ╚======================================================================╝
+                // â•”======================================================================â•—
+                // â•‘ PHASE 1: FTS5 Virtual Table Rebuild                                  â•‘
+                // â•š======================================================================â•
                 await ExecuteFTS5RebuildAsync(db, cancellationToken);
 
-                // ╔======================================================================╗
-                // ║ PHASE 2: Precomputed Fuzzy Suggestions Rebuild                       ║
-                // ╚======================================================================╝
+                // â•”======================================================================â•—
+                // â•‘ PHASE 2: Precomputed Fuzzy Suggestions Rebuild                       â•‘
+                // â•š======================================================================â•
                 await ExecuteFuzzySuggestionsRebuildAsync(db, cancellationToken);
 
-                // ── Update Thread-Safe Metrics ─────────────────────────────────────
+                // â”€â”€ Update Thread-Safe Metrics â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
                 lock (_metricsLock)
                 {
                     _lastRun = DateTime.UtcNow;
@@ -344,13 +323,13 @@ namespace ELKH.Services
         {
             try
             {
-                // ── Create FTS5 Virtual Table (Idempotent) ─────────────────────────
+                // â”€â”€ Create FTS5 Virtual Table (Idempotent) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
                 // Using FTS5 with the product Name and an unindexed PkProductId column.
                 // The rowid is set to PkProductId for consistent references.
                 var createFtsSql = @"CREATE VIRTUAL TABLE IF NOT EXISTS ProductFTS USING fts5(Name, PkProductId UNINDEXED);";
                 await db.Database.ExecuteSqlRawAsync(createFtsSql, cancellationToken);
 
-                // ── Insert New Products into FTS5 ──────────────────────────────────
+                // â”€â”€ Insert New Products into FTS5 â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
                 // Only insert products not already in the FTS table.
                 // This is incremental - only new products are added.
                 var sql = @"INSERT INTO ProductFTS(rowid, Name, PkProductId)
@@ -381,7 +360,7 @@ WHERE PkProductId NOT IN (SELECT rowid FROM ProductFTS);
         {
             try
             {
-                // ── Query All Products with Metadata ───────────────────────────────
+                // â”€â”€ Query All Products with Metadata â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
                 var suggestions = await db.Products
                     .Select(p => new ELKH.Models.FuzzySuggestionModel
                     {
@@ -396,7 +375,7 @@ WHERE PkProductId NOT IN (SELECT rowid FROM ProductFTS);
 
                 _logger.LogInformation("Queried {Count} products for fuzzy suggestions rebuild", suggestions.Count);
 
-                // ── Atomic Replacement with Transaction and Batching ────────────────
+                // â”€â”€ Atomic Replacement with Transaction and Batching â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
                 using var tx = await db.Database.BeginTransactionAsync(cancellationToken);
 
                 try

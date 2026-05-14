@@ -13,30 +13,6 @@ namespace ELKH.Controllers
     /// Prometheus-style metrics endpoint for system monitoring.
     /// Exposes operational metrics for fuzzy search reindexing service health and performance.
     /// </summary>
-    /// <remarks>
-    /// TABLE OF CONTENTS
-    /// ================================================================================
-    /// 1. Constructor & Dependencies
-    /// 2. Metrics Endpoint
-    ///    - Get()                                 // GET: Prometheus text format metrics
-    /// ================================================================================
-    /// 
-    /// Exposed Metrics:
-    /// - fuzzy_reindex_last_run_seconds         // Unix timestamp of last reindex
-    /// - fuzzy_reindex_last_duration_seconds    // Duration of last reindex
-    /// - fuzzy_reindex_run_count                // Total reindex runs since startup
-    /// - fuzzy_suggestion_count                 // Number of precomputed suggestions
-    /// 
-    /// Routes: /Admin/metrics
-    /// Authorization: Admin role required (prevents exposure of internal metrics)
-    /// Format: Prometheus text exposition format v0.0.4
-    /// 
-    /// Implementation Notes:
-    /// - Metrics are composed in-memory and served synchronously
-    /// - Database access is fault-tolerant (silently omits failing metrics)
-    /// - Returns plain text, not JSON, per Prometheus specification
-    /// - Background service instance injected for real-time status
-    /// </remarks>
     [Area("Admin")]
     [Authorize(Roles = "Admin")]
     [ApiController]

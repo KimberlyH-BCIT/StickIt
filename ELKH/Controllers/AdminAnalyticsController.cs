@@ -7,87 +7,12 @@ using System.Globalization;
 
 namespace ELKH.Controllers;
 
-// ╔===============================================================================================╗
-// ║                       ADMIN ANALYTICS CONTROLLER - TABLE OF CONTENTS                          ║
-// ╚===============================================================================================╝
-// 
-// OVERVIEW:
-// Comprehensive business intelligence controller providing sales analytics, performance metrics,
-// and administrative dashboard functionality for data-driven decision making.
-// 
-// TABLE OF CONTENTS:
-// ┌─ Section 1: Controller Setup & Dependencies .......................................... Line 72
-// │  ├─ Constructor with ApplicationDbContext and logging
-// │  ├─ AdminControllerBase inheritance for security
-// │  └─ Database context and logging integration
-// ├─ Section 2: Dashboard Analytics .................................................... Line 75
-// │  ├─ Index() - Admin dashboard with key performance indicators
-// │  ├─ Weekly and monthly order count aggregation
-// │  ├─ Stock level monitoring (high/low thresholds)
-// │  ├─ Top 5 products by units sold with revenue calculation
-// │  └─ Executive summary metrics for decision making
-// ├─ Section 3: Sales Analytics .................................................... Line 110
-// │  ├─ Sales() - Comprehensive sales reporting and trend analysis
-// │  ├─ Weekly/monthly gross sales calculation with decimal precision
-// │  ├─ 7-day sales trend chart with daily breakdown
-// │  ├─ 12-month sales trend chart with monthly aggregation
-// │  ├─ SQLite-compatible decimal aggregations (materialized approach)
-// │  └─ Top products by revenue with comprehensive analytics
-// ├─ Section 4: Product Analytics .................................................. Line 212
-// │  ├─ Products() - Product performance metrics and analysis
-// │  ├─ Product listing with category relationships
-// │  ├─ Stock quantity monitoring and alerts
-// │  ├─ Best seller and trending product identification
-// │  └─ Date-based product performance tracking
-// └─ Section 5: Export & Reporting ................................................. Line 254
-//    ├─ ExportSalesData() - CSV export functionality with date ranges
-//    ├─ Transaction data export with configurable time periods
-//    ├─ CSV formatting for Excel compatibility
-//    └─ Administrative audit logging for compliance
-//
-// ARCHITECTURE NOTES:
-// • Extracted from monolithic AdminController for focused business intelligence
-// • Inherits from AdminControllerBase for consistent security and logging
-// • SQLite-compatible aggregations using ToListAsync() then LINQ materialization
-// • Optimized queries with selective projection for performance
-// • Comprehensive audit logging for administrative actions
-//
-// BUSINESS INTELLIGENCE FEATURES:
-// • Executive dashboard with key performance indicators (KPIs)
-// • Time-series analysis with weekly and monthly trends
-// • Product performance ranking and revenue analysis
-// • Stock level monitoring with automated alerts
-// • Exportable data for external business intelligence tools
-//
-// PERFORMANCE OPTIMIZATIONS:
-// • Materialized queries for SQLite decimal precision compatibility
-// • Selective data projection to minimize memory footprint
-// • Efficient date range filtering with indexed queries
-// • Grouped aggregations performed in-memory for accuracy
-// • Cached calculations for dashboard responsiveness
-//
-// DATA ACCURACY CONSIDERATIONS:
-// • SQLite decimal Sum() limitations addressed through materialization
-// • Consistent UTC date handling across all analytics
-// • Null-safe aggregations with fallback values
-// • Revenue calculations with proper decimal precision
-// • Data validation and error handling for edge cases
-//
-// SECURITY IMPLEMENTATION:
-// • AdminControllerBase inheritance ensures role-based access
-// • Comprehensive audit logging for all analytics access
-// • Data exposure limited to aggregated metrics only
-// • No sensitive customer data in analytics exports
-// • Administrative action tracking for compliance requirements
-
 /// <summary>
 /// Admin controller responsible for sales analytics, reporting, and business intelligence.
 /// Handles dashboard metrics, sales charts, and performance analytics.
 /// </summary>
 /// <remarks>
-/// <para><strong>Extracted from AdminController</strong></para>
-/// This controller handles all analytics functionality that was previously
-/// in the monolithic AdminController, providing focused business intelligence.
+/// Keeps analytics and reporting behavior isolated from the broader admin workflows.
 /// 
 /// <para><strong>Responsibilities:</strong></para>
 /// <list type="bullet">

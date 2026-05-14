@@ -15,52 +15,6 @@ namespace ELKH.Controllers;
 /// Shopping cart management controller for authenticated and guest users.
 /// Handles cart operations (add, remove) and quick purchase functionality.
 /// </summary>
-/// <remarks>
-/// Cart operations support both authenticated users (database) and guest users (session).
-///
-/// CART OPERATIONS:
-/// - GET /Cart - Display current user's cart items
-/// - POST /Cart/AddToCart - Add product to cart with quantity validation
-/// - POST /Cart/BuyNow - Quick purchase (bypasses cart, creates order immediately)
-/// - POST /Cart/Update - Update item quantity in cart
-/// - POST /Cart/Remove - Remove item from cart
-/// - POST /Cart/Clear - Clear all items from cart
-///
-/// CHECKOUT FLOW:
-/// - Users proceed to checkout via CheckoutController which handles PayPal payment processing
-///
-/// BUSINESS LOGIC DELEGATION:
-/// - All cart operations delegated to ICartService for separation of concerns
-/// - Controller focuses on HTTP concerns (validation, authorization, result shaping)
-/// - Service layer handles business rules (inventory checks, price calculations)
-///
-/// SECURITY:
-/// - User email retrieved from authenticated context for logged-in users
-/// - Guest carts stored in secure session storage (30-min timeout, HttpOnly)
-/// - All operations scoped to current user's cart (database or session)
-/// - Anti-forgery tokens required for all POST operations
-///
-/// TABLE OF CONTENTS
-/// ================================================================================
-/// 1. Constructor & Dependencies                                    (lines 64-72)
-/// 2. Cart Display & Calculations                                   (lines 74-106)
-///    - Index() - Display cart with tax/shipping calculations
-/// 3. Cart Item Management                                          (lines 108-190)
-///    - AddToCart() - Add product with quantity validation         (lines 108-120)
-///    - Update() - Modify item quantity (minimum 1)                (lines 172-186)
-///    - Remove() - Remove single item from cart                    (lines 188-198)
-///    - Clear() - Empty entire cart                                (lines 200-211)
-/// 4. Order Creation                                                (lines 192-217)
-///    - BuyNow() - Quick purchase bypassing cart                   (lines 122-149)
-///    - PlaceOrder() - Create order from cart items                (lines 192-217)
-/// ================================================================================
-///
-/// STATUS CODE CONVENTIONS:
-/// - (-2) = User has no delivery address configured
-/// - (-1) = Product out of stock / inventory insufficient
-/// - (0)  = Operation failed / database error
-/// - (>0) = Success: returns order ID
-/// </remarks>
 public class CartController : Controller
 {
     #region Constructor & Dependencies
@@ -100,7 +54,7 @@ public class CartController : Controller
     /// BUSINESS RULES:
     /// - Free shipping threshold: $50.00 subtotal
     /// - Effective price calculated per product (includes discounts)
-    /// - Line totals computed from effective price ├ù quantity
+    /// - Line totals computed from effective price â”œÃ¹ quantity
     ///
     /// AUTHENTICATION ROUTING:
     /// - Authenticated: ICartService retrieves from database
@@ -224,12 +178,12 @@ public class CartController : Controller
                     success = true,
                     cartCount = cartCount,
                     quantity = quantity,
-                    message = $"Γ£ô Added {quantity} {itemText} to your cart!"
+                    message = $"Î“Â£Ã´ Added {quantity} {itemText} to your cart!"
                 });
             }
 
             // Standard form submission - redirect with TempData message
-            TempData["Message"] = $"success,Γ£ô Added {quantity} item{(quantity > 1 ? "s" : "")} to your cart!";
+            TempData["Message"] = $"success,Î“Â£Ã´ Added {quantity} item{(quantity > 1 ? "s" : "")} to your cart!";
 
             if (!string.IsNullOrEmpty(returnUrl) && Url.IsLocalUrl(returnUrl))
             {
@@ -380,10 +334,10 @@ public class CartController : Controller
     /// 5. Clear temporary cart entry
     ///
     /// STATUS CODE HANDLING:
-    /// - (-2): No delivery address ΓåÆ Redirect to User/Addresses
-    /// - (-1): Out of stock ΓåÆ Redirect to Product/Details with warning
-    /// - (0): Database error ΓåÆ Redirect to Product/Details with warning
-    /// - (>0): Success ΓåÆ Redirect to Order/Details with order ID
+    /// - (-2): No delivery address Î“Ã¥Ã† Redirect to User/Addresses
+    /// - (-1): Out of stock Î“Ã¥Ã† Redirect to Product/Details with warning
+    /// - (0): Database error Î“Ã¥Ã† Redirect to Product/Details with warning
+    /// - (>0): Success Î“Ã¥Ã† Redirect to Order/Details with order ID
     ///
     /// STREAMLINED UX:
     /// Bypasses traditional cart viewing for single-item purchases,
@@ -445,10 +399,10 @@ public class CartController : Controller
     /// 6. Clear user's cart
     ///
     /// STATUS CODE HANDLING:
-    /// - (-2): No delivery address ΓåÆ Redirect to User/Addresses
-    /// - (-1): One or more items out of stock ΓåÆ Redirect to Cart with warning
-    /// - (0): Database error ΓåÆ Redirect to Cart
-    /// - (>0): Success ΓåÆ Redirect to Order/Details with order ID
+    /// - (-2): No delivery address Î“Ã¥Ã† Redirect to User/Addresses
+    /// - (-1): One or more items out of stock Î“Ã¥Ã† Redirect to Cart with warning
+    /// - (0): Database error Î“Ã¥Ã† Redirect to Cart
+    /// - (>0): Success Î“Ã¥Ã† Redirect to Order/Details with order ID
     ///
     /// ATOMICITY:
     /// Order creation is transactional - all items must be available

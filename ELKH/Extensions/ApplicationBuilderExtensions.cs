@@ -7,68 +7,6 @@ namespace ELKH.Extensions
     /// Centralising middleware order here keeps <c>Program.cs</c> clean and makes it impossible
     /// to accidentally reorder security-critical middleware.
     /// </summary>
-    /// <remarks>
-    /// TABLE OF CONTENTS
-    /// ================================================================================
-    /// 1. UseApplicationMiddleware Method ............................. Lines [12-83]
-    ///    - Middleware pipeline order      // Security-critical ordering enforcement
-    ///    - Global exception handling      // First-line error catching
-    ///    - Security headers              // Defense-in-depth headers
-    ///    - Authentication/authorization   // Identity and access control
-    /// 
-    /// 2. UseSecurityHeaders Method ................................... Lines [85-136]
-    ///    - HTTP security headers          // OWASP security header implementation
-    ///    - Content Security Policy        // XSS and injection prevention
-    ///    - Frame options                 // Clickjacking protection
-    /// 
-    /// 3. UseApplicationEndpoints Method .............................. Lines [138-170]
-    ///    - Route mapping                 // MVC, Razor Pages, and health endpoints
-    ///    - Area support                  // Admin and specialized area routing
-    /// ================================================================================
-    /// 
-    /// ARCHITECTURAL CONTEXT:
-    /// • Critical middleware pipeline configuration ensuring proper security ordering
-    /// • Implements defense-in-depth security strategy with layered protections
-    /// • Environment-aware configuration (compression disabled in development)
-    /// • Part of ELKH's security-first application architecture
-    /// • Centralizes middleware configuration to prevent security misconfigurations
-    /// 
-    /// SECURITY IMPLEMENTATION:
-    /// This class implements comprehensive security measures:
-    /// 1. Global exception handling - prevents information disclosure
-    /// 2. Security headers - OWASP recommended HTTP security headers
-    /// 3. Content Security Policy - XSS and injection attack prevention
-    /// 4. HTTPS enforcement - ensures encrypted communication
-    /// 5. Rate limiting - prevents abuse and DoS attacks
-    /// 6. Authentication/Authorization - proper identity and access control
-    /// 
-    /// MIDDLEWARE ORDERING RATIONALE:
-    /// • Exception handling first - catches all errors for consistent responses
-    /// • Security headers early - applied to all responses including errors
-    /// • HTTPS redirection - ensures secure transport
-    /// • Compression before caching - efficient storage and transmission
-    /// • Authentication before authorization - establish identity before access control
-    /// • Routing last - endpoint resolution after all security measures
-    /// 
-    /// INTEGRATION POINTS:
-    /// • Used by: Program.cs during application startup configuration
-    /// • Integrates with: Custom middleware (GlobalExceptionMiddleware, CorrelationIdMiddleware)
-    /// • Configures: PayPal, reCAPTCHA, Bootstrap integration via CSP headers
-    /// • Supports: Health checks, static assets, area-based routing
-    /// 
-    /// PERFORMANCE CONSIDERATIONS:
-    /// • Conditional compression based on environment (dev tools compatibility)
-    /// • Output caching positioned after compression for efficiency
-    /// • Rate limiting before expensive operations
-    /// • Static asset optimization through WithStaticAssets()
-    /// 
-    /// COMPLIANCE & SECURITY:
-    /// • OWASP security header recommendations implemented
-    /// • CSP configured for PayPal and reCAPTCHA third-party integrations
-    /// • Clickjacking protection via frame options
-    /// • XSS prevention through multiple layers
-    /// • Information disclosure prevention via structured error handling
-    /// </remarks>
     public static class ApplicationBuilderExtensions
     {
         /// <summary>
@@ -78,7 +16,7 @@ namespace ELKH.Extensions
         /// <param name="env">The hosting environment (used to conditionally enable compression).</param>
         /// <remarks>
         /// Order is critical in ASP.NET Core. This method enforces:
-        /// Security Headers → HTTPS → Compression (Production only) → Output Cache → Session → Routing → Authentication → Authorization
+        /// Security Headers â†’ HTTPS â†’ Compression (Production only) â†’ Output Cache â†’ Session â†’ Routing â†’ Authentication â†’ Authorization
         ///
         /// Response compression is disabled in Development to allow Browser Link and Browser Refresh middleware
         /// to inject their scripts into HTML responses. These dev tools cannot inject into compressed responses.
@@ -154,7 +92,7 @@ namespace ELKH.Extensions
         /// <list type="bullet">
         ///   <item><term>X-Content-Type-Options: nosniff</term><description>Prevents browsers from MIME-sniffing a response away from the declared content type, blocking content-injection attacks.</description></item>
         ///   <item><term>X-Frame-Options: SAMEORIGIN</term><description>Allows the page to be framed only by pages on the same origin, mitigating clickjacking attacks.</description></item>
-        ///   <item><term>Referrer-Policy: strict-origin-when-cross-origin</term><description>Sends the full URL as the referrer for same-origin requests but only the origin for cross-origin requests, and nothing for downgrade (HTTPS→HTTP) navigations.</description></item>
+        ///   <item><term>Referrer-Policy: strict-origin-when-cross-origin</term><description>Sends the full URL as the referrer for same-origin requests but only the origin for cross-origin requests, and nothing for downgrade (HTTPSâ†’HTTP) navigations.</description></item>
         ///   <item><term>Permissions-Policy</term><description>Disables browser features (camera, microphone, geolocation) not required by this application.</description></item>
         /// </list>
         /// </remarks>
@@ -169,7 +107,7 @@ namespace ELKH.Extensions
                 context.Response.Headers["X-Frame-Options"] = "SAMEORIGIN";
 
                 // Limit referrer information sent on navigation: full URL for same-origin,
-                // origin-only for cross-origin, nothing for HTTPS → HTTP downgrades.
+                // origin-only for cross-origin, nothing for HTTPS â†’ HTTP downgrades.
                 context.Response.Headers["Referrer-Policy"] = "strict-origin-when-cross-origin";
 
                 // Opt out of browser features this application does not use.

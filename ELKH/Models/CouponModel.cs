@@ -7,40 +7,6 @@ namespace ELKH.Models;
 /// Represents a discount coupon that can be applied to orders for promotional purposes.
 /// Supports various discount types, usage limits, and expiration rules.
 /// </summary>
-/// <remarks>
-/// TABLE OF CONTENTS (120 lines)
-/// ================================================================================
-/// 1. Primary Key & Basic Properties ......................... Lines   25-55
-///    - PkCouponId, Code, Name, Description
-/// 
-/// 2. Discount Configuration ................................. Lines   57-85
-///    - DiscountType, DiscountValue, MinimumOrderValue
-///    - FreeShipping, MaxDiscountAmount (for percentage caps)
-/// 
-/// 3. Usage Rules & Validation ............................... Lines   87-105
-///    - IsActive, UsageLimit, CurrentUsageCount
-///    - ValidFrom, ValidUntil for time-based restrictions
-/// 
-/// 4. Audit & Tracking ....................................... Lines  107-115
-///    - CreatedAt, UpdatedAt for management tracking
-/// 
-/// 5. Navigation Properties ................................... Lines  117-120
-///    - OrderCoupons (many-to-many via junction table)
-/// ================================================================================
-/// 
-/// DISCOUNT TYPES SUPPORTED:
-/// • Percentage: 10% off entire order
-/// • FixedAmount: $5 off order total
-/// • FreeShipping: Waive shipping costs
-/// • BOGO: Buy one get one (future enhancement)
-/// 
-/// BUSINESS RULES:
-/// • Coupon codes are case-insensitive and normalized to uppercase
-/// • Usage limits prevent abuse (single-use, limited quantity, unlimited)
-/// • Minimum order values ensure profitability
-/// • Time-based validity prevents expired coupon usage
-/// • Maximum discount caps prevent excessive percentage discounts
-/// </remarks>
 public class CouponModel
 {
     /// <summary>

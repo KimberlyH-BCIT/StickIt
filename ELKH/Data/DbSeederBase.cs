@@ -5,97 +5,11 @@ using System.Text;
 
 namespace ELKH.Data;
 
-// ╔===============================================================================================╗
-// ║                         DATABASE SEEDER BASE - TABLE OF CONTENTS                             ║
-// ╚===============================================================================================╝
-// 
-// OVERVIEW:
-// Base class for database seeding operations providing common utilities and orchestration
-// for domain-specific seeding across the decomposed seeding architecture.
-// 
-// TABLE OF CONTENTS:
-// ┌─ Section 1: Shared Utilities & Common Infrastructure ................................. Line 41
-// │  ├─ Random number generator with fixed seed for reproducible results
-// │  ├─ P() factory method for ProductModel creation with normalized search
-// │  ├─ GenerateRandomDate() for realistic product timestamps
-// │  ├─ Normalize() for consistent product name search optimization
-// │  └─ GetRandom() accessor for cross-domain seeding consistency
-// ├─ Section 2: Product Factory & Data Generation ...................................... Line 63
-// │  ├─ ProductModel factory with comprehensive field population
-// │  ├─ Automatic NameNormalized generation for search functionality
-// │  ├─ Category relationship establishment
-// │  ├─ Realistic date generation with weighted distribution
-// │  ├─ Best seller and trending product flagging
-// │  └─ Tags and metadata population for enhanced filtering
-// ├─ Section 3: String Normalization & Search Optimization ............................. Line 102
-// │  ├─ Unicode normalization for international character support
-// │  ├─ Diacritic stripping for broader search compatibility
-// │  ├─ Culture-independent lowercase conversion
-// │  ├─ Synchronized implementation with ProductService.NormalizeName()
-// │  └─ Comprehensive character processing for search accuracy
-// └─ Section 4: Main Orchestration & Error Handling .................................... Line 140
-//    ├─ SeedAllAsync() - Master seeding coordinator
-//    ├─ Ordered seeding execution (Products → Users → Customers → Reviews)
-//    ├─ Comprehensive error handling without blocking app startup
-//    ├─ Dependency-aware seeding sequence management
-//    └─ Cross-domain seeding coordination and logging
-//
-// ARCHITECTURE NOTES:
-// • Partial class design enabling domain-specific seeding file separation
-// • Fixed seed random generation for reproducible test data
-// • Common utility pattern for consistent cross-domain operations
-// • Error-tolerant seeding preventing application startup failures
-// • Dependency-aware seeding order for referential integrity
-//
-// SEEDING STRATEGY:
-// • Idempotent operations safe for repeated execution
-// • Domain separation with shared infrastructure
-// • Realistic data generation with business-appropriate distributions
-// • Search optimization with immediate NameNormalized population
-// • Production-safe error handling with graceful degradation
-//
-// DATA GENERATION PATTERNS:
-// • Weighted date distribution favoring recent products (30% within 30 days)
-// • Consistent normalization matching runtime search behavior
-// • Factory pattern for simplified product creation
-// • Random seed consistency for deterministic test scenarios
-// • Comprehensive field population for realistic business scenarios
-//
-// CROSS-FILE COORDINATION:
-// • DbSeeder.cs - Main seeding coordination and product catalog
-// • DbSeeder.Users.cs - Administrative users and role management
-// • DbSeeder.Customers.cs - Demo customers with realistic order patterns
-// • DbSeeder.Reviews.cs - Store testimonials and product reviews
-// • Shared utilities available across all seeding domains
-//
-// SEARCH OPTIMIZATION:
-// • Real-time NameNormalized population during seeding
-// • Unicode normalization for international product support
-// • Diacritic removal for broader search compatibility
-// • Synchronized normalization with ProductService for consistency
-// • Culture-independent processing for global deployment
-
 /// <summary>
 /// Base class for database seeding operations providing common utilities and orchestration.
 /// </summary>
 /// <remarks>
-/// <para><strong>Partial Class Architecture:</strong></para>
-/// This partial class serves as the foundation for domain-specific seeding operations.
-/// Contains shared utilities used across all seeding domains and provides the main
-/// orchestration methods for initializing the application database.
-/// 
-/// <para><strong>Key Components:</strong></para>
-/// <list type="bullet">
-/// <item>Product factory methods for simplified creation</item>
-/// <item>String normalization for search optimization</item>
-/// <item>Date generation with realistic business distributions</item>
-/// <item>Master orchestration for ordered seeding execution</item>
-/// <item>Error handling preventing application startup failures</item>
-/// </list>
-/// 
-/// <para><strong>Seeding Coordination:</strong></para>
-/// Manages the execution order of domain-specific seeders to maintain referential
-/// integrity and provide comprehensive test data for development and testing.
+/// Provides shared helpers used by the partial seeder files.
 /// </remarks>
 public static partial class DbSeeder
 {

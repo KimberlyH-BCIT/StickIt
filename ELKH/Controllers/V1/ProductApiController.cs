@@ -7,97 +7,11 @@ using System.Globalization;
 
 namespace ELKH.Controllers.V1;
 
-// ╔===============================================================================================╗
-// ║                        PRODUCT API CONTROLLER - TABLE OF CONTENTS                            ║
-// ╚===============================================================================================╝
-// 
-// OVERVIEW:
-// RESTful API controller providing comprehensive product catalog functionality with support
-// for filtering, pagination, search, and availability checking through standardized endpoints.
-// 
-// TABLE OF CONTENTS:
-// ┌─ Section 1: Controller Setup & Dependencies .......................................... Line 57
-// │  ├─ Constructor with dependency injection
-// │  ├─ Service integrations (IProductService, ISearchService)
-// │  └─ API versioning and routing configuration
-// ├─ Section 2: Product Catalog Operations .............................................. Line 59
-// │  ├─ GetProducts() - Retrieve paginated product list with filtering/sorting
-// │  ├─ Parameter validation (page size limits, sort options)
-// │  ├─ Search integration with ISearchService
-// │  ├─ Category filtering and advanced sorting logic
-// │  └─ Comprehensive pagination with metadata
-// ├─ Section 3: Single Product Operations ............................................... Line 140
-// │  ├─ GetProduct() - Retrieve individual product by ID
-// │  ├─ Product-to-API model transformation
-// │  ├─ Not found handling with standardized errors
-// │  └─ Full product detail serialization
-// ├─ Section 4: Search & Discovery Services ............................................. Line 200
-// │  ├─ GetSearchSuggestions() - Autocomplete/typeahead functionality
-// │  ├─ Query validation and limit enforcement
-// │  ├─ Search service integration for name matching
-// │  └─ Optimized suggestion retrieval
-// └─ Section 5: Inventory & Availability Management ..................................... Line 248
-//    ├─ CheckAvailability() - Real-time stock and availability checking
-//    ├─ Stock status classification (In Stock, Low Stock, Out of Stock)
-//    ├─ Low stock threshold management (< 10 items)
-//    └─ Availability model with comprehensive status information
-//
-// ARCHITECTURE NOTES:
-// • RESTful API design following OpenAPI/Swagger standards
-// • Versioned endpoints with v1.0 API versioning strategy
-// • Standardized response models (ApiResponse<T>, ApiErrorResponse)
-// • Comprehensive error handling with structured error codes
-// • Pagination support with configurable limits and metadata
-//
-// API DESIGN PATTERNS:
-// • Resource-based URL patterns (/api/v1.0/ProductApi)
-// • HTTP verbs for semantic actions (GET for retrieval operations)
-// • Query parameters for filtering and configuration
-// • Consistent response envelope with success/error patterns
-// • Comprehensive Swagger documentation with response types
-//
-// BUSINESS LOGIC:
-// • Product catalog browsing with advanced filtering capabilities
-// • Search integration for product discovery and suggestions
-// • Real-time inventory status and availability checking
-// • Category-based filtering for organized product browsing
-// • Price-based and date-based sorting for user preferences
-//
-// PERFORMANCE CONSIDERATIONS:
-// • Page size limits prevent excessive data transfer (max 100 items)
-// • Search service integration for optimized product discovery
-// • Lazy loading and filtering applied at service layer
-// • Efficient pagination with skip/take operations
-// • Minimal API model transformation for reduced payload
-//
-// SECURITY IMPLEMENTATION:
-// • Public API endpoints (no authentication required for catalog browsing)
-// • Input validation on all parameters (pagination, search queries)
-// • Parameter sanitization and bounds checking
-// • Error message standardization to prevent information disclosure
-// • Structured logging for audit and monitoring
-
 /// <summary>
-/// Product API Controller - Version 1.0
-/// Provides product catalog functionality via RESTful API endpoints.
+/// Product catalog API controller for version 1.0.
 /// </summary>
 /// <remarks>
-/// <para><strong>API Version 1.0 Endpoints</strong></para>
-/// This controller provides comprehensive product catalog access through RESTful endpoints
-/// with support for advanced filtering, search, pagination, and real-time availability checking.
-/// 
-/// <para><strong>Supported Operations:</strong></para>
-/// <list type="bullet">
-/// <item>Product catalog browsing with filtering and pagination</item>
-/// <item>Individual product detail retrieval</item>
-/// <item>Search suggestions and autocomplete functionality</item>
-/// <item>Real-time inventory and availability status</item>
-/// <item>Category-based filtering and sorting options</item>
-/// </list>
-/// 
-/// <para><strong>Response Format:</strong></para>
-/// All endpoints return standardized JSON responses using ApiResponse&lt;T&gt; envelope pattern
-/// with consistent success/error handling and structured error codes for client integration.
+/// Exposes catalog browsing, product detail, search suggestion, and availability endpoints.
 /// </remarks>
 [ApiController]
 [ApiVersion("1.0")]

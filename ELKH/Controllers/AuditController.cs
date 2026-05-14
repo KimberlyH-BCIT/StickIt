@@ -11,31 +11,6 @@ namespace ELKH.Controllers
     /// Audit log viewer for administrative compliance and security monitoring.
     /// Provides filtering, pagination, and CSV export of all audit trail entries.
     /// </summary>
-    /// <remarks>
-    /// TABLE OF CONTENTS
-    /// ================================================================================
-    /// 1. Constructor & Dependencies                                   (lines 44-52)
-    /// 2. Audit Log Viewing                                            (lines 54-171)
-    ///    - Index()                               // GET: List audit entries with filters
-    ///    - Details(id)                           // GET: View single audit entry
-    /// ================================================================================
-    /// 
-    /// FEATURES:
-    /// - Date range filtering (from/to dates)
-    /// - Actor filtering (username substring search)
-    /// - Action filtering (action type substring search)
-    /// - CSV export for compliance reporting
-    /// - Pagination (50 entries per page, configurable)
-    /// 
-    /// ROUTES:
-    /// - GET /Admin/Audit - List view with filters and pagination
-    /// - GET /Admin/Audit?export=csv - CSV export of filtered results
-    /// - GET /Admin/Audit/Details/{id} - Single entry details
-    ///
-    /// AUTHORIZATION:
-    /// - Admin role required for all endpoints
-    /// - Audit trail immutable (no create/update/delete operations)
-    /// </remarks>
     [Area("Admin")]
     [Authorize(Roles = "Admin")]
     public class AuditController : Controller

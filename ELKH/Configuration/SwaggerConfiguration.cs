@@ -6,61 +6,6 @@ using Microsoft.AspNetCore.Mvc;
 
 namespace ELKH.Configuration;
 
-// ╔===============================================================================================╗
-// ║                             SWAGGER CONFIGURATION - TABLE OF CONTENTS                        ║
-// ╚===============================================================================================╝
-// 
-// OVERVIEW:
-// Comprehensive Swagger/OpenAPI configuration for ELKH e-commerce platform providing
-// enterprise-grade API documentation with security, versioning, and developer experience features.
-// 
-// TABLE OF CONTENTS:
-// ┌─ Section 1: Main Configuration & Service Registration ................................. Line 38
-// │  ├─ SwaggerConfiguration class definition and main setup
-// │  ├─ AddSwaggerDocumentation() - Service container configuration
-// │  └─ Security schemes (Bearer JWT, API Key) and requirements
-// ├─ Section 2: API Documentation & Metadata .............................................. Line 85
-// │  ├─ Version-specific documentation generation
-// │  ├─ API info, contact, license, and terms configuration
-// │  └─ Custom XML documentation integration
-// ├─ Section 3: Swagger UI Configuration ................................................. Line 121
-// │  ├─ UseSwaggerDocumentation() - Application pipeline setup
-// │  ├─ UI customization and routing configuration
-// │  └─ Multi-version endpoint configuration
-// ├─ Section 4: Operation Filtering & Enhancement ........................................ Line 165
-// │  ├─ ApiDocumentationOperationFilter class
-// │  ├─ Security requirements and response examples
-// │  ├─ Custom tagging and rate limiting metadata
-// │  └─ Dynamic example generation for API responses
-// ├─ Section 5: Document-Level Filters ................................................... Line 349
-// │  ├─ ApiDocumentationDocumentFilter class
-// │  ├─ Server configuration (production, staging, development)
-// │  ├─ Common error response schemas
-// │  └─ Vendor extensions and API metadata
-// └─ Section 6: API Versioning Integration ............................................... Line 384
-//    ├─ ApiVersionOperationFilter class
-//    ├─ Version-aware operation filtering
-//    └─ Parameter cleanup for versioned endpoints
-//
-// ARCHITECTURE NOTES:
-// • Uses Swashbuckle.AspNetCore for OpenAPI generation with custom filters
-// • Supports JWT Bearer authentication and API key authentication schemes
-// • Implements API versioning with Microsoft.AspNetCore.Mvc.Versioning
-// • Provides comprehensive example generation for improved developer experience
-//
-// SECURITY IMPLEMENTATION:
-// • JWT Bearer token authentication with proper security schemes
-// • API Key authentication support for service-to-service communication  
-// • Security requirements applied to all documented endpoints
-// • Rate limiting metadata included for API governance
-//
-// DEVELOPER EXPERIENCE:
-// • Auto-generated examples for common API responses
-// • Comprehensive operation descriptions and parameter documentation
-// • Multi-environment server configuration for testing
-// • Custom tagging for logical API organization
-// • Enhanced UI with proper default expansion and model rendering
-
 /// <summary>
 /// Swagger configuration for ELKH API documentation.
 /// Provides comprehensive API documentation with versioning support.

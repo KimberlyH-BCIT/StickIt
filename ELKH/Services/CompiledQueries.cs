@@ -56,6 +56,6 @@ namespace ELKH.Services
                     db.Products
                         .Include(p => p.Category)
                         .AsNoTracking()
-                        .FirstOrDefault(p => p.PkProductId == productId));
+                        .FirstOrDefault(p => p.PkProductId == productId && !p.IsDeleted));
     }
 }

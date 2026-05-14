@@ -12,65 +12,6 @@ namespace ELKH.Controllers;
 /// Admin controller responsible for system management, cache operations, and search indexing.
 /// Handles technical operations and system maintenance tasks.
 /// </summary>
-/// <remarks>
-/// TABLE OF CONTENTS (474 lines)
-/// ================================================================================
-/// 1. Constructor & Dependencies ................................... Lines   38-47
-///    - IMemoryCache, IFuzzyReindexService, base services injection
-/// 
-/// 2. Search Index Management ...................................... Lines   49-180
-///    - ReindexSearch()                       // POST: Rebuild FTS index with audit
-///    - ReindexHealth()                       // GET: Background service status
-///    - ProductFTS table maintenance and SQLite FTS5 operations
-/// 
-/// 3. Cache Management ............................................. Lines  182-320
-///    - CacheStats()                          // GET: Memory cache statistics
-///    - ClearFuzzyCache()                     // POST: Clear fuzzy search cache
-///    - GetCacheEntries()                     // Private: Cache enumeration helper
-/// 
-/// 4. System Health Monitoring .................................... Lines  322-420
-///    - BackgroundServiceStatus()             // GET: Service health dashboard
-///    - SystemMetrics()                       // GET: Performance metrics
-///    - Integration with background services coordination
-/// 
-/// 5. Data Models & Payloads ...................................... Lines  422-474
-///    - ReindexPayload                        // Request model for index rebuild
-///    - ClearCachePayload                     // Request model for cache operations
-///    - HealthStatusModel                     // Response model for service status
-/// ================================================================================
-/// 
-/// EXTRACTED FROM ADMINCONTROLLER:
-/// This controller handles all system management functionality that was previously
-/// in the monolithic AdminController, providing focused system administration
-/// with clear separation of concerns.
-/// 
-/// CORE RESPONSIBILITIES:
-/// • Search index rebuilding and maintenance using SQLite FTS5
-/// • Memory cache management and statistics collection
-/// • System health monitoring and background service coordination
-/// • Comprehensive audit trail for all system operations
-/// • Performance metrics collection and reporting
-/// 
-/// SECURITY & COMPLIANCE:
-/// • All endpoints require [Authorize(Roles = "Admin")] inheritance
-/// • Rate limiting applied specifically for admin operations
-/// • CSRF protection on all state-changing operations
-/// • Comprehensive audit logging for compliance and monitoring
-/// • Operation tracking with correlation IDs for distributed tracing
-/// 
-/// PERFORMANCE CONSIDERATIONS:
-/// • Cache operations designed for minimal impact on active users
-/// • Background service coordination prevents operation conflicts
-/// • Efficient FTS index rebuilding with batch operations
-/// • Memory-conscious cache enumeration and statistics
-/// 
-/// INTEGRATION POINTS:
-/// • Coordinates with AdminController for user management operations
-/// • Integrates with IFuzzyReindexService for search index maintenance
-/// • Uses IMemoryCache for application-level caching operations
-/// • Logs all operations through structured logging with correlation IDs
-/// • Background service health monitoring and coordination
-/// </remarks>
 public class AdminSystemController : AdminControllerBase
 {
     private readonly IMemoryCache _cache;

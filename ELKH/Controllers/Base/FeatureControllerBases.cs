@@ -9,66 +9,6 @@ namespace ELKH.Controllers.Base;
 /// Base controller for all user-area controllers that require authentication.
 /// Provides common user-specific functionality and utilities.
 /// </summary>
-/// <remarks>
-/// TABLE OF CONTENTS
-/// ================================================================================
-/// 1. UserControllerBase Class ................................... Lines [28-65]
-///    - Authentication requirement   // User authentication enforcement
-///    - Common dependencies         // Shared service injection
-///    - User context utilities      // Current user access methods
-/// 
-/// 2. AuthenticatedControllerBase Class .......................... Lines [67-95]
-///    - Base authentication logic    // Foundation authentication patterns
-///    - Error handling             // Consistent error responses
-///    - Session management         // User session utilities
-/// 
-/// 3. Feature-Specific Methods ................................... Lines [97-130]
-///    - User profile operations     // Profile management utilities
-///    - Address management         // Shipping address helpers
-///    - Review functionality       // User review utilities
-/// 
-/// 4. Security & Validation ...................................... Lines [132-152]
-///    - Input validation patterns   // Consistent validation approaches
-///    - Authorization helpers      // Permission checking utilities
-///    - CSRF protection           // Anti-forgery token management
-/// ================================================================================
-/// 
-/// ARCHITECTURAL CONTEXT:
-/// This controller hierarchy extracts common patterns from the original UserController
-/// and provides shared functionality for feature-specific user controllers:
-/// • UserProfileController - User profile management and settings
-/// • UserAddressController - Shipping address management
-/// • UserReviewController - Product review and testimonial management
-/// • UserOrderController - Order history and tracking
-/// 
-/// COMMON FEATURES PROVIDED:
-/// • User authentication validation with automatic redirect to login
-/// • Current user retrieval utilities with caching and performance optimization
-/// • Success/error message handling with consistent user experience
-/// • Common dependencies injection (UserService, logging, etc.)
-/// • Consistent error handling patterns across all user controllers
-/// 
-/// SECURITY IMPLEMENTATION:
-/// • [Authorize] attribute enforces authentication for all inherited controllers
-/// • User context validation prevents unauthorized access to other users' data
-/// • Consistent CSRF protection across all user-facing forms
-/// • Input validation patterns prevent injection and manipulation attacks
-/// • Session management with secure cookie handling
-/// 
-/// INTEGRATION POINTS:
-/// • Inherited by: UserProfileController, UserAddressController, UserReviewController
-/// • Depends on: IUserService for user operations and data access
-/// • Integrates with: ASP.NET Core Identity for authentication state
-/// • Uses: Dependency injection for service access and configuration
-/// • Supports: Razor Pages and MVC actions with consistent patterns
-/// 
-/// DEVELOPMENT BENEFITS:
-/// • Reduces code duplication across user-focused controllers
-/// • Enforces consistent authentication and authorization patterns
-/// • Simplifies testing through shared base functionality
-/// • Enables rapid development of new user features with proven patterns
-/// • Provides consistent user experience across all user management features
-/// </remarks>
 [Authorize]
 public abstract class UserControllerBase : AuthenticatedControllerBase
 {

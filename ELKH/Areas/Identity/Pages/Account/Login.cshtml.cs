@@ -22,29 +22,6 @@ using static ELKH.Extensions.RateLimitPolicies;
 
 namespace ELKH.Areas.Identity.Pages.Account
 {
-    /*
-     * ┌────────────────────────────────────────────────────────────────────────────┐
-     * │ TABLE OF CONTENTS - Login.cshtml.cs                                       │
-     * ├────────────────────────────────────────────────────────────────────────────┤
-     * │ 1. Properties & Input Model ............................ Lines  28-106    │
-     * │    - Dependency injection fields                                           │
-     * │    - InputModel: Email, Password, RememberMe                               │
-     * │    - ReCaptcha configuration                                               │
-     * │                                                                            │
-     * │ 2. GET Handler: OnGetAsync ............................. Lines 108-127    │
-     * │    - Clear external auth cookies                                           │
-     * │    - Load external login providers                                         │
-     * │    - Display error messages from redirects                                 │
-     * │                                                                            │
-     * │ 3. POST Handler: OnPostAsync ........................... Lines 129-210    │
-     * │    - reCAPTCHA validation                                                  │
-     * │    - Password sign-in attempt                                              │
-     * │    - Role-based redirect (Admin/Manager/Staff/Customer)                    │
-     * │    - 2FA redirect if enabled                                               │
-     * │    - Lockout handling                                                      │
-     * │    - Rate limited via [EnableRateLimiting(Auth)]                           │
-     * └────────────────────────────────────────────────────────────────────────────┘
-     */
 
     /// <summary>
     /// Razor Page model for user login with role-based redirects and security features.
@@ -58,10 +35,10 @@ namespace ELKH.Areas.Identity.Pages.Account
     /// <item>Attempt password sign-in via ASP.NET Core Identity</item>
     /// <item>On success: Determine user role and redirect accordingly:
     ///   <list type="bullet">
-    ///   <item>Admin → /Admin/Index (Admin dashboard)</item>
-    ///   <item>Manager → /Manager/Index (Manager dashboard)</item>
-    ///   <item>Staff → /Home/Index (Home page)</item>
-    ///   <item>Customer → /User/Index (Customer dashboard)</item>
+    ///   <item>Admin â†’ /Admin/Index (Admin dashboard)</item>
+    ///   <item>Manager â†’ /Manager/Index (Manager dashboard)</item>
+    ///   <item>Staff â†’ /Home/Index (Home page)</item>
+    ///   <item>Customer â†’ /User/Index (Customer dashboard)</item>
     ///   </list>
     /// </item>
     /// <item>On 2FA required: Redirect to LoginWith2fa page</item>
@@ -86,12 +63,12 @@ namespace ELKH.Areas.Identity.Pages.Account
     {
         #region Properties & Dependencies
 
-        // ── ASP.NET Core Identity Services ───────────────────────────────────────────────
+        // â”€â”€ ASP.NET Core Identity Services â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
         private readonly SignInManager<IdentityUser> _signInManager;
         private readonly UserManager<IdentityUser> _userManager;
         private readonly ILogger<LoginModel> _logger;
 
-        // ── ReCaptcha Validation ─────────────────────────────────────────────────────
+        // â”€â”€ ReCaptcha Validation â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
         private readonly IReCaptchaService _reCaptcha;
         private readonly ReCaptchaOptions _reCaptchaOptions;
 
@@ -124,7 +101,7 @@ namespace ELKH.Areas.Identity.Pages.Account
         }
 
         // ==============================================================================
-        // ║ Page Properties                                                            ║
+        // â•‘ Page Properties                                                            â•‘
         // ==============================================================================
 
         /// <summary>
@@ -192,7 +169,7 @@ namespace ELKH.Areas.Identity.Pages.Account
         /// </remarks>
         public async Task OnGetAsync(string returnUrl = null)
         {
-            // ── Display Error Messages ────────────────────────────────────────────────────
+            // â”€â”€ Display Error Messages â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
             // Show errors from TempData (e.g., external login failures)
             if (!string.IsNullOrEmpty(ErrorMessage))
             {
@@ -201,16 +178,16 @@ namespace ELKH.Areas.Identity.Pages.Account
 
             returnUrl ??= Url.Content("~/");
 
-            // ── Clear External Auth Cookies ───────────────────────────────────────────────
+            // â”€â”€ Clear External Auth Cookies â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
             // Ensures clean login state by removing any lingering external auth cookies
             await HttpContext.SignOutAsync(IdentityConstants.ExternalScheme);
 
-            // ── Load External Providers ─────────────────────────────────────────────────
+            // â”€â”€ Load External Providers â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
             ExternalLogins = (await _signInManager.GetExternalAuthenticationSchemesAsync()).ToList();
 
             ReturnUrl = returnUrl;
 
-            // ── Debug Logging ─────────────────────────────────────────────────────────
+            // â”€â”€ Debug Logging â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
             // Verify reCAPTCHA site key is loaded for troubleshooting
             _logger.LogInformation("ReCAPTCHA SiteKey loaded: {SiteKey}", 
                 string.IsNullOrEmpty(ReCaptchaSiteKey) ? "(empty)" : ReCaptchaSiteKey);
@@ -264,7 +241,7 @@ namespace ELKH.Areas.Identity.Pages.Account
         public async Task<IActionResult> OnPostAsync(string returnUrl = null)
         {
             // ==========================================================================
-            // ║ PHASE 1: reCAPTCHA Validation                                          ║
+            // â•‘ PHASE 1: reCAPTCHA Validation                                          â•‘
             // ==========================================================================
             var token = Request.Form["g-recaptcha-response"].ToString();
             var ok = await _reCaptcha.VerifyAsync(token, HttpContext.Connection.RemoteIpAddress?.ToString());
@@ -282,7 +259,7 @@ namespace ELKH.Areas.Identity.Pages.Account
             if (ModelState.IsValid)
             {
                 // ======================================================================
-                // ║ PHASE 2: Password Sign-In Attempt                                    ║
+                // â•‘ PHASE 2: Password Sign-In Attempt                                    â•‘
                 // ======================================================================
                 // NOTE: lockoutOnFailure is currently false. Consider enabling for production
                 // to prevent brute-force attacks (set to true).
@@ -295,37 +272,37 @@ namespace ELKH.Areas.Identity.Pages.Account
                 if (result.Succeeded)
                 {
                     // ==================================================================
-                    // ║ PHASE 3: Role-Based Redirect                                      ║
+                    // â•‘ PHASE 3: Role-Based Redirect                                      â•‘
                     // ==================================================================
                     // Check user roles in priority order: Admin > Manager > Staff > Customer
                     var user = await _userManager.FindByEmailAsync(Input.Email);
 
-                    // ── Admin Role Check ────────────────────────────────────────────────────────
+                    // â”€â”€ Admin Role Check â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
                     if (await _userManager.IsInRoleAsync(user, "Admin"))
                     {
                         return RedirectToAction("Index", "Admin", new { area = "" });
                     }
 
-                    // ── Manager Role Check ───────────────────────────────────────────────────────
+                    // â”€â”€ Manager Role Check â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
                     if (await _userManager.IsInRoleAsync(user, "Manager"))
                     {
                         return RedirectToAction("Index", "Manager", new { area = "" });
                     }
 
-                    // ── Staff Role Check ─────────────────────────────────────────────────────────
+                    // â”€â”€ Staff Role Check â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
                     if (await _userManager.IsInRoleAsync(user, "Staff"))
                     {
                         return RedirectToAction("Index", "Home", new { area = "" });
                     }
 
-                    // ── Customer or Default ────────────────────────────────────────────────────
+                    // â”€â”€ Customer or Default â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
                     // Customer role or no specific role - redirect to user dashboard
                     _logger.LogInformation("User {Email} logged in as Customer.", Input.Email);
                     return RedirectToAction("Index", "User", new { area = "" });
                 }
 
                 // ======================================================================
-                // ║ Special Cases: 2FA and Lockout                                       ║
+                // â•‘ Special Cases: 2FA and Lockout                                       â•‘
                 // ======================================================================
                 if (result.RequiresTwoFactor)
                 {
