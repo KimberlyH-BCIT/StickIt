@@ -30,6 +30,7 @@ public class CheckoutControllerTests
     private readonly Mock<IGuestCartService> _mockGuestCartService;
     private readonly Mock<IConfiguration> _mockConfiguration;
     private readonly Mock<IShippingService> _mockShippingService;
+    private readonly Mock<IPayPalService> _mockPayPalService;
     private readonly Mock<ILogger<CheckoutController>> _mockLogger;
     private readonly CheckoutController _controller;
 
@@ -47,6 +48,7 @@ public class CheckoutControllerTests
         _mockGuestCartService = new Mock<IGuestCartService>();
         _mockConfiguration = new Mock<IConfiguration>();
         _mockShippingService = new Mock<IShippingService>();
+        _mockPayPalService = new Mock<IPayPalService>();
         _mockLogger = new Mock<ILogger<CheckoutController>>();
 
         // Create controller under test
@@ -58,6 +60,7 @@ public class CheckoutControllerTests
             _mockGuestCartService.Object,
             _mockConfiguration.Object,
             _mockShippingService.Object,
+            _mockPayPalService.Object,
             _mockLogger.Object);
 
         // Setup controller context

@@ -1,217 +1,59 @@
-# =====================================================================
-# Git Attributes for ELKH .NET 10 Project - Best Practices
-# =====================================================================
-# Controls how Git handles line endings and file merging
-# Last Updated: March 2026
-# =====================================================================
-
-# Auto detect text files and perform LF normalization
 * text=auto
 
-# =====================================================================
-# Source Code Files (UTF-8 encoding enforced)
-# =====================================================================
-*.cs text diff=csharp working-tree-encoding=UTF-8
-*.csx text diff=csharp working-tree-encoding=UTF-8
-*.vb text working-tree-encoding=UTF-8
-*.fs text working-tree-encoding=UTF-8
-*.fsx text working-tree-encoding=UTF-8
-*.fsi text working-tree-encoding=UTF-8
-
-# =====================================================================
-# Web Files (UTF-8 encoding enforced for international content)
-# =====================================================================
-*.html text diff=html working-tree-encoding=UTF-8
-*.htm text diff=html working-tree-encoding=UTF-8
-*.cshtml text diff=html working-tree-encoding=UTF-8
-*.razor text diff=html working-tree-encoding=UTF-8
-*.css text diff=css working-tree-encoding=UTF-8
-*.scss text diff=css working-tree-encoding=UTF-8
-*.sass text diff=css working-tree-encoding=UTF-8
-*.less text diff=css working-tree-encoding=UTF-8
-*.js text working-tree-encoding=UTF-8
-*.ts text working-tree-encoding=UTF-8
-*.tsx text working-tree-encoding=UTF-8
-*.jsx text working-tree-encoding=UTF-8
-*.json text working-tree-encoding=UTF-8
-*.xml text working-tree-encoding=UTF-8
-*.yml text working-tree-encoding=UTF-8
-*.yaml text working-tree-encoding=UTF-8
-
-# =====================================================================
-# Configuration Files (UTF-8 for better international support)
-# =====================================================================
-*.config text working-tree-encoding=UTF-8
-*.conf text working-tree-encoding=UTF-8
-*.ini text working-tree-encoding=UTF-8
-*.cfg text working-tree-encoding=UTF-8
-*.properties text working-tree-encoding=UTF-8
-*.settings text working-tree-encoding=UTF-8
-
-# =====================================================================
-# Documentation (UTF-8 for international documentation)
-# =====================================================================
-*.md text diff=markdown working-tree-encoding=UTF-8
-*.txt text working-tree-encoding=UTF-8
-*.rtf text working-tree-encoding=UTF-8
-*.rst text working-tree-encoding=UTF-8
-
-# =====================================================================
-# Project Files (union merge for better collaboration)
-# =====================================================================
+# Source files
+*.cs text diff=csharp
+*.cshtml text
+*.razor text
 *.csproj text merge=union
-*.vbproj text merge=union
-*.fsproj text merge=union
-*.sln text merge=union
 *.props text
 *.targets text
-*.nuspec text
+*.sln text eol=crlf merge=union
+*.slnx text
 
-# =====================================================================
-# Database & Migrations
-# =====================================================================
-*.sql text
-
-# =====================================================================
-# Scripts
-# =====================================================================
+# Web and config files
+*.html text
+*.htm text
+*.css text
+*.scss text
+*.js text
+*.json text
+*.xml text
+*.yml text
+*.yaml text
+*.md text
+*.txt text
 *.ps1 text eol=crlf
 *.bat text eol=crlf
 *.cmd text eol=crlf
 *.sh text eol=lf
+Dockerfile text eol=lf
+*.dockerfile text eol=lf
+docker-compose*.yml text eol=lf
 
-# =====================================================================
-# Binary Files (explicit binary marking)
-# =====================================================================
-*.png binary
-*.jpg binary
-*.jpeg binary
-*.gif binary
-*.ico binary
-*.svg binary
-*.webp binary
-*.bmp binary
-*.tiff binary
-*.tif binary
-
-# Documents
-*.pdf binary
-*.doc binary
-*.docx binary
-*.xls binary
-*.xlsx binary
-*.ppt binary
-*.pptx binary
-
-# Archives
-*.zip binary
-*.7z binary
-*.tar binary
-*.gz binary
-*.rar binary
-
-# Executables and Libraries
-*.exe binary
-*.dll binary
-*.lib binary
-*.a binary
-*.so binary
-*.dylib binary
-
-# Fonts
-*.woff binary
-*.woff2 binary
-*.eot binary
-*.ttf binary
-*.otf binary
-
-# Database files
-*.db binary
-*.sqlite binary
-*.sqlite3 binary
-
-# =====================================================================
-# Merge Strategies
-# =====================================================================
-# Use union merge for changelog files
-CHANGELOG.md merge=union
-CHANGELOG.txt merge=union
-
-# Don't merge generated files
+# Generated files
 *.designer.cs -merge
 *.Designer.cs -merge
 *.generated.cs -merge
 *.g.cs -merge
 *.g.i.cs -merge
 
-# =====================================================================
-# Platform-specific line endings
-# =====================================================================
-# Ensure shell scripts use LF on all platforms
-*.sh text eol=lf
-Dockerfile text eol=lf
-*.dockerfile text eol=lf
-docker-compose*.yml text eol=lf
-
-# Ensure batch files use CRLF on all platforms  
-*.bat text eol=crlf
-*.cmd text eol=crlf
-
-# =====================================================================
-# Visual Studio specific
-# =====================================================================
-*.resx text
-*.vsixmanifest text
-*.vsct text
-
-# =====================================================================
-# Special files
-# =====================================================================
-# License and readme files
-LICENSE text
-COPYING text
-README text
-readme.txt text
-# is only available from the command line. Turn it on by uncommenting the 
-# entries below.
-###############################################################################
-#*.doc   diff=astextplain
-#*.DOC   diff=astextplain
-#*.docx  diff=astextplain
-#*.DOCX  diff=astextplain
-#*.dot   diff=astextplain
-#*.DOT   diff=astextplain
-#*.pdf   diff=astextplain
-#*.PDF   diff=astextplain
-#*.rtf   diff=astextplain
-#*.RTF   diff=astextplain
-
-# =====================================================================
-# ELKH Project Encoding Standards (Added for encoding consistency)
-# =====================================================================
-# This section enforces UTF-8 encoding for all text files to prevent
-# encoding issues discovered in 2026 encoding audit.
-# 
-# Key benefits:
-# - Prevents smart quotes and Unicode character issues
-# - Ensures consistent team collaboration across different systems
-# - Maintains proper handling of international content
-#
-# IMPORTANT: Team members should configure their editors to:
-# 1. Use UTF-8 encoding by default
-# 2. Show invisible characters to detect encoding issues
-# 3. Replace smart quotes with ASCII quotes automatically
-# 4. Replace Unicode box drawing characters with ASCII equivalents
-#
-# Reference: See encoding-issues-report.md for complete analysis
-# Automated fix available: run fix-encoding-issues.ps1 for bulk corrections
-# =====================================================================
-
-# Ensure all PowerShell scripts use UTF-8 with BOM for better Windows compatibility
-*.ps1 text eol=crlf working-tree-encoding=UTF-8
-
-# Special handling for appsettings files (critical for ELKH project)
-appsettings*.json text working-tree-encoding=UTF-8
-
-# Ensure seeding files maintain UTF-8 encoding
-*Seeder*.cs text diff=csharp working-tree-encoding=UTF-8
+# Binary files
+*.png binary
+*.jpg binary
+*.jpeg binary
+*.gif binary
+*.ico binary
+*.webp binary
+*.bmp binary
+*.pdf binary
+*.zip binary
+*.7z binary
+*.exe binary
+*.dll binary
+*.woff binary
+*.woff2 binary
+*.ttf binary
+*.otf binary
+*.db binary
+*.sqlite binary
+*.sqlite3 binary

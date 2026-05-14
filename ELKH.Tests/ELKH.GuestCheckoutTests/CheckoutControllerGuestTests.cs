@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.ViewFeatures;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Diagnostics;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
 using Moq;
@@ -29,6 +30,7 @@ public class CheckoutControllerGuestTests : IDisposable
     private readonly Mock<IGuestCartService> _mockGuestCartService;
     private readonly Mock<IConfiguration> _mockConfiguration;
     private readonly Mock<IShippingService> _mockShippingService;
+    private readonly Mock<IPayPalService> _mockPayPalService;
     private readonly Mock<ILogger<CheckoutController>> _mockLogger;
     private readonly CheckoutController _controller;
 
@@ -37,6 +39,7 @@ public class CheckoutControllerGuestTests : IDisposable
         // Setup in-memory database
         var options = new DbContextOptionsBuilder<ApplicationDbContext>()
             .UseInMemoryDatabase(databaseName: Guid.NewGuid().ToString())
+            .ConfigureWarnings(w => w.Ignore(InMemoryEventId.TransactionIgnoredWarning))
             .Options;
         _context = new ApplicationDbContext(options);
 
@@ -46,6 +49,7 @@ public class CheckoutControllerGuestTests : IDisposable
         _mockGuestCartService = new Mock<IGuestCartService>();
         _mockConfiguration = new Mock<IConfiguration>();
         _mockShippingService = new Mock<IShippingService>();
+        _mockPayPalService = new Mock<IPayPalService>();
         _mockLogger = new Mock<ILogger<CheckoutController>>();
 
         _controller = new CheckoutController(
@@ -56,6 +60,7 @@ public class CheckoutControllerGuestTests : IDisposable
             _mockGuestCartService.Object,
             _mockConfiguration.Object,
             _mockShippingService.Object,
+            _mockPayPalService.Object,
             _mockLogger.Object);
 
         SetupControllerContext();
@@ -100,6 +105,51 @@ public class CheckoutControllerGuestTests : IDisposable
 
         _context.Products.AddRange(products);
         _context.SaveChanges();
+
+        _mockShippingService.Setup(s => s.GetShippingMethodByIdAsync(It.IsAny<int>()))
+            .ReturnsAsync((int id) => new ShippingMethodModel
+            {
+                PkShippingMethodId = id,
+                Name = id == 1 ? "Standard" : "Express",
+                BasePrice = id == 1 ? 7.99m : 14.99m,
+                IsActive = true
+            });
+
+        _mockShippingService.Setup(s => s.CalculateShippingCostAsync(It.IsAny<int>(), It.IsAny<decimal>(), It.IsAny<decimal>()))
+            .ReturnsAsync((int id, decimal subtotal, decimal freeShippingThreshold) => id == 1 && subtotal >= freeShippingThreshold ? 0m : (id == 1 ? 7.99m : 14.99m));
+
+        _mockShippingService.Setup(s => s.GetAvailableShippingMethodsAsync())
+            .ReturnsAsync(new List<ShippingMethodModel>
+            {
+                new() { PkShippingMethodId = 1, Name = "Standard", BasePrice = 7.99m, IsActive = true },
+                new() { PkShippingMethodId = 2, Name = "Express", BasePrice = 14.99m, IsActive = true }
+            });
+
+        _mockGuestCartService.Setup(g => g.ClearCartAsync())
+            .Returns(Task.CompletedTask);
+
+        _mockConfiguration.Setup(c => c["PayPal:Currency"]).Returns("CAD");
+    }
+
+    private void SetupVerifiedPayment(decimal amount, string orderId = "PAYPAL-ORDER-1", string captureId = "CAPTURE-1")
+    {
+        _mockPayPalService
+            .Setup(p => p.VerifyCapturedOrderAsync(
+                orderId,
+                It.Is<decimal>(total => decimal.Round(total, 2, MidpointRounding.AwayFromZero) == amount),
+                "CAD"))
+            .ReturnsAsync(new PayPalVerificationResult
+            {
+                PayPalOrderId = orderId,
+                CaptureId = captureId,
+                Status = "COMPLETED",
+                Amount = amount,
+                Currency = "CAD",
+                CapturedAtUtc = DateTime.UtcNow,
+                PayerId = "PAYER-123",
+                PayerEmail = "payer@example.com",
+                VerificationSummaryJson = "{\"status\":\"COMPLETED\"}"
+            });
     }
 
     #region Guest GET Tests
@@ -241,6 +291,7 @@ public class CheckoutControllerGuestTests : IDisposable
     {
         // Arrange
         var validModel = CreateValidGuestCheckoutVM();
+        SetupVerifiedPayment(1790.88m);
 
         var cartItems = new List<CartItemVM>
         {
@@ -263,6 +314,7 @@ public class CheckoutControllerGuestTests : IDisposable
     {
         // Arrange
         var validModel = CreateValidGuestCheckoutVM();
+        SetupVerifiedPayment(43.81m);
 
         var cartItems = new List<CartItemVM>
         {
@@ -297,6 +349,12 @@ public class CheckoutControllerGuestTests : IDisposable
         order.OrderStatus.Should().Be(OrderStatus.Paid);
         order.DeliveryStatus.Should().Be(DeliveryStatus.Pending);
 
+        var transaction = await _context.Transactions.FirstOrDefaultAsync();
+        transaction.Should().NotBeNull();
+        transaction!.PaymentTransactionId.Should().Be("CAPTURE-1");
+        transaction.PaymentOrderId.Should().Be("PAYPAL-ORDER-1");
+        transaction.TransactionStatus.Should().Be("COMPLETED");
+
         // Verify contact detail was created
         var contact = await _context.ContactDetails.FirstOrDefaultAsync();
         contact.Should().NotBeNull();
@@ -321,6 +379,7 @@ public class CheckoutControllerGuestTests : IDisposable
     {
         // Arrange
         var validModel = CreateValidGuestCheckoutVM();
+        SetupVerifiedPayment(43.81m);
 
         var cartItems = new List<CartItemVM>
         {
@@ -348,6 +407,7 @@ public class CheckoutControllerGuestTests : IDisposable
     {
         // Arrange
         var validModel = CreateValidGuestCheckoutVM();
+        SetupVerifiedPayment(62.02m);
 
         var cartItems = new List<CartItemVM>
         {
@@ -374,6 +434,7 @@ public class CheckoutControllerGuestTests : IDisposable
     {
         // Arrange
         var validModel = CreateValidGuestCheckoutVM();
+        SetupVerifiedPayment(25.90m);
 
         var cartItems = new List<CartItemVM>
         {
@@ -388,6 +449,120 @@ public class CheckoutControllerGuestTests : IDisposable
 
         // Assert
         _controller.TempData["GuestOrderEmail"].Should().Be("jane.doe@example.com");
+    }
+
+    [Fact]
+    public async Task ProcessGuestPayment_WithMissingPayPalOrderId_ShouldRedirectWithError()
+    {
+        var model = CreateValidGuestCheckoutVM();
+        model.PayPalOrderId = null;
+
+        var cartItems = new List<CartItemVM>
+        {
+            new CartItemVM { ProductId = 1, UnitPrice = 15.99m, Quantity = 1, LineTotal = 15.99m }
+        };
+
+        _mockGuestCartService.Setup(g => g.GetCartItemsAsync())
+            .ReturnsAsync(cartItems);
+
+        var result = await _controller.ProcessGuestPayment(model);
+
+        result.Should().BeOfType<RedirectToActionResult>();
+        _controller.TempData["Message"]?.ToString().Should().Contain("PayPal payment verification is required");
+        _mockPayPalService.Verify(p => p.VerifyCapturedOrderAsync(It.IsAny<string>(), It.IsAny<decimal>(), It.IsAny<string>()), Times.Never);
+    }
+
+    [Fact]
+    public async Task ProcessGuestPayment_WithFailedCapture_ShouldRedirectWithError()
+    {
+        var model = CreateValidGuestCheckoutVM();
+        var cartItems = new List<CartItemVM>
+        {
+            new() { ProductId = 1, UnitPrice = 15.99m, Quantity = 2, LineTotal = 31.98m }
+        };
+
+        _mockGuestCartService.Setup(g => g.GetCartItemsAsync()).ReturnsAsync(cartItems);
+        _mockPayPalService
+            .Setup(p => p.VerifyCapturedOrderAsync("PAYPAL-ORDER-1", It.IsAny<decimal>(), "CAD"))
+            .ThrowsAsync(new InvalidOperationException("PayPal capture for order PAYPAL-ORDER-1 is not completed. Current status: DECLINED."));
+
+        var result = await _controller.ProcessGuestPayment(model);
+
+        result.Should().BeOfType<RedirectToActionResult>();
+        _controller.TempData["Message"]?.ToString().Should().Contain("not completed");
+        (await _context.Orders.CountAsync()).Should().Be(0);
+    }
+
+    [Fact]
+    public async Task ProcessGuestPayment_WithTamperedTotal_ShouldRejectOrder()
+    {
+        var model = CreateValidGuestCheckoutVM();
+        model.SelectedShippingMethodId = 2;
+        var cartItems = new List<CartItemVM>
+        {
+            new() { ProductId = 1, UnitPrice = 15.99m, Quantity = 2, LineTotal = 31.98m }
+        };
+
+        _mockGuestCartService.Setup(g => g.GetCartItemsAsync()).ReturnsAsync(cartItems);
+        _mockPayPalService
+            .Setup(p => p.VerifyCapturedOrderAsync("PAYPAL-ORDER-1", It.IsAny<decimal>(), "CAD"))
+            .ThrowsAsync(new InvalidOperationException("PayPal amount mismatch for order PAYPAL-ORDER-1. Expected 50.81, received 43.81."));
+
+        var result = await _controller.ProcessGuestPayment(model);
+
+        result.Should().BeOfType<RedirectToActionResult>();
+        _controller.TempData["Message"]?.ToString().Should().Contain("amount mismatch");
+        (await _context.Transactions.CountAsync()).Should().Be(0);
+    }
+
+    [Fact]
+    public async Task ProcessGuestPayment_WithDuplicateCapture_ShouldRejectOrder()
+    {
+        var model = CreateValidGuestCheckoutVM();
+        var cartItems = new List<CartItemVM>
+        {
+            new() { ProductId = 1, UnitPrice = 15.99m, Quantity = 2, LineTotal = 31.98m }
+        };
+
+        _mockGuestCartService.Setup(g => g.GetCartItemsAsync()).ReturnsAsync(cartItems);
+
+        _context.Transactions.Add(new TransactionModel
+        {
+            PaymentOrderId = "PAYPAL-ORDER-1",
+            PaymentTransactionId = "CAPTURE-OLD",
+            TransactionStatus = "COMPLETED",
+            Amount = 43.81m,
+            Currency = "CAD",
+            VerificationSummary = "{}"
+        });
+        await _context.SaveChangesAsync();
+
+        var result = await _controller.ProcessGuestPayment(model);
+
+        result.Should().BeOfType<RedirectToActionResult>();
+        _controller.TempData["Message"]?.ToString().Should().Contain("already been used");
+        _mockPayPalService.Verify(p => p.VerifyCapturedOrderAsync(It.IsAny<string>(), It.IsAny<decimal>(), It.IsAny<string>()), Times.Never);
+    }
+
+    [Fact]
+    public async Task ProcessGuestPayment_WithMismatchedAmountFromVerification_ShouldRejectOrder()
+    {
+        var model = CreateValidGuestCheckoutVM();
+        var cartItems = new List<CartItemVM>
+        {
+            new() { ProductId = 1, UnitPrice = 15.99m, Quantity = 2, LineTotal = 31.98m }
+        };
+
+        _mockGuestCartService.Setup(g => g.GetCartItemsAsync()).ReturnsAsync(cartItems);
+        _mockPayPalService
+            .Setup(p => p.VerifyCapturedOrderAsync("PAYPAL-ORDER-1", It.IsAny<decimal>(), "CAD"))
+            .ThrowsAsync(new InvalidOperationException("PayPal amount mismatch for order PAYPAL-ORDER-1. Expected 43.81, received 41.00."));
+
+        var result = await _controller.ProcessGuestPayment(model);
+
+        result.Should().BeOfType<RedirectToActionResult>();
+        _controller.TempData["Message"]?.ToString().Should().Contain("amount mismatch");
+        (await _context.Orders.CountAsync()).Should().Be(0);
     }
 
     #endregion
@@ -521,6 +696,9 @@ public class CheckoutControllerGuestTests : IDisposable
         return new GuestCheckoutVM
         {
             Email = "jane.doe@example.com",
+            PayPalOrderId = "PAYPAL-ORDER-1",
+            PayPalPayerId = "PAYER-123",
+            SelectedShippingMethodId = 1,
             FullName = "Jane Doe",
             PhoneNumber = "604-555-0100",
             Street = "123 Test St",

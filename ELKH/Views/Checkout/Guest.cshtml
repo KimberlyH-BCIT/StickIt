@@ -62,6 +62,8 @@
           novalidate
           aria-labelledby="checkout-form-heading">
         @Html.AntiForgeryToken()
+        <input asp-for="PayPalOrderId" type="hidden" id="paypalOrderId" />
+        <input asp-for="PayPalPayerId" type="hidden" id="paypalPayerId" />
         <h2 id="checkout-form-heading" class="sr-only">Guest Checkout Information Form</h2>
 
         <div class="row g-4">
@@ -705,6 +707,17 @@
                 },
                 onApprove: function(data, actions) {
                     return actions.order.capture().then(function(details) {
+                        const paymentInput = document.getElementById('paypalOrderId');
+                        const payerInput = document.getElementById('paypalPayerId');
+
+                        if (paymentInput) {
+                            paymentInput.value = data.orderID || '';
+                        }
+
+                        if (payerInput) {
+                            payerInput.value = details.payer?.payer_id || '';
+                        }
+
                         // Payment captured successfully, submit form
                         document.getElementById('guestCheckoutForm').submit();
                     });
@@ -717,6 +730,13 @@
 
             // Hide fallback button when PayPal loads successfully
             document.getElementById('fallbackButton').style.display = 'none';
+
+            document.getElementById('fallbackButton')?.addEventListener('click', function(event) {
+                if (!document.getElementById('paypalOrderId')?.value) {
+                    event.preventDefault();
+                    alert('Complete PayPal payment before submitting your order.');
+                }
+            });
         </script>
     }
 }

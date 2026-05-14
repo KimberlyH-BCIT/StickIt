@@ -40,11 +40,11 @@ public class GuestCartServiceTests : IDisposable
         _mockSession = new Mock<ISession>();
         _mockSession.Setup(s => s.Set(It.IsAny<string>(), It.IsAny<byte[]>()))
             .Callback<string, byte[]>((key, value) => _sessionStorage[key] = value);
-        _mockSession.Setup(s => s.TryGetValue(It.IsAny<string>(), out It.Ref<byte[]>.IsAny))
-            .Returns((string key, out byte[] value) =>
+        _mockSession.Setup(s => s.TryGetValue(It.IsAny<string>(), out It.Ref<byte[]?>.IsAny))
+            .Returns((string key, out byte[]? value) =>
             {
                 var exists = _sessionStorage.TryGetValue(key, out var result);
-                value = result!;
+                value = result;
                 return exists;
             });
         _mockSession.Setup(s => s.Remove(It.IsAny<string>()))

@@ -72,4 +72,14 @@ public class PayPalOptions
     /// Must be a valid ISO 4217 currency code supported by PayPal.
     /// </remarks>
     public string Currency   { get; set; } = "CAD";
+
+    /// <summary>
+    /// Optional expected merchant identifier returned by PayPal for verified captures.
+    /// </summary>
+    public string? MerchantId { get; set; }
+
+    /// <summary>
+    /// Optional expected merchant email returned by PayPal for verified captures.
+    /// </summary>
+    public string? MerchantEmail { get; set; }
 }

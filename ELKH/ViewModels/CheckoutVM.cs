@@ -10,7 +10,10 @@ namespace ELKH.ViewModels;
 public class CheckoutVM
 {
     // PayPal order ID (created client-side, captured server-side)
+    [Required(ErrorMessage = "Please complete PayPal payment before placing your order")]
     public string? PayPalOrderId { get; set; }
+
+    public string? PayPalPayerId { get; set; }
 
     // Selected contact detail ID (for existing addresses)
     public int? SelectedContactId { get; set; }

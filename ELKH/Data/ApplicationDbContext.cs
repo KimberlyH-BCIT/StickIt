@@ -324,6 +324,16 @@ namespace ELKH.Data
                 .IsUnique()
                 .HasDatabaseName("IX_Coupons_Code_Unique");
 
+            modelBuilder.Entity<TransactionModel>()
+                .HasIndex(t => t.PaymentOrderId)
+                .IsUnique()
+                .HasDatabaseName("IX_Transactions_PaymentOrderId_Unique");
+
+            modelBuilder.Entity<TransactionModel>()
+                .HasIndex(t => t.PaymentTransactionId)
+                .IsUnique()
+                .HasDatabaseName("IX_Transactions_PaymentTransactionId_Unique");
+
             #endregion
         }
 

@@ -1,639 +1,132 @@
-## =====================================================================
-## .NET 10 / ASP.NET Core Razor Pages - Best Practices .gitignore
-## =====================================================================
-## This file prevents sensitive data, build artifacts, and temporary
-## files from being committed to version control.
-##
-## Last Updated: March 2026
-## Target: .NET 10, ASP.NET Core, Razor Pages, ELKH Project
-## =====================================================================
-
-# =====================================================================
-# User-Specific Files
-# =====================================================================
-# Visual Studio user preferences and workspace settings
+# User-specific files
 *.rsuser
 *.suo
 *.user
 *.userosscache
 *.sln.docstates
-
-# MonoDevelop/Xamarin Studio
 *.userprefs
 
-# Rider
+# IDE folders
+.vs/
 .idea/
-*.sln.iml
-
-# VS Code
 .vscode/
 !.vscode/tasks.json
 !.vscode/launch.json
 !.vscode/extensions.json
 
-# Mono auto generated files
-mono_crash.*
-
-# =====================================================================
-# Build Results
-# =====================================================================
+# Build outputs
+[Bb]in/
+[Oo]bj/
 [Dd]ebug/
 [Dd]ebugPublic/
 [Rr]elease/
 [Rr]eleases/
+[Oo]ut/
 x64/
 x86/
-[Ww][Ii][Nn]32/
 [Aa][Rr][Mm]/
 [Aa][Rr][Mm]64/
-bld/
-[Bb]in/
-[Oo]bj/
-[Oo]ut/
-[Ll]og/
-[Ll]logs/
+artifacts/
 
-# Visual Studio cache/options
-.vs/
+# Test results and coverage
+[Tt]est[Rr]esult*/
+TestResults/
+*.trx
+*.coverage
+*.coveragexml
+coverage*/
 
-# Visual Studio auto generated files
-Generated\ Files/
+# Logs and temporary files
+*.log
+*.binlog
+*.tmp
+*.tmp_proj
+logs/
+log/
+tmp/
+temp/
 
-# =====================================================================
-# End-to-End Testing (Playwright)
-# =====================================================================
-# Playwright writes test artifacts, traces, and screenshots here.
-# These are CI/CD outputs — they must not be committed to source control.
+# Package managers and front-end tooling
+node_modules/
+bower_components/
+dist/
+.webpack/
+
+# Playwright
 test-results/
 playwright-report/
 blob-report/
 playwright/.cache/
-e2e/test-results/
-e2e/playwright-report/
 
-# Playwright HAR files and state snapshots captured during test runs.
-*.har
-
-# =====================================================================
-# Test Results & Coverage
-# =====================================================================
-[Tt]est[Rr]esult*/
-[Bb]uild[Ll]og.*
-
-# NUnit
-*.VisualState.xml
-TestResult.xml
-nunit-*.xml
-
-# xUnit
-*.xunit.runner.json
-
-# MSTest
-*.trx
-
-# Coverlet/Code Coverage
-coverage*.json
-coverage*.xml
-coverage*.info
-*.coverage
-*.coveragexml
-
-# =====================================================================
-# .NET Core / .NET 10 Specific
-# =====================================================================
-project.lock.json
-project.fragment.lock.json
-artifacts/
-
-# ASP.NET Scaffolding
-ScaffoldingReadMe.txt
-
-# StyleCop
-StyleCopReport.xml
-
-# =====================================================================
-# Build Artifacts
-# =====================================================================
-*_i.c
-*_p.c
-*_h.h
-*.ilk
-*.meta
-*.obj
-*.iobj
-*.pch
-*.pdb
-*.ipdb
-*.pgc
-*.pgd
-*.rsp
-*.sbr
-*.tlb
-*.tli
-*.tlh
-*.tmp
-*.tmp_proj
-*_wpftmp.csproj
-*.log
-*.vspscc
-*.vssscc
-.builds
-*.pidb
-*.svclog
-*.scc
-
-# =====================================================================
-# Visual C++ / Native Code
-# =====================================================================
-ipch/
-*.aps
-*.ncb
-*.opendb
-*.opensdf
-*.sdf
-*.cachefile
-*.VC.db
-*.VC.VC.opendb
-
-# =====================================================================
-# Visual Studio Profiler
-# =====================================================================
-*.psess
-*.vsp
-*.vspx
-*.sap
-*.e2e
-
-# =====================================================================
-# ReSharper / JetBrains Rider
-# =====================================================================
-_ReSharper*/
-*.[Rr]e[Ss]harper
-*.DotSettings.user
-
-# =====================================================================
-# Build Tools
-# =====================================================================
-# TeamCity
-_TeamCity*
-
-# DotCover
-*.dotCover
-
-# AxoCover
-.axoCover/*
-!.axoCover/settings.json
-
-# NCrunch
-_NCrunch_*
-.*crunch*.local.xml
-nCrunchTemp_*
-
-# MightyMoose
-*.mm.*
-AutoTest.Net/
-
-# =====================================================================
-# Web Development
-# =====================================================================
-# Sass
-.sass-cache/
-
-# Node.js
-node_modules/
-npm-debug.log*
-yarn-debug.log*
-yarn-error.log*
-.pnpm-debug.log*
-
-# Bower
-bower_components/
-
-# Webpack
-dist/
-.webpack/
-
-# =====================================================================
-# Publishing
-# =====================================================================
-# Click-Once directory
+# Publish artifacts
 publish/
-
-# Publish Web Output
+PublishScripts/
 *.[Pp]ublish.xml
-*.azurePubxml
-
-# Web deploy settings (may contain sensitive data)
 *.pubxml
 *.publishproj
+*.azurePubxml
 
-# Azure publish settings
-PublishScripts/
-
-# =====================================================================
-# NuGet
-# =====================================================================
+# NuGet packages
 *.nupkg
 *.snupkg
 **/[Pp]ackages/*
 !**/[Pp]ackages/build/
-*.nuget.props
-*.nuget.targets
 
-# =====================================================================
-# Microsoft Azure
-# =====================================================================
-csx/
-*.build.csdef
-ecf/
-rcf/
-
-# Azure Functions
-local.settings.json
-.azurefunctions/
-
-# =====================================================================
-# Windows Store Apps
-# =====================================================================
-AppPackages/
-BundleArtifacts/
-Package.StoreAssociation.xml
-_pkginfo.txt
-*.appx
-*.appxbundle
-*.appxupload
-
-# =====================================================================
-# Cache Files
-# =====================================================================
-*.[Cc]ache
-!?*.[Cc]ache/
-
-# =====================================================================
-# Database Files
-# =====================================================================
-# SQLite databases (development and test)
+# Local databases
 *.db
 *.db-shm
 *.db-wal
 *.sqlite
 *.sqlite3
-
-# SQL Server
 *.mdf
 *.ldf
 *.ndf
-
-# LocalDB
-*.localdb
-
-# Database backups
 *.bak
 
-# Project-specific: Development databases
-app.db
-app.db-shm
-app.db-wal
-ImageStore.db
-ImageStore.db-shm
-ImageStore.db-wal
-/ELKH/app.db*
-/ELKH/ImageStore.db*
-
-# =====================================================================
-# Secrets & Configuration
-# =====================================================================
-# User secrets (ASP.NET Core)
+# Local secrets and environment files
 **/secrets.json
 secrets.*
-user-secrets.json
-
-# Environment-specific appsettings - NEVER commit production credentials
-# The base appsettings.json (no environment suffix) is intentionally tracked
-appsettings.Development.json
-appsettings.Staging.json
-appsettings.Production.json
 appsettings.*.json
-
-# FileEmailSender output directory — may contain sensitive email content
-SavedEmails/
-**/SavedEmails/
-
-# Environment variables
 .env
-.env.*
 .env.local
-.env.development
-.env.staging
-.env.production
-!.env.example
-
-# Certificates and Keys
+.env.*.local
+local.settings.json
 *.pfx
 *.p12
 *.key
 *.cer
 *.crt
-*.pem
-
-# API keys and tokens
 **/apikeys.json
 **/tokens.json
 
-# =====================================================================
-# Logs & Temporary Files
-# =====================================================================
-*.log
-logs/
-*.tmp
-temp/
-tmp/
-
-# Health checks DB
-healthchecksdb*
-
-# =====================================================================
-# Docker & Containerization
-# =====================================================================
-# Docker volumes data
-Data/
-data/
-
-# Container logs
-docker-compose.override.yml
-
-# =====================================================================
-# Backup & Migration Files
-# =====================================================================
-_UpgradeReport_Files/
-Backup*/
-UpgradeLog*.XML
-UpgradeLog*.htm
-ServiceFabricBackup/
-*.rptproj.bak
-MigrationBackup/
-
-# =====================================================================
-# Business Intelligence
-# =====================================================================
-*.rdl.data
-*.bim.layout
-*.bim_*.settings
-*.rptproj.rsuser
-*- [Bb]ackup.rdl
-*- [Bb]ackup ([0-9]).rdl
-*- [Bb]ackup ([0-9][0-9]).rdl
-
-# =====================================================================
-# Fakes & Mocks
-# =====================================================================
-FakesAssemblies/
-
-# =====================================================================
-# Documentation Tools
-# =====================================================================
-# GhostDoc
-*.GhostDoc.xml
-
-# DocFX
-_site/
-
-# =====================================================================
-# Package Managers
-# =====================================================================
-# Paket
-.paket/paket.exe
-paket-files/
-
-# Cake
-tools/**
-!tools/packages.config
-
-# =====================================================================
-# Analysis Tools
-# =====================================================================
-# SonarQube
-.sonarqube/
-
-# CodeQL
-.codeql/
-
-# OpenCover
-OpenCover/
-
-# =====================================================================
-# Security & Monitoring
-# =====================================================================
-# Application Insights offline cache
-ApplicationInsightsOfflineCache/
-
-# Security audit reports (keep public reports, exclude sensitive ones)
-*security-audit-private.json
-*penetration-test-results.json
-
-# =====================================================================
-# Performance & Profiling
-# =====================================================================
-# BenchmarkDotNet
+# Application-generated local content
+SavedEmails/
+**/SavedEmails/
+healthchecksdb
+healthchecksdb-shm
+healthchecksdb-wal
 BenchmarkDotNet.Artifacts/
-
-# Profiler results
 *.diagsession
-
-# Memory dumps
 *.dmp
 
-# Binary logs
-*.binlog
+# Tooling
+_ReSharper*/
+*.DotSettings.user
+_NCrunch_*/
+*.ncrunchsolution
+.sonarqube/
+.codeql/
+OpenCover/
 
-# =====================================================================
-# GPU Debugger
-# =====================================================================
-*.nvuser
-
-# =====================================================================
-# Cross-Platform Tools
-# =====================================================================
-# MFractors (Xamarin)
-.mfractor/
-
-# Ionide (F#)
-.ionide/
-
-# Local History
-.localhistory/
-
-# =====================================================================
-# Auto-Generated XML Schema
-# =====================================================================
-FodyWeavers.xsd
-
-# =====================================================================
-# macOS
-# =====================================================================
+# OS files
 .DS_Store
-.AppleDouble
-.LSOverride
-._*
-
-# =====================================================================
-# Linux
-# =====================================================================
-*~
-.directory
-
-# =====================================================================
-# Windows
-# =====================================================================
 Thumbs.db
 Thumbs.db:encryptable
 ehthumbs.db
 ehthumbs_vista.db
-*.stackdump
 [Dd]esktop.ini
 $RECYCLE.BIN/
 
-# =====================================================================
-# ELKH Project-Specific
-# =====================================================================
-# Supplemental documentation and analysis files (working documents)
+# Repository-specific
+.gitignore.backup
 docs/supplementalDocs/
-
-# Uploaded user content (if stored locally during development)
-wwwroot/uploads/user-content/
-wwwroot/images/user-uploads/
-
-# Email test output
-test-emails/
-
-# EF Core Migrations (uncomment if causing merge conflicts)
-# Migrations/
-
-# Static web asset manifests (generated)
-*.staticwebassetsmanifest.json
-
-# =====================================================================
-# AI & Development Tools
-# =====================================================================
-# GitHub Copilot logs (these contain private coding sessions)
-.copilot/
-copilot-*.log
-
-# JetBrains dotMemory/dotTrace/dotPeek
-*.dotMemoryUnit
-
-# =====================================================================
-# Monitoring & Observability
-# =====================================================================
-# Grafana provisioning (if using local Grafana)
-grafana/data/
-grafana/logs/
-
-# Prometheus data
-prometheus-data/
-
-# =====================================================================
-# E2E Testing Specific
-# =====================================================================
-# Playwright browser downloads
-e2e/.cache/
-
-# Test screenshots and videos
-screenshots/
-videos/
-traces/
-
-# =====================================================================
-# Additional Security Patterns
-# =====================================================================
-# Backup configuration files that might contain sensitive data
-*.config.backup
-*.json.backup
-
-# JWT tokens and auth files
-jwt-*.json
-auth-*.json
-oauth-*.json
-
-# Application Insights data
-ApplicationInsights.config
-
-# =====================================================================
-# .NET Hot Reload (.NET 6+) - Enhancement
-# =====================================================================
-# Hot Reload runtime configuration files
-*.runtimeconfig.dev.json
-*.HotReloadInfo.json
-
-# Hot Reload temporary files
-*.hotreload.json
-HotReloadServer*/
-
-# =====================================================================
-# JetBrains Profiling Tools - Enhancement
-# =====================================================================
-# dotMemory/dotTrace memory dumps and workspaces
-*.dmw
-*.dpw
-*.dwp
-*.workspace
-
-# Profiling session files
-*.dtp
-*.dtp.*
-
-# Performance snapshots
-*.snapshots
-
-# =====================================================================
-# Azure Functions & Cloud Development - Enhancement
-# =====================================================================
-# Function app publish profiles
-PublishProfiles/
-
-# Azure deployment credentials
-.deployment
-deploy.cmd
-
-# Azure Resource Manager deployment outputs
-azuredeploy.parameters.dev.json
-azuredeploy.parameters.staging.json
-
-# =====================================================================
-# Modern Development Tools - Enhancement
-# =====================================================================
-# Tye (Microsoft orchestrator)
-.tye/
-
-# DevContainers (if not already using)
-.devcontainer/
-
-# GitHub Codespaces
-.codespaces/
-
-# =====================================================================
-# Additional Security Patterns - Enhancement
-# =====================================================================
-# Connection strings files
-connectionstrings.*.json
-connectionstrings.json
-
-# JWT token files
-*.jwt
-tokens.txt
-
-# License files with keys
-license.json
-license.xml
-license.txt
-
-# =====================================================================
-# Performance & Monitoring - Enhancement
-# =====================================================================
-# Diagnostic dumps (additional patterns)
-*.dump
-
-# Performance counters
-*.perfcounter
-perfmon.log
-/docs/ACCESSIBILITY.md

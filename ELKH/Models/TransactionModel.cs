@@ -24,6 +24,36 @@ namespace ELKH.Models
         [Display(Name = "Transaction Time")]
         public DateTime TransactionDate { get; set; } = DateTime.UtcNow;
 
+        /// <summary>External payment provider order identifier.</summary>
+        [MaxLength(100)]
+        public string? PaymentOrderId { get; set; }
+
+        /// <summary>External payment provider capture or transaction identifier.</summary>
+        [MaxLength(100)]
+        public string? PaymentTransactionId { get; set; }
+
+        /// <summary>Payment provider name used for this transaction.</summary>
+        [MaxLength(50)]
+        public string PaymentProvider { get; set; } = "PayPal";
+
+        /// <summary>Currency code returned by the payment provider.</summary>
+        [MaxLength(10)]
+        public string Currency { get; set; } = string.Empty;
+
+        /// <summary>UTC timestamp returned by the payment provider for the capture.</summary>
+        public DateTime? PaymentCapturedAtUtc { get; set; }
+
+        /// <summary>Optional payer identifier returned by the provider.</summary>
+        [MaxLength(100)]
+        public string? PayerId { get; set; }
+
+        /// <summary>Optional payer email returned by the provider.</summary>
+        [MaxLength(320)]
+        public string? PayerEmail { get; set; }
+
+        /// <summary>Serialized verification summary retained for audit and troubleshooting.</summary>
+        public string VerificationSummary { get; set; } = string.Empty;
+
         /// <summary>Shipping/delivery fee included in the transaction amount.</summary>
         [Display(Name = "Delivery Fee")]
         public decimal DeliveryFee { get; set; } = 0;

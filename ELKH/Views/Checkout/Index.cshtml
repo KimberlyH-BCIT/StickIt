@@ -57,6 +57,8 @@
           novalidate
           aria-labelledby="checkout-form-heading">
         @Html.AntiForgeryToken()
+        <input asp-for="PayPalOrderId" type="hidden" id="paypalOrderId" />
+        <input asp-for="PayPalPayerId" type="hidden" id="paypalPayerId" />
         <h2 id="checkout-form-heading" class="sr-only">Checkout Information Form</h2>
 
         <div class="row g-4">
@@ -796,18 +798,16 @@
                                                                             return actions.order.capture().then(function (details) {
                                                                                 announceStatusChange('Payment successful! Creating your order...');
 
-                                                                                // Add payment details to form for server processing
-                                                                                const paymentInput = document.createElement('input');
-                                                                                paymentInput.type = 'hidden';
-                                                                                paymentInput.name = 'PayPalOrderId';
-                                                                                paymentInput.value = data.orderID;
-                                                                                form.appendChild(paymentInput);
+                                                                                const paymentInput = document.getElementById('paypalOrderId');
+                                                                                const payerInput = document.getElementById('paypalPayerId');
 
-                                                                                const payerInput = document.createElement('input');
-                                                                                payerInput.type = 'hidden';
-                                                                                payerInput.name = 'PayPalPayerId';
-                                                                                payerInput.value = details.payer?.payer_id || '';
-                                                                                form.appendChild(payerInput);
+                                                                                if (paymentInput) {
+                                                                                    paymentInput.value = data.orderID || '';
+                                                                                }
+
+                                                                                if (payerInput) {
+                                                                                    payerInput.value = details.payer?.payer_id || '';
+                                                                                }
 
                                                                                 // Submit form to create order in database
                                                                                 form.submit();
@@ -856,6 +856,14 @@
                                                                             fallbackBtn.focus();
                                                                         }
                                                                     });
+                                                                    if (fallbackBtn) {
+                                                                        fallbackBtn.addEventListener('click', function(event) {
+                                                                            if (!document.getElementById('paypalOrderId')?.value) {
+                                                                                event.preventDefault();
+                                                                                announceStatusChange('Complete PayPal payment before submitting your order.');
+                                                                            }
+                                                                        });
+                                                                    }
                                                                 })();
                                                             </script>
                                                         }

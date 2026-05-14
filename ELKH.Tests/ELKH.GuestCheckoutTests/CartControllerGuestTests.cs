@@ -287,9 +287,10 @@ public class CartControllerGuestTests
         var value = jsonResult!.Value;
         
         value.Should().NotBeNull();
+        var responseType = value!.GetType();
         // Check that response contains success and cartCount properties
-        value.GetType().GetProperty("success")!.GetValue(value).Should().Be(true);
-        value.GetType().GetProperty("cartCount")!.GetValue(value).Should().Be(2);
+        responseType.GetProperty("success")!.GetValue(value).Should().Be(true);
+        responseType.GetProperty("cartCount")!.GetValue(value).Should().Be(2);
     }
 
     [Theory]

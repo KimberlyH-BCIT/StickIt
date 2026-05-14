@@ -77,6 +77,17 @@ namespace ELKH.ViewModels
     public class GuestCheckoutVM
     {
         /// <summary>
+        /// PayPal order ID returned by the browser flow and verified on the server.
+        /// </summary>
+        [Required(ErrorMessage = "Please complete PayPal payment before placing your order")]
+        public string? PayPalOrderId { get; set; }
+
+        /// <summary>
+        /// Optional payer ID returned by the browser for correlation only.
+        /// </summary>
+        public string? PayPalPayerId { get; set; }
+
+        /// <summary>
         /// Guest email address - used for order confirmation and tracking link
         /// </summary>
         [Required(ErrorMessage = "Email address is required")]
