@@ -130,3 +130,10 @@ $RECYCLE.BIN/
 # Repository-specific
 .gitignore.backup
 docs/supplementalDocs/
+docs/internal/CURRENT_VALIDATION.md
+docs/internal/DOCUMENTATION-REORGANIZATION-SUMMARY.md
+docs/internal/KAWAII-UI-COMPONENTS.md
+docs/internal/analysis/
+docs/internal/audits/
+.localdata/
+!.localdata/.gitkeep
