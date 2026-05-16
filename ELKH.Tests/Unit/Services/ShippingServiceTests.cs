@@ -98,12 +98,12 @@ namespace ELKH.Tests.Unit.Services
             // Assert
             Assert.NotNull(result);
             Assert.Equal(3, result.Count); // Should exclude inactive method
-            
+
             // Verify ordering by DisplayOrder
             Assert.Equal("Standard Shipping", result[0].Name);
             Assert.Equal("Express Delivery", result[1].Name);
             Assert.Equal("Priority Overnight", result[2].Name);
-            
+
             // Verify all returned methods are active
             Assert.All(result, method => Assert.True(method.IsActive));
         }
@@ -115,7 +115,7 @@ namespace ELKH.Tests.Unit.Services
             var emptyContext = new ApplicationDbContext(new DbContextOptionsBuilder<ApplicationDbContext>()
                 .UseInMemoryDatabase(databaseName: Guid.NewGuid().ToString())
                 .Options);
-            
+
             var emptyService = new ShippingService(emptyContext, NullLogger<ShippingService>.Instance);
 
             // Act

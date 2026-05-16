@@ -99,10 +99,10 @@ public class CartControllerGuestTests
         result.Should().BeOfType<ViewResult>();
         var viewResult = result as ViewResult;
         var model = viewResult!.Model as CartVM;
-        
+
         model.Should().NotBeNull();
         model!.Items.Should().HaveCount(1);
-        
+
         _mockCartService.Verify(c => c.GetCartItemsAsync("test@example.com"), Times.Once);
         _mockGuestCartService.Verify(c => c.GetCartItemsAsync(), Times.Never);
     }
@@ -135,11 +135,11 @@ public class CartControllerGuestTests
         result.Should().BeOfType<ViewResult>();
         var viewResult = result as ViewResult;
         var model = viewResult!.Model as CartVM;
-        
+
         model.Should().NotBeNull();
         model!.Items.Should().HaveCount(1);
         model.Items.First().ProductName.Should().Be("Test Product");
-        
+
         _mockGuestCartService.Verify(g => g.GetCartItemsAsync(), Times.Once);
         _mockCartService.Verify(c => c.GetCartItemsAsync(It.IsAny<string>()), Times.Never);
     }
@@ -164,7 +164,7 @@ public class CartControllerGuestTests
         // Assert
         var viewResult = result as ViewResult;
         var model = viewResult!.Model as CartVM;
-        
+
         model!.Subtotal.Should().Be(30.00m);
         model.Tax.Should().Be(3.60m); // 12%
         model.ShippingCost.Should().Be(5.99m); // Under $50 threshold
@@ -191,7 +191,7 @@ public class CartControllerGuestTests
         // Assert
         var viewResult = result as ViewResult;
         var model = viewResult!.Model as CartVM;
-        
+
         model!.Subtotal.Should().Be(60.00m);
         model.ShippingCost.Should().Be(0m); // Free shipping over $50
         model.Total.Should().Be(67.20m); // 60 + (60 * 0.12)
@@ -222,7 +222,7 @@ public class CartControllerGuestTests
 
         // Assert
         result.Should().BeOfType<RedirectToActionResult>();
-        
+
         _mockCartService.Verify(c => c.AddToCartAsync("test@example.com", 1, 2), Times.Once);
         _mockGuestCartService.Verify(g => g.AddToCartAsync(It.IsAny<int>(), It.IsAny<int>()), Times.Never);
     }
@@ -248,7 +248,7 @@ public class CartControllerGuestTests
 
         // Assert
         result.Should().BeOfType<RedirectToActionResult>();
-        
+
         _mockGuestCartService.Verify(g => g.AddToCartAsync(1, 2), Times.Once);
         _mockCartService.Verify(c => c.AddToCartAsync(It.IsAny<string>(), It.IsAny<int>(), It.IsAny<int>()), Times.Never);
     }
@@ -277,7 +277,7 @@ public class CartControllerGuestTests
         result.Should().BeOfType<JsonResult>();
         var jsonResult = result as JsonResult;
         var value = jsonResult!.Value;
-        
+
         value.Should().NotBeNull();
         // Check that response contains success and cartCount properties
         value.GetType().GetProperty("success")!.GetValue(value).Should().Be(true);
@@ -318,7 +318,7 @@ public class CartControllerGuestTests
         result.Should().BeOfType<RedirectToActionResult>();
         var redirect = result as RedirectToActionResult;
         redirect!.ActionName.Should().Be("Index");
-        
+
         _mockCartService.Verify(c => c.UpdateQuantityAsync("test@example.com", 1, 5), Times.Once);
         _mockGuestCartService.Verify(g => g.UpdateQuantityAsync(It.IsAny<int>(), It.IsAny<int>()), Times.Never);
     }
@@ -337,7 +337,7 @@ public class CartControllerGuestTests
 
         // Assert
         result.Should().BeOfType<RedirectToActionResult>();
-        
+
         _mockGuestCartService.Verify(g => g.UpdateQuantityAsync(1, 5), Times.Once);
         _mockCartService.Verify(c => c.UpdateQuantityAsync(It.IsAny<string>(), It.IsAny<int>(), It.IsAny<int>()), Times.Never);
     }
@@ -378,7 +378,7 @@ public class CartControllerGuestTests
 
         // Assert
         result.Should().BeOfType<RedirectToActionResult>();
-        
+
         _mockCartService.Verify(c => c.RemoveFromCartAsync("test@example.com", 1), Times.Once);
         _mockGuestCartService.Verify(g => g.RemoveFromCartAsync(It.IsAny<int>()), Times.Never);
     }
@@ -397,7 +397,7 @@ public class CartControllerGuestTests
 
         // Assert
         result.Should().BeOfType<RedirectToActionResult>();
-        
+
         _mockGuestCartService.Verify(g => g.RemoveFromCartAsync(1), Times.Once);
         _mockCartService.Verify(c => c.RemoveFromCartAsync(It.IsAny<string>(), It.IsAny<int>()), Times.Never);
     }
@@ -421,7 +421,7 @@ public class CartControllerGuestTests
         // Assert
         result.Should().BeOfType<RedirectToActionResult>();
         _controller.TempData["Message"].Should().Be("success,Cart cleared.");
-        
+
         _mockCartService.Verify(c => c.ClearCartAsync("test@example.com"), Times.Once);
         _mockGuestCartService.Verify(g => g.ClearCartAsync(), Times.Never);
     }
@@ -441,7 +441,7 @@ public class CartControllerGuestTests
         // Assert
         result.Should().BeOfType<RedirectToActionResult>();
         _controller.TempData["Message"].Should().Be("success,Cart cleared.");
-        
+
         _mockGuestCartService.Verify(g => g.ClearCartAsync(), Times.Once);
         _mockCartService.Verify(c => c.ClearCartAsync(It.IsAny<string>()), Times.Never);
     }

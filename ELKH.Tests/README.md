@@ -17,6 +17,11 @@ This directory contains comprehensive test coverage configuration and execution 
 
 The `ELKH.Tests` project currently enforces a conservative `15%` floor for both line and branch coverage. This keeps coverage collection gated without advertising the previous unrealistic `80%` threshold.
 
+## Current performance baseline
+- **Integration performance suite**: `ELKH.Tests.Integration.Performance.PerformanceIntegrationTests`
+- **Validated paths**: homepage, product catalog, search, cache behavior, health checks, static assets, and memory stability under load
+- **Profiler result**: startup/test-host initialization is the dominant cost, so optimization work should be justified by a measured payoff before changing production code
+
 ## Running Tests with Coverage
 
 ### Basic Coverage Collection
@@ -94,6 +99,11 @@ dotnet test --filter Category=Performance --logger console
 # Run with memory profiling
 dotnet test --filter Category=Performance --collect:"Code Coverage" --diag ./TestResults/diag.log
 ```
+
+### Branch-validated runtime guidance
+- The branch currently validates health with `/health` and does not expose separate readiness and liveness routes in production code.
+- Application Insights is only enabled when a connection string is configured; local and test runs are expected to work without it.
+- Keep performance claims tied to the audited test run or profiler output instead of projecting unmeasured improvements.
 
 ## Coverage Exclusions
 

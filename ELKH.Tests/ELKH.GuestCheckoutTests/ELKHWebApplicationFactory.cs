@@ -14,6 +14,7 @@ using System.Data.Common;
 using ELKH.Services;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
+using Microsoft.Extensions.Hosting;
 
 namespace ELKH.GuestCheckoutTests;
 
@@ -24,6 +25,8 @@ namespace ELKH.GuestCheckoutTests;
 public class ELKHWebApplicationFactory : WebApplicationFactory<Program>
 {
     private bool _seeded = false;
+    private bool _seedingStarted = false;
+    private Task? _seedingTask;
     private readonly object _seedLock = new object();
     private readonly string _appDbConnectionString = $"Data Source=GuestCheckoutAppDb_{Guid.NewGuid():N};Mode=Memory;Cache=Shared";
     private readonly string _imageDbConnectionString = $"Data Source=GuestCheckoutImageDb_{Guid.NewGuid():N};Mode=Memory;Cache=Shared";
@@ -53,7 +56,8 @@ public class ELKHWebApplicationFactory : WebApplicationFactory<Program>
                 { "Email:Pass", "test-password" },
                 { "Email:From", "test@example.com" },
                 { "Seed:AdminEmail", "admin@test.com" },
-                { "Seed:AdminPass", "Test123!@#" }
+                { "Seed:AdminPass", "Test123!@#" },
+                { "Seed:AllowDefaultElevatedCredentials", "true" }
             }!);
         });
 
@@ -65,6 +69,7 @@ public class ELKHWebApplicationFactory : WebApplicationFactory<Program>
             services.RemoveAll<DbContextOptions<ImageStoreContext>>();
             services.RemoveAll<IDbContextOptionsConfiguration<ApplicationDbContext>>();
             services.RemoveAll<IDbContextOptionsConfiguration<ImageStoreContext>>();
+            services.RemoveAll<IHostedService>();
 
             services.AddDbContext<ApplicationDbContext>(options =>
             {
@@ -96,35 +101,54 @@ public class ELKHWebApplicationFactory : WebApplicationFactory<Program>
     /// </summary>
     public void EnsureSeeded()
     {
+        Task? seedingTaskToWait;
+
         lock (_seedLock)
         {
             if (_seeded) return;
 
-            using var scope = Services.CreateScope();
-            var services = scope.ServiceProvider;
-
-            try
+            if (_seedingStarted)
             {
-                var db = services.GetRequiredService<ApplicationDbContext>();
-                var imageDb = services.GetRequiredService<ImageStoreContext>();
-                var userManager = services.GetRequiredService<UserManager<IdentityUser>>();
-                var roleManager = services.GetRequiredService<RoleManager<IdentityRole>>();
+                seedingTaskToWait = _seedingTask;
+            }
+            else
+            {
+                _seedingStarted = true;
+                _seedingTask = SeedTestDataAsync();
+                seedingTaskToWait = _seedingTask;
+            }
+        }
 
-                // Ensure the databases are created
-                db.Database.EnsureCreated();
-                imageDb.Database.EnsureCreated();
+        seedingTaskToWait!.GetAwaiter().GetResult();
+    }
 
-                // Seed test data
-                SeedTestData(db, userManager, roleManager).GetAwaiter().GetResult();
+    private async Task SeedTestDataAsync()
+    {
+        using var scope = Services.CreateScope();
+        var services = scope.ServiceProvider;
 
+        try
+        {
+            var db = services.GetRequiredService<ApplicationDbContext>();
+            var imageDb = services.GetRequiredService<ImageStoreContext>();
+            var userManager = services.GetRequiredService<UserManager<IdentityUser>>();
+            var roleManager = services.GetRequiredService<RoleManager<IdentityRole>>();
+
+            db.Database.EnsureCreated();
+            imageDb.Database.EnsureCreated();
+
+            await SeedTestData(db, userManager, roleManager);
+
+            lock (_seedLock)
+            {
                 _seeded = true;
             }
-            catch (Exception ex)
-            {
-                var logger = services.GetRequiredService<ILogger<ELKHWebApplicationFactory>>();
-                logger.LogError(ex, "An error occurred seeding the database with test data.");
-                throw;
-            }
+        }
+        catch (Exception ex)
+        {
+            var logger = services.GetRequiredService<ILogger<ELKHWebApplicationFactory>>();
+            logger.LogError(ex, "An error occurred seeding the database with test data.");
+            throw;
         }
     }
 
@@ -212,7 +236,7 @@ public class ELKHWebApplicationFactory : WebApplicationFactory<Program>
             },
             new ELKH.Models.ProductModel
             {
-                Name = "Test Product 2", 
+                Name = "Test Product 2",
                 Description = "Another test product",
                 Price = 15.99m,
                 StockQuantity = 50,
@@ -230,6 +254,11 @@ public class ELKHWebApplicationFactory : WebApplicationFactory<Program>
         }
 
         await db.SaveChangesAsync();
+
+        lock (_seedLock)
+        {
+            _seeded = true;
+        }
     }
 
     protected override void Dispose(bool disposing)

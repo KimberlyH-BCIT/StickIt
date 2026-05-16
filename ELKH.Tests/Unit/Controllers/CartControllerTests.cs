@@ -74,6 +74,36 @@ public class CartControllerTests
     }
 
     [Fact]
+    public async Task Index_ShouldReturnViewWithCartVmForGuestUser()
+    {
+        _controller.ControllerContext.HttpContext.User = new ClaimsPrincipal(new ClaimsIdentity());
+
+        var guestItems = new List<CartItemVM>
+        {
+            new()
+            {
+                ProductId = 1,
+                ProductName = "Guest Product",
+                UnitPrice = 9.99m,
+                Quantity = 3,
+                LineTotal = 29.97m
+            }
+        };
+
+        _mockGuestCartService.Setup(c => c.GetCartItemsAsync())
+            .ReturnsAsync(guestItems);
+
+        var result = await _controller.Index();
+
+        var viewResult = result.Should().BeOfType<ViewResult>().Subject;
+        var model = viewResult.Model.Should().BeOfType<CartVM>().Subject;
+        model.Items.Should().HaveCount(1);
+        model.Items[0].ProductName.Should().Be("Guest Product");
+        model.Items[0].Quantity.Should().Be(3);
+        _mockCartService.Verify(c => c.GetCartItemsAsync(It.IsAny<string>()), Times.Never);
+    }
+
+    [Fact]
     public async Task AddToCart_WithValidDataAndAjaxRequest_ShouldReturnSuccessJson()
     {
         _controller.ControllerContext.HttpContext.Request.Headers["X-Requested-With"] = "XMLHttpRequest";
@@ -96,6 +126,30 @@ public class CartControllerTests
         value.GetType().GetProperty("cartCount")!.GetValue(value).Should().Be(2);
     }
 
+    [Fact]
+    public async Task AddToCart_WithValidDataAndGuestAjaxRequest_ShouldReturnSuccessJson()
+    {
+        _controller.ControllerContext.HttpContext.User = new ClaimsPrincipal(new ClaimsIdentity());
+        _controller.ControllerContext.HttpContext.Request.Headers["X-Requested-With"] = "XMLHttpRequest";
+
+        _mockGuestCartService.Setup(c => c.AddToCartAsync(1, 2))
+            .Returns(Task.CompletedTask);
+        _mockGuestCartService.Setup(c => c.GetCartItemsAsync())
+            .ReturnsAsync(new List<CartItemVM>
+            {
+                new() { Quantity = 2 }
+            });
+
+        var result = await _controller.AddToCart(1, 2);
+
+        var jsonResult = result.Should().BeOfType<JsonResult>().Subject;
+        var value = jsonResult.Value;
+        value.Should().NotBeNull();
+        value!.GetType().GetProperty("success")!.GetValue(value).Should().Be(true);
+        value.GetType().GetProperty("cartCount")!.GetValue(value).Should().Be(2);
+        _mockCartService.Verify(c => c.AddToCartAsync(It.IsAny<string>(), It.IsAny<int>(), It.IsAny<int>()), Times.Never);
+    }
+
     [Theory]
     [InlineData(0)]
     [InlineData(-1)]
@@ -105,6 +159,25 @@ public class CartControllerTests
 
         result.Should().BeOfType<BadRequestObjectResult>();
         _mockCartService.Verify(c => c.AddToCartAsync(It.IsAny<string>(), It.IsAny<int>(), It.IsAny<int>()), Times.Never);
+    }
+
+    [Fact]
+    public async Task Index_WithAuthenticatedUserMissingEmail_ShouldRedirectToIdentityLogin()
+    {
+        var anonymousClaims = new ClaimsPrincipal(new ClaimsIdentity(new[]
+        {
+            new Claim(ClaimTypes.NameIdentifier, "1")
+        }, "Test"));
+
+        _controller.ControllerContext.HttpContext.User = anonymousClaims;
+
+        var result = await _controller.Index();
+
+        var redirect = result.Should().BeOfType<RedirectToActionResult>().Subject;
+        redirect.ActionName.Should().Be("Login");
+        redirect.ControllerName.Should().Be("Account");
+        redirect.RouteValues.Should().ContainKey("area");
+        _mockCartService.Verify(c => c.GetCartItemsAsync(It.IsAny<string>()), Times.Never);
     }
 
     [Fact]

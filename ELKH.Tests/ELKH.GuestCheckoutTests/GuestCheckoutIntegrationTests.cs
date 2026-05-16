@@ -23,7 +23,6 @@ public class GuestCheckoutIntegrationTests : IClassFixture<ELKHWebApplicationFac
     public GuestCheckoutIntegrationTests(ELKHWebApplicationFactory factory)
     {
         _factory = factory;
-        _factory.EnsureSeeded(); // Ensure database is seeded before running tests
         _client = factory.CreateClient(new WebApplicationFactoryClientOptions
         {
             AllowAutoRedirect = false
@@ -72,7 +71,7 @@ public class GuestCheckoutIntegrationTests : IClassFixture<ELKHWebApplicationFac
         // Arrange - Get a product from the database
         using var scope = _factory.Services.CreateScope();
         var db = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
-        
+
         var product = await db.Products
             .Where(p => p.IsActive && p.StockQuantity > 0)
             .FirstAsync();
@@ -90,7 +89,7 @@ public class GuestCheckoutIntegrationTests : IClassFixture<ELKHWebApplicationFac
         // Arrange - Add product to session cart first
         using var scope = _factory.Services.CreateScope();
         var db = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
-        
+
         var product = await db.Products
             .Where(p => p.IsActive && p.StockQuantity > 0)
             .FirstAsync();
@@ -103,7 +102,7 @@ public class GuestCheckoutIntegrationTests : IClassFixture<ELKHWebApplicationFac
         // Assert
         response.StatusCode.Should().Be(HttpStatusCode.OK);
         var content = await response.Content.ReadAsStringAsync();
-        
+
         // Should display cart items
         content.Should().Contain(product.Name);
     }
@@ -114,7 +113,7 @@ public class GuestCheckoutIntegrationTests : IClassFixture<ELKHWebApplicationFac
         // Arrange - Add product to cart first
         using var scope = _factory.Services.CreateScope();
         var db = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
-        
+
         var product = await db.Products
             .Where(p => p.IsActive && p.StockQuantity > 0)
             .FirstAsync();
@@ -127,7 +126,7 @@ public class GuestCheckoutIntegrationTests : IClassFixture<ELKHWebApplicationFac
         // Assert
         response.StatusCode.Should().Be(HttpStatusCode.OK);
         var content = await response.Content.ReadAsStringAsync();
-        
+
         // Should display guest checkout form
         content.Should().Contain("Contact Information");
         content.Should().Contain("Email");
@@ -140,7 +139,7 @@ public class GuestCheckoutIntegrationTests : IClassFixture<ELKHWebApplicationFac
         // Arrange - Add product to cart
         using var scope = _factory.Services.CreateScope();
         var db = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
-        
+
         var product = await db.Products
             .Where(p => p.IsActive && p.StockQuantity > 5)
             .FirstAsync();
@@ -169,7 +168,7 @@ public class GuestCheckoutIntegrationTests : IClassFixture<ELKHWebApplicationFac
         // Verify order was created in database
         using var verifyScope = _factory.Services.CreateScope();
         var verifyDb = verifyScope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
-        
+
         var order = await verifyDb.Orders
             .Where(o => o.FkRegisteredUserId == null) // Guest order
             .OrderByDescending(o => o.CreatedAt)
@@ -190,7 +189,7 @@ public class GuestCheckoutIntegrationTests : IClassFixture<ELKHWebApplicationFac
         // Arrange - Get initial product inventory
         using var scope = _factory.Services.CreateScope();
         var db = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
-        
+
         var product = await db.Products
             .Where(p => p.IsActive && p.StockQuantity > 10)
             .FirstAsync();
@@ -219,9 +218,9 @@ public class GuestCheckoutIntegrationTests : IClassFixture<ELKHWebApplicationFac
         // Assert - Inventory should be decremented
         using var verifyScope = _factory.Services.CreateScope();
         var verifyDb = verifyScope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
-        
+
         var updatedProduct = await verifyDb.Products.FindAsync(product.PkProductId);
-        
+
         if (updatedProduct != null)
         {
             // Inventory should be reduced by the order quantity
@@ -235,7 +234,7 @@ public class GuestCheckoutIntegrationTests : IClassFixture<ELKHWebApplicationFac
         // Arrange
         using var scope = _factory.Services.CreateScope();
         var db = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
-        
+
         var product = await db.Products
             .Where(p => p.IsActive && p.StockQuantity > 0)
             .FirstAsync();
@@ -261,7 +260,7 @@ public class GuestCheckoutIntegrationTests : IClassFixture<ELKHWebApplicationFac
         // Assert - Contact detail should be created
         using var verifyScope = _factory.Services.CreateScope();
         var verifyDb = verifyScope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
-        
+
         var contactDetail = await verifyDb.ContactDetails
             .OrderByDescending(c => c.PkContactId)
             .FirstOrDefaultAsync();
@@ -280,7 +279,7 @@ public class GuestCheckoutIntegrationTests : IClassFixture<ELKHWebApplicationFac
         // Arrange - Add product to cart
         using var scope = _factory.Services.CreateScope();
         var db = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
-        
+
         var product = await db.Products
             .Where(p => p.IsActive && p.StockQuantity > 0)
             .FirstAsync();
@@ -305,7 +304,7 @@ public class GuestCheckoutIntegrationTests : IClassFixture<ELKHWebApplicationFac
         // Assert - View cart should now be empty
         var cartResponse = await _client.GetAsync("/Cart");
         var cartContent = await cartResponse.Content.ReadAsStringAsync();
-        
+
         // Cart should be empty or show empty message
         // (Exact assertion depends on how empty cart is displayed)
         cartResponse.StatusCode.Should().Be(HttpStatusCode.OK);
@@ -318,7 +317,7 @@ public class GuestCheckoutIntegrationTests : IClassFixture<ELKHWebApplicationFac
         // Arrange - Add product to cart
         using var scope = _factory.Services.CreateScope();
         var db = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
-        
+
         var product = await db.Products
             .Where(p => p.IsActive && p.StockQuantity > 0)
             .FirstAsync();
@@ -369,7 +368,7 @@ public class GuestCheckoutIntegrationTests : IClassFixture<ELKHWebApplicationFac
         // Arrange - Add products to cart
         using var scope = _factory.Services.CreateScope();
         var db = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
-        
+
         var products = await db.Products
             .Where(p => p.IsActive && p.StockQuantity > 0)
             .Take(2)
@@ -388,7 +387,7 @@ public class GuestCheckoutIntegrationTests : IClassFixture<ELKHWebApplicationFac
         content.Should().Contain("Contact Information");
         content.Should().Contain("Order Summary");
         content.Should().Contain("Total");
-        
+
         // Pricing rules: 12% tax, $7.99 shipping for orders under $50
         response.StatusCode.Should().Be(HttpStatusCode.OK);
     }
@@ -399,7 +398,7 @@ public class GuestCheckoutIntegrationTests : IClassFixture<ELKHWebApplicationFac
         // Arrange - Add product to cart
         using var scope = _factory.Services.CreateScope();
         var db = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
-        
+
         var product = await db.Products
             .Where(p => p.IsActive && p.StockQuantity > 0)
             .FirstAsync();
@@ -431,11 +430,11 @@ public class GuestCheckoutIntegrationTests : IClassFixture<ELKHWebApplicationFac
         // This test validates the optional account creation workflow
         using var verifyScope = _factory.Services.CreateScope();
         var verifyDb = verifyScope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
-        
+
         // Check if user was created (implementation dependent)
         var userExists = await verifyDb.RegisteredUsers
             .AnyAsync(u => u.Email == testEmail);
-        
+
         // Note: This assertion depends on whether the feature is fully implemented
         // For now, just verify the checkout succeeded
         var order = await verifyDb.Orders

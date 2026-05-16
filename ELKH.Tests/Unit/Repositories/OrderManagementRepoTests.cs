@@ -174,22 +174,22 @@ public class OrderManagementRepoTests : IDisposable
         // Add test orders
         var orders = new[]
         {
-            new OrderModel 
-            { 
+            new OrderModel
+            {
                 FkRegisteredUserId = user1.PkRegisteredUserId,
                 TotalAmount = 100.00m,
                 OrderStatus = OrderStatus.Paid,
                 CreatedAt = DateTime.UtcNow.AddDays(-3)
             },
-            new OrderModel 
-            { 
+            new OrderModel
+            {
                 FkRegisteredUserId = user1.PkRegisteredUserId,
                 TotalAmount = 75.50m,
                 OrderStatus = OrderStatus.Paid,
                 CreatedAt = DateTime.UtcNow.AddDays(-1)
             },
-            new OrderModel 
-            { 
+            new OrderModel
+            {
                 FkRegisteredUserId = user2.PkRegisteredUserId,
                 TotalAmount = 150.25m,
                 OrderStatus = OrderStatus.Pending,

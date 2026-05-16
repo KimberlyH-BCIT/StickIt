@@ -9,6 +9,7 @@ using ELKH.Data;
 using ELKH.Models;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Configuration;
 using System.Globalization;
 using System.Text;
 
@@ -44,6 +45,7 @@ public class ELKHWebApplicationFactory : WebApplicationFactory<Program>
             services.RemoveAll<ImageStoreContext>();
             services.RemoveAll<DbContextOptions<ApplicationDbContext>>();
             services.RemoveAll<DbContextOptions<ImageStoreContext>>();
+            services.RemoveAll<IHostedService>();
 
             var dbContextConfigurationDescriptors = services
                 .Where(d => d.ServiceType.IsGenericType
@@ -69,6 +71,14 @@ public class ELKHWebApplicationFactory : WebApplicationFactory<Program>
             {
                 options.UseSqlite(_imageDbConnectionString);
                 options.EnableSensitiveDataLogging();
+            });
+        });
+
+        builder.ConfigureAppConfiguration((context, config) =>
+        {
+            config.AddInMemoryCollection(new Dictionary<string, string>
+            {
+                { "Seed:AllowDefaultElevatedCredentials", "true" }
             });
         });
 
@@ -113,10 +123,7 @@ public class ELKHWebApplicationFactory : WebApplicationFactory<Program>
         var roles = new[] { "Admin", "Manager", "Staff", "Customer" };
         foreach (var roleName in roles)
         {
-            if (!await roleManager.RoleExistsAsync(roleName))
-            {
-                await roleManager.CreateAsync(new IdentityRole(roleName));
-            }
+            await roleManager.CreateAsync(new IdentityRole(roleName));
         }
 
         // Create test users
@@ -127,31 +134,25 @@ public class ELKHWebApplicationFactory : WebApplicationFactory<Program>
             new { Email = "manager@test.com", Password = "Manager123!", Role = "Manager" }
         };
 
+        var registeredUsers = new List<RegisteredUserModel>();
+
         foreach (var testUser in testUsers)
         {
-            var existingUser = await userManager.FindByEmailAsync(testUser.Email);
-            if (existingUser == null)
+            var user = new IdentityUser
             {
-                var user = new IdentityUser
-                {
-                    UserName = testUser.Email,
-                    Email = testUser.Email,
-                    EmailConfirmed = true
-                };
+                UserName = testUser.Email,
+                Email = testUser.Email,
+                EmailConfirmed = true
+            };
 
-                var result = await userManager.CreateAsync(user, testUser.Password);
-                if (result.Succeeded)
+            var result = await userManager.CreateAsync(user, testUser.Password);
+            if (result.Succeeded)
+            {
+                await userManager.AddToRoleAsync(user, testUser.Role);
+                registeredUsers.Add(new RegisteredUserModel
                 {
-                    await userManager.AddToRoleAsync(user, testUser.Role);
-                    
-                    // Create corresponding RegisteredUser record
-                    var registeredUser = new ELKH.Models.RegisteredUserModel
-                    {
-                        Email = testUser.Email
-                    };
-                    
-                    db.RegisteredUsers.Add(registeredUser);
-                }
+                    Email = testUser.Email
+                });
             }
         }
 
@@ -163,18 +164,11 @@ public class ELKHWebApplicationFactory : WebApplicationFactory<Program>
             new ELKH.Models.CategoryModel { CategoryName = "Nature" }
         };
 
-        foreach (var category in categories)
-        {
-            if (!db.Categories.Any(c => c.CategoryName == category.CategoryName))
-            {
-                db.Categories.Add(category);
-            }
-        }
-
-        await db.SaveChangesAsync();
+        db.RegisteredUsers.AddRange(registeredUsers);
+        db.Categories.AddRange(categories);
 
         // Create test products
-        var firstCategory = db.Categories.First();
+        var firstCategory = categories[0];
         var products = new[]
         {
             new ELKH.Models.ProductModel
@@ -183,51 +177,44 @@ public class ELKHWebApplicationFactory : WebApplicationFactory<Program>
                 Description = "Test product for integration testing",
                 Price = 9.99m,
                 StockQuantity = 100,
-                FkCategoryId = firstCategory.PkCategoryId,
+                Category = firstCategory,
                 IsActive = true
             },
             new ELKH.Models.ProductModel
             {
-                Name = "Test Product 2", 
+                Name = "Test Product 2",
                 Description = "Another test product",
                 Price = 15.99m,
                 StockQuantity = 50,
-                FkCategoryId = firstCategory.PkCategoryId,
+                Category = firstCategory,
                 IsActive = true
             }
         };
 
         foreach (var product in products)
         {
-            if (!db.Products.Any(p => p.Name == product.Name))
-            {
-                product.NameNormalized = NormalizeName(product.Name);
-                product.Tags = "test,integration";
-                db.Products.Add(product);
-            }
+            product.NameNormalized = NormalizeName(product.Name);
+            product.Tags = "test,integration";
         }
 
+        db.Products.AddRange(products);
         await db.SaveChangesAsync();
 
-        var seededProducts = await db.Products
-            .Where(p => p.Name.StartsWith("Test Product"))
-            .ToListAsync();
+        var fuzzySuggestions = new List<FuzzySuggestionModel>(products.Length);
 
-        foreach (var product in seededProducts)
+        foreach (var product in products)
         {
-            if (!await db.FuzzySuggestions.AnyAsync(f => f.PkProductId == product.PkProductId))
+            fuzzySuggestions.Add(new FuzzySuggestionModel
             {
-                db.FuzzySuggestions.Add(new FuzzySuggestionModel
-                {
-                    PkProductId = product.PkProductId,
-                    Name = product.Name,
-                    NameNormalized = NormalizeName(product.Name),
-                    Price = product.Price,
-                    Thumbnail = string.Empty
-                });
-            }
+                PkProductId = product.PkProductId,
+                Name = product.Name,
+                NameNormalized = product.NameNormalized,
+                Price = product.Price,
+                Thumbnail = string.Empty
+            });
         }
 
+        db.FuzzySuggestions.AddRange(fuzzySuggestions);
         await db.SaveChangesAsync();
     }
 

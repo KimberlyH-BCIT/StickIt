@@ -55,7 +55,7 @@ public class OrderControllerTests
         var actionContext = new ActionContext(httpContext, new RouteData(), new ControllerActionDescriptor());
         _controller.ControllerContext = new ControllerContext(actionContext);
         _controller.TempData = new TempDataDictionary(httpContext, Mock.Of<ITempDataProvider>());
-        
+
         // Setup authenticated user
         SetupAuthenticatedUser("test@example.com");
     }
@@ -133,9 +133,9 @@ public class OrderControllerTests
     public async Task Details_WithValidOrderId_ShouldReturnViewWithOrderDetails()
     {
         // Arrange
-        var order = new OrderModel 
-        { 
-            PkOrderId = 1, 
+        var order = new OrderModel
+        {
+            PkOrderId = 1,
             TotalAmount = 29.99m,
             RegisteredUser = new RegisteredUserModel { Email = "test@example.com" }
         };
@@ -171,9 +171,9 @@ public class OrderControllerTests
     public async Task Details_WithUnauthorizedUser_ShouldReturnForbid()
     {
         // Arrange
-        var order = new OrderModel 
-        { 
-            PkOrderId = 1, 
+        var order = new OrderModel
+        {
+            PkOrderId = 1,
             TotalAmount = 29.99m,
             RegisteredUser = new RegisteredUserModel { Email = "other@example.com" }  // Different user
         };

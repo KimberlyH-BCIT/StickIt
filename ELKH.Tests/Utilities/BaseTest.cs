@@ -110,7 +110,7 @@ public abstract class BaseTest : IDisposable
     /// <summary>
     /// Sets up a controller with mock HttpContext and user authentication
     /// </summary>
-    protected static T SetupControllerWithAuth<T>(T controller, ClaimsPrincipal user = null) 
+    protected static T SetupControllerWithAuth<T>(T controller, ClaimsPrincipal user = null)
         where T : ControllerBase
     {
         var httpContext = CreateMockHttpContext(user);
@@ -166,12 +166,12 @@ public abstract class BaseTest : IDisposable
     {
         var user = TestDataFactory.CreateUser(email: email);
         _context.RegisteredUsers.Add(user);
-        
+
         if (saveChanges)
         {
             _context.SaveChanges();
         }
-        
+
         return user;
     }
 
@@ -212,12 +212,12 @@ public abstract class BaseTest : IDisposable
     {
         var category = TestDataFactory.CreateCategory(name: name);
         _context.Categories.Add(category);
-        
+
         if (saveChanges)
         {
             _context.SaveChanges();
         }
-        
+
         return category;
     }
 
@@ -234,14 +234,14 @@ public abstract class BaseTest : IDisposable
             userId: user.PkRegisteredUserId,
             productId: product.PkProductId,
             quantity: quantity);
-        
+
         _context.Carts.Add(cartItem);
-        
+
         if (saveChanges)
         {
             _context.SaveChanges();
         }
-        
+
         return cartItem;
     }
 

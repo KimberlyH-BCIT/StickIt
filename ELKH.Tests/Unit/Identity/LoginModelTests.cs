@@ -78,6 +78,103 @@ public class LoginModelTests
         signInManager.Verify(s => s.PasswordSignInAsync("user@example.com", "password", false, false), Times.Once);
     }
 
+    [Fact]
+    public async Task OnPostAsync_WithRolelessUser_ShouldSignOutAndReturnPageError()
+    {
+        var userManager = CreateMockUserManager();
+        var signInManager = CreateMockSignInManager(userManager.Object);
+        var logger = new Mock<ILogger<LoginModel>>();
+        var recaptcha = new Mock<IReCaptchaService>();
+        recaptcha.Setup(r => r.VerifyAsync(It.IsAny<string>(), It.IsAny<string>())).ReturnsAsync(true);
+        signInManager.Setup(s => s.GetExternalAuthenticationSchemesAsync())
+            .ReturnsAsync(new List<Microsoft.AspNetCore.Authentication.AuthenticationScheme>());
+        signInManager.Setup(s => s.PasswordSignInAsync("user@example.com", "password", false, false))
+            .ReturnsAsync(Microsoft.AspNetCore.Identity.SignInResult.Success);
+        signInManager.Setup(s => s.SignOutAsync()).Returns(Task.CompletedTask);
+
+        var identityUser = new IdentityUser { Email = "user@example.com", UserName = "user@example.com" };
+        userManager.Setup(u => u.FindByEmailAsync("user@example.com")).ReturnsAsync(identityUser);
+        userManager.Setup(u => u.IsInRoleAsync(identityUser, It.IsAny<string>())).ReturnsAsync(false);
+
+        var environment = new Mock<IWebHostEnvironment>();
+        environment.SetupGet(e => e.EnvironmentName).Returns(Environments.Development);
+
+        var model = CreateModel(signInManager.Object, logger.Object, recaptcha.Object, environment.Object);
+        model.Input = new LoginModel.InputModel
+        {
+            Email = "user@example.com",
+            Password = "password",
+            RememberMe = false
+        };
+
+        var result = await model.OnPostAsync();
+
+        result.Should().BeOfType<PageResult>();
+        signInManager.Verify(s => s.SignOutAsync(), Times.Once);
+        model.ModelState[string.Empty]!.Errors.Should().ContainSingle();
+        model.ModelState[string.Empty]!.Errors[0].ErrorMessage.Should().Be("Your account does not have an assigned role. Please contact support.");
+    }
+
+    [Fact]
+    public async Task OnPostAsync_WithTwoFactorRequired_ShouldRedirectToTwoFactorPage()
+    {
+        var userManager = CreateMockUserManager();
+        var signInManager = CreateMockSignInManager(userManager.Object);
+        var logger = new Mock<ILogger<LoginModel>>();
+        var recaptcha = new Mock<IReCaptchaService>();
+        recaptcha.Setup(r => r.VerifyAsync(It.IsAny<string>(), It.IsAny<string>())).ReturnsAsync(true);
+        signInManager.Setup(s => s.GetExternalAuthenticationSchemesAsync())
+            .ReturnsAsync(new List<Microsoft.AspNetCore.Authentication.AuthenticationScheme>());
+        signInManager.Setup(s => s.PasswordSignInAsync("user@example.com", "password", false, false))
+            .ReturnsAsync(Microsoft.AspNetCore.Identity.SignInResult.TwoFactorRequired);
+
+        var environment = new Mock<IWebHostEnvironment>();
+        environment.SetupGet(e => e.EnvironmentName).Returns(Environments.Development);
+
+        var model = CreateModel(signInManager.Object, logger.Object, recaptcha.Object, environment.Object);
+        model.Input = new LoginModel.InputModel
+        {
+            Email = "user@example.com",
+            Password = "password",
+            RememberMe = false
+        };
+
+        var result = await model.OnPostAsync();
+
+        var redirect = result.Should().BeOfType<RedirectToPageResult>().Subject;
+        redirect.PageName.Should().Be("./LoginWith2fa");
+    }
+
+    [Fact]
+    public async Task OnPostAsync_WithLockedOutUser_ShouldRedirectToLockoutPage()
+    {
+        var userManager = CreateMockUserManager();
+        var signInManager = CreateMockSignInManager(userManager.Object);
+        var logger = new Mock<ILogger<LoginModel>>();
+        var recaptcha = new Mock<IReCaptchaService>();
+        recaptcha.Setup(r => r.VerifyAsync(It.IsAny<string>(), It.IsAny<string>())).ReturnsAsync(true);
+        signInManager.Setup(s => s.GetExternalAuthenticationSchemesAsync())
+            .ReturnsAsync(new List<Microsoft.AspNetCore.Authentication.AuthenticationScheme>());
+        signInManager.Setup(s => s.PasswordSignInAsync("user@example.com", "password", false, false))
+            .ReturnsAsync(Microsoft.AspNetCore.Identity.SignInResult.LockedOut);
+
+        var environment = new Mock<IWebHostEnvironment>();
+        environment.SetupGet(e => e.EnvironmentName).Returns(Environments.Development);
+
+        var model = CreateModel(signInManager.Object, logger.Object, recaptcha.Object, environment.Object);
+        model.Input = new LoginModel.InputModel
+        {
+            Email = "user@example.com",
+            Password = "password",
+            RememberMe = false
+        };
+
+        var result = await model.OnPostAsync();
+
+        var redirect = result.Should().BeOfType<RedirectToPageResult>().Subject;
+        redirect.PageName.Should().Be("./Lockout");
+    }
+
     private static LoginModel CreateModel(
         SignInManager<IdentityUser> signInManager,
         ILogger<LoginModel> logger,

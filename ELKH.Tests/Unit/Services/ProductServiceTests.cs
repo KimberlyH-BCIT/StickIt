@@ -1,4 +1,5 @@
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Caching.Memory;
 using Microsoft.Extensions.Logging.Abstractions;
 
 namespace ELKH.Tests.Unit.Services;
@@ -12,6 +13,7 @@ public class ProductServiceTests
     private readonly ApplicationDbContext _context;
     private readonly Mock<ISearchService> _mockSearchService;
     private readonly Mock<IProductMapper> _mockMapper;
+    private readonly IMemoryCache _cache;
     private readonly ProductService _productService;
 
     public ProductServiceTests()
@@ -25,12 +27,14 @@ public class ProductServiceTests
         // Setup mocks
         _mockSearchService = new Mock<ISearchService>();
         _mockMapper = new Mock<IProductMapper>();
+        _cache = new MemoryCache(new MemoryCacheOptions());
 
         // Create service under test
         _productService = new ProductService(
             _context,
             _mockSearchService.Object,
             _mockMapper.Object,
+            _cache,
             NullLogger<ProductService>.Instance);
     }
 
@@ -70,10 +74,10 @@ public class ProductServiceTests
     public async Task GetByIdAsync_WithValidId_ShouldReturnProduct()
     {
         // Arrange
-        var product = new ProductModel 
-        { 
-            PkProductId = 1, 
-            Name = "Test Product", 
+        var product = new ProductModel
+        {
+            PkProductId = 1,
+            Name = "Test Product",
             Price = 10.99m,
             Category = new CategoryModel { PkCategoryId = 1, CategoryName = "Test Category" }
         };

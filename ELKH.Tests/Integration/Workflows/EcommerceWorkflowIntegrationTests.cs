@@ -46,7 +46,7 @@ public class EcommerceWorkflowIntegrationTests : IClassFixture<ELKHWebApplicatio
         using var scope = _factory.Services.CreateScope();
         var db = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
         var product = await db.Products.FirstAsync();
-        
+
         var detailResponse = await _client.GetAsync($"/Product/Details/{product.PkProductId}");
         detailResponse.StatusCode.Should().Be(HttpStatusCode.OK);
 

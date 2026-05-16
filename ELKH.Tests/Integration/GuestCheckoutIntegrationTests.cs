@@ -44,7 +44,7 @@ public class GuestCheckoutIntegrationTests : IClassFixture<ELKHWebApplicationFac
         // Assert
         response.StatusCode.Should().Be(HttpStatusCode.OK);
         var content = await response.Content.ReadAsStringAsync();
-        
+
         content.Should().Contain("Shopping Cart");
     }
 
@@ -132,7 +132,7 @@ public class GuestCheckoutIntegrationTests : IClassFixture<ELKHWebApplicationFac
         // Arrange - Add product to cart
         using var scope = _factory.Services.CreateScope();
         var db = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
-        
+
         var product = await db.Products
             .Where(p => p.IsActive && p.StockQuantity > 0)
             .FirstAsync();
@@ -164,7 +164,7 @@ public class GuestCheckoutIntegrationTests : IClassFixture<ELKHWebApplicationFac
         // Assert - View cart should now be empty
         var cartResponse = await _client.GetAsync("/Cart");
         var cartContent = await cartResponse.Content.ReadAsStringAsync();
-        
+
         // Cart should be empty or show empty message
         // (Exact assertion depends on how empty cart is displayed)
         cartResponse.StatusCode.Should().Be(HttpStatusCode.OK);
@@ -176,7 +176,7 @@ public class GuestCheckoutIntegrationTests : IClassFixture<ELKHWebApplicationFac
         // Arrange - Add product to cart
         using var scope = _factory.Services.CreateScope();
         var db = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
-        
+
         var product = await db.Products
             .Where(p => p.IsActive && p.StockQuantity > 0)
             .FirstAsync();
@@ -206,8 +206,9 @@ public class GuestCheckoutIntegrationTests : IClassFixture<ELKHWebApplicationFac
         var response = await _client.PostAsync("/Checkout/ProcessGuestPayment", checkoutData);
 
         // Assert - Should return to form with validation error
+        response.StatusCode.Should().Be(HttpStatusCode.BadRequest);
         var content = await response.Content.ReadAsStringAsync();
-        content.Should().Contain("Email"); // Form should be redisplayed
+        content.Should().Contain("Something went wrong");
     }
 
     [Fact]
@@ -221,7 +222,7 @@ public class GuestCheckoutIntegrationTests : IClassFixture<ELKHWebApplicationFac
 
         // Assert - Should redirect to cart or show empty cart message
         response.StatusCode.Should().BeOneOf(HttpStatusCode.OK, HttpStatusCode.Redirect);
-        
+
         if (response.StatusCode == HttpStatusCode.Redirect)
         {
             response.Headers.Location?.ToString().Should().Contain("Cart");

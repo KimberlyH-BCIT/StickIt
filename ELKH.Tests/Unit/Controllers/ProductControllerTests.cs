@@ -485,7 +485,7 @@ public class ProductControllerTests
         redirectResult.ActionName.Should().Be("Index");
 
         // Confirm service received correct product data
-        _mockProductService.Verify(p => p.CreateAsync(It.Is<ProductVM>(pm => 
+        _mockProductService.Verify(p => p.CreateAsync(It.Is<ProductVM>(pm =>
             pm.ProductName == "New Product" && pm.Price == 29.99m), It.IsAny<CancellationToken>()), Times.Once);
 
         // Verify TempData success message
@@ -535,7 +535,7 @@ public class ProductControllerTests
         viewResult.Model.Should().BeOfType<ProductVM>();
 
         // Service should not be called with invalid model
-        _mockProductService.Verify(p => p.CreateAsync(It.IsAny<ProductVM>(), It.IsAny<CancellationToken>()), 
+        _mockProductService.Verify(p => p.CreateAsync(It.IsAny<ProductVM>(), It.IsAny<CancellationToken>()),
                                   Times.Never);
 
         // Should add helpful error message
@@ -663,7 +663,7 @@ public class ProductControllerTests
         redirectResult.ActionName.Should().Be("Index");
 
         // Confirm service received correct product data
-        _mockProductService.Verify(p => p.UpdateAsync(It.Is<ProductVM>(pm => 
+        _mockProductService.Verify(p => p.UpdateAsync(It.Is<ProductVM>(pm =>
             pm.ProductName == "Updated Product" && pm.Price == 24.99m), It.IsAny<CancellationToken>()), Times.Once);
 
         // Verify TempData success message
@@ -855,7 +855,7 @@ public class ProductControllerTests
     /// <param name="price">Product price</param>
     /// <param name="description">Product description</param>
     /// <returns>ProductVM with test data</returns>
-    private static ProductVM CreateTestProduct(int id = 1, string name = "Test Product", 
+    private static ProductVM CreateTestProduct(int id = 1, string name = "Test Product",
         decimal price = 19.99m, string description = "Test Description")
     {
         return new ProductVM

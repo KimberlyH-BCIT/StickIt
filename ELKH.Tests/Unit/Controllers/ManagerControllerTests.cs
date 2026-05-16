@@ -5,6 +5,7 @@ using Microsoft.AspNetCore.Mvc.Controllers;
 using Microsoft.AspNetCore.Mvc.ViewFeatures;
 using Microsoft.AspNetCore.Routing;
 using Microsoft.AspNetCore.Identity;
+using Microsoft.Extensions.Caching.Memory;
 using Moq;
 using System.Collections;
 using System.Linq.Expressions;
@@ -89,6 +90,7 @@ public class ManagerControllerTests
     // ── Mock Dependencies ──
     private readonly Mock<ApplicationDbContext> _mockDbContext;
     private readonly Mock<UserManager<IdentityUser>> _mockUserManager;
+    private readonly IMemoryCache _cache;
     private readonly ManagerController _controller;
     private readonly ApplicationDbContext _dbContext;
     private readonly Mock<DbSet<ProductModel>> _mockProductSet;
@@ -132,6 +134,7 @@ public class ManagerControllerTests
         var userStore = new Mock<IUserStore<IdentityUser>>();
         _mockUserManager = new Mock<UserManager<IdentityUser>>(
             userStore.Object, null, null, null, null, null, null, null, null);
+        _cache = new MemoryCache(new MemoryCacheOptions());
 
         #endregion
 
@@ -150,7 +153,7 @@ public class ManagerControllerTests
         #region Controller Initialization
 
         // Create controller instance with all mocked dependencies
-        _controller = new ManagerController(_dbContext, _mockUserManager.Object);
+        _controller = new ManagerController(_dbContext, _mockUserManager.Object, _cache);
 
         // Configure ASP.NET Core controller context for request simulation
         var httpContext = new DefaultHttpContext();
@@ -366,7 +369,7 @@ public class ManagerControllerTests
 
         #region Act - Execute product status toggle
 
-        var controller = new ManagerController(_mockDbContext.Object, _mockUserManager.Object)
+        var controller = new ManagerController(_mockDbContext.Object, _mockUserManager.Object, _cache)
         {
             ControllerContext = _controller.ControllerContext,
             TempData = _controller.TempData
@@ -419,7 +422,7 @@ public class ManagerControllerTests
 
         #region Act & Assert - Validate 404 response for missing product
 
-        var controller = new ManagerController(_mockDbContext.Object, _mockUserManager.Object)
+        var controller = new ManagerController(_mockDbContext.Object, _mockUserManager.Object, _cache)
         {
             ControllerContext = _controller.ControllerContext,
             TempData = _controller.TempData
@@ -461,16 +464,16 @@ public class ManagerControllerTests
 
         var transactions = new List<TransactionModel>
         {
-            new TransactionModel 
-            { 
-                PkTransactionId = 1, 
-                Amount = 25.99m, 
+            new TransactionModel
+            {
+                PkTransactionId = 1,
+                Amount = 25.99m,
                 TransactionDate = DateTime.UtcNow,
                 TransactionStatus = "Completed"
             },
-            new TransactionModel 
-            { 
-                PkTransactionId = 2, 
+            new TransactionModel
+            {
+                PkTransactionId = 2,
                 Amount = 45.99m,
                 TransactionDate = DateTime.UtcNow.AddDays(-1),
                 TransactionStatus = "Pending"

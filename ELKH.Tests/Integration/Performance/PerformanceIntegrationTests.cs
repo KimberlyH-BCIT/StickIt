@@ -69,7 +69,7 @@ public class PerformanceIntegrationTests : IClassFixture<ELKHWebApplicationFacto
         var stopwatch = new Stopwatch();
 
         // Act & Assert - Test various database operations
-        
+
         // Test 1: Product lookup by ID
         stopwatch.Start();
         var product = await db.Products.FirstOrDefaultAsync();
@@ -167,7 +167,7 @@ public class PerformanceIntegrationTests : IClassFixture<ELKHWebApplicationFacto
     {
         // Arrange
         var initialMemory = GC.GetTotalMemory(true);
-        
+
         // Act - Simulate load
         var tasks = new List<Task>();
         for (int i = 0; i < 50; i++)
@@ -210,7 +210,7 @@ public class PerformanceIntegrationTests : IClassFixture<ELKHWebApplicationFacto
             _ => 5.0 // Default: 5 seconds
         };
 
-        responseTime.TotalSeconds.Should().BeLessThan(slaSeconds, 
+        responseTime.TotalSeconds.Should().BeLessThan(slaSeconds,
             $"Page {url} should load within {slaSeconds} seconds SLA");
     }
 
@@ -240,7 +240,7 @@ public class PerformanceIntegrationTests : IClassFixture<ELKHWebApplicationFacto
         foreach (var asset in staticAssets)
         {
             var responseTime = await MeasureRequestTime(asset);
-            responseTime.TotalMilliseconds.Should().BeLessThan(1000, 
+            responseTime.TotalMilliseconds.Should().BeLessThan(1000,
                 $"Static asset {asset} should load in under 1 second");
         }
     }

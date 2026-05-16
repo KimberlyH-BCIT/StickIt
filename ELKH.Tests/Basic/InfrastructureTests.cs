@@ -15,7 +15,7 @@ public class InfrastructureTests : BaseTest
     {
         // Arrange & Act
         var canConnect = _context.Database.CanConnect();
-        
+
         // Assert
         canConnect.Should().BeTrue();
     }
@@ -36,7 +36,7 @@ public class InfrastructureTests : BaseTest
     {
         // Arrange & Act
         var product = TestDataFactory.CreateProduct();
-        
+
         // Assert
         product.Should().NotBeNull();
         product.Name.Should().NotBeNullOrEmpty();
@@ -48,14 +48,14 @@ public class InfrastructureTests : BaseTest
     {
         // Arrange
         var user = TestDataFactory.CreateUser();
-        
+
         // Act - Create
         _context.RegisteredUsers.Add(user);
         await _context.SaveChangesAsync();
-        
+
         // Act - Read
         var retrievedUser = await _context.RegisteredUsers.FindAsync(user.PkRegisteredUserId);
-        
+
         // Assert
         retrievedUser.Should().NotBeNull();
         retrievedUser!.Email.Should().Be(user.Email);

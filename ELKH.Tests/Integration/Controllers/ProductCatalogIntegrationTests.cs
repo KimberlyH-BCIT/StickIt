@@ -48,10 +48,10 @@ public class ProductCatalogIntegrationTests : IClassFixture<ELKHWebApplicationFa
         // Assert
         response.StatusCode.Should().Be(HttpStatusCode.OK);
         var content = await response.Content.ReadAsStringAsync();
-        
+
         content.Should().Contain("Products");
         content.Should().Contain("productGrid");
-        content.Should().Contain("Quick View");
+        content.Should().Contain("View Details");
     }
 
     [Fact]
@@ -63,7 +63,7 @@ public class ProductCatalogIntegrationTests : IClassFixture<ELKHWebApplicationFa
         // Assert
         response.StatusCode.Should().Be(HttpStatusCode.OK);
         var content = await response.Content.ReadAsStringAsync();
-        
+
         content.Should().Contain("Test Product 1");
         content.Should().Contain("Search results for"); // Search indicator
     }
@@ -80,7 +80,7 @@ public class ProductCatalogIntegrationTests : IClassFixture<ELKHWebApplicationFa
         // Assert
         response.StatusCode.Should().Be(HttpStatusCode.OK);
         var content = await response.Content.ReadAsStringAsync();
-        
+
         content.Should().Contain(product.Name);
         content.Should().Contain(product.Description);
         content.Should().Contain(product.Price.ToString("C")); // Price formatting
@@ -166,7 +166,7 @@ public class ProductCatalogIntegrationTests : IClassFixture<ELKHWebApplicationFa
         // Assert
         response.StatusCode.Should().Be(HttpStatusCode.OK);
         response.Content.Headers.ContentType?.MediaType.Should().Be("application/json");
-        
+
         var json = await response.Content.ReadAsStringAsync();
         using var document = JsonDocument.Parse(json);
         var suggestions = document.RootElement;
@@ -178,7 +178,7 @@ public class ProductCatalogIntegrationTests : IClassFixture<ELKHWebApplicationFa
     }
 
     [Fact]
-    public async Task Product_Index_Should_Render_Quick_View_Trigger_For_Product()
+    public async Task Product_Index_Should_Render_View_Details_Link_For_Product()
     {
         // Act
         var response = await _client.GetAsync("/Product");
@@ -186,8 +186,8 @@ public class ProductCatalogIntegrationTests : IClassFixture<ELKHWebApplicationFa
         // Assert
         response.StatusCode.Should().Be(HttpStatusCode.OK);
         var content = await response.Content.ReadAsStringAsync();
-        content.Should().Contain("Quick View");
-        content.Should().Contain("data-product-id=");
+        content.Should().Contain("View Details");
+        content.Should().Contain("/Product/Details/");
     }
 
     [Fact]

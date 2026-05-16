@@ -164,7 +164,7 @@ public class AuthenticationIntegrationTests : IClassFixture<ELKHWebApplicationFa
         // Assert
         // Should either redirect to login again (invalid token) or return 400 (bad request)
         // The exact behavior depends on ASP.NET Core Identity's CSRF handling
-        (response.StatusCode == HttpStatusCode.Redirect || 
+        (response.StatusCode == HttpStatusCode.Redirect ||
          response.StatusCode == HttpStatusCode.BadRequest).Should().BeTrue();
     }
 
@@ -179,7 +179,7 @@ public class AuthenticationIntegrationTests : IClassFixture<ELKHWebApplicationFa
         response.Headers.Should().ContainKey("X-Frame-Options");
         response.Headers.Should().ContainKey("Referrer-Policy");
         response.Headers.Should().ContainKey("Permissions-Policy");
-        
+
         response.Headers.GetValues("X-Content-Type-Options").First().Should().Be("nosniff");
         response.Headers.GetValues("X-Frame-Options").First().Should().Be("SAMEORIGIN");
     }

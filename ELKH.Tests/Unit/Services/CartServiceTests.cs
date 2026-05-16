@@ -112,7 +112,7 @@ public class CartServiceTests
 
         // Assert
         await action.Should().ThrowAsync<InvalidOperationException>();
-        
+
         var cartItem = await _context.Carts.FirstOrDefaultAsync(c => c.FkRegisteredUserId == 1 && c.FkProductID == 1);
         cartItem.Should().BeNull();
     }
@@ -187,7 +187,7 @@ public class CartServiceTests
         // Assert
         var remainingItems = await _context.Carts.Where(c => c.FkRegisteredUserId == 1).ToListAsync();
         remainingItems.Should().BeEmpty();
-        
+
         // Verify other users' items are not affected
         var otherUserItems = await _context.Carts.Where(c => c.FkRegisteredUserId == 2).ToListAsync();
         otherUserItems.Should().HaveCount(1);

@@ -163,7 +163,7 @@ public class GuestCartServiceTests : IDisposable
         // Act & Assert
         var exception = await Assert.ThrowsAsync<InvalidOperationException>(
             async () => await _service.AddToCartAsync(outOfStockProductId, 1));
-        
+
         exception.Message.Should().Contain("out of stock");
     }
 
@@ -177,7 +177,7 @@ public class GuestCartServiceTests : IDisposable
         // Act & Assert
         var exception = await Assert.ThrowsAsync<InvalidOperationException>(
             async () => await _service.AddToCartAsync(productId, excessiveQuantity));
-        
+
         exception.Message.Should().Contain("Only 50 available");
     }
 
@@ -404,7 +404,7 @@ public class GuestCartServiceTests : IDisposable
     {
         // Arrange
         await _service.AddToCartAsync(1, 2);
-        
+
         // Delete product from database
         var product = await _context.Products.FindAsync(1);
         _context.Products.Remove(product!);

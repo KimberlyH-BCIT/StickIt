@@ -22,7 +22,7 @@ public static class TestDataFactory
     /// Creates a test user with default or specified properties
     /// </summary>
     public static RegisteredUserModel CreateUser(
-        int? id = null, 
+        int? id = null,
         string? email = null)
     {
         return new RegisteredUserModel

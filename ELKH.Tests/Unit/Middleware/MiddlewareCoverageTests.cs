@@ -122,10 +122,14 @@ public class MiddlewareCoverageTests
 
         await middleware.InvokeAsync(context);
 
-        var response = await ReadErrorResponseAsync(context);
+        var responseContent = await ReadResponseBodyAsync(context);
         context.Response.StatusCode.Should().Be((int)HttpStatusCode.BadRequest);
-        response.Error.Should().Be("Bad Request");
-        response.Details.Should().Be("bad payload");
+        context.Response.ContentType.Should().Be("text/html; charset=utf-8");
+        responseContent.Should().Contain("<!DOCTYPE html>");
+        responseContent.Should().Contain("Bad Request");
+        responseContent.Should().Contain("Invalid request data. Please check your input and try again.");
+        responseContent.Should().Contain("trace-123");
+        responseContent.Should().NotContain("bad payload");
     }
 
     [Fact]
@@ -143,6 +147,7 @@ public class MiddlewareCoverageTests
 
         var response = await ReadErrorResponseAsync(context);
         context.Response.StatusCode.Should().Be((int)HttpStatusCode.NotFound);
+        context.Response.ContentType.Should().Be("application/json");
         response.Error.Should().Be("Not Found");
         response.Message.Should().Be("The requested resource was not found.");
     }
@@ -199,10 +204,12 @@ public class MiddlewareCoverageTests
 
         await middleware.InvokeAsync(context);
 
-        var response = await ReadErrorResponseAsync(context);
+        var responseContent = await ReadResponseBodyAsync(context);
         context.Response.StatusCode.Should().Be((int)HttpStatusCode.Forbidden);
-        response.Error.Should().Be("Forbidden");
-        response.Message.Should().Be("You don't have permission to access this resource.");
+        context.Response.ContentType.Should().Be("text/html; charset=utf-8");
+        responseContent.Should().Contain("<!DOCTYPE html>");
+        responseContent.Should().Contain("Forbidden");
+        responseContent.Should().Contain("You don&#39;t have permission to access this resource.");
     }
 
     [Fact]
@@ -219,11 +226,56 @@ public class MiddlewareCoverageTests
 
         await middleware.InvokeAsync(context);
 
-        var response = await ReadErrorResponseAsync(context);
+        var responseContent = await ReadResponseBodyAsync(context);
         context.Response.StatusCode.Should().Be((int)HttpStatusCode.InternalServerError);
-        response.Error.Should().Be("Internal Server Error");
-        response.Message.Should().Be("An unexpected error occurred. Please try again later.");
-        response.Details.Should().BeNull();
+        context.Response.ContentType.Should().Be("text/html; charset=utf-8");
+        responseContent.Should().Contain("<!DOCTYPE html>");
+        responseContent.Should().Contain("Internal Server Error");
+        responseContent.Should().Contain("An unexpected error occurred. Please try again later.");
+        responseContent.Should().Contain("trace-123");
+        responseContent.Should().NotContain("sensitive details");
+    }
+
+    [Fact]
+    public async Task GlobalExceptionMiddleware_WithBrowserRequest_AndJsonAcceptHeader_ShouldReturnHtmlErrorPage()
+    {
+        var structuredLogger = new Mock<IStructuredLoggingService>();
+        var middleware = CreateGlobalExceptionMiddleware(
+            _ => throw new Exception("sensitive details"),
+            structuredLogger,
+            Environments.Production);
+
+        var context = CreateHttpContext(structuredLogger.Object, "/products", HttpMethods.Get, "application/json");
+
+        await middleware.InvokeAsync(context);
+
+        var responseContent = await ReadResponseBodyAsync(context);
+        context.Response.StatusCode.Should().Be((int)HttpStatusCode.InternalServerError);
+        context.Response.ContentType.Should().Be("text/html; charset=utf-8");
+        responseContent.Should().Contain("<!DOCTYPE html>");
+        responseContent.Should().Contain("Internal Server Error");
+        responseContent.Should().Contain("An unexpected error occurred. Please try again later.");
+        responseContent.Should().Contain("trace-123");
+        responseContent.Should().NotContain("sensitive details");
+    }
+
+    [Fact]
+    public async Task GlobalExceptionMiddleware_WithApiPathAndBrowserAcceptHeader_ShouldStillReturnJson()
+    {
+        var structuredLogger = new Mock<IStructuredLoggingService>();
+        var middleware = CreateGlobalExceptionMiddleware(
+            _ => throw new KeyNotFoundException("missing"),
+            structuredLogger,
+            Environments.Production);
+
+        var context = CreateHttpContext(structuredLogger.Object, "/api/products/404", HttpMethods.Get, "text/html");
+
+        await middleware.InvokeAsync(context);
+
+        var response = await ReadErrorResponseAsync(context);
+        context.Response.StatusCode.Should().Be((int)HttpStatusCode.NotFound);
+        context.Response.ContentType.Should().Be("application/json");
+        response.Error.Should().Be("Not Found");
     }
 
     [Fact]
@@ -264,7 +316,8 @@ public class MiddlewareCoverageTests
     private static DefaultHttpContext CreateHttpContext(
         IStructuredLoggingService structuredLoggingService,
         string path,
-        string method)
+        string method,
+        string acceptHeader = "text/html")
     {
         var services = new ServiceCollection()
             .AddSingleton(structuredLoggingService)
@@ -278,7 +331,7 @@ public class MiddlewareCoverageTests
 
         context.Request.Path = path;
         context.Request.Method = method;
-        context.Request.Headers.Accept = "application/json";
+        context.Request.Headers.Accept = acceptHeader;
         context.Request.Headers.UserAgent = "middleware-test-agent";
         context.User = new ClaimsPrincipal(new ClaimsIdentity(
         [
@@ -291,13 +344,18 @@ public class MiddlewareCoverageTests
 
     private static async Task<ErrorResponse> ReadErrorResponseAsync(DefaultHttpContext context)
     {
-        context.Response.Body.Position = 0;
-        using var reader = new StreamReader(context.Response.Body, leaveOpen: true);
-        var content = await reader.ReadToEndAsync();
+        var content = await ReadResponseBodyAsync(context);
 
         return JsonSerializer.Deserialize<ErrorResponse>(content, new JsonSerializerOptions
         {
             PropertyNameCaseInsensitive = true
         })!;
+    }
+
+    private static async Task<string> ReadResponseBodyAsync(DefaultHttpContext context)
+    {
+        context.Response.Body.Position = 0;
+        using var reader = new StreamReader(context.Response.Body, leaveOpen: true);
+        return await reader.ReadToEndAsync();
     }
 }

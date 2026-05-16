@@ -31,6 +31,7 @@ public class CheckoutControllerGuestTests : IDisposable
     private readonly Mock<IContactDetailRepo> _mockContactDetailRepo;
     private readonly Mock<ICartService> _mockCartService;
     private readonly Mock<IGuestCartService> _mockGuestCartService;
+    private readonly Mock<ICheckoutOrchestrationService> _mockCheckoutOrchestrationService;
     private readonly Mock<IConfiguration> _mockConfiguration;
     private readonly Mock<IShippingService> _mockShippingService;
     private readonly Mock<IPayPalService> _mockPayPalService;
@@ -52,6 +53,7 @@ public class CheckoutControllerGuestTests : IDisposable
         _mockContactDetailRepo = new Mock<IContactDetailRepo>();
         _mockCartService = new Mock<ICartService>();
         _mockGuestCartService = new Mock<IGuestCartService>();
+        _mockCheckoutOrchestrationService = new Mock<ICheckoutOrchestrationService>();
         _mockConfiguration = new Mock<IConfiguration>();
         _mockShippingService = new Mock<IShippingService>();
         _mockPayPalService = new Mock<IPayPalService>();
@@ -65,6 +67,7 @@ public class CheckoutControllerGuestTests : IDisposable
             _mockContactDetailRepo.Object,
             _mockCartService.Object,
             _mockGuestCartService.Object,
+            _mockCheckoutOrchestrationService.Object,
             _mockConfiguration.Object,
             _mockShippingService.Object,
             _mockPayPalService.Object,
@@ -247,7 +250,7 @@ public class CheckoutControllerGuestTests : IDisposable
         // Assert
         var viewResult = result as ViewResult;
         var model = viewResult!.Model as GuestCheckoutVM;
-        
+
         model!.ShippingCost.Should().Be(0m); // Free shipping over $50
     }
 
@@ -445,7 +448,7 @@ public class CheckoutControllerGuestTests : IDisposable
         // Assert
         var orderItems = await _context.OrderItems.ToListAsync();
         orderItems.Should().HaveCount(2);
-        
+
         orderItems.Should().Contain(oi => oi.FkProductId == 1 && oi.Quantity == 2);
         orderItems.Should().Contain(oi => oi.FkProductId == 2 && oi.Quantity == 1);
     }
