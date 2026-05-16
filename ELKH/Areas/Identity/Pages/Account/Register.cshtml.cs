@@ -11,6 +11,7 @@ using System.Text;
 using System.Text.Encodings.Web;
 using System.Threading;
 using System.Threading.Tasks;
+using ELKH.Configuration;
 using ELKH.Data;
 using ELKH.Models;
 using ELKH.Repositories;
@@ -23,7 +24,6 @@ using Microsoft.AspNetCore.Mvc.RazorPages;
 using Microsoft.AspNetCore.WebUtilities;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
-using ELKH.Configuration;
 using static ELKH.Extensions.RateLimitPolicies;
 
 namespace ELKH.Areas.Identity.Pages.Account
@@ -56,8 +56,7 @@ namespace ELKH.Areas.Identity.Pages.Account
     /// If false: Sign in immediately and redirect to Product catalog (Index).
     ///
     /// <para><strong>Role Assignment:</strong></para>
-    /// All new registrants are automatically assigned the "Customer" role
-    /// (comment placeholder exists but implementation may be in seeder or middleware).
+    /// All new registrants are automatically assigned the "Customer" role.
     /// </remarks>
     public class RegisterModel : PageModel
     {
@@ -89,6 +88,7 @@ namespace ELKH.Areas.Identity.Pages.Account
         /// Initializes a new instance of <see cref="RegisterModel"/> with required dependencies.
         /// </summary>
         /// <param name="userManager">ASP.NET Core Identity UserManager for account creation.</param>
+        /// <param name="roleManager">ASP.NET Core Identity RoleManager used to assign roles (e.g. "Customer").</param>
         /// <param name="userStore">User store abstraction for UserManager operations.</param>
         /// <param name="signInManager">Handles sign-in after successful registration (if email confirmation not required).</param>
         /// <param name="logger">Logger for registration events and errors.</param>
@@ -301,9 +301,9 @@ namespace ELKH.Areas.Identity.Pages.Account
                     // Created immediately so the header shows the name instead of email from first login.
                     var profile = new UserProfileModel
                     {
-                        PkEmail   = Input.Email,
+                        PkEmail = Input.Email,
                         FirstName = Input.FirstName,
-                        LastName  = Input.LastName
+                        LastName = Input.LastName
                     };
                     _context.UserProfiles.Add(profile);
 
@@ -327,11 +327,34 @@ namespace ELKH.Areas.Identity.Pages.Account
                     await _contactRepository.AddAndSaveAsync(contact);
 
                     // ==============================================================
-                    // â•‘ PHASE 3: Role Assignment (Placeholder)                    â•‘
+                    // â•‘ PHASE 3: Role Assignment                                    â•‘
                     // ==============================================================
-                    // NOTE: Customer role assignment may be handled by seeder or middleware.
-                    // Uncomment below to assign role immediately:
-                    // await _userManager.AddToRoleAsync(user, "Customer");
+                    if (!await _roleManager.RoleExistsAsync(customerRoleName))
+                    {
+                        var createRoleResult = await _roleManager.CreateAsync(new IdentityRole(customerRoleName));
+                        if (!createRoleResult.Succeeded)
+                        {
+                            foreach (var error in createRoleResult.Errors)
+                            {
+                                ModelState.AddModelError(string.Empty, error.Description);
+                            }
+
+                            await _userManager.DeleteAsync(user);
+                            return Page();
+                        }
+                    }
+
+                    var addToRoleResult = await _userManager.AddToRoleAsync(user, customerRoleName);
+                    if (!addToRoleResult.Succeeded)
+                    {
+                        foreach (var error in addToRoleResult.Errors)
+                        {
+                            ModelState.AddModelError(string.Empty, error.Description);
+                        }
+
+                        await _userManager.DeleteAsync(user);
+                        return Page();
+                    }
 
                     _logger.LogInformation("User created a new account with password.");
 

@@ -44,7 +44,7 @@ public class PayPalOptions
     /// This is a public identifier for your PayPal application.
     /// Must be configured via secure configuration providers.
     /// </remarks>
-    public string ClientId   { get; set; } = "";
+    public string ClientId { get; set; } = "";
 
     /// <summary>
     /// PayPal Client Secret for API authentication.
@@ -53,7 +53,7 @@ public class PayPalOptions
     /// This is a confidential secret that must never be exposed publicly.
     /// Must be configured via user secrets or secure environment variables.
     /// </remarks>
-    public string Secret     { get; set; } = "";
+    public string Secret { get; set; } = "";
 
     /// <summary>
     /// PayPal environment setting: "sandbox" for testing, "live" for production.
@@ -71,7 +71,7 @@ public class PayPalOptions
     /// Defaults to "CAD" (Canadian Dollar) for ELKH's Canadian market focus.
     /// Must be a valid ISO 4217 currency code supported by PayPal.
     /// </remarks>
-    public string Currency   { get; set; } = "CAD";
+    public string Currency { get; set; } = "CAD";
 
     /// <summary>
     /// Optional expected merchant identifier returned by PayPal for verified captures.

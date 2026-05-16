@@ -27,6 +27,9 @@ max_line_length = 120
 indent_size = 4
 max_line_length = 140
 
+# Keep analyzer output focused on correctness for verification runs.
+dotnet_diagnostic.CA1848.severity = none
+
 # Organize usings
 dotnet_sort_system_directives_first = true
 dotnet_separate_import_directive_groups = false

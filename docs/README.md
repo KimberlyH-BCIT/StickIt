@@ -64,7 +64,7 @@ Use the root `README.md` for the fast project tour. Use this index when you want
 **Contents**:
 - Application Insights hooks and telemetry notes
 - Metrics and health-check coverage
-- Troubleshooting and tuning references
+- Cache-aware troubleshooting and tuning references
 - Optional monitoring paths rather than mandatory local setup
 
 ### User documentation
@@ -108,6 +108,11 @@ Observed local validation on `2026-05-14` for this branch:
 - guest checkout regression suite: `72/72` passing via `dotnet test ELKH.Tests\\ELKH.GuestCheckoutTests\\ELKH.GuestCheckoutTests.csproj --no-restore -p:Threshold=0 --logger "console;verbosity=minimal"`
 
 This is a dated branch snapshot, not a standing guarantee. Prefer a CI-generated run record when publishing fresh validation evidence.
+
+Current branch notes:
+- The validated observability path is `/health` with Application Insights enabled only when configured.
+- The latest cleanup pass removed redundant setup comments and one repeated category lookup in the seeding path.
+- Use the targeted integration/performance tests as the branch’s strongest validation evidence until a fresh CI run is recorded.
 
 ### Documentation standards
 - **Format**: Markdown with consistent structure and styling

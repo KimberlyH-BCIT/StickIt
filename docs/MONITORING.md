@@ -107,6 +107,13 @@ requests
 | summarize avg(duration), count() by name
 | order by avg_duration desc
 
+// Cache-friendly public page traffic
+requests
+| where timestamp > ago(1h)
+| where name has_any ("/Home/Index", "/Category/Index", "/Category/ByCategory", "/Promotions/Index", "/Product/Index", "/Product/LoadMore")
+| summarize count(), avg(duration) by name
+| order by avg_duration desc
+
 // Slow database queries
 dependencies
 | where type == "SQL" and duration > 1000
@@ -357,31 +364,16 @@ groups:
 
 ### Health Check Implementation
 ```csharp
-// Program.cs - Health checks configuration
+// Program.cs - validated health checks configuration
 builder.Services.AddHealthChecks()
-    .AddDbContextCheck<ApplicationDbContext>()
-    .AddCheck<EmailHealthCheck>("email")
-    .AddCheck<SearchIndexHealthCheck>("search_index")
-    .AddCheck<CacheHealthCheck>("memory_cache")
-    .AddCheck<FileSystemHealthCheck>("file_system");
+    .AddDbContextCheck<ApplicationDbContext>(name: "database", tags: new[] { "db", "sql", "ready" })
+    .AddDbContextCheck<ImageStoreContext>(name: "imagestore", tags: new[] { "db", "sql", "ready" })
+    .AddCheck<PayPalHealthCheck>(name: "paypal", tags: new[] { "external", "payment", "live" })
+    .AddCheck<EmailHealthCheck>(name: "email", tags: new[] { "external", "smtp", "live" });
 
-// Configure health check endpoints
-app.MapHealthChecks("/health", new HealthCheckOptions
-{
-    ResponseWriter = UIResponseWriter.WriteHealthCheckUIResponse
-});
-
-app.MapHealthChecks("/health/ready", new HealthCheckOptions
-{
-    Predicate = check => check.Tags.Contains("ready"),
-    ResponseWriter = UIResponseWriter.WriteHealthCheckUIResponse
-});
-
-app.MapHealthChecks("/health/live", new HealthCheckOptions
-{
-    Predicate = _ => false,
-    ResponseWriter = UIResponseWriter.WriteHealthCheckUIResponse
-});
+// The branch currently validates /health as the public probe endpoint.
+// Ready/live splits are documented in the deployment guidance but are not mapped in this branch.
+app.MapHealthChecks("/health");
 ```
 
 ### Custom Health Checks
@@ -422,9 +414,14 @@ public class EmailHealthCheck : IHealthCheck
 - job_name: 'elkh-health'
   static_configs:
     - targets: ['elkh-app:8080']
-  metrics_path: '/health/prometheus'
+  metrics_path: '/health'
   scrape_interval: 30s
 ```
+
+### Validated Branch Notes
+- `/health` is the validated probe endpoint used by the current branch for container and smoke-test checks.
+- `Program.cs` currently registers database, image-store, PayPal, and email health checks, and the integration suite exercises the public health endpoint.
+- If readiness and liveness endpoints are added later, update this document and `docs/DEPLOYMENT.md` together so the branch guidance stays aligned with the code.
 
 ## 🔧 Performance Monitoring
 

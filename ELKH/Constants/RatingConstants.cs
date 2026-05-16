@@ -6,8 +6,8 @@ namespace ELKH.Constants
     /// </summary>
     public static class RatingFilter
     {
-        public const string All        = "all";
-        public const string Flagged    = "flagged";
+        public const string All = "all";
+        public const string Flagged = "flagged";
         public const string Unapproved = "unapproved";
     }
 
@@ -16,9 +16,9 @@ namespace ELKH.Constants
     /// </summary>
     public static class RatingSort
     {
-        public const string DateDesc   = "date_desc";
-        public const string DateAsc    = "date_asc";
+        public const string DateDesc = "date_desc";
+        public const string DateAsc = "date_asc";
         public const string RatingDesc = "rating_desc";
-        public const string RatingAsc  = "rating_asc";
+        public const string RatingAsc = "rating_asc";
     }
 }

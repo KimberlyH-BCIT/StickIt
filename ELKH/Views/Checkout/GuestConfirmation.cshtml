@@ -250,7 +250,7 @@
                                 @{
                                     var subtotal = Model.OrderItems?.Sum(i => i.UnitPrice * i.Quantity) ?? 0m;
                                     var tax = subtotal * 0.12m;
-                                    var shipping = subtotal >= 50m ? 0m : 7.99m;
+                                    var shipping = subtotal >= 50m ? 0m : 5.99m;
                                 }
                                 @subtotal.ToString("C")
                             </dd>

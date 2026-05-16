@@ -2,88 +2,61 @@
     ViewData["Title"] = "Accessibility Statement";
 }
 
-<div class="container my-5">
-    <div class="row justify-content-center">
-        <div class="col-lg-8">
-            <h1 class="mb-4">@ViewData["Title"]</h1>
-            
-            <p class="lead">ELKH Stickers is committed to ensuring digital accessibility for people with disabilities.</p>
+<div class="container-kawaii py-4 py-md-5">
+    <header class="kawaii-hero mb-4" aria-labelledby="accessibility-statement-heading">
+        <h1 id="accessibility-statement-heading" class="kawaii-cloud-title font-heading">
+            @ViewData["Title"]
+        </h1>
+        <p class="kawaii-subtitle">A short statement of the current accessibility patterns and known gaps in this branch.</p>
+    </header>
 
-            <div class="card shadow-sm mb-4">
-                <div class="card-body p-4">
-                    <h5 class="card-title">Our Commitment</h5>
-                    <p>We are continually improving the user experience for everyone and applying the relevant accessibility standards to ensure we provide equal access to all of our users.</p>
-                    <p class="mb-0">We strive to conform to the Web Content Accessibility Guidelines (WCAG) 2.1, Level AA, published by the World Wide Web Consortium (W3C).</p>
+    <main id="main-content" role="main">
+        <div class="row justify-content-center">
+            <div class="col-lg-8">
+                <div class="kawaii-card mb-4">
+                    <div class="p-4 p-md-5">
+                        <h2 class="font-heading hierarchy-primary mb-3">Our commitment</h2>
+                        <p class="hierarchy-secondary mb-3">ELKH Stickers is committed to improving digital accessibility for people with disabilities and to keeping the customer-facing experience aligned with WCAG 2.1 Level AA patterns where the codebase supports them.</p>
+                        <p class="mb-0">This page summarizes the current in-repo accessibility posture. It is not a third-party certification and it should be read alongside the implementation notes in <code>docs/ACCESSIBILITY.md</code>.</p>
+                    </div>
                 </div>
-            </div>
 
-            <div class="card shadow-sm mb-4">
-                <div class="card-body p-4">
-                    <h5 class="card-title">Accessibility Features</h5>
-                    <p>Our website includes the following accessibility features:</p>
-                    <ul class="mb-0">
-                        <li>Semantic HTML structure for better screen reader navigation</li>
-                        <li>Alternative text for images</li>
-                        <li>Keyboard navigation support</li>
-                        <li>ARIA labels and roles where appropriate</li>
-                        <li>Sufficient color contrast for text readability</li>
-                        <li>Responsive design that works on various devices and screen sizes</li>
-                        <li>Clear and consistent navigation</li>
-                        <li>Form labels and error messages</li>
-                    </ul>
+                <div class="kawaii-card mb-4">
+                    <div class="p-4 p-md-5">
+                        <h2 class="font-heading hierarchy-primary mb-3">Implemented patterns</h2>
+                        <ul class="mb-0">
+                            <li>Semantic HTML structure for navigation and content landmarks</li>
+                            <li>Skip links and keyboard-friendly navigation patterns</li>
+                            <li>ARIA labels, roles, and live regions for forms and status updates</li>
+                            <li>Focus styling and reduced-motion support in the shared layout</li>
+                            <li>Responsive layouts and visible form labels across storefront and Identity pages</li>
+                        </ul>
+                    </div>
                 </div>
-            </div>
 
-            <div class="card shadow-sm mb-4">
-                <div class="card-body p-4">
-                    <h5 class="card-title">Compatibility</h5>
-                    <p class="mb-0">This website is designed to be compatible with the following assistive technologies:</p>
-                    <ul class="mt-2 mb-0">
-                        <li>Screen readers (JAWS, NVDA, VoiceOver)</li>
-                        <li>Speech recognition software</li>
-                        <li>Keyboard navigation</li>
-                        <li>Screen magnification software</li>
-                    </ul>
+                <div class="kawaii-card mb-4">
+                    <div class="p-4 p-md-5">
+                        <h2 class="font-heading hierarchy-primary mb-3">Known limitations</h2>
+                        <p class="mb-0">The repository still needs committed axe/Lighthouse results, screen-reader notes tied to a reviewed build, and a short evidence checklist captured after a real accessibility review session.</p>
+                    </div>
                 </div>
-            </div>
 
-            <div class="card shadow-sm mb-4">
-                <div class="card-body p-4">
-                    <h5 class="card-title">Known Limitations</h5>
-                    <p>Despite our best efforts, there may be some limitations. We are actively working to improve accessibility and remove barriers.</p>
-                    <p class="mb-0">If you encounter any accessibility barriers, please let us know so we can address them.</p>
+                <div class="kawaii-card mb-4">
+                    <div class="p-4 p-md-5">
+                        <h2 class="font-heading hierarchy-primary mb-3">Feedback</h2>
+                        <p>If you encounter an accessibility barrier, please report it so it can be reviewed and documented.</p>
+                        <ul class="mb-0">
+                            <li>Email: accessibility@stickit.dev</li>
+                            <li>Contact form: <a asp-action="Contact" class="kawaii-link">Contact Us</a></li>
+                        </ul>
+                    </div>
                 </div>
-            </div>
 
-            <div class="card shadow-sm mb-4">
-                <div class="card-body p-4">
-                    <h5 class="card-title">Assessment and Testing</h5>
-                    <p class="mb-0">We regularly test our website using:</p>
-                    <ul class="mt-2 mb-0">
-                        <li>Automated accessibility testing tools</li>
-                        <li>Manual testing with assistive technologies</li>
-                        <li>Keyboard-only navigation testing</li>
-                        <li>User feedback and accessibility audits</li>
-                    </ul>
+                <div class="alert alert-info mt-4" role="status">
+                    <i class="bi bi-info-circle me-2"></i>
+                    <strong>Last Updated:</strong> @DateTime.Now.ToString("MMMM dd, yyyy")
                 </div>
-            </div>
-
-            <div class="card shadow-sm">
-                <div class="card-body p-4">
-                    <h5 class="card-title">Feedback</h5>
-                    <p>We welcome your feedback on the accessibility of ELKH Stickers. Please let us know if you encounter accessibility barriers:</p>
-                    <ul class="mb-3">
-                        <li>Email: accessibility@stickit.dev</li>
-                        <li>Contact form: <a asp-action="Contact">Contact Us</a></li>
-                    </ul>
-                    <p class="mb-0">We aim to respond to accessibility feedback within 5 business days.</p>
-                </div>
-            </div>
-
-            <div class="alert alert-info mt-4">
-                <i class="bi bi-info-circle me-2"></i>
-                <strong>Last Updated:</strong> @DateTime.Now.ToString("MMMM dd, yyyy")
             </div>
         </div>
-    </div>
+    </main>
 </div>

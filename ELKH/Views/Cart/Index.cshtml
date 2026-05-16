@@ -20,7 +20,7 @@
     </header>
 }
 
-<main class="container py-4" data-cart-count="@totalQuantity" role="main">
+<div class="container py-4" data-cart-count="@totalQuantity">
     <div id="cart-status" aria-live="polite" aria-atomic="true" class="sr-only"></div>
 
     @if (Model.IsEmpty)
@@ -212,7 +212,7 @@
                                     @Model.Subtotal.ToString("C")
                                 </dd>
 
-                                <dt class="col-sm-8 col-7">Tax (HST 13%):</dt>
+                                <dt class="col-sm-8 col-7">Tax (12%):</dt>
                                 <dd class="col-sm-4 col-5 text-end" aria-label="Tax amount">
                                     @Model.Tax.ToString("C")
                                 </dd>
@@ -278,7 +278,7 @@
             </div>
         </div>
     }
-</main>
+</div>
 
 @section Scripts {
     <script src="~/js/cart-interactions.js" asp-append-version="true"></script>

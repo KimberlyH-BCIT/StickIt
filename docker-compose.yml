@@ -24,8 +24,8 @@ services:
       Logging__LogLevel__Default: Information
       Logging__LogLevel__Microsoft.AspNetCore: Warning
     volumes:
-      - ./ELKH/app.db:/app/Data/app.db
-      - ./ELKH/ImageStore.db:/app/Data/ImageStore.db
+      - ./.localdata/app.db:/app/Data/app.db
+      - ./.localdata/ImageStore.db:/app/Data/ImageStore.db
       - ./ELKH/wwwroot:/app/wwwroot
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost/health"]

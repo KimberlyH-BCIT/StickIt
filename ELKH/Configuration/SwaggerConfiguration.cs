@@ -1,8 +1,8 @@
+using System.Reflection;
 using Asp.Versioning.ApiExplorer;
+using Microsoft.AspNetCore.Mvc;
 using Microsoft.OpenApi;
 using Swashbuckle.AspNetCore.SwaggerGen;
-using System.Reflection;
-using Microsoft.AspNetCore.Mvc;
 
 namespace ELKH.Configuration;
 
@@ -10,6 +10,14 @@ namespace ELKH.Configuration;
 /// Swagger configuration for ELKH API documentation.
 /// Provides comprehensive API documentation with versioning support.
 /// </summary>
+/// <remarks>
+/// <para><strong>Table of Contents:</strong></para>
+/// <list type="number">
+/// <item>Section 1: Main Configuration &amp; Service Registration</item>
+/// <item>Section 2: API Documentation &amp; Metadata Helper Methods</item>
+/// <item>Section 3: Swagger UI Configuration</item>
+/// </list>
+/// </remarks>
 public static class SwaggerConfiguration
 {
     #region Section 1: Main Configuration & Service Registration
@@ -76,21 +84,21 @@ public static class SwaggerConfiguration
             {
                 options.SwaggerDoc(description.GroupName, new OpenApiInfo
                 {
-                    Title = "ELKH eCommerce API",
+                    Title = "StickIt API",
                     Version = description.ApiVersion.ToString(),
                     Description = GetVersionDescription(description),
                     Contact = new OpenApiContact
                     {
-                        Name = "ELKH Development Team",
-                        Email = "api-support@elkh.com",
-                        Url = new Uri("https://elkh.com/contact")
+                        Name = "StickIt Development Team",
+                        Email = "support@example.com",
+                        Url = new Uri("https://example.com")
                     },
                     License = new OpenApiLicense
                     {
                         Name = "MIT License",
                         Url = new Uri("https://opensource.org/licenses/MIT")
                     },
-                    TermsOfService = new Uri("https://elkh.com/terms")
+                    TermsOfService = new Uri("https://example.com/terms")
                 });
             }
 
@@ -123,7 +131,7 @@ public static class SwaggerConfiguration
         {
             options.RoutePrefix = "api/docs";
             options.DocumentTitle = "ELKH eCommerce API Documentation";
-            
+
             // Configure endpoints for each API version
             foreach (var description in provider.ApiVersionDescriptions.Reverse())
             {
@@ -147,7 +155,7 @@ public static class SwaggerConfiguration
 
             // Custom CSS for branding
             options.InjectStylesheet("/css/swagger-custom.css");
-            
+
             // Custom JavaScript for enhanced functionality
             //options.InjectJavaScript("/js/swagger-custom.js"); // Not available in this version
         });
@@ -166,7 +174,7 @@ public static class SwaggerConfiguration
     private static string GetVersionDescription(ApiVersionDescription description)
     {
         var version = description.ApiVersion.ToString();
-        
+
         return version switch
         {
             "1.0" => "Initial release of the ELKH eCommerce API. Provides core functionality for product catalog, search, and basic operations.",

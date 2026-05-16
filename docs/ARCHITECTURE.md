@@ -107,7 +107,14 @@ StickIt/
 
 ## 🎮 Controller Decomposition
 
-This application is more MVC-controller-heavy than Razor-Pages-heavy. Razor Pages are concentrated in the Identity area rather than being the primary pattern for the storefront and admin flows.
+This application uses MVC controllers for the storefront and admin flows, while Razor Pages are concentrated in the Identity area.
+
+### Current UI pattern split
+- **MVC Controllers + Views**: public storefront pages, catalog browsing, checkout, admin workflows, and other custom application screens.
+- **Razor Pages**: Identity login, registration, account management, and other built-in authentication flows.
+- **Shared layout and partials**: used by both patterns to keep navigation and branding consistent.
+
+This split matches the current codebase and keeps the Razor Pages surface focused where it is most useful today.
 
 ### Original Monolithic Design
 - **UserController** (772 lines) - Multiple responsibilities
@@ -200,15 +207,16 @@ public interface IRegisteredUserLogRepo : IRepository<RegisteredUserLogModel>
 ### Service Organization
 ```
 Services/
-├── IUserService.cs              # User management and authentication
-├── ISearchService.cs           # Product search and filtering
-├── IImageOptimizationService.cs # Image processing and optimization
-├── IEmailService.cs            # Email notifications
-├── IRatingService.cs           # Product ratings and reviews
-├── IStoreReviewService.cs      # Store testimonials
-├── IOrderService.cs            # Order management
-├── IPaymentService.cs          # Payment processing
-└── IFuzzyReindexService.cs     # Background search indexing
+├── IUserService.cs              # User-facing account and dashboard operations
+├── ISearchService.cs            # Product search and filtering
+├── IImageOptimizationService.cs # Image storage / optimization helper
+├── IOrderEmailService.cs        # Order confirmation and order-status email notifications
+├── IPayPalService.cs            # PayPal order verification and payment integration
+├── IRatingService.cs            # Product ratings and reviews
+├── IStoreReviewService.cs       # Store testimonials
+├── IShippingService.cs          # Shipping method lookup and cost calculation
+├── IStockNotificationService.cs # Back-in-stock notifications
+└── IFuzzyReindexService.cs      # Background search indexing
 ```
 
 ### Service Patterns
@@ -296,7 +304,7 @@ graph LR
 ```
 
 ### Custom Telemetry Processors
-- **PerformanceEnrichmentProcessor** - Adds business context and performance tiers
+- **Business telemetry enrichment processor** - Adds business context and performance tiers
 - **SensitiveDataFilterProcessor** - Removes PII from telemetry
 - **GlobalExceptionMiddleware** - Centralized error handling and reporting
 

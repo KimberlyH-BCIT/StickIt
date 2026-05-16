@@ -11,7 +11,7 @@ It is not a formal certification report. Instead, it collects:
 
 ## Accessibility target
 
-The project is aiming for **WCAG 2.1 Level AA** patterns in the customer-facing experience, but this repository does not currently include a full third-party audit package or committed axe/Lighthouse artifacts proving complete conformance.
+The project is aiming for **WCAG 2.1 Level AA** patterns in the customer-facing experience, and the codebase already shows implemented accessibility patterns, but this repository does not currently include a full third-party audit package or committed axe/Lighthouse artifacts proving complete conformance.
 
 What is evidenced in the repo today:
 - semantic layout and skip links
@@ -60,10 +60,21 @@ Implemented and intended patterns:
 
 ### Navigation Components
 #### Main Navigation (`_Navbar.cshtml`)
-- ARIA roles: `role="navigation"`, `role="menu"`, `role="menuitem"`
-- Dropdown menus use proper ARIA menu pattern
+- Landmark navigation is exposed through `<nav aria-label="Main navigation">`
+- Account/cart actions are also exposed through a dedicated `<nav aria-label="User account and cart actions">`
+- The hamburger control exposes `aria-controls`, `aria-expanded`, and an explicit `aria-label`
+- Dropdowns currently use Bootstrap nav/dropdown markup with `aria-expanded` / `aria-haspopup` states rather than a full WAI-ARIA menu/menuitem pattern
 - Hamburger menu has `aria-controls`, `aria-expanded`
 - All links have descriptive `aria-label` attributes
+
+#### Search Surfaces
+- The shared header search bar uses `<section role="search" aria-labelledby="search-form-heading">` to create a clear landmark for product search.
+- The product search/filter partial also uses `<section role="search" aria-labelledby="search-filter-heading">` so the two search entry points share the same landmark pattern.
+- Both search forms keep visible labels, helper text, and autocomplete semantics for keyboard and screen reader users.
+
+#### Footer Navigation (`_Layout.cshtml`)
+- Footer groups use labeled navigation landmarks for useful links, support, and company information.
+- The footer's contact guidance is product-facing and no longer refers to demo-only social/newsletter flows.
 
 #### Offcanvas Menu
 - Proper `role="dialog"` semantics
@@ -81,6 +92,10 @@ Examples implemented in the app:
 - ✅ Help text associated via `aria-describedby`
 - ✅ Error messages with `role="alert"` and `aria-live="polite"`
 - ✅ Autocomplete attributes for common fields (email, name, address)
+
+### Alert messages
+- Reusable alert banners use `role="alert"` with `aria-atomic="true"` so screen readers announce the full message consistently.
+- Identity status messages in the account and account-management areas follow the same atomic alert pattern.
 
 ### Enhanced forms
 - **Product Create/Edit**: Full accessibility with required indicators, validation feedback, and help text
@@ -189,6 +204,9 @@ All images include appropriate alternative text:
   <i class="bi bi-image" aria-hidden="true"></i>
 </div>
 ```
+
+### Temporary Alerts
+- JavaScript-generated temporary alerts use `role="alert"` with `aria-atomic="true"` so the full message is announced consistently.
 
 ### Avatar Images
 User profile pictures include descriptive alt text:
@@ -340,13 +358,13 @@ Recommended tools for repeatable portfolio evidence:
 - **Pa11y**: Automated accessibility testing CLI
 
 ### Current evidence status
-At the time of this branch update, the repository documents the intended testing approach but does not yet include committed output files or screenshots from:
+At the time of this branch update, the repository documents the intended testing approach and the in-repo implementation patterns, but it does not yet include committed output files or screenshots from:
 - NVDA
 - JAWS
 - VoiceOver
 - TalkBack
 
-Until those artifacts are captured, treat screen-reader support here as an implementation goal supported by code patterns, not as a fully evidenced certification statement.
+Until those artifacts are captured, treat screen-reader support here as an implementation goal supported by code patterns and manual checks, not as a fully evidenced certification statement.
 
 ---
 
@@ -356,6 +374,7 @@ Until those artifacts are captured, treat screen-reader support here as an imple
 - No committed axe or Lighthouse result captures yet
 - No screenshot set yet showing keyboard focus states across the main storefront flows
 - No short accessibility walkthrough GIF yet for the portfolio README
+- No committed screen-reader notes tied to a specific reviewed build
 
 ### Future enhancements
 - [ ] Add ARIA landmarks to product grid sections
@@ -363,7 +382,7 @@ Until those artifacts are captured, treat screen-reader support here as an imple
 - [ ] Add skip links within long product lists
 - [ ] Enhance mobile touch target sizes on complex forms
 - [ ] Add voice command support
-- [ ] Commit real audit artifacts and responsive accessibility screenshots
+- [ ] Commit real audit artifacts, screen-reader notes, and responsive accessibility screenshots
 
 ---
 

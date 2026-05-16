@@ -45,7 +45,7 @@ public class ReCaptchaOptions
     /// This key is used in client-side JavaScript to render the reCAPTCHA widget.
     /// It's safe to expose publicly as it's domain-restricted in Google's console.
     /// </remarks>
-    public string SiteKey   { get; set; } = "";
+    public string SiteKey { get; set; } = "";
 
     /// <summary>
     /// reCAPTCHA Secret Key for server-side verification.

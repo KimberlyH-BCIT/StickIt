@@ -18,10 +18,10 @@
                aria-label="ELKH - Go to homepage">
                 <img src="~/logo-stickit.png" alt="ELKH Logo" class="logo-image" />
             </a>
-            <div class="d-flex align-items-center flex-wrap gap-3" role="navigation" aria-label="User account and cart actions">
+            <nav class="d-flex align-items-center flex-wrap gap-3" aria-label="User account and cart actions">
                 <partial name="_LoginPartial" />
                 <partial name="_CartIconPartial" />
-            </div>
+            </nav>
         </div>
     </div>
 
@@ -29,7 +29,7 @@
     <partial name="_SearchBar" />
 
     @* Navigation strip with soft kawaii styling *@
-    <nav class="kawaii-nav" role="navigation" aria-label="Main navigation" id="site-navigation">
+    <nav class="kawaii-nav" aria-label="Main navigation" id="site-navigation">
         <div class="container-fluid d-flex align-items-center py-2">
             <button class="kawaii-nav-hamburger btn-kawaii btn-outline-kawaii flex-shrink-0 me-3"
                     type="button"

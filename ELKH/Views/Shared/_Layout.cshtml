@@ -384,37 +384,11 @@
 
                 <div class="col-12 col-lg-3">
                     <h3 class="text-white fw-bold mb-2 h5">Stay connected</h3>
-                    <div class="text-white-50 mb-3">Subscribe for product drops and updates.</div>
-
-                    <form id="newsletter-form" class="d-flex gap-2 mb-3" aria-label="Newsletter subscription">
-                        <label for="newsletter-email" class="sr-only">Email address for newsletter</label>
-                        <input id="newsletter-email" 
-                               name="email" 
-                               class="form-control form-control-sm" 
-                               type="email" 
-                               placeholder="Email address" 
-                               aria-label="Email address for newsletter" 
-                               autocomplete="email" 
-                               required 
-                               aria-describedby="newsletter-description" />
-                        <button id="newsletter-btn" class="btn btn-warning btn-sm fw-bold" type="submit" aria-label="Subscribe to newsletter">Subscribe</button>
-                    </form>
-                    <div id="newsletter-description" class="sr-only">Subscribe to receive product updates and promotional emails</div>
-
-                    <div class="d-flex gap-3 fs-5" role="navigation" aria-label="Social media links">
-                        <a class="text-white-50" href="#" aria-label="Follow us on Instagram">
-                            <i class="bi bi-instagram" aria-hidden="true"></i>
-                        </a>
-                        <a class="text-white-50" href="#" aria-label="Follow us on Facebook">
-                            <i class="bi bi-facebook" aria-hidden="true"></i>
-                        </a>
-                        <a class="text-white-50" href="#" aria-label="Follow us on YouTube">
-                            <i class="bi bi-youtube" aria-hidden="true"></i>
-                        </a>
-                        <a class="text-white-50" href="#" aria-label="Follow us on TikTok">
-                            <i class="bi bi-tiktok" aria-hidden="true"></i>
-                        </a>
-                    </div>
+                    <p class="text-white-50 mb-3">Project updates and support details are available through the site content and contact page.</p>
+                    <p class="small text-white-50 mb-0">
+                        Use the <a class="text-warning text-decoration-none" asp-controller="Home" asp-action="Contact">contact page</a>
+                        for project questions and support.
+                    </p>
                 </div>
 
             </div>
@@ -422,7 +396,7 @@
             <hr class="border-secondary my-4" />
 
             <div class="d-flex justify-content-between align-items-center flex-wrap gap-2">
-                <div>&copy; @DateTime.Now.Year - ELKH</div>
+                <div>&copy; @DateTime.Now.Year - StickIt</div>
                 <div class="d-flex gap-3">
                     <a class="text-white-50 text-decoration-none" asp-controller="Home" asp-action="Privacy">Privacy</a>
                     <a class="text-white-50 text-decoration-none" asp-controller="Home" asp-action="Terms">Terms</a>
@@ -540,16 +514,37 @@
             banner.setAttribute('role', 'banner');
             banner.setAttribute('aria-live', 'polite');
             banner.setAttribute('aria-label', 'Install app notification');
-            banner.innerHTML = `
-                <div class="d-flex align-items-center">
-                    <i class="bi bi-download me-2" aria-hidden="true"></i>
-                    <span>Install ELKH app for a better shopping experience!</span>
-                </div>
-                <div class="d-flex gap-2">
-                    <button class="btn btn-sm btn-primary" onclick="installPWA()" aria-label="Install ELKH app">Install</button>
-                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close install notification"></button>
-                </div>
-            `;
+
+            const messageContainer = document.createElement('div');
+            messageContainer.className = 'd-flex align-items-center';
+
+            const icon = document.createElement('i');
+            icon.className = 'bi bi-download me-2';
+            icon.setAttribute('aria-hidden', 'true');
+
+            const messageText = document.createElement('span');
+            messageText.textContent = 'Install StickIt app for a better shopping experience!';
+
+            messageContainer.append(icon, messageText);
+
+            const actionContainer = document.createElement('div');
+            actionContainer.className = 'd-flex gap-2';
+
+            const installButton = document.createElement('button');
+            installButton.type = 'button';
+            installButton.className = 'btn btn-sm btn-primary';
+            installButton.setAttribute('aria-label', 'Install StickIt app');
+            installButton.textContent = 'Install';
+            installButton.addEventListener('click', installPWA);
+
+            const closeButton = document.createElement('button');
+            closeButton.type = 'button';
+            closeButton.className = 'btn-close';
+            closeButton.setAttribute('aria-label', 'Close install notification');
+            closeButton.addEventListener('click', hideInstallPromotion);
+
+            actionContainer.append(installButton, closeButton);
+            banner.append(messageContainer, actionContainer);
 
             document.body.prepend(banner);
 
@@ -604,10 +599,20 @@
                     indicator.id = 'offline-indicator';
                     indicator.className = 'alert alert-warning alert-dismissible mb-0 text-center';
                     indicator.style.cssText = 'position: fixed; bottom: 0; left: 0; right: 0; z-index: 9999; border-radius: 0;';
-                    indicator.innerHTML = `
-                        <i class="bi bi-wifi-off me-2"></i>You're offline. Some features may be limited.
-                        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-                    `;
+
+                    const offlineIcon = document.createElement('i');
+                    offlineIcon.className = 'bi bi-wifi-off me-2';
+                    offlineIcon.setAttribute('aria-hidden', 'true');
+
+                    const offlineText = document.createTextNode("You're offline. Some features may be limited.");
+
+                    const closeButton = document.createElement('button');
+                    closeButton.type = 'button';
+                    closeButton.className = 'btn-close';
+                    closeButton.setAttribute('aria-label', 'Close');
+                    closeButton.addEventListener('click', () => indicator.remove());
+
+                    indicator.append(offlineIcon, offlineText, closeButton);
                     document.body.appendChild(indicator);
                 }
             }

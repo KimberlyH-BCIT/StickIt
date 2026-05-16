@@ -67,6 +67,7 @@ function showTempMessage(level, text) {
     const alert = document.createElement('div');
     alert.className = `alert ${cls} alert-dismissible fade show`;
     alert.role = 'alert';
+    alert.setAttribute('aria-atomic', 'true');
     // escapeHtml guards against XSS from server-supplied message strings.
     alert.innerHTML = `${escapeHtml(text)} <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>`;
     container.insertAdjacentElement('afterbegin', alert);
@@ -502,31 +503,3 @@ function initProductCardNavigation() {
     });
 }
 
-// ─── Newsletter Subscription ──────────────────────────────────────────────────
-
-/**
- * Initializes the newsletter subscription form in the footer.
- * On submit, displays a success message and clears the input field.
- */
-document.addEventListener('DOMContentLoaded', function() {
-    const form = document.getElementById('newsletter-form');
-    if (!form) return;
-
-    form.addEventListener('submit', function(e) {
-        e.preventDefault();
-
-        const emailInput = document.getElementById('newsletter-email');
-        const email = emailInput.value.trim();
-
-        if (!email) {
-            showTempMessage('warning', 'Please enter a valid email address.');
-            return;
-        }
-
-        // Show success message
-        showTempMessage('success', `Thanks for subscribing! We'll send updates to ${escapeHtml(email)}`);
-
-        // Clear the input field
-        emailInput.value = '';
-    });
-});

@@ -39,6 +39,8 @@ A full-stack web application with:
 
 This repo still needs real product screenshots before it is presentation-ready. I have added a capture checklist so the README can point to the exact assets that should exist for a proper portfolio pass.
 
+The current UI split is intentional: MVC controllers and views power the storefront and admin flows, while Razor Pages are used primarily for Identity and account-management screens.
+
 ### Screenshots and demo assets to capture
 
 | Surface | Planned asset | Why it matters |
@@ -72,6 +74,8 @@ This branch is intended to show my portfolio contributions, especially around:
 - Docker and local-environment simplification
 - documentation cleanup and portfolio positioning
 - UI polish, accessibility-minded improvements, and design-system cleanup
+
+The implementation is not Razor Pages-first across the whole site; it is a mixed MVC + Razor Pages app with Razor Pages focused on Identity.
 
 The original team credits are preserved later in this README.
 
@@ -109,7 +113,7 @@ Then open:
 
 ## Demo logins
 
-The app can seed local demo accounts through `ELKH/Data/DbSeeder.Users.cs`, but default elevated credentials are now disabled unless development explicitly opts in with `Seed:AllowDefaultElevatedCredentials=true`.
+The app can seed local demo accounts through `ELKH/Data/DbSeeder.Users.cs`, but elevated built-in demo credentials are blocked by default. They are only allowed when Development explicitly opts in with `Seed:AllowDefaultElevatedCredentials=true`.
 
 | Role | Email | Password |
 |---|---|---|
@@ -117,7 +121,7 @@ The app can seed local demo accounts through `ELKH/Data/DbSeeder.Users.cs`, but 
 | Manager | `manager@stickit.dev` | `Manager@2025!` |
 | Staff | `staff@stickit.dev` | `Staff@2025!` |
 
-These defaults are for explicit local demo mode only. In non-development environments, configure elevated seed credentials explicitly or disable privileged seeding.
+These values are for explicit local demo mode only. In non-development environments, startup now fails if elevated seeding would rely on missing credentials or these built-in demo defaults. Configure unique elevated seed credentials explicitly or disable privileged seeding.
 
 The customer seeder also generates many demo customer accounts with `@home.com` emails and `Demo@2025!##` style passwords for local and demo exploration.
 

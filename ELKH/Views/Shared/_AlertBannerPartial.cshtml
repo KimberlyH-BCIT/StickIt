@@ -7,7 +7,7 @@
 ╚==================================================================================╝
 *@
 
-<div class="alert @Model.AlertType @Model.CssClasses" role="alert">
+<div class="alert @Model.AlertType @Model.CssClasses" role="alert" aria-atomic="true">
     @if (Model.CssClasses.Contains("justify-content-between"))
     {
         @* Layout for complex alerts with actions and dismiss buttons *@

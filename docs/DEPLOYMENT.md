@@ -363,8 +363,9 @@ az webapp deployment source config-zip `
       "properties": {
         "serverFarmId": "[resourceId('Microsoft.Web/serverfarms', variables('appServicePlanName'))]",
         "siteConfig": {
-          "netFrameworkVersion": "v8.0",
-          "healthCheckPath": "/health"
+          "netFrameworkVersion": "v10.0",
+          "healthCheckPath": "/health",
+          "http20Enabled": true
         }
       }
     },
@@ -419,6 +420,11 @@ Encrypt=True;
 TrustServerCertificate=False;
 Connection Timeout=30;
 ```
+
+### Validated Branch Notes
+- The branch currently validates a single public `/health` endpoint instead of separate readiness and liveness routes.
+- `Program.cs` wires Application Insights only when a connection string is configured, so local and test startup remain usable without Azure monitoring.
+- The current integration test suite covers the health endpoint, static assets, and the primary Razor Pages flow, so deployment guidance should stay limited to those validated paths unless the branch adds more checks.
 
 ## ⚙️ Kubernetes Deployment
 
@@ -675,6 +681,9 @@ jobs:
     - name: Test
       run: dotnet test --configuration Release --collect:"XPlat Code Coverage"
 
+    - name: Validate performance and integration baseline
+      run: dotnet test ELKH.Tests\ELKH.Tests.csproj --no-restore -p:Threshold=0 --logger "console;verbosity=minimal"
+
   build-and-deploy:
     needs: test
     runs-on: ubuntu-latest
@@ -731,6 +740,11 @@ jobs:
 }
 ```
 
+### Validated branch readiness
+- The branch currently validates startup with the `/health` endpoint and integration tests rather than separate readiness and liveness routes.
+- Application Insights is conditional on configuration in `Program.cs`; local and test hosts are expected to run without it.
+- Performance validation in this branch is driven by the existing test suites and the audited baseline noted in `ELKH.Tests/README.md`.
+
 ## 📋 Deployment Checklist
 
 ### Pre-Deployment
@@ -741,6 +755,7 @@ jobs:
 - [ ] Health checks configured
 - [ ] Monitoring dashboards ready
 - [ ] Rollback plan prepared
+- [ ] Audited performance baseline captured for the current branch
 
 ### Post-Deployment
 - [ ] Application health verified
@@ -749,6 +764,7 @@ jobs:
 - [ ] Error rates acceptable
 - [ ] User journeys functional
 - [ ] Monitoring alerts active
+- [ ] `/health` probe returns the expected result in the deployed environment
 
 ## 🔄 Rollback Procedures
 

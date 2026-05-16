@@ -7,16 +7,16 @@ using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
 using System.Linq;
 using System.Threading.Tasks;
-using Microsoft.AspNetCore.Authorization;
+using ELKH.Configuration;
+using ELKH.Models;
+using ELKH.Services;
 using Microsoft.AspNetCore.Authentication;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Identity.UI.Services;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 using Microsoft.Extensions.Logging;
-using ELKH.Services;
-using ELKH.Models;
-using ELKH.Configuration;
 using Microsoft.Extensions.Options;
 using static ELKH.Extensions.RateLimitPolicies;
 
@@ -86,6 +86,7 @@ namespace ELKH.Areas.Identity.Pages.Account
         /// <param name="logger">Logger for login events and security diagnostics.</param>
         /// <param name="reCaptcha">Service for validating reCAPTCHA tokens.</param>
         /// <param name="reCaptchaOptions">Google reCAPTCHA configuration (site key for client).</param>
+        /// <param name="environment">Hosting environment used to alter runtime behavior (Development/Production).</param>
         public LoginModel(
             SignInManager<IdentityUser> signInManager,
             ILogger<LoginModel> logger,
@@ -192,7 +193,7 @@ namespace ELKH.Areas.Identity.Pages.Account
 
             // â”€â”€ Debug Logging â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
             // Verify reCAPTCHA site key is loaded for troubleshooting
-            _logger.LogInformation("ReCAPTCHA SiteKey loaded: {SiteKey}", 
+            _logger.LogInformation("ReCAPTCHA SiteKey loaded: {SiteKey}",
                 string.IsNullOrEmpty(ReCaptchaSiteKey) ? "(empty)" : ReCaptchaSiteKey);
         }
 
@@ -266,9 +267,9 @@ namespace ELKH.Areas.Identity.Pages.Account
                 // ======================================================================
                 var lockoutOnFailure = !_environment.IsDevelopment();
                 var result = await _signInManager.PasswordSignInAsync(
-                    Input.Email, 
-                    Input.Password, 
-                    Input.RememberMe, 
+                    Input.Email,
+                    Input.Password,
+                    Input.RememberMe,
                     lockoutOnFailure: lockoutOnFailure);
 
                 if (result.Succeeded)

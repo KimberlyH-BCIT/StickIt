@@ -5,10 +5,11 @@
 ╚==================================================================================╝
 *@
 
-<div class="header-search py-3 surface-sky">
+<section class="header-search py-3 surface-sky" role="search" aria-labelledby="search-form-heading">
     <div class="container-fluid d-flex justify-content-center">
         <div class="search-kawaii">
-            <form asp-controller="Product" asp-action="Index" method="get" class="d-flex align-items-center" role="search" id="search-form">
+            <h2 id="search-form-heading" class="sr-only">Product search</h2>
+            <form asp-controller="Product" asp-action="Index" method="get" class="d-flex align-items-center" id="search-form">
                 <label for="productNameInput" class="sr-only">Search for products</label>
                 <div class="search-input-container position-relative flex-grow-1">
                     <input id="productNameInput"
@@ -46,4 +47,4 @@
             </div>
         </div>
     </div>
-</div>
+</section>

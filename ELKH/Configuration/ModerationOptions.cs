@@ -27,6 +27,6 @@ namespace ELKH.Configuration
         /// <example>
         /// "https://myapp.com"
         /// </example>
-        public string BaseUrl { get; set; }
+        public string BaseUrl { get; set; } = string.Empty;
     }
 }

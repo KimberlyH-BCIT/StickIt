@@ -2,30 +2,26 @@
 @{
     var hasExternalLogins = (await SignInManager.GetExternalAuthenticationSchemesAsync()).Any();
 }
-<div class="kawaii-panel">
-    <nav aria-label="Account management">
-        <div class="d-flex flex-column gap-2">
-            <a class="tab-kawaii @ManageNavPages.IndexNavClass(ViewContext)" id="profile" asp-page="./Index">
-                <i class="bi bi-person-fill me-2" aria-hidden="true"></i>Profile
-            </a>
-            <a class="tab-kawaii @ManageNavPages.EmailNavClass(ViewContext)" id="email" asp-page="./Email">
-                <i class="bi bi-envelope-fill me-2" aria-hidden="true"></i>Email
-            </a>
-            <a class="tab-kawaii @ManageNavPages.ChangePasswordNavClass(ViewContext)" id="change-password" asp-page="./ChangePassword">
-                <i class="bi bi-lock-fill me-2" aria-hidden="true"></i>Password
-            </a>
-            @if (hasExternalLogins)
-            {
-                <a id="external-login" class="tab-kawaii @ManageNavPages.ExternalLoginsNavClass(ViewContext)" asp-page="./ExternalLogins">
-                    <i class="bi bi-link-45deg me-2" aria-hidden="true"></i>External logins
-                </a>
-            }
-            <a class="tab-kawaii @ManageNavPages.TwoFactorAuthenticationNavClass(ViewContext)" id="two-factor" asp-page="./TwoFactorAuthentication">
-                <i class="bi bi-shield-lock-fill me-2" aria-hidden="true"></i>Two-factor auth
-            </a>
-            <a class="tab-kawaii @ManageNavPages.PersonalDataNavClass(ViewContext)" id="personal-data" asp-page="./PersonalData">
-                <i class="bi bi-database-fill me-2" aria-hidden="true"></i>Personal data
-            </a>
-        </div>
-    </nav>
+<div class="d-flex flex-column gap-2">
+    <a class="tab-kawaii @ManageNavPages.IndexNavClass(ViewContext)" id="profile" asp-page="./Index">
+        <i class="bi bi-person-fill me-2" aria-hidden="true"></i>Profile
+    </a>
+    <a class="tab-kawaii @ManageNavPages.EmailNavClass(ViewContext)" id="email" asp-page="./Email">
+        <i class="bi bi-envelope-fill me-2" aria-hidden="true"></i>Email
+    </a>
+    <a class="tab-kawaii @ManageNavPages.ChangePasswordNavClass(ViewContext)" id="change-password" asp-page="./ChangePassword">
+        <i class="bi bi-lock-fill me-2" aria-hidden="true"></i>Password
+    </a>
+    @if (hasExternalLogins)
+    {
+        <a id="external-login" class="tab-kawaii @ManageNavPages.ExternalLoginsNavClass(ViewContext)" asp-page="./ExternalLogins">
+            <i class="bi bi-link-45deg me-2" aria-hidden="true"></i>External logins
+        </a>
+    }
+    <a class="tab-kawaii @ManageNavPages.TwoFactorAuthenticationNavClass(ViewContext)" id="two-factor" asp-page="./TwoFactorAuthentication">
+        <i class="bi bi-shield-lock-fill me-2" aria-hidden="true"></i>Two-factor auth
+    </a>
+    <a class="tab-kawaii @ManageNavPages.PersonalDataNavClass(ViewContext)" id="personal-data" asp-page="./PersonalData">
+        <i class="bi bi-database-fill me-2" aria-hidden="true"></i>Personal data
+    </a>
 </div>
