@@ -1,24 +1,23 @@
+using System.Globalization;
+using System.Net;
+using Asp.Versioning;
+using Asp.Versioning.ApiExplorer;
 using ELKH.Configuration;
 using ELKH.Data;
 using ELKH.Extensions;
 using ELKH.Models;
 using ELKH.Repositories;
 using ELKH.Services;
+using Microsoft.AspNetCore.HttpOverrides;
 using Microsoft.AspNetCore.Identity;
-using Microsoft.AspNetCore.Localization;
-using Microsoft.EntityFrameworkCore;
 using Microsoft.AspNetCore.Identity.UI.Services;
-using Asp.Versioning;
-using Asp.Versioning.ApiExplorer;
+using Microsoft.AspNetCore.Localization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Filters;
-using Microsoft.AspNetCore.HttpOverrides;
-using System.Net;
-using System.Globalization;
+using Microsoft.EntityFrameworkCore;
 
 var builder = WebApplication.CreateBuilder(args);
 
-// Configure logging to avoid EventLog disposal issues
 builder.Logging.ClearProviders();
 builder.Logging.AddConsole();
 builder.Logging.AddDebug();
@@ -36,12 +35,7 @@ builder.Services.AddDbContext<ImageStoreContext>(options =>
     options.UseSqlite(imageStoreConnection));
 builder.Services.AddDatabaseDeveloperPageExceptionFilter();
 
-// -- Health Checks (for monitoring and deployment readiness)
-// Exposes /health endpoint for load balancers, monitoring tools, and container orchestrators
-// Includes checks for:
-// - Database connectivity (ApplicationDbContext, ImageStoreContext)
-// - PayPal API accessibility and credential validation
-// - Email/SMTP server connectivity (production only, skipped in development)
+// -- Health Checks
 builder.Services.AddHealthChecks()
     .AddDbContextCheck<ApplicationDbContext>(
         name: "database",
@@ -117,7 +111,6 @@ builder.Services.AddIdentity<IdentityUser, IdentityRole>(options =>
     .AddDefaultTokenProviders()
     .AddDefaultUI();
 
-// -- MVC / Razor
 builder.Services.AddControllersWithViews();
 builder.Services.AddRazorPages();
 
@@ -169,18 +162,15 @@ builder.Services.AddResponseCompression(options =>
     };
 });
 
-// -- Caching
 builder.Services.AddMemoryCache();
 builder.Services.AddOutputCachingPolicies();
 
-// Response caching for API endpoints
 builder.Services.AddResponseCaching(options =>
 {
     options.MaximumBodySize = 1024 * 1024; // 1 MB
     options.UseCaseSensitivePaths = false;
 });
 
-// Cache profiles for different types of content
 builder.Services.Configure<MvcOptions>(options =>
 {
     options.CacheProfiles.Add("ProductCatalog", new CacheProfile
@@ -206,7 +196,6 @@ builder.Services.Configure<MvcOptions>(options =>
     });
 });
 
-// -- Session Support (for guest checkout)
 builder.Services.AddSession(options =>
 {
     options.IdleTimeout = TimeSpan.FromMinutes(30); // Session expires after 30 minutes of inactivity
@@ -216,43 +205,21 @@ builder.Services.AddSession(options =>
     options.Cookie.SameSite = SameSiteMode.Lax; // CSRF protection
 });
 
-// -- Rate Limiting (brute-force / enumeration protection)
 builder.Services.AddRateLimitingPolicies();
 
-// -- Configuration Options
 builder.Services.AddApplicationOptions(builder.Configuration);
 
-// -- Payment and security services
 builder.Services.AddHttpClient<IPayPalService, PayPalService>();
 builder.Services.AddHttpClient<IReCaptchaService, ReCaptchaService>();
 
-// Register repositories whose callers inject the concrete type or interface not covered by AddRepositories()
 builder.Services.AddScoped<ICartRepo, CartRepo>();
-// -- Application Services (using extension methods for cleaner organization)
-// All service registrations are grouped by functionality in extension methods.
-// See Extensions/ServiceCollectionExtensions.cs for implementation details.
-builder.Services.AddBackgroundServices();  // FuzzyReindexService, FuzzyHelperService
-builder.Services.AddApplicationServices(); // All application services including image optimization, logging, guest cart
-builder.Services.AddEmailServices();       // SmtpEmailSender, EmailSenderAdapter, IEmailSender
-builder.Services.AddRepositories();        // All repository implementations with base class inheritance
+builder.Services.AddBackgroundServices();
+builder.Services.AddApplicationServices();
+builder.Services.AddEmailServices();
+builder.Services.AddRepositories();
 
-builder.Services.AddHttpContextAccessor(); // Required for CorrelationId access and session-based cart
+builder.Services.AddHttpContextAccessor();
 
-// -- Mapping
-// NOTE: AutoMapper 16.x removed DI extension support and changed the API significantly.
-// AutoMapper versions 12.x-15.x have a known HIGH SEVERITY vulnerability (GHSA-rvv3-g6hj-g44x).
-// Since we only map ProductModel <-> ProductVM, we've removed AutoMapper entirely and
-// implemented manual mapping via IProductMapper/ProductMapper services.
-// 
-// Benefits: No vulnerabilities, better performance, type-safe, explicit mapping logic.
-// See Services/ProductMapper.cs for implementation and ProductService for usage.
-//
-// Future: If more complex mapping is needed, consider Mapperly (source-generated mapper)
-// which provides AutoMapper-like convenience without runtime overhead or security issues.
-
-// =====================================================================
-// Build application
-// =====================================================================
 var app = builder.Build();
 
 if (!isApplicationInsightsConfigured)
@@ -391,8 +358,9 @@ await using (var migrationScope = app.Services.CreateAsyncScope())
 // Seeding can be disabled via Database:RunSeeders = false in appsettings.json
 // or via environment variable. Useful after first run to prevent accidental reseeding.
 var runSeeders = app.Configuration.GetValue<bool>("Database:RunSeeders", defaultValue: true);
+var isTestingEnvironment = app.Environment.IsEnvironment("Testing");
 var allowDefaultElevatedSeedCredentials =
-    app.Environment.IsDevelopment() &&
+    (app.Environment.IsDevelopment() || isTestingEnvironment) &&
     app.Configuration.GetValue<bool>("Seed:AllowDefaultElevatedCredentials", defaultValue: false);
 
 if (runSeeders)
@@ -424,15 +392,20 @@ if (runSeeders)
                 app.Configuration,
                 app.Environment.WebRootPath,
                 allowDefaultElevatedSeedCredentials);
-            await DbSeeder.SeedCustomersAndOrdersAsync(db, userManager, app.Environment.WebRootPath);
-            await DbSeeder.SeedStoreReviewsAsync(db, userManager); // Seed featured homepage reviews
-            await DbSeeder.SeedTestTransactionsAsync(db);
+
+            if (!isTestingEnvironment)
+            {
+                await DbSeeder.SeedCustomersAndOrdersAsync(db, userManager, app.Environment.WebRootPath);
+                await DbSeeder.SeedStoreReviewsAsync(db, userManager); // Seed featured homepage reviews
+                await DbSeeder.SeedTestTransactionsAsync(db);
+            }
 
             app.Logger.LogInformation("Seeding completed successfully.");
         }
         catch (Exception ex)
         {
             app.Logger.LogError(ex, "Seeding failed.");
+            throw;
         }
         finally
         {

@@ -1,11 +1,11 @@
-using Microsoft.AspNetCore.Authorization;
-using Microsoft.AspNetCore.Mvc;
+using System.Linq;
+using System.Threading.Tasks;
 using ELKH.Data;
 using ELKH.Repositories;
 using ELKH.Services;
-using System.Linq;
-using System.Threading.Tasks;
 using ELKH.ViewModels;
+using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc;
 
 namespace ELKH.Controllers;
 
@@ -58,15 +58,15 @@ public class OrderController : AuthenticatedControllerBase
         // Apply sorting
         IEnumerable<ELKH.Models.OrderModel> sortedOrders = sort switch
         {
-            "date_asc"   => orders.OrderBy(o => o.CreatedAt),
+            "date_asc" => orders.OrderBy(o => o.CreatedAt),
             "total_high" => orders.OrderByDescending(o => o.TotalAmount),
-            "total_low"  => orders.OrderBy(o => o.TotalAmount),
-            "status"     => orders.OrderBy(o => o.OrderStatus).ThenByDescending(o => o.CreatedAt),
-            _            => orders.OrderByDescending(o => o.CreatedAt) // date_desc
+            "total_low" => orders.OrderBy(o => o.TotalAmount),
+            "status" => orders.OrderBy(o => o.OrderStatus).ThenByDescending(o => o.CreatedAt),
+            _ => orders.OrderByDescending(o => o.CreatedAt) // date_desc
         };
 
-        return View("~/Views/OrderHistory/History.cshtml", new OrderHistoryVM 
-        { 
+        return View("~/Views/OrderHistory/History.cshtml", new OrderHistoryVM
+        {
             Orders = sortedOrders.ToList(),
             CurrentSort = sort
         });

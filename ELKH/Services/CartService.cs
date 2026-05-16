@@ -1,226 +1,227 @@
 using ELKH.Extensions;
 
 namespace ELKH.Services;
-    /// <summary>
-    /// Service for managing shopping cart operations and order placement.
-    /// Handles cart item management, inventory validation, and order processing with atomic transactions.
-    /// </summary>
-    public class CartService : ICartService
-    {
-        private readonly ApplicationDbContext _db;
-        private readonly IUserService _userService;
-        private readonly ELKH.Repositories.IContactDetailRepo _contactRepo;
-        private readonly IShippingService _shippingService;
 
-        /// <summary>
-        /// Initializes a new instance of <see cref="CartService"/>.
-        /// </summary>
-        /// <param name="db">EF Core context for cart, order, and product data.</param>
-        /// <param name="userService">Cached user lookup service for resolving the acting user.</param>
-        /// <param name="contactRepo">Repository for retrieving the user's default delivery address.</param>
-        /// <param name="shippingService">Service for shipping method validation and cost calculation.</param>
-        public CartService(ApplicationDbContext db, IUserService userService, ELKH.Repositories.IContactDetailRepo contactRepo, IShippingService shippingService)
-        {
-            _db = db;
-            _userService = userService;
-            _contactRepo = contactRepo;
-            _shippingService = shippingService;
-        }
-        
-        public async Task ClearCartAsync(string userEmail)
-        {
-            var user = await _userService.GetByEmailAsync(userEmail);
-            if (user == null) return;
-
-            var items = await _db.Carts
-                .Where(c => c.FkRegisteredUserId == user.PkRegisteredUserId)
-                .ToListAsync();
-
-            if (items.Count == 0) return;
-
-            _db.Carts.RemoveRange(items);
-            await _db.SaveChangesAsync();
-        }
-
-        public async Task AddToCartAsync(string userEmail, int itemId, int quantity)
-        {
-            var user = await _userService.GetByEmailAsync(userEmail);
-            if (user == null) 
-                throw new InvalidOperationException("User not found.");
-
-            // Step 2: Validate product exists
-            var product = await _db.Products.FindAsync(itemId);
-            if (product == null) 
-                throw new InvalidOperationException("Product not found.");
-
-            // Step 3: Validate stock availability
-            if (product.StockQuantity <= 0)
-                throw new InvalidOperationException("This item is out of stock and cannot be added to your cart.");
-
-            var existing = await _db.Carts.FirstOrDefaultAsync(
-                c => c.FkRegisteredUserId == user.PkRegisteredUserId && c.FkProductID == itemId);
-
-            // Step 5: Validate total quantity doesn't exceed stock
-            var totalQuantity = (existing?.Quantity ?? 0) + quantity;
-            if (totalQuantity > product.StockQuantity)
-                throw new InvalidOperationException($"Cannot add {quantity} items. Only {product.StockQuantity - (existing?.Quantity ?? 0)} available (you already have {existing?.Quantity ?? 0} in cart).");
-
-            // Step 6: Calculate effective price (with discount applied)
-            var effective = product.GetEffectivePrice();
-
-            if (existing != null)
-            {
-                existing.Quantity += quantity;
-                existing.TotalPrice = existing.Quantity * effective;
-            }
-            else
-            {
-                _db.Carts.Add(new CartModel
-                {
-                    FkRegisteredUserId = user.PkRegisteredUserId,
-                    FkProductID = itemId,
-                    Quantity = quantity,
-                    TotalPrice = quantity * effective
-                });
-            }
-
-    // Step 7: Persist changes
-    await _db.SaveChangesAsync();
-}
-
-// ---------------------------------------------------------------------
-// Quick-purchase helpers
-// ---------------------------------------------------------------------
 /// <summary>
-/// Places an immediate order for a single product without modifying the cart.
-/// Validates the address and stock, then creates the order inside a transaction.
-/// Returns the same error codes as PlaceOrderAsync (-1 stock, -2 no address, -3 invalid shipping).
+/// Service for managing shopping cart operations and order placement.
+/// Handles cart item management, inventory validation, and order processing with atomic transactions.
 /// </summary>
-public async Task<int> BuyNowAsync(string userEmail, int itemId, int quantity, int shippingMethodId)
+public class CartService : ICartService
+{
+    private readonly ApplicationDbContext _db;
+    private readonly IUserService _userService;
+    private readonly ELKH.Repositories.IContactDetailRepo _contactRepo;
+    private readonly IShippingService _shippingService;
+
+    /// <summary>
+    /// Initializes a new instance of <see cref="CartService"/>.
+    /// </summary>
+    /// <param name="db">EF Core context for cart, order, and product data.</param>
+    /// <param name="userService">Cached user lookup service for resolving the acting user.</param>
+    /// <param name="contactRepo">Repository for retrieving the user's default delivery address.</param>
+    /// <param name="shippingService">Service for shipping method validation and cost calculation.</param>
+    public CartService(ApplicationDbContext db, IUserService userService, ELKH.Repositories.IContactDetailRepo contactRepo, IShippingService shippingService)
+    {
+        _db = db;
+        _userService = userService;
+        _contactRepo = contactRepo;
+        _shippingService = shippingService;
+    }
+
+    public async Task ClearCartAsync(string userEmail)
+    {
+        var user = await _userService.GetByEmailAsync(userEmail);
+        if (user == null) return;
+
+        var items = await _db.Carts
+            .Where(c => c.FkRegisteredUserId == user.PkRegisteredUserId)
+            .ToListAsync();
+
+        if (items.Count == 0) return;
+
+        _db.Carts.RemoveRange(items);
+        await _db.SaveChangesAsync();
+    }
+
+    public async Task AddToCartAsync(string userEmail, int itemId, int quantity)
+    {
+        var user = await _userService.GetByEmailAsync(userEmail);
+        if (user == null)
+            throw new InvalidOperationException("User not found.");
+
+        // Step 2: Validate product exists
+        var product = await _db.Products.FindAsync(itemId);
+        if (product == null)
+            throw new InvalidOperationException("Product not found.");
+
+        // Step 3: Validate stock availability
+        if (product.StockQuantity <= 0)
+            throw new InvalidOperationException("This item is out of stock and cannot be added to your cart.");
+
+        var existing = await _db.Carts.FirstOrDefaultAsync(
+            c => c.FkRegisteredUserId == user.PkRegisteredUserId && c.FkProductID == itemId);
+
+        // Step 5: Validate total quantity doesn't exceed stock
+        var totalQuantity = (existing?.Quantity ?? 0) + quantity;
+        if (totalQuantity > product.StockQuantity)
+            throw new InvalidOperationException($"Cannot add {quantity} items. Only {product.StockQuantity - (existing?.Quantity ?? 0)} available (you already have {existing?.Quantity ?? 0} in cart).");
+
+        // Step 6: Calculate effective price (with discount applied)
+        var effective = product.GetEffectivePrice();
+
+        if (existing != null)
         {
-            var user = await _userService.GetByEmailAsync(userEmail);
-            if (user == null) return 0;
-
-            var product = await _db.Products.FindAsync(itemId);
-            if (product == null) return 0;
-
-            if ((product.StockQuantity) < quantity) return -1;
-
-            // Validate shipping method
-            var shippingMethod = await _shippingService.GetShippingMethodByIdAsync(shippingMethodId);
-            if (shippingMethod == null || !shippingMethod.IsActive)
-                return -3; // Invalid or inactive shipping method
-
-            var defaultContact = await _contactRepo.GetDefaultByUserIdAsync(user.PkRegisteredUserId);
-            int contactId = defaultContact?.PkContactId ?? 0;
-            if (contactId == 0) return -2;
-
-            var effective = product.GetEffectivePrice();
-            var subtotal = effective * quantity;
-
-            // Calculate shipping cost
-            var shippingCost = await _shippingService.CalculateShippingCostAsync(shippingMethodId, subtotal);
-            var totalAmount = subtotal + shippingCost;
-
-            await using var transaction = await _db.Database.BeginTransactionAsync();
-            try
-            {
-                var order = new OrderModel
-                {
-                    OrderStatus        = OrderStatus.Pending,
-                    TotalAmount        = totalAmount,
-                    CreatedAt          = System.DateTime.UtcNow,
-                    DeliveryStatus     = DeliveryStatus.Pending,
-                    FkRegisteredUserId = user.PkRegisteredUserId,
-                    FkContactId        = contactId,
-                    FkShippingMethodId = shippingMethodId,
-                    ShippingMethodName = shippingMethod.Name,
-                    ShippingCost       = shippingCost
-                };
-                _db.Orders.Add(order);
-                await _db.SaveChangesAsync();
-
-                _db.OrderItems.Add(new OrderItemModel
-                {
-                    FkOrderId = order.PkOrderId,
-                    FkProductId = itemId,
-                    Quantity = quantity,
-                    UnitPrice = effective
-                });
-
-                product.StockQuantity = (product.StockQuantity) - quantity;
-
-                await _db.SaveChangesAsync();
-                await transaction.CommitAsync();
-                return order.PkOrderId;
-            }
-            catch (Microsoft.EntityFrameworkCore.DbUpdateConcurrencyException)
-            {
-                await transaction.RollbackAsync();
-                return -1;
-            }
-            catch
-            {
-                await transaction.RollbackAsync();
-                throw;
-            }
+            existing.Quantity += quantity;
+            existing.TotalPrice = existing.Quantity * effective;
         }
-        
-        public async Task UpdateQuantityAsync(string userEmail, int cartId, int quantity)
+        else
         {
-            if (quantity < 1) quantity = 1;
+            _db.Carts.Add(new CartModel
+            {
+                FkRegisteredUserId = user.PkRegisteredUserId,
+                FkProductID = itemId,
+                Quantity = quantity,
+                TotalPrice = quantity * effective
+            });
+        }
 
-            var user = await _userService.GetByEmailAsync(userEmail);
-            if (user == null) return;
+        // Step 7: Persist changes
+        await _db.SaveChangesAsync();
+    }
 
-            var item = await _db.Carts.FirstOrDefaultAsync(c =>
-                c.PkCartId == cartId && c.FkRegisteredUserId == user.PkRegisteredUserId);
+    // ---------------------------------------------------------------------
+    // Quick-purchase helpers
+    // ---------------------------------------------------------------------
+    /// <summary>
+    /// Places an immediate order for a single product without modifying the cart.
+    /// Validates the address and stock, then creates the order inside a transaction.
+    /// Returns the same error codes as PlaceOrderAsync (-1 stock, -2 no address, -3 invalid shipping).
+    /// </summary>
+    public async Task<int> BuyNowAsync(string userEmail, int itemId, int quantity, int shippingMethodId)
+    {
+        var user = await _userService.GetByEmailAsync(userEmail);
+        if (user == null) return 0;
 
-            if (item == null) return;
+        var product = await _db.Products.FindAsync(itemId);
+        if (product == null) return 0;
 
-            // update qty
-            item.Quantity = quantity;
+        if ((product.StockQuantity) < quantity) return -1;
 
-            // keep TotalPrice in sync with displayed price
-            var product = await _db.Products.FindAsync(item.FkProductID);
-            var unit = product?.GetEffectivePrice() ?? 0m; 
-            item.TotalPrice = unit * quantity;
+        // Validate shipping method
+        var shippingMethod = await _shippingService.GetShippingMethodByIdAsync(shippingMethodId);
+        if (shippingMethod == null || !shippingMethod.IsActive)
+            return -3; // Invalid or inactive shipping method
+
+        var defaultContact = await _contactRepo.GetDefaultByUserIdAsync(user.PkRegisteredUserId);
+        int contactId = defaultContact?.PkContactId ?? 0;
+        if (contactId == 0) return -2;
+
+        var effective = product.GetEffectivePrice();
+        var subtotal = effective * quantity;
+
+        // Calculate shipping cost
+        var shippingCost = await _shippingService.CalculateShippingCostAsync(shippingMethodId, subtotal);
+        var totalAmount = subtotal + shippingCost;
+
+        await using var transaction = await _db.Database.BeginTransactionAsync();
+        try
+        {
+            var order = new OrderModel
+            {
+                OrderStatus = OrderStatus.Pending,
+                TotalAmount = totalAmount,
+                CreatedAt = System.DateTime.UtcNow,
+                DeliveryStatus = DeliveryStatus.Pending,
+                FkRegisteredUserId = user.PkRegisteredUserId,
+                FkContactId = contactId,
+                FkShippingMethodId = shippingMethodId,
+                ShippingMethodName = shippingMethod.Name,
+                ShippingCost = shippingCost
+            };
+            _db.Orders.Add(order);
+            await _db.SaveChangesAsync();
+
+            _db.OrderItems.Add(new OrderItemModel
+            {
+                FkOrderId = order.PkOrderId,
+                FkProductId = itemId,
+                Quantity = quantity,
+                UnitPrice = effective
+            });
+
+            product.StockQuantity = (product.StockQuantity) - quantity;
 
             await _db.SaveChangesAsync();
+            await transaction.CommitAsync();
+            return order.PkOrderId;
         }
-
-        public async Task RemoveFromCartAsync(string userEmail, int cartId)
+        catch (Microsoft.EntityFrameworkCore.DbUpdateConcurrencyException)
         {
-            var user = await _userService.GetByEmailAsync(userEmail);
-            if (user == null)
-            {
-                user = await _db.RegisteredUsers
-                    .AsNoTracking()
-                    .FirstOrDefaultAsync(u => u.Email == userEmail);
-            }
-
-            if (user == null) return;
-
-            var item = await _db.Carts.FirstOrDefaultAsync(
-                c => c.PkCartId == cartId && c.FkRegisteredUserId == user.PkRegisteredUserId);
-
-            if (item != null)
-            {
-                _db.Carts.Remove(item);
-                await _db.SaveChangesAsync();
-            }
+            await transaction.RollbackAsync();
+            return -1;
         }
-
-        public async Task<List<CartModel>> GetCartItemsAsync(string userEmail)
+        catch
         {
-            var user = await _userService.GetByEmailAsync(userEmail);
-            if (user == null) return new List<CartModel>();
-
-            return await _db.Carts
-                .Include(c => c.Product)
-                .Where(c => c.FkRegisteredUserId == user.PkRegisteredUserId)
-                .ToListAsync();
+            await transaction.RollbackAsync();
+            throw;
         }
+    }
+
+    public async Task UpdateQuantityAsync(string userEmail, int cartId, int quantity)
+    {
+        if (quantity < 1) quantity = 1;
+
+        var user = await _userService.GetByEmailAsync(userEmail);
+        if (user == null) return;
+
+        var item = await _db.Carts.FirstOrDefaultAsync(c =>
+            c.PkCartId == cartId && c.FkRegisteredUserId == user.PkRegisteredUserId);
+
+        if (item == null) return;
+
+        // update qty
+        item.Quantity = quantity;
+
+        // keep TotalPrice in sync with displayed price
+        var product = await _db.Products.FindAsync(item.FkProductID);
+        var unit = product?.GetEffectivePrice() ?? 0m;
+        item.TotalPrice = unit * quantity;
+
+        await _db.SaveChangesAsync();
+    }
+
+    public async Task RemoveFromCartAsync(string userEmail, int cartId)
+    {
+        var user = await _userService.GetByEmailAsync(userEmail);
+        if (user == null)
+        {
+            user = await _db.RegisteredUsers
+                .AsNoTracking()
+                .FirstOrDefaultAsync(u => u.Email == userEmail);
+        }
+
+        if (user == null) return;
+
+        var item = await _db.Carts.FirstOrDefaultAsync(
+            c => c.PkCartId == cartId && c.FkRegisteredUserId == user.PkRegisteredUserId);
+
+        if (item != null)
+        {
+            _db.Carts.Remove(item);
+            await _db.SaveChangesAsync();
+        }
+    }
+
+    public async Task<List<CartModel>> GetCartItemsAsync(string userEmail)
+    {
+        var user = await _userService.GetByEmailAsync(userEmail);
+        if (user == null) return new List<CartModel>();
+
+        return await _db.Carts
+            .Include(c => c.Product)
+            .Where(c => c.FkRegisteredUserId == user.PkRegisteredUserId)
+            .ToListAsync();
+    }
 
     // ---------------------------------------------------------------------
     // Ordering
@@ -312,8 +313,8 @@ public async Task<int> BuyNowAsync(string userEmail, int itemId, int quantity, i
             var totalAmount = subtotal + shippingCost;
 
             // Step 10: Create order entity with shipping information
-            var order = new OrderModel 
-            { 
+            var order = new OrderModel
+            {
                 OrderStatus = OrderStatus.Pending,
                 TotalAmount = totalAmount,
                 CreatedAt = System.DateTime.UtcNow,
@@ -334,8 +335,8 @@ public async Task<int> BuyNowAsync(string userEmail, int itemId, int quantity, i
             // ensures the decrement and the order creation are committed together.
             foreach (var c in items)
             {
-                _db.OrderItems.Add(new OrderItemModel 
-                { 
+                _db.OrderItems.Add(new OrderItemModel
+                {
                     FkOrderId = order.PkOrderId,
                     FkProductId = c.FkProductID,
                     Quantity = c.Quantity,

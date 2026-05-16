@@ -1,7 +1,7 @@
 using ELKH.Models;
 using ELKH.ViewModels;
-using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
 using static ELKH.Extensions.RateLimitPolicies;
 
@@ -59,11 +59,11 @@ namespace ELKH.Controllers
             var pagedProducts = await _productService.GetPagedCatalogAsync(search, categoryId, sort, 0, pageSize);
             var categories = await _productService.GetCategoriesAsync();
 
-            ViewBag.Search     = search;
+            ViewBag.Search = search;
             ViewBag.CategoryId = categoryId;
-            ViewBag.Sort       = sort;
-            ViewBag.Total      = pagedProducts.TotalCount;
-            ViewBag.HasMore    = pagedProducts.TotalCount > pageSize;
+            ViewBag.Sort = sort;
+            ViewBag.Total = pagedProducts.TotalCount;
+            ViewBag.HasMore = pagedProducts.TotalCount > pageSize;
             ViewBag.Categories = new SelectList(categories, "PkCategoryId", "CategoryName", categoryId);
 
             return View(pagedProducts.Items);
@@ -126,9 +126,9 @@ namespace ELKH.Controllers
                     {
                         // The user has already rated this product - populate ViewBag so the
                         // view renders the edit/delete controls instead of the submission form.
-                        ViewBag.UserRating       = eligibility.ExistingRating;
+                        ViewBag.UserRating = eligibility.ExistingRating;
                         ViewBag.UserAlreadyRated = true;
-                        ViewBag.UserRatingId     = eligibility.ExistingRating.PkRatingId;
+                        ViewBag.UserRatingId = eligibility.ExistingRating.PkRatingId;
                     }
                 }
             }
@@ -319,11 +319,11 @@ namespace ELKH.Controllers
             // render bold highlight spans without any client-side string parsing.
             var outList = results.Select(r => new
             {
-                id        = r.Id,
-                name      = r.Name,
-                price     = r.Price,
+                id = r.Id,
+                name = r.Name,
+                price = r.Price,
                 thumbnail = r.Thumbnail,
-                matches   = r.Matches.Select(m => new { start = m.start, length = m.length })
+                matches = r.Matches.Select(m => new { start = m.start, length = m.length })
             }).ToList();
             return Json(outList);
         }
@@ -359,19 +359,19 @@ namespace ELKH.Controllers
         public async Task<IActionResult> Create(ProductVM vm)
         {
             if (!ModelState.IsValid)
-                {
-                    var options = await BuildCategoryOptionsAsync(vm.CategoryId);
-                    ViewBag.CategoryId = options;
+            {
+                var options = await BuildCategoryOptionsAsync(vm.CategoryId);
+                ViewBag.CategoryId = options;
 
-                    // Helpful validation message
-                    ModelState.AddModelError(string.Empty,
-                    "One or more required fields are missing or invalid. " +
-                    "Please review your input and try again.");
+                // Helpful validation message
+                ModelState.AddModelError(string.Empty,
+                "One or more required fields are missing or invalid. " +
+                "Please review your input and try again.");
 
-                    return View(vm);
-                }
+                return View(vm);
+            }
 
-                await _productService.CreateAsync(vm);
+            await _productService.CreateAsync(vm);
 
             TempData["Message"] = "success, Product created successfully";
             return RedirectToAction(nameof(Index));
@@ -422,20 +422,20 @@ namespace ELKH.Controllers
         public async Task<IActionResult> Edit(ProductVM vm)
         {
             if (!ModelState.IsValid)
-                {
-                    // Rebuild the category options for the dropdown
-                    var options = await BuildCategoryOptionsAsync(vm.CategoryId);
-                    ViewBag.CategoryId = options;
+            {
+                // Rebuild the category options for the dropdown
+                var options = await BuildCategoryOptionsAsync(vm.CategoryId);
+                ViewBag.CategoryId = options;
 
-                    // Helpful validation message
-                    ModelState.AddModelError(string.Empty,
-                    "One or more required fields are missing or invalid. " +
-                    "Please review your input and try again.");
+                // Helpful validation message
+                ModelState.AddModelError(string.Empty,
+                "One or more required fields are missing or invalid. " +
+                "Please review your input and try again.");
 
-                    return View(vm);
-                }
+                return View(vm);
+            }
 
-                var exists = await _productService.GetByIdAsync(vm.ProductId);
+            var exists = await _productService.GetByIdAsync(vm.ProductId);
             if (exists is null)
             {
                 TempData["Message"] = $"warning, Unable to find product ID: {vm.ProductId}";

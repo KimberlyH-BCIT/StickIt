@@ -13,13 +13,13 @@ namespace ELKH.Models
 
         [Required]
         [MaxLength(150)]
-        public string Title { get; set; }
+        public string Title { get; set; } = string.Empty;
 
         [Required]
         [MaxLength(1000)]
-        public string Body { get; set; }
+        public string Body { get; set; } = string.Empty;
 
-        public string SentBy { get; set; }
+        public string SentBy { get; set; } = string.Empty;
 
         public DateTime SentAt { get; set; } = DateTime.UtcNow;
 

@@ -1,3 +1,4 @@
+using System.Threading.RateLimiting;
 using ELKH.Data;
 using ELKH.Repositories;
 using ELKH.Services;
@@ -5,7 +6,6 @@ using Microsoft.AspNetCore.OutputCaching;
 using Microsoft.AspNetCore.RateLimiting;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
-using System.Threading.RateLimiting;
 
 namespace ELKH.Extensions
 {
@@ -20,7 +20,7 @@ namespace ELKH.Extensions
         /// Binds strongly-typed option classes to their corresponding appsettings.json sections.
         /// </summary>
         public static IServiceCollection AddApplicationOptions(
-            this IServiceCollection services, 
+            this IServiceCollection services,
             IConfiguration configuration)
         {
             services.Configure<ELKH.Configuration.CacheOptions>(configuration.GetSection("Cache"));
@@ -42,6 +42,12 @@ namespace ELKH.Extensions
             services.AddScoped<IRatingService, RatingService>();
             services.AddScoped<IModerationService, ModerationService>();
             services.AddScoped<IProductService, ProductService>();
+            services.AddScoped<IAccountDetailsService, AccountDetailsService>();
+            services.AddScoped<IAdminUserListService, AdminUserListService>();
+            services.AddScoped<IAdminUserRoleService, AdminUserRoleService>();
+            services.AddScoped<ICheckoutOrchestrationService, CheckoutOrchestrationService>();
+            services.AddScoped<ICategoryBrowseService, CategoryBrowseService>();
+            services.AddScoped<IAdminRoleOrchestrationService, AdminRoleOrchestrationService>();
             services.AddScoped<ICartService, CartService>();
             services.AddScoped<IWishlistService, WishlistService>();
             services.AddScoped<IShippingService, ShippingService>();
@@ -52,7 +58,7 @@ namespace ELKH.Extensions
             services.AddScoped<StockNotificationEmailService>(); // Email notifications for restocked items
             services.AddScoped<IProductMapper, ProductMapper>(); // Manual mapping instead of AutoMapper
             services.AddScoped<ImageValidationService>(); // Secure image upload validation
-            services.AddScoped<IImageOptimizationService, ImageOptimizationService>(); // Image optimization services
+            services.AddScoped<IImageVariantService, ImageVariantService>(); // Image variant and placeholder services
             services.AddScoped<IStructuredLoggingService, StructuredLoggingService>(); // Enhanced logging
             services.AddScoped<IGuestCartService, GuestCartService>(); // Guest checkout services
 
@@ -123,7 +129,7 @@ namespace ELKH.Extensions
             // on the concrete BackgroundService type.
             services.AddSingleton<IFuzzyReindexService>(sp => sp.GetRequiredService<FuzzyReindexService>());
             services.AddHostedService(sp => sp.GetRequiredService<FuzzyReindexService>());
-            
+
             return services;
         }
 
@@ -140,49 +146,49 @@ namespace ELKH.Extensions
                 // Strict: 5 attempts per 60 s - protects login and registration.
                 options.AddFixedWindowLimiter(RateLimitPolicies.Auth, o =>
                 {
-                    o.PermitLimit      = 5;
-                    o.Window           = TimeSpan.FromSeconds(60);
+                    o.PermitLimit = 5;
+                    o.Window = TimeSpan.FromSeconds(60);
                     o.QueueProcessingOrder = QueueProcessingOrder.OldestFirst;
-                    o.QueueLimit       = 0;
+                    o.QueueLimit = 0;
                 });
 
                 // Checkout: 3 payment attempts per 60 s per IP.
                 options.AddFixedWindowLimiter(RateLimitPolicies.Checkout, o =>
                 {
-                    o.PermitLimit      = 3;
-                    o.Window           = TimeSpan.FromSeconds(60);
+                    o.PermitLimit = 3;
+                    o.Window = TimeSpan.FromSeconds(60);
                     o.QueueProcessingOrder = QueueProcessingOrder.OldestFirst;
-                    o.QueueLimit       = 0;
+                    o.QueueLimit = 0;
                 });
 
                 // Search autocomplete: 30 requests per 10 s (generous for live typing).
                 options.AddSlidingWindowLimiter(RateLimitPolicies.Search, o =>
                 {
-                    o.PermitLimit         = 30;
-                    o.Window              = TimeSpan.FromSeconds(10);
-                    o.SegmentsPerWindow   = 5;
+                    o.PermitLimit = 30;
+                    o.Window = TimeSpan.FromSeconds(10);
+                    o.SegmentsPerWindow = 5;
                     o.QueueProcessingOrder = QueueProcessingOrder.OldestFirst;
-                    o.QueueLimit          = 0;
+                    o.QueueLimit = 0;
                 });
 
                 // Admin operations: 10 requests per 60 s - protects resource-intensive admin actions.
                 // Includes: ReindexFTS, ClearCache, bulk operations
                 options.AddFixedWindowLimiter(RateLimitPolicies.Admin, o =>
                 {
-                    o.PermitLimit      = 10;
-                    o.Window           = TimeSpan.FromSeconds(60);
+                    o.PermitLimit = 10;
+                    o.Window = TimeSpan.FromSeconds(60);
                     o.QueueProcessingOrder = QueueProcessingOrder.OldestFirst;
-                    o.QueueLimit       = 0;
+                    o.QueueLimit = 0;
                 });
 
                 // Cart operations: 20 requests per 60 s - prevents inventory enumeration attacks.
                 // Includes: AddToCart, Update, Remove
                 options.AddFixedWindowLimiter(RateLimitPolicies.Cart, o =>
                 {
-                    o.PermitLimit      = 20;
-                    o.Window           = TimeSpan.FromSeconds(60);
+                    o.PermitLimit = 20;
+                    o.Window = TimeSpan.FromSeconds(60);
                     o.QueueProcessingOrder = QueueProcessingOrder.OldestFirst;
-                    o.QueueLimit       = 0;
+                    o.QueueLimit = 0;
                 });
             });
 
@@ -229,11 +235,11 @@ internal sealed class ProductListOutputCachePolicy : IOutputCachePolicy
 {
     public ValueTask CacheRequestAsync(OutputCacheContext context, CancellationToken cancellationToken)
     {
-        context.EnableOutputCaching             = true;
-        context.AllowCacheLookup                = true;
-        context.AllowCacheStorage               = true;
-        context.AllowLocking                    = true;
-        context.ResponseExpirationTimeSpan      = TimeSpan.FromMinutes(5);
+        context.EnableOutputCaching = true;
+        context.AllowCacheLookup = true;
+        context.AllowCacheStorage = true;
+        context.AllowLocking = true;
+        context.ResponseExpirationTimeSpan = TimeSpan.FromMinutes(5);
 
         // Vary by all query-string keys (search, categoryId, sort, offsetâ€¦)
         context.CacheVaryByRules.QueryKeys = "*";
@@ -260,10 +266,10 @@ namespace ELKH.Extensions
     // ----- rate-limiting policy names (shared between registration and attributes) -----
     public static class RateLimitPolicies
     {
-        public const string Auth     = "auth";      // login / register
+        public const string Auth = "auth";      // login / register
         public const string Checkout = "checkout";  // payment endpoints
-        public const string Search   = "search";    // autocomplete
-        public const string Admin    = "admin";     // resource-intensive admin operations
-        public const string Cart     = "cart";      // cart operations (prevents inventory enumeration)
+        public const string Search = "search";    // autocomplete
+        public const string Admin = "admin";     // resource-intensive admin operations
+        public const string Cart = "cart";      // cart operations (prevents inventory enumeration)
     }
 }

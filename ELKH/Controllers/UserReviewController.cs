@@ -12,6 +12,13 @@ namespace ELKH.Controllers;
 /// </summary>
 /// <remarks>
 /// Keeps review-related behavior isolated from the broader user account flows.
+/// 
+/// <para><strong>Table of Contents:</strong></para>
+/// <list type="number">
+/// <item>Section 1: Controller Setup &amp; Dependencies</item>
+/// <item>Section 2: Product Ratings &amp; Reviews</item>
+/// <item>Section 3: Store Reviews &amp; Testimonials</item>
+/// </list>
 /// </remarks>
 public class UserReviewController : UserControllerBase
 {
@@ -89,7 +96,7 @@ public class UserReviewController : UserControllerBase
             return Challenge();
 
         var productsToReview = await _ratingService.GetProductsToReviewAsync(userId.Value);
-        
+
         return View(productsToReview);
     }
 

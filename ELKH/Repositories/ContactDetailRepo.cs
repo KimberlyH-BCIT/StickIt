@@ -11,7 +11,7 @@ namespace ELKH.Repositories
     /// </summary>
     public class ContactDetailRepo : RepositoryBase<ContactDetailModel, int>, IContactDetailRepo
     {
-        public ContactDetailRepo(ApplicationDbContext context, ILogger<ContactDetailRepo> logger) 
+        public ContactDetailRepo(ApplicationDbContext context, ILogger<ContactDetailRepo> logger)
             : base(context, logger)
         {
         }
@@ -113,8 +113,8 @@ namespace ELKH.Repositories
         private async Task UnsetOtherDefaultsAsync(int userId, int exceptContactId)
         {
             var otherDefaults = await Context.ContactDetails
-                .Where(c => c.FkRegisteredUserId == userId 
-                         && c.PkContactId != exceptContactId 
+                .Where(c => c.FkRegisteredUserId == userId
+                         && c.PkContactId != exceptContactId
                          && c.IsDefault)
                 .ToListAsync();
 

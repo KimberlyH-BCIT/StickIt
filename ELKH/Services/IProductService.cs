@@ -68,6 +68,7 @@ namespace ELKH.Services
         /// and writes an audit log entry describing why the reindex was triggered.
         /// </summary>
         /// <param name="reason">Human-readable description of why the reindex was requested (stored in the audit log).</param>
+        /// <param name="ct">Cancellation token to abort the reindex operation.</param>
         Task ReindexFTSAsync(string reason, CancellationToken ct = default);
 
         /// <summary>

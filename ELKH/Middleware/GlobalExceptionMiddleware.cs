@@ -1,9 +1,9 @@
-using Microsoft.ApplicationInsights;
-using Microsoft.ApplicationInsights.DataContracts;
 using System.Net;
 using System.Security;
 using System.Text.Json;
 using ELKH.Services;
+using Microsoft.ApplicationInsights;
+using Microsoft.ApplicationInsights.DataContracts;
 
 namespace ELKH.Middleware;
 
@@ -16,6 +16,17 @@ namespace ELKH.Middleware;
 /// </summary>
 public class GlobalExceptionMiddleware
 {
+    private static readonly JsonSerializerOptions ApiJsonSerializerOptions = new()
+    {
+        PropertyNamingPolicy = JsonNamingPolicy.CamelCase
+    };
+
+    private static readonly JsonSerializerOptions DevelopmentApiJsonSerializerOptions = new()
+    {
+        PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
+        WriteIndented = true
+    };
+
     private readonly RequestDelegate _next;
     private readonly ILogger<GlobalExceptionMiddleware> _logger;
     private readonly IWebHostEnvironment _environment;
@@ -46,6 +57,7 @@ public class GlobalExceptionMiddleware
     {
         // Resolve the scoped service per-request
         var structuredLogging = context.RequestServices.GetRequiredService<IStructuredLoggingService>();
+        var isDevelopment = _environment.IsDevelopment();
 
         var correlationId = context.TraceIdentifier;
         var userId = context.User?.Identity?.Name ?? "Anonymous";
@@ -61,7 +73,7 @@ public class GlobalExceptionMiddleware
             {
                 Exception = exception.GetType().Name,
                 Message = exception.Message,
-                StackTrace = _environment.IsDevelopment() ? exception.StackTrace : null,
+                StackTrace = isDevelopment ? exception.StackTrace : null,
                 CorrelationId = correlationId,
                 UserId = userId,
                 RequestPath = requestPath,
@@ -83,30 +95,31 @@ public class GlobalExceptionMiddleware
             exceptionTelemetry.Properties["RequestPath"] = requestPath;
             exceptionTelemetry.Properties["Method"] = method;
             exceptionTelemetry.Properties["ErrorCategory"] = CategorizeException(exception);
-            
+
             telemetryClient.TrackException(exceptionTelemetry);
         }
 
-        // Determine response based on exception type and request
-        var response = await CreateErrorResponseAsync(context, exception, correlationId);
-        
-        // Set response content type and status
-        context.Response.ContentType = "application/json";
+        var isApiRequest = IsApiRequest(context);
+        var response = CreateErrorResponse(exception, correlationId, isDevelopment);
+
         context.Response.StatusCode = response.StatusCode;
 
-        // Write response
-        await context.Response.WriteAsync(JsonSerializer.Serialize(response, new JsonSerializerOptions
+        if (isApiRequest)
         {
-            PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
-            WriteIndented = _environment.IsDevelopment()
-        }));
+            context.Response.ContentType = "application/json";
+            await context.Response.WriteAsync(JsonSerializer.Serialize(
+                response,
+                isDevelopment ? DevelopmentApiJsonSerializerOptions : ApiJsonSerializerOptions));
+
+            return;
+        }
+
+        context.Response.ContentType = "text/html; charset=utf-8";
+        await context.Response.WriteAsync(CreateHtmlErrorPage(response));
     }
 
-    private async Task<ErrorResponse> CreateErrorResponseAsync(HttpContext context, Exception exception, string correlationId)
+    private ErrorResponse CreateErrorResponse(Exception exception, string correlationId, bool isDevelopment)
     {
-        var isApiRequest = context.Request.Path.StartsWithSegments("/api") ||
-                          context.Request.Headers["Accept"].ToString().Contains("application/json");
-
         return exception switch
         {
             // Authentication/Authorization errors
@@ -137,7 +150,7 @@ public class GlobalExceptionMiddleware
                 Message = "Invalid request data. Please check your input and try again.",
                 CorrelationId = correlationId,
                 Timestamp = DateTimeOffset.UtcNow,
-                Details = _environment.IsDevelopment() ? exception.Message : null
+                Details = isDevelopment ? exception.Message : null
             },
 
             // Not found errors
@@ -153,13 +166,13 @@ public class GlobalExceptionMiddleware
             // Database/External service errors
             InvalidOperationException when exception.Message.Contains("database") ||
                                           exception.Message.Contains("connection") => new ErrorResponse
-            {
-                StatusCode = (int)HttpStatusCode.ServiceUnavailable,
-                Error = "Service Unavailable",
-                Message = "The service is temporarily unavailable. Please try again later.",
-                CorrelationId = correlationId,
-                Timestamp = DateTimeOffset.UtcNow
-            },
+                                          {
+                                              StatusCode = (int)HttpStatusCode.ServiceUnavailable,
+                                              Error = "Service Unavailable",
+                                              Message = "The service is temporarily unavailable. Please try again later.",
+                                              CorrelationId = correlationId,
+                                              Timestamp = DateTimeOffset.UtcNow
+                                          },
 
             // Timeout errors
             TimeoutException or TaskCanceledException => new ErrorResponse
@@ -176,14 +189,28 @@ public class GlobalExceptionMiddleware
             {
                 StatusCode = (int)HttpStatusCode.InternalServerError,
                 Error = "Internal Server Error",
-                Message = _environment.IsDevelopment() 
-                    ? exception.Message 
+                Message = isDevelopment
+                    ? exception.Message
                     : "An unexpected error occurred. Please try again later.",
                 CorrelationId = correlationId,
                 Timestamp = DateTimeOffset.UtcNow,
-                Details = _environment.IsDevelopment() ? exception.StackTrace : null
+                Details = isDevelopment ? exception.StackTrace : null
             }
         };
+    }
+
+    private static bool IsApiRequest(HttpContext context)
+    {
+        return context.Request.Path.StartsWithSegments("/api");
+    }
+
+    private static string CreateHtmlErrorPage(ErrorResponse response)
+    {
+        var title = WebUtility.HtmlEncode(response.Error);
+        var message = WebUtility.HtmlEncode(response.Message);
+        var correlationId = WebUtility.HtmlEncode(response.CorrelationId);
+
+        return $"<!DOCTYPE html><html lang=\"en\"><head><meta charset=\"utf-8\"><meta name=\"viewport\" content=\"width=device-width, initial-scale=1\"><title>{title}</title></head><body><main><h1>{title}</h1><p>{message}</p><p>Request ID: <code>{correlationId}</code></p></main></body></html>";
     }
 
     private SeverityLevel GetSeverityLevel(Exception exception)

@@ -9,10 +9,21 @@ namespace ELKH.Data;
 /// This partial class coordinates all domain-specific seeding operations.
 /// </summary>
 /// <remarks>
+/// <para><strong>Table of Contents:</strong></para>
+/// <list type="number">
+/// <item>Test Transaction Seeding</item>
+/// <item>Section 2: Product Catalog Seeding</item>
+/// <item>Section 3: Legacy Entry Points</item>
+/// </list>
+/// 
 /// Keeps startup seeding idempotent and delegates domain-specific data creation to partial class files.
 /// </remarks>
 public static partial class DbSeeder
 {
+    private static readonly object _placeholderAvatarCacheLock = new();
+    private static string? _cachedPlaceholderAvatarPath;
+    private static byte[]? _cachedPlaceholderAvatarBytes;
+
     #region Test Transaction Seeding
 
     /// <summary>
@@ -131,31 +142,39 @@ public static partial class DbSeeder
             "Miscellaneous"
         };
 
-        foreach (var name in categoryNames)
-        {
-            if (!await db.Categories.AnyAsync(c => c.CategoryName == name))
-                db.Categories.Add(new CategoryModel { CategoryName = name });
-        }
-        await db.SaveChangesAsync();
-
-        // ── Load Categories into Dictionary ──────────────────────────────────
-        // Retrieve all categories with their assigned PKs for foreign key references.
-        // Dictionary lookup by name allows clean product creation code below.
         var cats = await db.Categories
             .Where(c => categoryNames.Contains(c.CategoryName))
             .ToDictionaryAsync(c => c.CategoryName);
 
-        var canadian  = cats["Canadian"];
+        var missingCategories = categoryNames
+            .Where(name => !cats.ContainsKey(name))
+            .Select(name => new CategoryModel { CategoryName = name })
+            .ToArray();
+
+        if (missingCategories.Length > 0)
+        {
+            db.Categories.AddRange(missingCategories);
+            await db.SaveChangesAsync();
+
+            foreach (var category in missingCategories)
+            {
+                cats[category.CategoryName] = category;
+            }
+        }
+
+        // Load categories into a lookup for the product factory below.
+
+        var canadian = cats["Canadian"];
         var christmas = cats["Christmas"];
-        var animals   = cats["Cute Animals"];
-        var easter    = cats["Easter"];
-        var food      = cats["Food"];
+        var animals = cats["Cute Animals"];
+        var easter = cats["Easter"];
+        var food = cats["Food"];
         var halloween = cats["Halloween"];
-        var lunarNY   = cats["Lunar New Year"];
-        var nature    = cats["Nature & Floral"];
-        var newYear   = cats["New Years Eve"];
-        var thanks    = cats["Thanksgiving"];
-        var misc      = cats["Miscellaneous"];
+        var lunarNY = cats["Lunar New Year"];
+        var nature = cats["Nature & Floral"];
+        var newYear = cats["New Years Eve"];
+        var thanks = cats["Thanksgiving"];
+        var misc = cats["Miscellaneous"];
 
         // ======================================================================
         // ║ PHASE 2: Product Creation                                          ║

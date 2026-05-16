@@ -2,15 +2,15 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using ELKH.Services;
 using Microsoft.AspNetCore.Razor.TagHelpers;
 using Microsoft.Extensions.Logging;
-using ELKH.Services;
 
 namespace ELKH.TagHelpers;
 
 /// <summary>
-/// Tag helper for optimized images with lazy loading, responsive sizes, and WebP support.
-/// Automatically generates modern performance-optimized image markup with:
+/// Tag helper for image variant markup with lazy loading, responsive sizes, and WebP path support.
+/// Automatically generates image markup that prefers pre-generated variants when available:
 /// - WebP format conversion for smaller file sizes
 /// - Lazy loading with placeholder strategies 
 /// - Responsive srcset for different viewport sizes
@@ -20,7 +20,7 @@ namespace ELKH.TagHelpers;
 [HtmlTargetElement("img", Attributes = "optimized")]
 public class OptimizedImageTagHelper : TagHelper
 {
-    private readonly IImageOptimizationService _imageOptimizationService;
+    private readonly IImageVariantService _imageVariantService;
     private readonly ILogger<OptimizedImageTagHelper> _logger;
 
     /// <summary>
@@ -78,10 +78,10 @@ public class OptimizedImageTagHelper : TagHelper
     public bool Optimized { get; set; }
 
     public OptimizedImageTagHelper(
-        IImageOptimizationService imageOptimizationService,
+        IImageVariantService imageVariantService,
         ILogger<OptimizedImageTagHelper> logger)
     {
-        _imageOptimizationService = imageOptimizationService;
+        _imageVariantService = imageVariantService;
         _logger = logger;
     }
 
@@ -98,7 +98,7 @@ public class OptimizedImageTagHelper : TagHelper
             output.Attributes.RemoveAll("optimized");
 
             // Get optimized image path
-            var optimizedSrc = _imageOptimizationService.GetOptimizedImagePath(Src, "webp");
+            var optimizedSrc = _imageVariantService.GetOptimizedImagePath(Src, "webp");
 
             // Build responsive srcset if enabled
             string? srcset = null;
@@ -163,7 +163,7 @@ public class OptimizedImageTagHelper : TagHelper
         catch (Exception ex)
         {
             _logger.LogWarning(ex, "Failed to process optimized image for {Src}", Src);
-            
+
             // Fallback to standard image
             output.Attributes.SetAttribute("src", Src);
             if (!string.IsNullOrEmpty(Alt))
@@ -194,7 +194,7 @@ public class OptimizedImageTagHelper : TagHelper
             {
                 var responsivePath = Path.Combine(basePath, "optimized", $"{fileName}-{size.Key}.webp")
                     .Replace('\\', '/');
-                
+
                 // Check if responsive image exists (in a real implementation)
                 srcsetItems.Add($"/{responsivePath.TrimStart('/')} {size.Value}");
             }
@@ -212,7 +212,7 @@ public class OptimizedImageTagHelper : TagHelper
     {
         // Use data attributes for lazy loading library
         output.Attributes.SetAttribute("data-src", optimizedSrc);
-        
+
         if (!string.IsNullOrEmpty(srcset))
         {
             output.Attributes.SetAttribute("data-srcset", srcset);
@@ -225,12 +225,12 @@ public class OptimizedImageTagHelper : TagHelper
                 // Use a tiny blurred version as placeholder
                 output.Attributes.SetAttribute("src", GetPlaceholderSrc());
                 break;
-                
+
             case "skeleton":
                 // Use a skeleton placeholder
                 output.Attributes.SetAttribute("src", "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='400' height='300'%3E%3Crect width='100%25' height='100%25' fill='%23f0f0f0'/%3E%3C/svg%3E");
                 break;
-                
+
             case "low-quality":
             default:
                 // Use a low-quality version

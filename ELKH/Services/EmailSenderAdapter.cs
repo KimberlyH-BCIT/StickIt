@@ -7,8 +7,8 @@ namespace ELKH.Services
     /// ASP.NET Core Identity IEmailSender interface, allowing a single email
     /// sender implementation to be used throughout the application.
     /// </summary>
-    public class EmailSenderAdapter : 
-        ELKH.Services.IEmailSender, 
+    public class EmailSenderAdapter :
+        ELKH.Services.IEmailSender,
         Microsoft.AspNetCore.Identity.UI.Services.IEmailSender
     {
         private readonly SmtpEmailSender _sender;
@@ -21,7 +21,7 @@ namespace ELKH.Services
         {
             _sender = sender;
         }
-        
+
         /// <summary>
         /// Implementation for ASP.NET Core Identity's IEmailSender interface.
         /// Converts the single email address to an array for the underlying sender.
@@ -30,7 +30,7 @@ namespace ELKH.Services
         {
             return _sender.SendEmailAsync(new[] { email }, subject, htmlMessage, null);
         }
-        
+
         /// <summary>
         /// Implementation for the custom IEmailSender interface that supports
         /// multiple recipients and custom from addresses.

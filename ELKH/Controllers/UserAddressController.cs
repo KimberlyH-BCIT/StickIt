@@ -1,10 +1,10 @@
+using System.Security.Claims;
 using ELKH.Controllers.Base;
 using ELKH.Models;
 using ELKH.Repositories;
 using ELKH.Services;
 using ELKH.ViewModels;
 using Microsoft.AspNetCore.Mvc;
-using System.Security.Claims;
 
 namespace ELKH.Controllers;
 
@@ -44,7 +44,7 @@ public class UserAddressController : UserControllerBase
             return Challenge();
 
         var addresses = await _contactRepository.GetAllByUserIdAsync(userId.Value);
-        
+
         var viewModels = addresses.Select(a => new ContactDetailVM
         {
             ContactId = a.PkContactId,

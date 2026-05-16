@@ -26,7 +26,7 @@ namespace ELKH.Repositories
         /// <summary>Get an entity by its primary key synchronously (prefer the async overload).</summary>
         public virtual TEntity? GetById(TKey id)
         {
-            try   { return Context.Set<TEntity>().Find(id); }
+            try { return Context.Set<TEntity>().Find(id); }
             catch (Exception ex)
             {
                 Logger.LogError(ex, "Error retrieving {EntityType} with ID {Id}", typeof(TEntity).Name, id);
@@ -37,7 +37,7 @@ namespace ELKH.Repositories
         /// <summary>Get an entity by its primary key asynchronously.</summary>
         public virtual async Task<TEntity?> GetByIdAsync(TKey id)
         {
-            try   { return await Context.Set<TEntity>().FindAsync(id); }
+            try { return await Context.Set<TEntity>().FindAsync(id); }
             catch (Exception ex)
             {
                 Logger.LogError(ex, "Error retrieving {EntityType} with ID {Id}", typeof(TEntity).Name, id);
@@ -48,7 +48,7 @@ namespace ELKH.Repositories
         /// <summary>Get all entities (prefer the async overload).</summary>
         public virtual IEnumerable<TEntity> GetAll()
         {
-            try   { return Context.Set<TEntity>().ToList(); }
+            try { return Context.Set<TEntity>().ToList(); }
             catch (Exception ex)
             {
                 Logger.LogError(ex, "Error retrieving all {EntityType}", typeof(TEntity).Name);
@@ -59,7 +59,7 @@ namespace ELKH.Repositories
         /// <summary>Get all entities asynchronously.</summary>
         public virtual async Task<IEnumerable<TEntity>> GetAllAsync()
         {
-            try   { return await Context.Set<TEntity>().ToListAsync(); }
+            try { return await Context.Set<TEntity>().ToListAsync(); }
             catch (Exception ex)
             {
                 Logger.LogError(ex, "Error retrieving all {EntityType}", typeof(TEntity).Name);

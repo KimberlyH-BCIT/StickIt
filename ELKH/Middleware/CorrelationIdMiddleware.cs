@@ -102,7 +102,7 @@ public static class CorrelationIdExtensions
     {
         return context.Items[CorrelationIdMiddleware.CorrelationIdLogKey]?.ToString();
     }
-    
+
     /// <summary>
     /// Gets the correlation ID from the HTTP context accessor
     /// </summary>

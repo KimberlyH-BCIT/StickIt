@@ -5,9 +5,9 @@ namespace ELKH.ViewModels
     /// display including profile data, contact details, and account settings.
     /// </summary>
     public class AccountDetailsVM
-        {
-            public UserListVM User { get; set; } = new UserListVM();
-            public ContactDetailVM? Contact { get; set; }
-        }
-    
+    {
+        public UserListVM User { get; set; } = new UserListVM();
+        public ContactDetailVM? Contact { get; set; }
+    }
+
 }

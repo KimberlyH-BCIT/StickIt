@@ -1,14 +1,14 @@
+using System;
+using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
-using Microsoft.Extensions.Hosting;
-using Microsoft.Extensions.Logging;
+using ELKH.Configuration;
 using ELKH.Data;
 using Microsoft.EntityFrameworkCore;
-using System.Linq;
-using System;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Hosting;
+using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
-using ELKH.Configuration;
 
 namespace ELKH.Services
 {
@@ -68,6 +68,7 @@ namespace ELKH.Services
         /// Application configuration; reads <c>Search:ReindexIntervalMinutes</c> to override
         /// the default 6-hour periodic interval. Useful for testing or high-frequency updates.
         /// </param>
+        /// <param name="searchOptions">Typed search configuration options containing reindex interval and retry settings.</param>
         public FuzzyReindexService(IServiceProvider services, ILogger<FuzzyReindexService> logger, Microsoft.Extensions.Configuration.IConfiguration configuration, IOptions<SearchOptions> searchOptions)
         {
             _services = services;
@@ -78,7 +79,7 @@ namespace ELKH.Services
             // Priority: 1) Search:Reindex:IntervalMinutes, 2) Search:ReindexIntervalMinutes (legacy), 3) Default from options
             var minutes = _options.IntervalMinutes;
             var legacyMinutes = configuration.GetValue<int?>("Search:ReindexIntervalMinutes");
-            if (legacyMinutes.HasValue && legacyMinutes.Value > 0) 
+            if (legacyMinutes.HasValue && legacyMinutes.Value > 0)
             {
                 minutes = legacyMinutes.Value;
                 _logger.LogWarning("Using legacy Search:ReindexIntervalMinutes setting. Consider migrating to Search:Reindex:IntervalMinutes.");
@@ -130,7 +131,7 @@ namespace ELKH.Services
                     if (_options.UseExponentialBackoff)
                     {
                         delay = TimeSpan.FromSeconds(Math.Min(
-                            delay.TotalSeconds * 2, 
+                            delay.TotalSeconds * 2,
                             _options.MaxRetryDelaySeconds));
                     }
                 }
@@ -364,12 +365,12 @@ WHERE PkProductId NOT IN (SELECT rowid FROM ProductFTS);
                 var suggestions = await db.Products
                     .Select(p => new ELKH.Models.FuzzySuggestionModel
                     {
-                        PkProductId    = p.PkProductId,
-                        Name           = p.Name,
+                        PkProductId = p.PkProductId,
+                        Name = p.Name,
                         NameNormalized = p.Name.ToLowerInvariant(), // For case-insensitive prefix matching
-                        Price          = p.Price,
-                        Thumbnail      = p.ProductImage!.Select(pi => pi.ProductImageURL).FirstOrDefault() ?? string.Empty,
-                        CreatedAt      = DateTime.UtcNow
+                        Price = p.Price,
+                        Thumbnail = p.ProductImage!.Select(pi => pi.ProductImageURL).FirstOrDefault() ?? string.Empty,
+                        CreatedAt = DateTime.UtcNow
                     })
                     .ToListAsync(cancellationToken);
 
@@ -394,13 +395,13 @@ WHERE PkProductId NOT IN (SELECT rowid FROM ProductFTS);
                         await db.SaveChangesAsync(cancellationToken);
 
                         totalInserted += batch.Count;
-                        _logger.LogDebug("Inserted batch {BatchNumber}: {BatchSize} suggestions ({TotalInserted}/{TotalCount})", 
+                        _logger.LogDebug("Inserted batch {BatchNumber}: {BatchSize} suggestions ({TotalInserted}/{TotalCount})",
                             (i / _options.BatchSize) + 1, batch.Count, totalInserted, suggestions.Count);
                     }
 
                     await tx.CommitAsync(cancellationToken);
 
-                    _logger.LogInformation("Fuzzy suggestions reindexed successfully: {Count} suggestions inserted in {BatchCount} batches", 
+                    _logger.LogInformation("Fuzzy suggestions reindexed successfully: {Count} suggestions inserted in {BatchCount} batches",
                         suggestions.Count, Math.Ceiling((double)suggestions.Count / _options.BatchSize));
                 }
                 catch (Exception)

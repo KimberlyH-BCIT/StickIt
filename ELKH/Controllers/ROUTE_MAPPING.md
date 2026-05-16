@@ -1,13 +1,19 @@
 # Controller Decomposition Route Mapping
 
-## Original vs New Controller Routes
+## Status
 
-This document maps the old routes to the new decomposed controller structure to ensure no breaking changes.
+This file is an archived planning artifact from an earlier controller-decomposition effort. It is kept as historical reference only.
+
+The current application does not implement the legacy compatibility routes that were once proposed here. Live routing is defined in `ELKH/Extensions/ApplicationBuilderExtensions.cs` through the area route, the default controller route, and Razor Pages endpoint mapping.
+
+## Historical Notes
+
+The tables below show the intended route/action split that was being considered when larger `UserController` and `AdminController` responsibilities were being decomposed. Treat them as migration notes, not as current behavior or implementation instructions.
 
 ### UserController → Multiple Controllers
 
-| **Original Route** | **New Route** | **Controller** | **Action** |
-|-------------------|---------------|----------------|------------|
+| Original Route | Planned Route | Planned Controller | Planned Action |
+|---|---|---|---|
 | `/User/Index` | `/UserProfile/Index` | UserProfileController | Index |
 | `/User/EditProfile` | `/UserProfile/Edit` | UserProfileController | Edit |
 | `/User/UploadAvatar` | `/UserProfile/UploadAvatar` | UserProfileController | UploadAvatar |
@@ -26,8 +32,8 @@ This document maps the old routes to the new decomposed controller structure to 
 
 ### AdminController → Multiple Controllers
 
-| **Original Route** | **New Route** | **Controller** | **Action** |
-|-------------------|---------------|----------------|------------|
+| Original Route | Planned Route | Planned Controller | Planned Action |
+|---|---|---|---|
 | `/Admin/Index` | `/AdminAnalytics/Index` | AdminAnalyticsController | Index |
 | `/Admin/ManageSales` | `/AdminAnalytics/Sales` | AdminAnalyticsController | Sales |
 | `/Admin/ListUsers` | `/AdminUser/Index` | AdminUserController | Index |
@@ -38,90 +44,8 @@ This document maps the old routes to the new decomposed controller structure to 
 | `/Admin/CacheStats` | `/AdminSystem/CacheStats` | AdminSystemController | CacheStats |
 | `/Admin/ClearFuzzyCache` | `/AdminSystem/ClearCache` | AdminSystemController | ClearCache |
 
-## Backward Compatibility Routes
+## Current Guidance
 
-To maintain backward compatibility, the following routes should be added to Program.cs:
-
-```csharp
-// User Controller Backward Compatibility
-app.MapControllerRoute(
-    name: "user_legacy",
-    pattern: "User/{action}",
-    defaults: new { controller = "UserProfile" },
-    constraints: new { action = "Index|EditProfile|UploadAvatar|RemoveAvatar|History|WishlistSection|ActiveOrdersSection|OrderHistorySection" });
-
-app.MapControllerRoute(
-    name: "user_address_legacy",
-    pattern: "User/{action}",
-    defaults: new { controller = "UserAddress" },
-    constraints: new { action = "Addresses|AddAddress|EditAddress|DeleteAddress|SetDefaultAddress" });
-
-app.MapControllerRoute(
-    name: "user_review_legacy", 
-    pattern: "User/{action}",
-    defaults: new { controller = "UserReview" },
-    constraints: new { action = "MyRatings|LeaveReview" });
-
-// Admin Controller Backward Compatibility  
-app.MapControllerRoute(
-    name: "admin_analytics_legacy",
-    pattern: "Admin/{action}",
-    defaults: new { controller = "AdminAnalytics" },
-    constraints: new { action = "Index|ManageSales" });
-
-app.MapControllerRoute(
-    name: "admin_user_legacy",
-    pattern: "Admin/{action}",
-    defaults: new { controller = "AdminUser" },
-    constraints: new { action = "ListUsers|AccountDetails|RemoveRole" });
-
-app.MapControllerRoute(
-    name: "admin_system_legacy",
-    pattern: "Admin/{action}",
-    defaults: new { controller = "AdminSystem" },
-    constraints: new { action = "ReindexFTS|ReindexHealth|CacheStats|ClearFuzzyCache" });
-```
-
-## Action Name Mapping
-
-Some action names have been updated for consistency:
-
-| **Old Action** | **New Action** | **Reason** |
-|---------------|---------------|------------|
-| `EditProfile` | `Edit` | Consistent with RESTful naming |
-| `Addresses` | `Index` | Standard index action name |
-| `AddAddress` | `Create` | RESTful naming convention |
-| `LeaveReview` | `StoreReview` | More descriptive name |
-| `ListUsers` | `Index` | Standard index action name |
-| `AccountDetails` | `Details` | Consistent with RESTful naming |
-| `ManageSales` | `Sales` | Simplified action name |
-| `ReindexFTS` | `ReindexSearch` | More descriptive name |
-| `ReindexHealth` | `SearchHealth` | Consistent naming pattern |
-| `ClearFuzzyCache` | `ClearCache` | Simplified name |
-
-## View File Updates Required
-
-The following view files need to be updated to reference the new routes:
-
-### Layout and Navigation
-- `Views/Shared/_Layout.cshtml` - Update navigation links
-- `Views/Shared/_AdminLayout.cshtml` - Update admin navigation  
-
-### User Area Views
-- Update all `@Html.ActionLink()` and `@Url.Action()` calls in user views
-- Update form action attributes in address management views
-- Update AJAX endpoints in dashboard sections
-
-### Admin Area Views  
-- Update all admin navigation and action links
-- Update AJAX endpoints for system operations
-- Update form action attributes in user management views
-
-## Testing Checklist
-
-- [ ] All original URLs redirect correctly to new controllers
-- [ ] Navigation links work without 404 errors  
-- [ ] AJAX endpoints function properly
-- [ ] Form submissions redirect to correct controllers
-- [ ] Breadcrumbs and back links work correctly
-- [ ] Search and filter functionality preserved
+- Do not use this file as a checklist for `Program.cs` or endpoint changes.
+- If route compatibility work is revived later, validate the live routes first and create a new implementation plan against the current codebase.
+- Keep portfolio-facing docs tied to implemented routes rather than archived plans.

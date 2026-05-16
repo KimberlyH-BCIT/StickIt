@@ -17,7 +17,7 @@ public class CouponService(ApplicationDbContext context, ILogger<CouponService> 
             return null;
 
         var normalizedCode = NormalizeCouponCode(couponCode);
-        
+
         var coupon = await context.Coupons
             .AsNoTracking()
             .FirstOrDefaultAsync(c => c.Code == normalizedCode);
@@ -52,12 +52,12 @@ public class CouponService(ApplicationDbContext context, ILogger<CouponService> 
         // Check minimum order value
         if (orderSubtotal < coupon.MinimumOrderValue)
         {
-            logger.LogInformation("Coupon validation failed: Order subtotal {Subtotal:C} is below minimum {MinOrder:C} for coupon '{CouponCode}'", 
+            logger.LogInformation("Coupon validation failed: Order subtotal {Subtotal:C} is below minimum {MinOrder:C} for coupon '{CouponCode}'",
                 orderSubtotal, coupon.MinimumOrderValue, couponCode);
             return null;
         }
 
-        logger.LogInformation("Coupon validation successful: Code '{CouponCode}' is valid for order subtotal {Subtotal:C}", 
+        logger.LogInformation("Coupon validation successful: Code '{CouponCode}' is valid for order subtotal {Subtotal:C}",
             couponCode, orderSubtotal);
         return coupon;
     }
@@ -77,12 +77,12 @@ public class CouponService(ApplicationDbContext context, ILogger<CouponService> 
             case "PERCENTAGE":
                 // Calculate percentage discount
                 discountAmount = orderSubtotal * (coupon.DiscountValue / 100m);
-                
+
                 // Apply maximum discount cap if specified
                 if (coupon.MaxDiscountAmount.HasValue && discountAmount > coupon.MaxDiscountAmount.Value)
                 {
                     discountAmount = coupon.MaxDiscountAmount.Value;
-                    logger.LogInformation("Percentage discount capped at {MaxDiscount:C} for coupon '{CouponCode}'", 
+                    logger.LogInformation("Percentage discount capped at {MaxDiscount:C} for coupon '{CouponCode}'",
                         coupon.MaxDiscountAmount.Value, coupon.Code);
                 }
                 break;
@@ -98,7 +98,7 @@ public class CouponService(ApplicationDbContext context, ILogger<CouponService> 
                 break;
 
             default:
-                logger.LogWarning("Unknown discount type '{DiscountType}' for coupon '{CouponCode}'", 
+                logger.LogWarning("Unknown discount type '{DiscountType}' for coupon '{CouponCode}'",
                     coupon.DiscountType, coupon.Code);
                 break;
         }
@@ -107,7 +107,7 @@ public class CouponService(ApplicationDbContext context, ILogger<CouponService> 
         var maxPossibleDiscount = orderSubtotal + (coupon.DiscountType.ToUpperInvariant() == "FREESHIPPING" ? shippingCost : 0);
         discountAmount = Math.Min(discountAmount, maxPossibleDiscount);
 
-        logger.LogInformation("Calculated discount amount {DiscountAmount:C} for coupon '{CouponCode}' on order {Subtotal:C}", 
+        logger.LogInformation("Calculated discount amount {DiscountAmount:C} for coupon '{CouponCode}' on order {Subtotal:C}",
             discountAmount, coupon.Code, orderSubtotal);
 
         return Math.Max(0, discountAmount); // Ensure non-negative
@@ -145,7 +145,7 @@ public class CouponService(ApplicationDbContext context, ILogger<CouponService> 
 
         await context.SaveChangesAsync();
 
-        logger.LogInformation("Recorded coupon usage: Coupon {CouponId} used in order {OrderId} for discount {DiscountAmount:C}", 
+        logger.LogInformation("Recorded coupon usage: Coupon {CouponId} used in order {OrderId} for discount {DiscountAmount:C}",
             couponId, orderId, discountAmount);
     }
 
@@ -187,7 +187,7 @@ public class CouponService(ApplicationDbContext context, ILogger<CouponService> 
     public async Task<List<CouponModel>> GetActiveCouponsAsync()
     {
         var now = DateTime.UtcNow;
-        
+
         return await context.Coupons
             .AsNoTracking()
             .Where(c => c.IsActive &&
@@ -247,7 +247,7 @@ public class CouponService(ApplicationDbContext context, ILogger<CouponService> 
         context.Coupons.Add(coupon);
         await context.SaveChangesAsync();
 
-        logger.LogInformation("Created new coupon: {CouponCode} ({DiscountType}: {DiscountValue})", 
+        logger.LogInformation("Created new coupon: {CouponCode} ({DiscountType}: {DiscountValue})",
             coupon.Code, coupon.DiscountType, coupon.DiscountValue);
 
         return coupon;
@@ -351,7 +351,7 @@ public class CouponService(ApplicationDbContext context, ILogger<CouponService> 
         if (coupon.UsageLimit.HasValue && coupon.UsageLimit.Value <= 0)
             throw new ArgumentException("Usage limit must be greater than 0");
 
-        if (coupon.ValidFrom.HasValue && coupon.ValidUntil.HasValue && 
+        if (coupon.ValidFrom.HasValue && coupon.ValidUntil.HasValue &&
             coupon.ValidFrom.Value >= coupon.ValidUntil.Value)
             throw new ArgumentException("Valid from date must be before valid until date");
     }

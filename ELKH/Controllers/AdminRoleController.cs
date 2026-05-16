@@ -1,10 +1,10 @@
 using ELKH.Repositories;
+using ELKH.Services;
 using ELKH.ViewModels;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
-using System.ComponentModel.DataAnnotations;
 
 namespace ELKH.Controllers
 {
@@ -17,8 +17,10 @@ namespace ELKH.Controllers
     {
         #region Constructor & Dependencies
 
+        private readonly IAdminRoleOrchestrationService _adminRoleService;
         private readonly UserManager<IdentityUser> _userManager;
         private readonly RoleManager<IdentityRole> _roleManager;
+        private readonly IAdminUserRoleService _adminUserRoleService;
 
         /// <summary>
         /// Initializes the role management controller with Identity managers.
@@ -26,11 +28,15 @@ namespace ELKH.Controllers
         /// <param name="userManager">ASP.NET Core Identity user manager for user operations</param>
         /// <param name="roleManager">ASP.NET Core Identity role manager for role CRUD</param>
         public AdminRoleController(
+            IAdminRoleOrchestrationService adminRoleService,
             UserManager<IdentityUser> userManager,
-            RoleManager<IdentityRole> roleManager)
+            RoleManager<IdentityRole> roleManager,
+            IAdminUserRoleService adminUserRoleService)
         {
+            _adminRoleService = adminRoleService;
             _userManager = userManager;
             _roleManager = roleManager;
+            _adminUserRoleService = adminUserRoleService;
         }
 
         #endregion
@@ -45,63 +51,61 @@ namespace ELKH.Controllers
         /// Queries all roles from Identity's RoleManager and projects to RoleVM.
         /// This endpoint serves as the main role management dashboard.
         /// </remarks>
-        public IActionResult ListRoles()
+        public async Task<IActionResult> ListRoles()
         {
-            var roles = _roleManager.Roles
-                .Select(r => new RoleVM { RoleId = r.Id, RoleName = r.Name })
-                .ToList();
+            var roles = await _adminRoleService.GetRolesAsync();
 
             return View(roles);
         }
 
         #endregion
 
-#region Role Creation
+        #region Role Creation
 
-/// <summary>
-/// Renders the form for creating a new role.
-/// </summary>
-/// <returns>Empty role creation form</returns>
-public IActionResult CreateRole()
-{
-    return View();
-}
-
-/// <summary>
-/// Persists the new role to the Identity store.
-/// </summary>
-/// <param name="model">Role view model containing the new role name</param>
-/// <returns>Redirects to ListRoles on success, re-displays form with errors on failure</returns>
-/// <remarks>
-/// Delegates to RoleManager.CreateAsync for Identity validation:
-/// - Role name uniqueness enforcement
-/// - Role name format validation (no special characters, etc.)
-/// - Concurrency token generation
-/// All Identity errors are captured and displayed in the form.
-/// </remarks>
-[HttpPost]
-[ValidateAntiForgeryToken]
-public async Task<IActionResult> CreateRole(RoleVM model)
-{
-    if (ModelState.IsValid)
-    {
-        // Delegate to Identity for validation and persistence
-        var result = await _roleManager.CreateAsync(new IdentityRole(model.RoleName!));
-
-        if (result.Succeeded)
+        /// <summary>
+        /// Renders the form for creating a new role.
+        /// </summary>
+        /// <returns>Empty role creation form</returns>
+        public IActionResult CreateRole()
         {
-            TempData["Success"] = "Role created successfully.";
-            return RedirectToAction("ListRoles");
+            return View();
         }
 
-        // Capture all Identity validation errors
-        foreach (var error in result.Errors)
-            ModelState.AddModelError("", error.Description);
-    }
-    return View(model);
-}
+        /// <summary>
+        /// Persists the new role to the Identity store.
+        /// </summary>
+        /// <param name="model">Role view model containing the new role name</param>
+        /// <returns>Redirects to ListRoles on success, re-displays form with errors on failure</returns>
+        /// <remarks>
+        /// Delegates to RoleManager.CreateAsync for Identity validation:
+        /// - Role name uniqueness enforcement
+        /// - Role name format validation (no special characters, etc.)
+        /// - Concurrency token generation
+        /// All Identity errors are captured and displayed in the form.
+        /// </remarks>
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> CreateRole(RoleVM model)
+        {
+            if (ModelState.IsValid)
+            {
+                // Delegate to Identity for validation and persistence
+                var result = await _roleManager.CreateAsync(new IdentityRole(model.RoleName!));
 
-#endregion
+                if (result.Succeeded)
+                {
+                    TempData["Success"] = "Role created successfully.";
+                    return RedirectToAction("ListRoles");
+                }
+
+                // Capture all Identity validation errors
+                foreach (var error in result.Errors)
+                    ModelState.AddModelError("", error.Description);
+            }
+            return View(model);
+        }
+
+        #endregion
 
         #region Role Editing
 
@@ -115,10 +119,10 @@ public async Task<IActionResult> CreateRole(RoleVM model)
         /// </remarks>
         public async Task<IActionResult> EditRole(string roleId)
         {
-            var role = await _roleManager.FindByIdAsync(roleId);
-            if (role == null) return NotFound();
+            var foundRole = await _adminRoleService.GetRoleByIdAsync(roleId);
+            if (foundRole == null) return NotFound();
 
-            return View(new RoleVM { RoleId = role.Id, RoleName = role.Name });
+            return View(foundRole);
         }
 
         /// <summary>
@@ -161,182 +165,91 @@ public async Task<IActionResult> CreateRole(RoleVM model)
 
         #endregion
 
-#region Role Assignment
+        #region Role Assignment
 
-/// <summary>
-/// Renders the role assignment form with context-aware pre-population.
-/// </summary>
-/// <param name="userId">Optional user ID to pre-fill email (when assigning from UserDetails)</param>
-/// <param name="returnTo">Navigation context: "UserDetails" or "RoleDetails"</param>
-/// <param name="roleId">Optional role ID to lock role selection (when assigning from RoleUsers)</param>
-/// <returns>Assignment form view with contextual pre-population</returns>
-/// <remarks>
-/// CONTEXT-AWARE WORKFLOW:
-/// 1. From UserDetails page (userId provided):
-///    - Email is pre-filled from user lookup
-///    - Role dropdown is open for selection
-///    - Returns to UserDetails after assignment
-/// 
-/// 2. From RoleUsers page (roleId provided, returnTo="RoleDetails"):
-///    - Role is locked and pre-selected
-///    - Email field is empty for manual entry
-///    - Returns to RoleUsers after assignment
-/// 
-/// 3. Direct navigation (no context):
-///    - Both email and role fields are empty
-///    - Returns to ListRoles after assignment
-/// </remarks>
-public async Task<IActionResult> AssignRoles(string? userId, string? returnTo, string? roleId)
-{
-    // â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
-    // STEP 1: Pre-fill email when navigating from UserDetails
-    // â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
-    string? prefilledEmail = null;
-    if (!string.IsNullOrEmpty(userId))
-    {
-        var user = await _userManager.FindByIdAsync(userId);
-        if (user == null) return NotFound();
-        prefilledEmail = user.Email;
-    }
+        /// <summary>
+        /// Renders the role assignment form with context-aware pre-population.
+        /// </summary>
+        /// <param name="userId">Optional user ID to pre-fill email (when assigning from UserDetails)</param>
+        /// <param name="returnTo">Navigation context: "UserDetails" or "RoleDetails"</param>
+        /// <param name="roleId">Optional role ID to lock role selection (when assigning from RoleUsers)</param>
+        /// <returns>Assignment form view with contextual pre-population</returns>
+        /// <remarks>
+        /// CONTEXT-AWARE WORKFLOW:
+        /// 1. From UserDetails page (userId provided):
+        ///    - Email is pre-filled from user lookup
+        ///    - Role dropdown is open for selection
+        ///    - Returns to UserDetails after assignment
+        /// 
+        /// 2. From RoleUsers page (roleId provided, returnTo="RoleDetails"):
+        ///    - Role is locked and pre-selected
+        ///    - Email field is empty for manual entry
+        ///    - Returns to RoleUsers after assignment
+        /// 
+        /// 3. Direct navigation (no context):
+        ///    - Both email and role fields are empty
+        ///    - Returns to ListRoles after assignment
+        /// </remarks>
+        public async Task<IActionResult> AssignRoles(string? userId, string? returnTo, string? roleId)
+        {
+            var model = await _adminRoleService.BuildAssignRoleVmAsync(userId, returnTo, roleId);
 
-    // â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
-    // STEP 2: Lock role when navigating from RoleUsers page
-    // Prevents changing the role while assigning users to it
-    // â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
-    bool isRoleLocked = returnTo == "RoleDetails" && !string.IsNullOrEmpty(roleId);
-    string? preselectedRoleName = null;
-    if (isRoleLocked)
-    {
-        var role = await _roleManager.FindByIdAsync(roleId!);
-        preselectedRoleName = role?.Name;
-    }
+            if (model == null)
+            {
+                return NotFound();
+            }
 
-    // â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
-    // STEP 3: Build view model with navigation context
-    // â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
-    var model = new AssignRoleVM
-    {
-        UserId       = userId,
-        Email        = prefilledEmail,
-        ReturnTo     = returnTo,
-        RoleId       = roleId,
-        IsRoleLocked = isRoleLocked,
-        RoleName     = preselectedRoleName,
-        Roles        = _roleManager.Roles
-                        .Select(r => new RoleVM { RoleId = r.Id, RoleName = r.Name })
-                        .ToList()
-    };
+            return View(model);
+        }
 
-    return View(model);
-}
+        /// <summary>
+        /// Assigns a role to the user identified by email address.
+        /// </summary>
+        /// <param name="model">Assignment view model with email, role, and navigation context</param>
+        /// <returns>Context-aware redirect on success, form with errors on failure</returns>
+        /// <remarks>
+        /// VALIDATION STEPS:
+        /// 1. Email address presence and user existence
+        /// 2. Role selection presence
+        /// 3. Duplicate assignment prevention (IsInRoleAsync check)
+        /// 4. Identity role assignment with error capture
+        /// 
+        /// NAVIGATION:
+        /// - UserDetails context â†’ Returns to Admin/AccountDetails
+        /// - RoleDetails context â†’ Returns to RoleUsers
+        /// - Default â†’ Returns to ListRoles
+        /// </remarks>
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> AssignRoles(AssignRoleVM model)
+        {
+            ModelState.Remove("Roles");
 
-/// <summary>
-/// Assigns a role to the user identified by email address.
-/// </summary>
-/// <param name="model">Assignment view model with email, role, and navigation context</param>
-/// <returns>Context-aware redirect on success, form with errors on failure</returns>
-/// <remarks>
-/// VALIDATION STEPS:
-/// 1. Email address presence and user existence
-/// 2. Role selection presence
-/// 3. Duplicate assignment prevention (IsInRoleAsync check)
-/// 4. Identity role assignment with error capture
-/// 
-/// NAVIGATION:
-/// - UserDetails context â†’ Returns to Admin/AccountDetails
-/// - RoleDetails context â†’ Returns to RoleUsers
-/// - Default â†’ Returns to ListRoles
-/// </remarks>
-[HttpPost]
-[ValidateAntiForgeryToken]
-public async Task<IActionResult> AssignRoles(AssignRoleVM model)
-{
-    // Remove Roles collection from validation (repopulated on error)
-    ModelState.Remove("Roles");
+            var result = await _adminRoleService.AssignRoleAsync(model);
+            if (!result.Succeeded)
+            {
+                foreach (var error in result.ModelErrors)
+                    ModelState.AddModelError("", error);
 
-    // â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
-    // STEP 1: Validate email presence
-    // â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
-    if (string.IsNullOrEmpty(model.Email))
-    {
-        ModelState.AddModelError("", "Please enter user email.");
-        await ReloadRoles(model);
-        return View(model);
-    }
+                if (!string.IsNullOrWhiteSpace(result.ErrorMessage))
+                    ModelState.AddModelError("", result.ErrorMessage);
 
-    // â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
-    // STEP 2: Validate role selection
-    // â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
-    if (string.IsNullOrEmpty(model.RoleName))
-    {
-        ModelState.AddModelError("", "Please select a role.");
-        await ReloadRoles(model);
-        return View(model);
-    }
+                model.Roles = await _adminRoleService.GetRolesAsync();
+                return View(model);
+            }
 
-    // â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
-    // STEP 3: Verify user exists
-    // â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
-    var user = await _userManager.FindByEmailAsync(model.Email);
-    if (user == null)
-    {
-        ModelState.AddModelError("", "User not found.");
-        await ReloadRoles(model);
-        return View(model);
-    }
+            TempData["Success"] = "Role assigned successfully.";
 
-    // â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
-    // STEP 4: Prevent duplicate role assignment
-    // â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
-    if (await _userManager.IsInRoleAsync(user, model.RoleName!))
-    {
-        ModelState.AddModelError("", "User is already assigned to this role.");
-        await ReloadRoles(model);
-        return View(model);
-    }
+            if (model.ReturnTo == "UserDetails" && !string.IsNullOrEmpty(model.UserId))
+                return RedirectToAction("AccountDetails", "Admin", new { id = model.UserId });
 
-    // â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
-    // STEP 5: Assign role via Identity manager
-    // â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
-    var result = await _userManager.AddToRoleAsync(user, model.RoleName);
+            if (model.ReturnTo == "RoleDetails" && !string.IsNullOrEmpty(model.RoleId))
+                return RedirectToAction("RoleUsers", new { roleId = model.RoleId });
 
-    if (result.Succeeded)
-    {
-        TempData["Success"] = "Role assigned successfully.";
+            return RedirectToAction("ListRoles");
+        }
 
-        // â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
-        // STEP 6: Context-aware navigation after success
-        // â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
-        if (model.ReturnTo == "UserDetails" && !string.IsNullOrEmpty(model.UserId))
-            return RedirectToAction("AccountDetails", "Admin", new { id = model.UserId });
-
-        if (model.ReturnTo == "RoleDetails" && !string.IsNullOrEmpty(model.RoleId))
-            return RedirectToAction("RoleUsers", new { roleId = model.RoleId });
-
-        return RedirectToAction("ListRoles");
-    }
-
-    TempData["Error"] = "Failed to assign role.";
-    await ReloadRoles(model);
-    return View(model);
-}
-
-/// <summary>
-/// Repopulates the role dropdown on the assignment form after a validation failure.
-/// </summary>
-/// <param name="model">Assignment view model to update with role list</param>
-/// <remarks>
-/// Required because the Roles collection is excluded from ModelState validation
-/// and must be reloaded to display the form after POST validation errors.
-/// </remarks>
-private async Task ReloadRoles(AssignRoleVM model)
-{
-    model.Roles = _roleManager.Roles
-        .Select(r => new RoleVM { RoleId = r.Id, RoleName = r.Name })
-        .ToList();
-}
-
-#endregion
+        #endregion
 
         #region Role Users Management
 
@@ -355,18 +268,13 @@ private async Task ReloadRoles(AssignRoleVM model)
         /// </remarks>
         public async Task<IActionResult> RoleUsers(string roleId)
         {
-            if (string.IsNullOrEmpty(roleId)) return NotFound();
+            var result = await _adminUserRoleService.GetRoleUsersAsync(roleId);
+            if (result == null) return NotFound();
 
-            var role = await _roleManager.FindByIdAsync(roleId);
-            if (role == null) return NotFound();
+            ViewBag.RoleId = result.RoleId;
+            ViewBag.RoleName = result.RoleName;
 
-            // Efficient single query instead of N+1 IsInRoleAsync calls
-            var usersInRole = await _userManager.GetUsersInRoleAsync(role.Name!);
-
-            ViewBag.RoleId = role.Id;
-            ViewBag.RoleName = role.Name;
-
-            return View(usersInRole);
+            return View(result.Users);
         }
 
         /// <summary>
@@ -383,21 +291,11 @@ private async Task ReloadRoles(AssignRoleVM model)
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> RemoveUserFromRole(string roleId, string userId)
         {
-            var role = await _roleManager.FindByIdAsync(roleId);
-            var user = await _userManager.FindByIdAsync(userId);
-
-            if (role == null || user == null)
-            {
-                TempData["Error"] = "Something went wrong.";
-                return RedirectToAction("ListRoles");
-            }
-
-            // Delegate to Identity for role removal
-            var result = await _userManager.RemoveFromRoleAsync(user, role.Name!);
+            var result = await _adminUserRoleService.RemoveUserFromRoleAsync(roleId, userId);
 
             TempData[result.Succeeded ? "Success" : "Error"] = result.Succeeded
                 ? "User removed from role successfully."
-                : "Failed to remove user from role.";
+                : result.ErrorMessage ?? "Failed to remove user from role.";
 
             return RedirectToAction("RoleUsers", new { roleId });
         }
@@ -413,10 +311,10 @@ private async Task ReloadRoles(AssignRoleVM model)
         /// <returns>Deletion confirmation view with role details</returns>
         public async Task<IActionResult> DeleteRole(string roleId)
         {
-            var role = await _roleManager.FindByIdAsync(roleId);
+            var role = await _adminRoleService.GetRoleByIdAsync(roleId);
             if (role == null) return NotFound();
 
-            return View(new RoleVM { RoleId = role.Id, RoleName = role.Name });
+            return View(role);
         }
 
         /// <summary>
@@ -441,35 +339,13 @@ private async Task ReloadRoles(AssignRoleVM model)
         {
             try
             {
-                // â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
-                // STEP 1: Verify role exists
-                // â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
-                var role = await _roleManager.FindByIdAsync(model.RoleId);
-                if (role == null)
+                var result = await _adminRoleService.DeleteRoleAsync(model.RoleId);
+                if (!result.Succeeded)
                 {
-                    TempData["Error"] = "Role not found.";
+                    TempData["Error"] = result.ErrorMessage ?? "An unexpected error occurred while deleting the role.";
                     return RedirectToAction("ListRoles");
                 }
-
-                // â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
-                // STEP 2: Prevent deletion if users are assigned
-                // Enforces referential integrity at application level
-                // â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
-                var usersInRole = await _userManager.GetUsersInRoleAsync(role.Name!);
-                if (usersInRole.Any())
-                {
-                    TempData["Error"] = "Cannot delete role because it is assigned to users.";
-                    return RedirectToAction("ListRoles");
-                }
-
-                // â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
-                // STEP 3: Delete role via Identity manager
-                // â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
-                var result = await _roleManager.DeleteAsync(role);
-                TempData[result.Succeeded ? "Success" : "Error"] = result.Succeeded
-                    ? "Role deleted successfully."
-                    : "Failed to delete role.";
-
+                TempData["Success"] = "Role deleted successfully.";
                 return RedirectToAction("ListRoles");
             }
             catch

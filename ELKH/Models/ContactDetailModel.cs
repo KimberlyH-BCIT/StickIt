@@ -1,5 +1,5 @@
-using System.ComponentModel.DataAnnotations;
 using System.Collections.Generic;
+using System.ComponentModel.DataAnnotations;
 
 namespace ELKH.Models
 {
@@ -18,7 +18,7 @@ namespace ELKH.Models
         /// <summary>
         /// First name of the contact/recipient.
         /// </summary>
-        [Display(Name ="First Name")]
+        [Display(Name = "First Name")]
         [MaxLength(100)]
         public string FirstName { get; set; } = string.Empty;
 
@@ -57,7 +57,7 @@ namespace ELKH.Models
         /// <summary>
         /// Postal or ZIP code.
         /// </summary>
-        [Display(Name ="Postcode")]
+        [Display(Name = "Postcode")]
         [MaxLength(20)]
         public string PostCode { get; set; } = string.Empty;
 
@@ -70,18 +70,18 @@ namespace ELKH.Models
         /// <summary>
         /// Whether this is the user's default address for shipping/billing.
         /// </summary>
-        [Display(Name ="Is Default Address")]
+        [Display(Name = "Is Default Address")]
         public bool IsDefault { get; set; } = true;
 
-// Relationship with RegisteredUser
-public int? FkRegisteredUserId { get; set; }
-public RegisteredUserModel? RegisteredUser { get; set; }
+        // Relationship with RegisteredUser
+        public int? FkRegisteredUserId { get; set; }
+        public RegisteredUserModel? RegisteredUser { get; set; }
 
-// Relationship with Transaction
-public ICollection<TransactionModel>? Transactions { get; set; }
+        // Relationship with Transaction
+        public ICollection<TransactionModel>? Transactions { get; set; }
 
-// Relationship with Order
-public ICollection<OrderModel> Orders { get; set; } = new List<OrderModel>();
+        // Relationship with Order
+        public ICollection<OrderModel> Orders { get; set; } = new List<OrderModel>();
         public string UserId { get; set; } = string.Empty;
     }
 }

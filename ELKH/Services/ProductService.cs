@@ -1,27 +1,45 @@
 using ELKH.Data;
-using ELKH.ViewModels;
 using ELKH.Models;
+using ELKH.ViewModels;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Caching.Memory;
 using Microsoft.Extensions.Logging;
 
 namespace ELKH.Services
 {
     /// <summary>
     /// Implementation of <see cref="IProductService"/> backed by EF Core with manual mapping.
-    /// Delegates search operations to <see cref="ISearchService"/> and uses
+    /// Delegates autocomplete-style name search to <see cref="ISearchService"/> and uses
     /// <see cref="CompiledQueries"/> for hot-path single-product lookups.
     /// </summary>
-    public class ProductService(ApplicationDbContext db, ISearchService searchService, IProductMapper mapper, ILogger<ProductService> logger) : IProductService
+    public class ProductService(ApplicationDbContext db, ISearchService searchService, IProductMapper mapper, IMemoryCache cache, ILogger<ProductService> logger) : IProductService
     {
+        private static readonly TimeSpan CatalogCacheDuration = TimeSpan.FromMinutes(5);
+        private const string CategoriesCacheKey = "catalog_categories";
+        private const string AllProductsCacheKey = "catalog_products_all";
+        private const string PromotionalProductsCacheKey = "catalog_products_promotional";
+
         /// <inheritdoc/>
         public async Task<IEnumerable<ProductVM>> GetAllAsync(CancellationToken ct = default)
         {
-            // Include Category so the mapper can populate CategoryName without a second query.
+            if (cache.TryGetValue(AllProductsCacheKey, out List<ProductVM>? cachedProducts) && cachedProducts is not null)
+            {
+                return cachedProducts;
+            }
+
             var products = await db.Products
+                .AsNoTracking()
                 .Where(p => !p.IsDeleted)
                 .Include(p => p.Category)
                 .ToListAsync(ct);
-            return mapper.ToViewModels(products);
+
+            var viewModels = mapper.ToViewModels(products).ToList();
+            cache.Set(AllProductsCacheKey, viewModels, new MemoryCacheEntryOptions
+            {
+                AbsoluteExpirationRelativeToNow = CatalogCacheDuration
+            });
+
+            return viewModels;
         }
 
         /// <inheritdoc/>
@@ -43,6 +61,8 @@ namespace ELKH.Services
             if (!string.IsNullOrWhiteSpace(search))
             {
                 var term = search.Trim();
+                // Catalog filtering currently uses direct Name/Description matching.
+                // It does not route through the fuzzy/FTS suggestion pipeline used by ISearchService.
                 query = query.Where(p => p.Name.Contains(term) || p.Description.Contains(term));
             }
 
@@ -138,6 +158,7 @@ namespace ELKH.Services
             entity.NameNormalized = NormalizeName(entity.Name);
             db.Products.Add(entity);
             await db.SaveChangesAsync(ct);
+            InvalidateCatalogCaches();
         }
 
         /// <inheritdoc/>
@@ -158,6 +179,7 @@ namespace ELKH.Services
             // Re-normalize after mapping in case the product name changed.
             entity.NameNormalized = NormalizeName(entity.Name);
             await db.SaveChangesAsync(ct);
+            InvalidateCatalogCaches();
         }
 
         /// <inheritdoc/>
@@ -169,6 +191,7 @@ namespace ELKH.Services
                 entity.IsDeleted = true;
                 entity.IsActive = false;
                 await db.SaveChangesAsync(ct);
+                InvalidateCatalogCaches();
             }
         }
 
@@ -200,16 +223,36 @@ WHERE PkProductId NOT IN (SELECT rowid FROM ProductFTS);
         /// <inheritdoc/>
         public async Task<IEnumerable<CategoryModel>> GetCategoriesAsync(CancellationToken ct = default)
         {
-            return await db.Categories.OrderBy(c => c.CategoryName).ToListAsync(ct);
+            if (cache.TryGetValue(CategoriesCacheKey, out List<CategoryModel>? cachedCategories) && cachedCategories is not null)
+            {
+                return cachedCategories;
+            }
+
+            var categories = await db.Categories
+                .AsNoTracking()
+                .OrderBy(c => c.CategoryName)
+                .ToListAsync(ct);
+
+            cache.Set(CategoriesCacheKey, categories, new MemoryCacheEntryOptions
+            {
+                AbsoluteExpirationRelativeToNow = CatalogCacheDuration
+            });
+
+            return categories;
         }
 
         /// <inheritdoc/>
         public async Task<IEnumerable<ProductVM>> GetPromotionalProductsAsync(CancellationToken ct = default)
         {
+            if (cache.TryGetValue(PromotionalProductsCacheKey, out List<ProductVM>? cachedPromotions) && cachedPromotions is not null)
+            {
+                return cachedPromotions;
+            }
+
             // Check if there are any active coupons first to optimize the query
             var hasActiveCoupons = await db.Coupons
-                .AnyAsync(c => c.IsActive && 
-                    c.ValidFrom <= DateTime.UtcNow && 
+                .AnyAsync(c => c.IsActive &&
+                    c.ValidFrom <= DateTime.UtcNow &&
                     c.ValidUntil >= DateTime.UtcNow, ct);
 
             // Get products with direct discounts or all products if there are active coupons
@@ -222,7 +265,20 @@ WHERE PkProductId NOT IN (SELECT rowid FROM ProductFTS);
                 .OrderBy(p => p.Name)
                 .ToListAsync(ct);
 
-            return mapper.ToViewModels(promotionalProducts);
+            var viewModels = mapper.ToViewModels(promotionalProducts).ToList();
+            cache.Set(PromotionalProductsCacheKey, viewModels, new MemoryCacheEntryOptions
+            {
+                AbsoluteExpirationRelativeToNow = CatalogCacheDuration
+            });
+
+            return viewModels;
+        }
+
+        private void InvalidateCatalogCaches()
+        {
+            cache.Remove(CategoriesCacheKey);
+            cache.Remove(AllProductsCacheKey);
+            cache.Remove(PromotionalProductsCacheKey);
         }
 
         /// <summary>

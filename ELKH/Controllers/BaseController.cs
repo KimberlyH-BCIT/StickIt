@@ -1,9 +1,9 @@
+using System.Security.Claims;
 using ELKH.Data;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Filters;
 using Microsoft.EntityFrameworkCore;
-using System.Security.Claims;
 
 namespace ELKH.Controllers;
 
@@ -25,7 +25,7 @@ namespace ELKH.Controllers;
 public class BaseController : Controller
 {
     protected readonly ApplicationDbContext _db;
-    protected readonly UserManager<IdentityUser> _userManager;
+    protected readonly UserManager<IdentityUser>? _userManager;
 
     public BaseController(ApplicationDbContext db)
     {

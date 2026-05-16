@@ -4,11 +4,12 @@ using Microsoft.Extensions.Logging;
 namespace ELKH.Services;
 
 /// <summary>
-/// Service for optimizing images with compression, resizing, and lazy loading support.
+/// Service for pass-through image copies, responsive variant file generation, and placeholder support.
+/// It does not currently perform guaranteed re-encoding or resizing.
 /// </summary>
-public class ImageOptimizationService : IImageOptimizationService
+public class ImageVariantService : IImageVariantService
 {
-    private readonly ILogger<ImageOptimizationService> _logger;
+    private readonly ILogger<ImageVariantService> _logger;
     private readonly IWebHostEnvironment _environment;
 
     private static readonly Dictionary<string, int> ResponsiveSizes = new()
@@ -20,8 +21,8 @@ public class ImageOptimizationService : IImageOptimizationService
         { "xlarge", 1920 }
     };
 
-    public ImageOptimizationService(
-        ILogger<ImageOptimizationService> logger,
+    public ImageVariantService(
+        ILogger<ImageVariantService> logger,
         IWebHostEnvironment environment)
     {
         _logger = logger;
@@ -47,7 +48,7 @@ public class ImageOptimizationService : IImageOptimizationService
             outputStream.Position = 0;
 
             _logger.LogDebug(
-                "Returned image stream without re-encoding from {InputSize}KB to {OutputSize}KB ({Format}, Q{Quality})",
+                "Returned copied image stream without guaranteed re-encoding from {InputSize}KB to {OutputSize}KB ({Format}, Q{Quality})",
                 inputStream.CanSeek ? inputStream.Length / 1024 : 0,
                 outputStream.Length / 1024,
                 outputFormat,
@@ -57,7 +58,7 @@ public class ImageOptimizationService : IImageOptimizationService
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Failed to optimize image with format {Format} and quality {Quality}", outputFormat, quality);
+            _logger.LogError(ex, "Failed to prepare image variant stream with format {Format} and quality {Quality}", outputFormat, quality);
             throw;
         }
     }
@@ -86,19 +87,19 @@ public class ImageOptimizationService : IImageOptimizationService
                 var webPath = $"/{outputDirectory.TrimStart('/')}/{fileName}".Replace('\\', '/');
 
                 sourceCopy.Position = 0;
-                await using var optimizedStream = await OptimizeImageAsync(sourceCopy, "webp", 85, size.Value, size.Value);
+                await using var variantStream = await OptimizeImageAsync(sourceCopy, "webp", 85, size.Value, size.Value);
                 await using var fileStream = new FileStream(filePath, FileMode.Create, FileAccess.Write, FileShare.None);
-                await optimizedStream.CopyToAsync(fileStream);
+                await variantStream.CopyToAsync(fileStream);
 
                 results[sizeName] = webPath;
-                _logger.LogDebug("Created responsive image {Size} at {Path}", sizeName, webPath);
+                _logger.LogDebug("Created responsive image variant {Size} at {Path}", sizeName, webPath);
             }
 
             return results;
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Failed to create responsive images for {BaseFileName}", baseFileName);
+            _logger.LogError(ex, "Failed to create responsive image variants for {BaseFileName}", baseFileName);
             throw;
         }
     }
@@ -135,16 +136,16 @@ public class ImageOptimizationService : IImageOptimizationService
 
             if (File.Exists(physicalPath))
             {
-                _logger.LogDebug("Using optimized image at {OptimizedPath}", optimizedPath);
+                _logger.LogDebug("Using image variant at {OptimizedPath}", optimizedPath);
                 return "/" + optimizedPath.TrimStart('/');
             }
 
-            _logger.LogDebug("Optimized image not found, using original at {OriginalPath}", originalPath);
+            _logger.LogDebug("Image variant not found, using original at {OriginalPath}", originalPath);
             return originalPath;
         }
         catch (Exception ex)
         {
-            _logger.LogWarning(ex, "Failed to determine optimized image path for {OriginalPath}", originalPath);
+            _logger.LogWarning(ex, "Failed to determine image variant path for {OriginalPath}", originalPath);
             return originalPath;
         }
     }

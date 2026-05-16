@@ -29,7 +29,7 @@ namespace ELKH.Extensions
             {
                 null => AddErrorAndReturnFalse(modelState, "Product not found."),
                 { IsActive: false } => AddErrorAndReturnFalse(modelState, "This product is no longer available."),
-                { StockQuantity: var stock } when stock < requestedQuantity => 
+                { StockQuantity: var stock } when stock < requestedQuantity =>
                     AddErrorAndReturnFalse(modelState, $"Only {stock} items available in stock."),
                 _ => true
             };

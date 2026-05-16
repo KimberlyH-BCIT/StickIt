@@ -13,6 +13,14 @@ namespace ELKH.Controllers
     /// listing products, adjusting stock quantities, and managing product images.
     /// </summary>
     /// <remarks>
+/// <para><strong>Table of Contents:</strong></para>
+/// <list type="number">
+/// <item>Section 1: Controller Setup &amp; Dependencies</item>
+/// <item>Section 2: Inventory Display &amp; Listing</item>
+/// <item>Section 3: Stock Quantity Management</item>
+/// <item>Section 4: Product Image Management</item>
+/// </list>
+/// 
     /// <para><strong>Multi-Role Administrative Access</strong></para>
     /// This controller requires Admin, Manager, or Staff role authorization for all operations.
     /// 
@@ -28,22 +36,22 @@ namespace ELKH.Controllers
     /// When products are restocked from out-of-stock status, the system automatically
     /// processes customer notifications with a 24-hour cooldown period to prevent spam.
     /// </remarks>
-[Authorize(Roles = "Admin,Manager,Staff")]
-public class InventoryController : Controller
-{
-    #region Section 1: Controller Setup & Dependencies
+    [Authorize(Roles = "Admin,Manager,Staff")]
+    public class InventoryController : Controller
+    {
+        #region Section 1: Controller Setup & Dependencies
 
-    // ===================================================================
-    // Section 1: Controller Setup & Dependencies
-    // ===================================================================
+        // ===================================================================
+        // Section 1: Controller Setup & Dependencies
+        // ===================================================================
 
-    private readonly IInventoryRepo _inventoryRepo;
-    private readonly ELKH.Services.ImageValidationService _imageValidator;
-    private readonly ELKH.Services.StockNotificationEmailService _stockNotificationService;
-    private readonly ELKH.Data.ApplicationDbContext _db;
+        private readonly IInventoryRepo _inventoryRepo;
+        private readonly ELKH.Services.ImageValidationService _imageValidator;
+        private readonly ELKH.Services.StockNotificationEmailService _stockNotificationService;
+        private readonly ELKH.Data.ApplicationDbContext _db;
 
         public InventoryController(
-            IInventoryRepo inventoryRepo, 
+            IInventoryRepo inventoryRepo,
             ELKH.Services.ImageValidationService imageValidator,
             ELKH.Services.StockNotificationEmailService stockNotificationService,
             ELKH.Data.ApplicationDbContext db)
@@ -54,16 +62,16 @@ public class InventoryController : Controller
             _db = db;
         }
 
-    #endregion
+        #endregion
 
-    #region Section 2: Inventory Display & Listing
+        #region Section 2: Inventory Display & Listing
 
-    // ===================================================================
-    // Section 2: Inventory Display & Listing
-    // ===================================================================
+        // ===================================================================
+        // Section 2: Inventory Display & Listing
+        // ===================================================================
 
 
-public async Task<IActionResult> Index()
+        public async Task<IActionResult> Index()
         {
             var result = await _inventoryRepo.GetAllProduct(null);
 
@@ -78,7 +86,7 @@ public async Task<IActionResult> Index()
         // Section 3: Stock Quantity Management
         // ===================================================================
 
-[HttpPost]
+        [HttpPost]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> EditProductAmount(int productId, int quantityId)
         {
@@ -103,8 +111,8 @@ public async Task<IActionResult> Index()
             {
                 // Check if there are any pending notifications before triggering
                 var hasPendingNotifications = await _db.StockNotifications
-                    .AnyAsync(sn => sn.FkProductId == productId 
-                                 && !sn.NotificationSent 
+                    .AnyAsync(sn => sn.FkProductId == productId
+                                 && !sn.NotificationSent
                                  && !sn.IsCancelled);
 
                 if (hasPendingNotifications)
@@ -165,21 +173,21 @@ public async Task<IActionResult> Index()
                 return NotFound();
             }
 
-var vmList = productImages.Select(pi => new ProductImageVM
-{
-    ImageId = pi.ImageId,
-    FileName = pi.FileName,
-    Description = pi.Description,
-    ImageData = pi.ImageData
-}).ToList();
+            var vmList = productImages.Select(pi => new ProductImageVM
+            {
+                ImageId = pi.ImageId,
+                FileName = pi.FileName,
+                Description = pi.Description,
+                ImageData = pi.ImageData
+            }).ToList();
 
             return View(vmList);
         }
 
-public async Task<IActionResult> AddImage(int productId)
-{
-    var vm = new ImageModel();
-    ViewBag.ProductId = productId;
+        public async Task<IActionResult> AddImage(int productId)
+        {
+            var vm = new ImageModel();
+            ViewBag.ProductId = productId;
 
             return View(vm);
         }

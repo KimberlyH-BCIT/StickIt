@@ -1,7 +1,7 @@
-using Microsoft.AspNetCore.Authorization;
-using Microsoft.AspNetCore.Mvc;
 using ELKH.Data;
 using ELKH.Services;
+using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc;
 
 namespace ELKH.Controllers
 {
@@ -18,7 +18,6 @@ namespace ELKH.Controllers
             : base(db)
         {
             UserService = userService;
-            db = db;
         }
 
         /// <summary>
@@ -116,7 +115,7 @@ namespace ELKH.Controllers
                 return Redirect(refererValue.ToString());
             }
 
-            return controllerName != null 
+            return controllerName != null
                 ? RedirectToAction(actionName, controllerName)
                 : RedirectToAction(actionName);
         }

@@ -1,12 +1,11 @@
+using System.Globalization;
 using System.Net.Http.Headers;
 using System.Text;
-using System.Globalization;
 
 namespace ELKH.Services;
 
 /// <summary>
-/// PayPal integration service providing payment processing functionality including
-/// order creation, payment capture, and transaction management through PayPal's REST API.
+/// PayPal integration service providing token management and server-side payment verification through PayPal's REST API.
 /// </summary>
 public class PayPalService(HttpClient http, IOptions<PayPalOptions> opts, IMemoryCache cache) : IPayPalService
 {
@@ -65,51 +64,6 @@ public class PayPalService(HttpClient http, IOptions<PayPalOptions> opts, IMemor
         {
             _tokenSemaphore.Release();
         }
-    }
-
-    public async Task<string> CreateOrderAsync(decimal total, string currency)
-    {
-        var token = await GetAccessTokenAsync();
-
-        var body = new
-        {
-            intent = "CAPTURE",
-            purchase_units = new[]
-            {
-                new
-                {
-                    amount = new
-                    {
-                        currency_code = currency,
-                        value = total.ToString("F2")
-                    }
-                }
-            }
-        };
-
-        using var req = new HttpRequestMessage(HttpMethod.Post, $"{BaseUrl}/v2/checkout/orders");
-        req.Headers.Authorization = new AuthenticationHeaderValue("Bearer", token);
-        req.Headers.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
-        req.Content = new StringContent(JsonSerializer.Serialize(body), Encoding.UTF8, "application/json");
-
-        var res = await http.SendAsync(req);
-        res.EnsureSuccessStatusCode();
-
-        var json = await res.Content.ReadAsStringAsync();
-        using var doc = JsonDocument.Parse(json);
-        return doc.RootElement.GetProperty("id").GetString()!;
-    }
-
-    public async Task CaptureOrderAsync(string paypalOrderId)
-    {
-        var token = await GetAccessTokenAsync();
-
-        using var req = new HttpRequestMessage(HttpMethod.Post, $"{BaseUrl}/v2/checkout/orders/{paypalOrderId}/capture");
-        req.Headers.Authorization = new AuthenticationHeaderValue("Bearer", token);
-        req.Headers.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
-
-        var res = await http.SendAsync(req);
-        res.EnsureSuccessStatusCode();
     }
 
     public async Task<PayPalVerificationResult> VerifyCapturedOrderAsync(string paypalOrderId, decimal expectedAmount, string expectedCurrency)

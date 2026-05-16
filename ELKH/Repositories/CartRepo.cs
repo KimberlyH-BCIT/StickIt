@@ -27,7 +27,7 @@ public class CartRepo : ICartRepo
     public CartRepo(ApplicationDbContext context, ILogger<CartRepo> logger)
     {
         _context = context;
-        _logger  = logger;
+        _logger = logger;
     }
 
     #endregion
@@ -106,7 +106,7 @@ public class CartRepo : ICartRepo
         }
         catch (DbUpdateException ex)
         {
-            _logger.LogError(ex, "Database error adding cart item for user {UserId}, product {ProductId}", 
+            _logger.LogError(ex, "Database error adding cart item for user {UserId}, product {ProductId}",
                 cart.FkRegisteredUserId, cart.FkProductID);
             return false;
         }
@@ -133,14 +133,14 @@ public class CartRepo : ICartRepo
         try
         {
             var existing = await _context.Carts.FindAsync(cart.PkCartId);
-            if (existing is null) 
+            if (existing is null)
             {
                 _logger.LogWarning("Attempted to update non-existent cart item {CartId}", cart.PkCartId);
                 return false;
             }
 
             // Update only the modifiable properties
-            existing.Quantity   = cart.Quantity;
+            existing.Quantity = cart.Quantity;
             existing.TotalPrice = cart.TotalPrice;
 
             await _context.SaveChangesAsync();
@@ -148,7 +148,7 @@ public class CartRepo : ICartRepo
         }
         catch (DbUpdateException ex)
         {
-            _logger.LogError(ex, "Database error updating cart item {CartId} for user {UserId}", 
+            _logger.LogError(ex, "Database error updating cart item {CartId} for user {UserId}",
                 cart.PkCartId, cart.FkRegisteredUserId);
             return false;
         }
@@ -170,7 +170,7 @@ public class CartRepo : ICartRepo
         try
         {
             var cart = await _context.Carts.FindAsync(cartId);
-            if (cart is null) 
+            if (cart is null)
             {
                 _logger.LogWarning("Attempted to remove non-existent cart item {CartId}", cartId);
                 return false;
@@ -215,7 +215,7 @@ public class CartRepo : ICartRepo
             {
                 _context.Carts.RemoveRange(items);
                 await _context.SaveChangesAsync();
-                _logger.LogInformation("Cleared {ItemCount} cart items for user {UserId}", 
+                _logger.LogInformation("Cleared {ItemCount} cart items for user {UserId}",
                     items.Count, registeredUserId);
             }
 

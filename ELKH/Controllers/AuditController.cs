@@ -1,9 +1,9 @@
-using Microsoft.AspNetCore.Mvc;
-using Microsoft.AspNetCore.Authorization;
+using System.Text;
 using ELKH.Data;
 using ELKH.Models;
+using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
-using System.Text;
 
 namespace ELKH.Controllers
 {
@@ -78,7 +78,7 @@ namespace ELKH.Controllers
                 if (DateTime.TryParse(toValue, out var to))
                     q = q.Where(a => a.Timestamp <= to);
             }
-            
+
             // --- Actor filter: substring match on the username who performed the action ---
             // Empty/whitespace values are ignored to avoid unintentionally filtering everything.
             if (req.TryGetValue("actor", out var actorValue))
@@ -95,7 +95,7 @@ namespace ELKH.Controllers
                 if (!string.IsNullOrEmpty(action))
                     q = q.Where(a => a.Action.Contains(action));
             }
-            
+
             // --- CSV export path ---
             // Checked before pagination so the export always contains every matching record,
             // not just the current page. StringBuilder is used for efficient string concatenation
@@ -116,10 +116,10 @@ namespace ELKH.Controllers
                 {
                     csv.AppendLine($"\"{a.Timestamp:u}\",\"{a.Actor}\",\"{a.Action}\",\"{a.Reason}\",{a.AffectedKeysCount},\"{a.Details.Replace("\"", "''")}\"");
                 }
-                
+
                 return File(Encoding.UTF8.GetBytes(csv.ToString()), "text/csv", "audit.csv");
             }
-            
+
             // --- Pagination ---
             // CountAsync() issues a SELECT COUNT(*) using the already-composed query filters.
             // Math.Ceiling ensures a partial final page is still counted (e.g. 101 items at
@@ -137,7 +137,7 @@ namespace ELKH.Controllers
 
             ViewBag.Page = page;
             ViewBag.TotalPages = totalPages;
-            
+
             return View(items);
         }
 

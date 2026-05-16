@@ -96,5 +96,5 @@ namespace ELKH.Services
         /// </remarks>
         Task<List<CartModel>> GetCartItemsAsync(string userEmail);
     }
-    
+
 }

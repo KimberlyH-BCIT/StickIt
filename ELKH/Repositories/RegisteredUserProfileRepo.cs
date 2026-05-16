@@ -11,7 +11,7 @@ namespace ELKH.Repositories;
 /// </summary>
 public class RegisteredUserProfileRepo : RepositoryBase<UserProfileModel, string>, IRegisteredUserProfileRepo
 {
-    public RegisteredUserProfileRepo(ApplicationDbContext context, ILogger<RegisteredUserProfileRepo> logger) 
+    public RegisteredUserProfileRepo(ApplicationDbContext context, ILogger<RegisteredUserProfileRepo> logger)
         : base(context, logger)
     {
     }

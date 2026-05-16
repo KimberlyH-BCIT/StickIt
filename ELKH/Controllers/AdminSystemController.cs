@@ -54,7 +54,7 @@ public class AdminSystemController : AdminControllerBase
             var sql = @"INSERT INTO ProductFTS(rowid, Name, PkProductId)
         SELECT PkProductId, Name, PkProductId FROM Products
         WHERE PkProductId NOT IN (SELECT rowid FROM ProductFTS);";
-            
+
             await Context.Database.ExecuteSqlRawAsync(sql);
 
             // Step 2: Record audit entry for compliance tracking
@@ -248,10 +248,10 @@ public class AdminSystemController : AdminControllerBase
                 // Remove each key from IMemoryCache
                 foreach (var k in keys)
                 {
-                    try 
-                    { 
-                        _cache.Remove(k.CacheKey); 
-                    } 
+                    try
+                    {
+                        _cache.Remove(k.CacheKey);
+                    }
                     catch (Exception ex)
                     {
                         Logger.LogWarning(ex, "Failed to remove cache key {CacheKey}", k.CacheKey);
@@ -300,10 +300,11 @@ public class AdminSystemController : AdminControllerBase
 
             await LogAdminActionAsync("ClearedCache", $"Cleared {registryCount} entries. Reason: {reason}");
 
-            return Ok(new { 
-                success = true, 
-                cleared = registryCount, 
-                message = $"Successfully cleared {registryCount} cache entries" 
+            return Ok(new
+            {
+                success = true,
+                cleared = registryCount,
+                message = $"Successfully cleared {registryCount} cache entries"
             });
         }
         catch (Exception ex)
@@ -395,7 +396,7 @@ public class AdminSystemController : AdminControllerBase
         {
             var canConnect = await Context.Database.CanConnectAsync();
             var productCount = await Context.Products.CountAsync();
-            
+
             return new
             {
                 status = canConnect ? "Healthy" : "Unhealthy",
@@ -416,7 +417,7 @@ public class AdminSystemController : AdminControllerBase
         try
         {
             var keyCount = await Context.CachedFuzzyKeys.CountAsync();
-            
+
             return new
             {
                 status = "Healthy",
@@ -437,7 +438,7 @@ public class AdminSystemController : AdminControllerBase
         {
             var totalProducts = await Context.Products.CountAsync();
             // Note: In a real implementation, you'd check the FTS table count
-            
+
             return new
             {
                 status = "Healthy",

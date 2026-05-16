@@ -1,8 +1,9 @@
-using ELKH.Extensions;
-using ELKH.Services;
-using Microsoft.EntityFrameworkCore;
 using System.Security.Cryptography;
 using System.Text;
+using ELKH.Extensions;
+using ELKH.Services;
+using ELKH.Models;
+using Microsoft.EntityFrameworkCore;
 
 namespace ELKH.Controllers;
 
@@ -18,6 +19,7 @@ public class CheckoutController : Controller
     private readonly IContactDetailRepo _contactRepo;
     private readonly ICartService _cartService;
     private readonly IGuestCartService _guestCartService;
+    private readonly ICheckoutOrchestrationService _checkoutOrchestrationService;
     private readonly IConfiguration _configuration;
     private readonly IShippingService _shippingService;
     private readonly IPayPalService _payPalService;
@@ -30,6 +32,7 @@ public class CheckoutController : Controller
         IContactDetailRepo contactRepo,
         ICartService cartService,
         IGuestCartService guestCartService,
+        ICheckoutOrchestrationService checkoutOrchestrationService,
         IConfiguration configuration,
         IShippingService shippingService,
         IPayPalService payPalService,
@@ -41,6 +44,7 @@ public class CheckoutController : Controller
         _contactRepo = contactRepo;
         _cartService = cartService;
         _guestCartService = guestCartService;
+        _checkoutOrchestrationService = checkoutOrchestrationService;
         _configuration = configuration;
         _shippingService = shippingService;
         _payPalService = payPalService;
@@ -59,93 +63,9 @@ public class CheckoutController : Controller
         if (string.IsNullOrWhiteSpace(email))
             return RedirectToPage("/Account/Login", new { area = "Identity" });
 
-        var regUser = await _db.RegisteredUsers.FirstOrDefaultAsync(u => u.Email == email);
-        if (regUser == null)
+        var checkoutVM = await _checkoutOrchestrationService.BuildCheckoutAsync(email);
+        if (checkoutVM == null)
             return RedirectToAction("Index", "Cart");
-
-        // ===================================================================
-        // STEP 2: Load cart items (redirect to cart if empty)
-        // ===================================================================
-        var cartItems = await _cartRepo.GetByUserIdAsync(regUser.PkRegisteredUserId);
-        if (!cartItems.Any())
-            return RedirectToAction("Index", "Cart");
-
-        // ===================================================================
-        // STEP 3: Load saved addresses for selection dropdown
-        // Feature merged from HEAD branch - allows users to select from
-        // previously used addresses or enter a new one
-        // ===================================================================
-        var savedAddresses = await _contactRepo.GetAllByUserIdAsync(regUser.PkRegisteredUserId);
-        var defaultAddress = await _contactRepo.GetDefaultByUserIdAsync(regUser.PkRegisteredUserId);
-
-        // ===================================================================
-        // STEP 4: Load available shipping methods
-        // ===================================================================
-        var availableShippingMethods = await _shippingService.GetAvailableShippingMethodsAsync();
-
-        // ===================================================================
-        // STEP 5: Build checkout view model with cart items and addresses
-        // ===================================================================
-        var checkoutVM = new CheckoutVM
-        {
-            Items = cartItems.Select(c => new CartItemVM
-            {
-                CartItemId = c.PkCartId,
-                ProductName = c.Product?.Name ?? "",
-                Quantity = c.Quantity,
-                UnitPrice = c.Product?.GetEffectivePrice() ?? 0m,
-                LineTotal = (c.Product?.GetEffectivePrice() ?? 0m) * c.Quantity
-            }).ToList(),
-            SavedAddresses = savedAddresses.Select(a => new ContactDetailVM
-            {
-                ContactId = a.PkContactId,
-                FirstName = a.FirstName,
-                LastName = a.LastName,
-                PhoneNumber = a.PhoneNumber,
-                Street = a.Street,
-                City = a.City,
-                Province = a.Province,
-                PostalCode = a.PostCode,
-                Country = a.Country,
-                IsDefault = a.IsDefault
-            }).ToList(),
-            AvailableShippingMethods = availableShippingMethods,
-            SelectedShippingMethodId = availableShippingMethods.FirstOrDefault()?.PkShippingMethodId ?? 1 // Default to first (Standard)
-        };
-
-        // ===================================================================
-        // STEP 6: Pre-populate form with default address if available
-        // ===================================================================
-        // Pre-populate with default address if available
-        if (defaultAddress != null)
-        {
-            checkoutVM.SelectedContactId = defaultAddress.PkContactId;
-            checkoutVM.FullName = $"{defaultAddress.FirstName} {defaultAddress.LastName}";
-            checkoutVM.Street = defaultAddress.Street;
-            checkoutVM.City = defaultAddress.City;
-            checkoutVM.Province = defaultAddress.Province;
-            checkoutVM.PostalCode = defaultAddress.PostCode;
-            checkoutVM.Country = defaultAddress.Country;
-            checkoutVM.PhoneNumber = defaultAddress.PhoneNumber;
-        }
-
-        // ===================================================================
-        // STEP 7: Calculate order totals with dynamic shipping
-        // Tax: 12% (BC PST 7% + GST 5%)
-        // Shipping: Calculated using ShippingService with free shipping threshold
-        // ===================================================================
-        // Calculate totals
-        checkoutVM.Subtotal = checkoutVM.Items.Sum(i => i.LineTotal);
-        checkoutVM.Tax = checkoutVM.Subtotal * 0.12m;
-        checkoutVM.ShippingCost = await _shippingService.CalculateShippingCostAsync(
-            checkoutVM.SelectedShippingMethodId, checkoutVM.Subtotal);
-        checkoutVM.Total = checkoutVM.Subtotal + checkoutVM.Tax + checkoutVM.ShippingCost;
-
-        // ===================================================================
-        // STEP 8: Configure PayPal client-side integration
-        // Using simplified approach from pr-43 (client-side capture only)
-        // ===================================================================
-        // Simple PayPal client ID from config (pr-43 approach that was working)
         ViewBag.PayPalClientId = _configuration["PayPal:ClientId"];
 
         return View(checkoutVM);
@@ -166,243 +86,31 @@ public class CheckoutController : Controller
     [Microsoft.AspNetCore.RateLimiting.EnableRateLimiting(RateLimitPolicies.Checkout)]
     public async Task<IActionResult> ProcessPayment(CheckoutVM vm)
     {
-        // ===================================================================
-        // STEP 1: Validate form input
-        // ===================================================================
         if (!ModelState.IsValid)
         {
-            // Re-populate display-only fields that are not posted back as form fields
             var emailForRepopulate = User.FindFirstValue(ClaimTypes.Email) ?? User.Identity?.Name;
             if (!string.IsNullOrWhiteSpace(emailForRepopulate))
             {
-                var userForRepopulate = await _db.RegisteredUsers
-                    .FirstOrDefaultAsync(u => u.Email == emailForRepopulate);
-                if (userForRepopulate != null)
-                {
-                    var cartItemsForRepopulate = await _cartRepo.GetByUserIdAsync(userForRepopulate.PkRegisteredUserId);
-                    vm.Items = cartItemsForRepopulate.Select(c => new CartItemVM
-                    {
-                        CartItemId = c.PkCartId,
-                        ProductName = c.Product?.Name ?? "",
-                        Quantity = c.Quantity,
-                        UnitPrice = c.Product?.GetEffectivePrice() ?? 0m,
-                        LineTotal = (c.Product?.GetEffectivePrice() ?? 0m) * c.Quantity
-                    }).ToList();
-                    vm.Subtotal = vm.Items.Sum(i => i.LineTotal);
-                    vm.Tax = vm.Subtotal * 0.12m;
-                    vm.ShippingCost = await _shippingService.CalculateShippingCostAsync(
-                        vm.SelectedShippingMethodId, vm.Subtotal);
-                    vm.Total = vm.Subtotal + vm.Tax + vm.ShippingCost;
-                    vm.SavedAddresses = (await _contactRepo.GetAllByUserIdAsync(userForRepopulate.PkRegisteredUserId))
-                        .Select(a => new ContactDetailVM
-                        {
-                            ContactId = a.PkContactId,
-                            FirstName = a.FirstName,
-                            LastName = a.LastName,
-                            PhoneNumber = a.PhoneNumber,
-                            Street = a.Street,
-                            City = a.City,
-                            Province = a.Province,
-                            PostalCode = a.PostCode,
-                            Country = a.Country,
-                            IsDefault = a.IsDefault
-                        }).ToList();
-                    vm.AvailableShippingMethods = await _shippingService.GetAvailableShippingMethodsAsync();
-                }
+                await _checkoutOrchestrationService.PopulateCheckoutAsync(vm, emailForRepopulate);
             }
             ViewBag.PayPalClientId = _configuration["PayPal:ClientId"];
             return View("Index", vm);
         }
 
-        // ===================================================================
-        // STEP 2: Authenticate user and load cart
-        // ===================================================================
         var email = User.FindFirstValue(ClaimTypes.Email) ?? User.Identity?.Name;
         if (string.IsNullOrWhiteSpace(email))
             return RedirectToPage("/Account/Login", new { area = "Identity" });
 
-        var regUser = await _db.RegisteredUsers.FirstOrDefaultAsync(u => u.Email == email);
-        if (regUser is null) return RedirectToAction("Index", "Cart");
-
-        var cartItems = (await _cartRepo.GetByUserIdAsync(regUser.PkRegisteredUserId)).ToList();
-        if (cartItems.Count == 0) return RedirectToAction("Index", "Cart");
-
-        // ===================================================================
-        // STEP 3: Validate shipping method and recalculate totals server-side (security: prevent tampering)
-        // ===================================================================
-        // Validate selected shipping method
-        var shippingMethod = await _shippingService.GetShippingMethodByIdAsync(vm.SelectedShippingMethodId);
-        if (shippingMethod == null || !shippingMethod.IsActive)
+        var expectedCurrency = _configuration["PayPal:Currency"] ?? "CAD";
+        var result = await _checkoutOrchestrationService.ProcessPaymentAsync(email, vm, expectedCurrency);
+        if (!result.Success)
         {
-            TempData["Message"] = "error,Invalid shipping method selected.";
+            TempData["Message"] = $"error,{result.ErrorMessage}";
             return RedirectToAction("Index");
         }
 
-        // Recalculate server-side to prevent client-side price tampering
-        var subtotal = cartItems.Sum(c => (c.Product?.GetEffectivePrice() ?? 0m) * c.Quantity);
-        var tax = subtotal * 0.12m;
-        var shipping = await _shippingService.CalculateShippingCostAsync(vm.SelectedShippingMethodId, subtotal);
-        var total = subtotal + tax + shipping;
-
-        if (string.IsNullOrWhiteSpace(vm.PayPalOrderId))
-        {
-            TempData["Message"] = "error,PayPal payment verification is required before placing your order.";
-            return RedirectToAction("Index");
-        }
-
-        PayPalVerificationResult paymentVerification;
-        try
-        {
-            paymentVerification = await VerifyPayPalPaymentAsync(vm.PayPalOrderId, total);
-        }
-        catch (InvalidOperationException ex)
-        {
-            _logger.LogWarning(ex, "Rejected PayPal verification for order submission by user {Email}", email);
-            TempData["Message"] = $"error,{ex.Message}";
-            return RedirectToAction("Index");
-        }
-
-        // ===================================================================
-        // STEP 4: Verify inventory availability before creating order
-        // ===================================================================
-        // Check inventory before processing
-        foreach (var item in cartItems)
-        {
-            if (item.Product == null || (item.Product.StockQuantity ?? 0) < item.Quantity)
-            {
-                TempData["Message"] = "error,One or more items in your cart are out of stock.";
-                return RedirectToAction("Index");
-            }
-        }
-
-        // ===================================================================
-        // STEP 5-8: Create order in a transaction to ensure atomicity
-        // All database operations wrapped in transaction for data consistency
-        // ===================================================================
-        await using var transaction = _db.Database.IsRelational()
-            ? await _db.Database.BeginTransactionAsync()
-            : null;
-        try
-        {
-            // ===================================================================
-            // STEP 5: Create or retrieve contact detail (shipping address)
-            // Supports both saved addresses and new address entry
-            // ===================================================================
-            // Create or update contact detail
-            ContactDetailModel? contact = null;
-            if (vm.SelectedContactId.HasValue && vm.SelectedContactId.Value > 0)
-            {
-                contact = await _db.ContactDetails.FirstOrDefaultAsync(c =>
-                    c.PkContactId == vm.SelectedContactId.Value &&
-                    c.FkRegisteredUserId == regUser.PkRegisteredUserId);
-
-                if (contact == null)
-                {
-                    TempData["Message"] = "error,Selected contact details could not be found for your account.";
-                    return RedirectToAction("Index");
-                }
-            }
-
-            if (contact == null)
-            {
-                // Create new contact
-                // Split full name into first/last (simple split on first space)
-                var names = (vm.FullName ?? "").Split(' ', 2);
-                contact = new ContactDetailModel
-                {
-                    FkRegisteredUserId = regUser.PkRegisteredUserId,
-                    FirstName = names.Length > 0 ? names[0] : "",
-                    LastName = names.Length > 1 ? names[1] : "",
-                    PhoneNumber = vm.PhoneNumber ?? "",
-                    Street = vm.Street ?? "",
-                    City = vm.City ?? "",
-                    Province = vm.Province ?? "",
-                    PostCode = vm.PostalCode ?? "",
-                    Country = vm.Country ?? "Canada",
-                    IsDefault = false
-                };
-                _db.ContactDetails.Add(contact);
-                await _db.SaveChangesAsync();
-            }
-
-            // ===================================================================
-            // STEP 6: Create order record with shipping information
-            // OrderStatus set to "Paid" because PayPal already captured payment
-            // ===================================================================
-            // Create order
-            var order = new OrderModel
-            {
-                FkContactId = contact.PkContactId,
-                FkRegisteredUserId = regUser.PkRegisteredUserId,
-                OrderStatus = OrderStatus.Paid,
-                TotalAmount = total,
-                CreatedAt = DateTime.UtcNow,
-                DeliveryStatus = DeliveryStatus.Pending,
-                FkShippingMethodId = vm.SelectedShippingMethodId,
-                ShippingMethodName = shippingMethod.Name,
-                ShippingCost = shipping
-            };
-            _db.Orders.Add(order);
-            await _db.SaveChangesAsync();
-
-            var paymentTransaction = CreateVerifiedTransaction(order, contact.PkContactId, shipping, paymentVerification);
-            _db.Transactions.Add(paymentTransaction);
-            await _db.SaveChangesAsync();
-
-            // ===================================================================
-            // STEP 7: Create order items and decrement inventory
-            // ===================================================================
-            // Create order items and decrement inventory
-            foreach (var cartItem in cartItems)
-            {
-                var orderItem = new OrderItemModel
-                {
-                    FkOrderId = order.PkOrderId,
-                    FkProductId = cartItem.FkProductID,
-                    Quantity = cartItem.Quantity,
-                    UnitPrice = cartItem.Product?.GetEffectivePrice() ?? 0m
-                };
-                _db.OrderItems.Add(orderItem);
-
-                if (!await TryReserveInventoryAsync(cartItem.FkProductID, cartItem.Quantity))
-                {
-                    if (transaction != null)
-                    {
-                        await transaction.RollbackAsync();
-                    }
-
-                    TempData["Message"] = "error,One or more items in your cart are no longer available in the requested quantity.";
-                    return RedirectToAction("Index");
-                }
-            }
-
-            // ===================================================================
-            // STEP 8: Clear cart and commit transaction
-            // ===================================================================
-            // Clear cart
-            _db.Carts.RemoveRange(cartItems);
-            await _db.SaveChangesAsync();
-
-            // Commit transaction - all changes are now permanent
-            if (transaction != null)
-            {
-                await transaction.CommitAsync();
-            }
-
-            TempData["Message"] = "success,Order placed successfully!";
-            return RedirectToAction("Details", "Order", new { id = order.PkOrderId });
-        }
-        catch (Exception ex)
-        {
-            // Rollback transaction on any error to maintain data consistency
-            if (transaction != null)
-            {
-                await transaction.RollbackAsync();
-            }
-            _logger.LogError(ex, "Failed to process order for user {Email}", email);
-            TempData["Message"] = "error,An error occurred while processing your order. Please try again.";
-            return RedirectToAction("Index");
-        }
+        TempData["Message"] = "success,Order placed successfully!";
+        return RedirectToAction("Details", "Order", new { id = result.OrderId });
     }
 
     #region Guest Checkout
@@ -484,358 +192,29 @@ public class CheckoutController : Controller
     [Microsoft.AspNetCore.RateLimiting.EnableRateLimiting(RateLimitPolicies.Checkout)]
     public async Task<IActionResult> ProcessGuestPayment(GuestCheckoutVM vm)
     {
-        // ===================================================================
-        // STEP 1: Validate form input
-        // ===================================================================
         if (!ModelState.IsValid)
         {
             vm.PayPalClientId = _configuration["PayPal:ClientId"];
             return View("Guest", vm);
         }
 
-        // ===================================================================
-        // STEP 2: Retrieve session cart
-        // ===================================================================
-        var cartItems = await _guestCartService.GetCartItemsAsync();
-        if (cartItems.Count == 0)
-        {
-            TempData["Message"] = "error,Your cart is empty.";
-            return RedirectToAction("Index", "Cart");
-        }
-
-        // Load full product details for inventory check and price calculation
-        var productIds = cartItems.Select(c => c.ProductId).ToList();
-        var products = await _db.Products
-            .Where(p => productIds.Contains(p.PkProductId))
-            .ToListAsync();
-
-        // ===================================================================
-        // STEP 3: Validate shipping method and recalculate totals server-side (security)
-        // ===================================================================
-        // Validate selected shipping method
-        var shippingMethod = await _shippingService.GetShippingMethodByIdAsync(vm.SelectedShippingMethodId);
-        if (shippingMethod == null || !shippingMethod.IsActive)
-        {
-            TempData["Message"] = "error,Invalid shipping method selected.";
-            return RedirectToAction("Guest");
-        }
-
-        var subtotal = 0m;
-        foreach (var item in cartItems)
-        {
-            var product = products.FirstOrDefault(p => p.PkProductId == item.ProductId);
-            if (product != null)
-            {
-                subtotal += CalculateCheckoutUnitPrice(product) * item.Quantity;
-            }
-        }
-        var tax = subtotal * 0.12m;
-        var shipping = await _shippingService.CalculateShippingCostAsync(vm.SelectedShippingMethodId, subtotal);
-        var total = decimal.Round(subtotal + tax + shipping, 2, MidpointRounding.AwayFromZero);
-
-        if (string.IsNullOrWhiteSpace(vm.PayPalOrderId))
-        {
-            TempData["Message"] = "error,PayPal payment verification is required before placing your order.";
-            return RedirectToAction("Guest");
-        }
-
-        PayPalVerificationResult paymentVerification;
-        try
-        {
-            paymentVerification = await VerifyPayPalPaymentAsync(vm.PayPalOrderId, total);
-        }
-        catch (InvalidOperationException ex)
-        {
-            _logger.LogWarning(ex, "Rejected guest PayPal verification for {Email}", vm.Email);
-            TempData["Message"] = $"error,{ex.Message}";
-            return RedirectToAction("Guest");
-        }
-
-        // ===================================================================
-        // STEP 4: Verify inventory availability
-        // ===================================================================
-        foreach (var item in cartItems)
-        {
-            var product = products.FirstOrDefault(p => p.PkProductId == item.ProductId);
-            if (product == null || (product.StockQuantity ?? 0) < item.Quantity)
-            {
-                TempData["Message"] = "error,One or more items in your cart are out of stock.";
-                return RedirectToAction("Guest");
-            }
-        }
-
-        // ===================================================================
-        // STEP 5: Create contact detail (not linked to user account)
-        // ===================================================================
-        await using var transaction = _db.Database.IsRelational()
-            ? await _db.Database.BeginTransactionAsync()
-            : null;
-        try
-        {
-            var names = (vm.FullName ?? "").Split(' ', 2);
-            var guestAccessToken = GenerateGuestAccessToken();
-            var contact = new ContactDetailModel
-            {
-                FkRegisteredUserId = null,
-                FirstName = names.Length > 0 ? names[0] : "",
-                LastName = names.Length > 1 ? names[1] : "",
-                PhoneNumber = vm.PhoneNumber ?? "",
-                Street = vm.Street ?? "",
-                City = vm.City ?? "",
-                Province = vm.Province ?? "",
-                PostCode = vm.PostalCode ?? "",
-                Country = vm.Country ?? "Canada",
-                IsDefault = false
-            };
-            _db.ContactDetails.Add(contact);
-            await _db.SaveChangesAsync();
-
-            var order = new OrderModel
-            {
-                FkContactId = contact.PkContactId,
-                ContactDetail = contact,
-                FkRegisteredUserId = null,
-                OrderStatus = OrderStatus.Paid,
-                TotalAmount = total,
-                CreatedAt = DateTime.UtcNow,
-                DeliveryStatus = DeliveryStatus.Pending,
-                FkShippingMethodId = vm.SelectedShippingMethodId,
-                ShippingMethodName = shippingMethod.Name,
-                ShippingCost = shipping,
-                GuestAccessTokenHash = HashGuestAccessToken(guestAccessToken)
-            };
-            _db.Orders.Add(order);
-            await _db.SaveChangesAsync();
-
-            var paymentTransaction = CreateVerifiedTransaction(order, contact.PkContactId, shipping, paymentVerification);
-            _db.Transactions.Add(paymentTransaction);
-            await _db.SaveChangesAsync();
-
-            foreach (var item in cartItems)
-            {
-                var product = products.FirstOrDefault(p => p.PkProductId == item.ProductId);
-                if (product != null)
-                {
-                    var orderItem = new OrderItemModel
-                    {
-                        FkOrderId = order.PkOrderId,
-                        Order = order,
-                        FkProductId = product.PkProductId,
-                        Product = product,
-                        Quantity = item.Quantity,
-                        UnitPrice = CalculateCheckoutUnitPrice(product)
-                    };
-                    _db.OrderItems.Add(orderItem);
-
-                    if (!await TryReserveInventoryAsync(product.PkProductId, item.Quantity))
-                    {
-                        if (transaction != null)
-                        {
-                            await transaction.RollbackAsync();
-                        }
-
-                        TempData["Message"] = "error,One or more items in your cart are no longer available in the requested quantity.";
-                        return RedirectToAction("Guest");
-                    }
-                }
-            }
-
-            await _db.SaveChangesAsync();
-            await _guestCartService.ClearCartAsync();
-            if (transaction != null)
-            {
-                await transaction.CommitAsync();
-            }
-
-            var guestConfirmationLink = BuildGuestConfirmationLink(guestAccessToken);
-            try
-            {
-                await _orderEmailService.SendOrderConfirmationAsync(
-                    vm.Email,
-                    contact.FirstName,
-                    order.PkOrderId,
-                    guestConfirmationLink);
-            }
-            catch (Exception ex)
-            {
-                _logger.LogWarning(ex, "Failed to send guest order confirmation email for order {OrderId}", order.PkOrderId);
-            }
-
-            TempData["Message"] = "success,Order placed successfully! Check your email for order details.";
-            return RedirectToAction(nameof(GuestConfirmation), new { token = guestAccessToken });
-        }
-        catch (Exception ex)
-        {
-            try
-            {
-                if (transaction != null)
-                {
-                if (transaction != null)
-                {
-                    await transaction.RollbackAsync();
-                }
-                }
-            }
-            catch (Exception rollbackEx)
-            {
-                _logger.LogWarning(rollbackEx, "Failed to roll back guest checkout transaction for {Email}", vm.Email);
-            }
-
-            _logger.LogError(ex, "Failed to process guest order for {Email}", vm.Email);
-            TempData["Message"] = "error,An error occurred while processing your order. Please try again.";
-            return RedirectToAction("Guest");
-        }
-
-        // ===================================================================
-        // STEP 9: Optional - Create user account if requested
-        // ===================================================================
-        // Account creation functionality is planned for future release:
-        // - Check if vm.CreateAccount == true
-        // - Validate password requirements  
-        // - Create ASP.NET Core Identity user
-        // - Link order to new user account
-        // - Send welcome email
-
-        // ===================================================================
-        // STEP 10: Redirect to confirmation
-        // ===================================================================
-    }
-
-    private async Task<PayPalVerificationResult> VerifyPayPalPaymentAsync(string payPalOrderId, decimal expectedTotal)
-    {
-        var duplicateTransaction = await _db.Transactions
-            .AsNoTracking()
-            .FirstOrDefaultAsync(t => t.PaymentOrderId == payPalOrderId || t.PaymentTransactionId == payPalOrderId);
-
-        if (duplicateTransaction != null)
-        {
-            throw new InvalidOperationException("This PayPal payment has already been used for another order.");
-        }
-
         var expectedCurrency = _configuration["PayPal:Currency"] ?? "CAD";
-        var verification = await _payPalService.VerifyCapturedOrderAsync(payPalOrderId, expectedTotal, expectedCurrency);
-        if (verification is null)
+        var result = await _checkoutOrchestrationService.ProcessGuestPaymentAsync(
+            vm,
+            expectedCurrency,
+            Request.Scheme,
+            Request.Host.Value ?? string.Empty);
+
+        if (!result.Success)
         {
-            throw new InvalidOperationException("PayPal verification did not return a payment result.");
+            TempData["Message"] = $"error,{result.ErrorMessage}";
+            return result.ErrorMessage == "Your cart is empty."
+                ? RedirectToAction("Index", "Cart")
+                : RedirectToAction("Guest");
         }
 
-        var verifiedCaptureId = verification.CaptureId;
-        var verifiedOrderId = verification.PayPalOrderId;
-
-        var duplicateCapture = await _db.Transactions
-            .AsNoTracking()
-            .FirstOrDefaultAsync(t => t.PaymentTransactionId == verifiedCaptureId || t.PaymentOrderId == verifiedOrderId);
-
-        if (duplicateCapture != null)
-        {
-            throw new InvalidOperationException("This PayPal payment has already been used for another order.");
-        }
-
-        return verification;
-    }
-
-    private async Task<bool> TryReserveInventoryAsync(int productId, int quantity)
-    {
-        if (quantity <= 0)
-        {
-            return false;
-        }
-
-        if (_db.Database.IsRelational())
-        {
-            FormattableString sql = $@"
-UPDATE Products
-SET StockQuantity = StockQuantity - {quantity}
-WHERE PkProductId = {productId}
-  AND StockQuantity IS NOT NULL
-  AND StockQuantity >= {quantity};";
-
-            var rowsAffected = await _db.Database.ExecuteSqlInterpolatedAsync(sql);
-            if (rowsAffected == 1)
-            {
-                var trackedProductEntry = _db.ChangeTracker
-                    .Entries<ProductModel>()
-                    .FirstOrDefault(e => e.Entity.PkProductId == productId);
-
-                if (trackedProductEntry != null)
-                {
-                    trackedProductEntry.Entity.StockQuantity = (trackedProductEntry.Entity.StockQuantity ?? 0) - quantity;
-                    trackedProductEntry.OriginalValues[nameof(ProductModel.StockQuantity)] = trackedProductEntry.Entity.StockQuantity;
-                    trackedProductEntry.State = EntityState.Unchanged;
-                }
-            }
-
-            return rowsAffected == 1;
-        }
-
-        var product = await _db.Products.FirstOrDefaultAsync(p => p.PkProductId == productId);
-        if (product == null || (product.StockQuantity ?? 0) < quantity)
-        {
-            return false;
-        }
-
-        product.StockQuantity -= quantity;
-
-        try
-        {
-            await _db.SaveChangesAsync();
-            return true;
-        }
-        catch (DbUpdateConcurrencyException)
-        {
-            return false;
-        }
-    }
-
-    private static TransactionModel CreateVerifiedTransaction(OrderModel order, int contactId, decimal shipping, PayPalVerificationResult verification)
-    {
-        return new TransactionModel
-        {
-            FkOrderId = order.PkOrderId,
-            FkContactId = contactId,
-            TransactionStatus = verification.Status,
-            Amount = verification.Amount,
-            Currency = verification.Currency,
-            DeliveryFee = shipping,
-            TransactionDate = verification.CapturedAtUtc ?? DateTime.UtcNow,
-            PaymentOrderId = verification.PayPalOrderId,
-            PaymentTransactionId = verification.CaptureId,
-            PaymentProvider = "PayPal",
-            PaymentCapturedAtUtc = verification.CapturedAtUtc,
-            PayerId = verification.PayerId,
-            PayerEmail = verification.PayerEmail,
-            VerificationSummary = verification.VerificationSummaryJson
-        };
-    }
-
-    private static decimal CalculateCheckoutUnitPrice(ProductModel product)
-    {
-        return product.DiscountPercent > 0
-            ? product.Price * (1 - (product.DiscountPercent / 100m))
-            : product.Price;
-    }
-
-    private static string GenerateGuestAccessToken()
-    {
-        return Microsoft.AspNetCore.WebUtilities.WebEncoders.Base64UrlEncode(RandomNumberGenerator.GetBytes(32));
-    }
-
-    private static string HashGuestAccessToken(string token)
-    {
-        return Convert.ToBase64String(SHA256.HashData(Encoding.UTF8.GetBytes(token)));
-    }
-
-    private string BuildGuestConfirmationLink(string token)
-    {
-        var path = Url.Action(nameof(GuestConfirmation), "Checkout", new { token })
-            ?? $"/Checkout/GuestConfirmation?token={Uri.EscapeDataString(token)}";
-
-        if (!Request.Host.HasValue)
-        {
-            return path;
-        }
-
-        return $"{Request.Scheme}://{Request.Host}{path}";
+        TempData["Message"] = "success,Order placed successfully! Check your email for order details.";
+        return RedirectToAction(nameof(GuestConfirmation), new { token = result.GuestAccessToken });
     }
 
     /// <summary>
@@ -878,6 +257,11 @@ WHERE PkProductId = {productId}
         }
 
         return View(order);
+    }
+
+    private static string HashGuestAccessToken(string token)
+    {
+        return Convert.ToBase64String(SHA256.HashData(Encoding.UTF8.GetBytes(token)));
     }
 
     #endregion

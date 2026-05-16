@@ -117,8 +117,8 @@ public static partial class DbSeeder
             ("St. John's",         "Newfoundland and Labrador",    'A'),
         ];
 
-        string[] streetSuffixes = ["St","Ave","Rd","Blvd","Cres","Dr","Way","Lane","Pl","Ct"];
-        string[] streetNames    =
+        string[] streetSuffixes = ["St", "Ave", "Rd", "Blvd", "Cres", "Dr", "Way", "Lane", "Pl", "Ct"];
+        string[] streetNames =
         [
             "Maple","Oak","Pine","Cedar","Elm","Birch","Walnut","Willow","Spruce","Ash",
             "Poplar","Cherry","Larch","Fir","Sycamore","Hazel","Beech","Alder","Rowan","Hawthorn"
@@ -132,7 +132,7 @@ public static partial class DbSeeder
 
         // Weighted star ratings: realistic e-commerce distribution
         // 50% 5-star, 25% 4-star, 15% 3-star, 7% 2-star, 3% 1-star
-        int[] starPool = [5,5,5,5,5,5,5,5,5,5, 4,4,4,4,4, 3,3,3, 2,2, 1];
+        int[] starPool = [5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 4, 4, 4, 4, 4, 3, 3, 3, 2, 2, 1];
 
         // ======================================================================
         // â•‘ Generate 50 Demo Customers                                         â•‘
@@ -142,15 +142,15 @@ public static partial class DbSeeder
         for (int i = 0; i < 50; i++)
         {
             var firstName = firstNames[i];
-            var lastName  = lastNames[i];
-            var email     = $"{firstName.ToLowerInvariant()}.{lastName.ToLowerInvariant()}{i + 1}@home.com";
-            var password  = $"Demo@2025!{(i + 1):D2}";
+            var lastName = lastNames[i];
+            var email = $"{firstName.ToLowerInvariant()}.{lastName.ToLowerInvariant()}{i + 1}@home.com";
+            var password = $"Demo@2025!{(i + 1):D2}";
 
             // 1. Identity user (email pre-confirmed so the account is usable immediately).
             var identityUser = new IdentityUser
             {
-                UserName       = email,
-                Email          = email,
+                UserName = email,
+                Email = email,
                 EmailConfirmed = true
             };
             var result = await userManager.CreateAsync(identityUser, password);
@@ -167,10 +167,10 @@ public static partial class DbSeeder
             // 3. UserProfileModel - placeholder avatar
             db.UserProfiles.Add(new UserProfileModel
             {
-                PkEmail        = email,
-                FirstName      = firstName,
-                LastName       = lastName,
-                AvatarData     = avatarBytes,
+                PkEmail = email,
+                FirstName = firstName,
+                LastName = lastName,
+                AvatarData = avatarBytes,
                 AvatarMimeType = avatarBytes is not null ? "image/png" : null
             });
 
@@ -216,17 +216,17 @@ public static partial class DbSeeder
 
         var contact = new ContactDetailModel
         {
-            FirstName          = firstName,
-            LastName           = lastName,
-            PhoneNumber        = $"({rng.Next(200, 999)}) {rng.Next(100, 999)}-{rng.Next(1000, 9999)}",
-            Street             = $"{streetNum} {streetName} {streetSfx}",
-            City               = loc.City,
-            Province           = loc.Province,
-            PostCode           = postalCode,
-            Country            = "Canada",
-            IsDefault          = true,
+            FirstName = firstName,
+            LastName = lastName,
+            PhoneNumber = $"({rng.Next(200, 999)}) {rng.Next(100, 999)}-{rng.Next(1000, 9999)}",
+            Street = $"{streetNum} {streetName} {streetSfx}",
+            City = loc.City,
+            Province = loc.Province,
+            PostCode = postalCode,
+            Country = "Canada",
+            IsDefault = true,
             FkRegisteredUserId = registeredUser.PkRegisteredUserId,
-            UserId             = userId
+            UserId = userId
         };
         db.ContactDetails.Add(contact);
         await db.SaveChangesAsync();
@@ -251,8 +251,8 @@ public static partial class DbSeeder
             db.WishListItems.Add(new WishListItemModel
             {
                 FkWishListId = wishlist.PkWishListId,
-                FkProductId  = wp.PkProductId,
-                DateAdded    = DateTime.UtcNow.AddDays(-rng.Next(1, 180))
+                FkProductId = wp.PkProductId,
+                DateAdded = DateTime.UtcNow.AddDays(-rng.Next(1, 180))
             });
         }
     }
@@ -280,22 +280,22 @@ public static partial class DbSeeder
             int roll = rng.Next(10);
             var (orderStatus, deliveryStatus) = roll switch
             {
-                < 4 => (OrderStatus.Shipped,    DeliveryStatus.Delivered),
-                < 7 => (OrderStatus.Shipped,    DeliveryStatus.Shipped),
-                < 9 => (OrderStatus.Shipped,    DeliveryStatus.InTransit),
-                _   => (OrderStatus.Pending,    DeliveryStatus.Pending)
+                < 4 => (OrderStatus.Shipped, DeliveryStatus.Delivered),
+                < 7 => (OrderStatus.Shipped, DeliveryStatus.Shipped),
+                < 9 => (OrderStatus.Shipped, DeliveryStatus.InTransit),
+                _ => (OrderStatus.Pending, DeliveryStatus.Pending)
             };
 
             var orderProducts = products.OrderBy(_ => rng.Next()).Take(rng.Next(1, 4)).ToList();
 
             var order = new OrderModel
             {
-                OrderStatus        = orderStatus,
-                TotalAmount        = 0,
-                CreatedAt          = orderDate,
-                DeliveryStatus     = deliveryStatus,
+                OrderStatus = orderStatus,
+                TotalAmount = 0,
+                CreatedAt = orderDate,
+                DeliveryStatus = deliveryStatus,
                 FkRegisteredUserId = registeredUser.PkRegisteredUserId,
-                FkContactId        = contact.PkContactId
+                FkContactId = contact.PkContactId
             };
             db.Orders.Add(order);
             await db.SaveChangesAsync();
@@ -312,9 +312,9 @@ public static partial class DbSeeder
 
                 var item = new OrderItemModel
                 {
-                    FkOrderId   = order.PkOrderId,
+                    FkOrderId = order.PkOrderId,
                     FkProductId = prod.PkProductId,
-                    Quantity    = qty
+                    Quantity = qty
                 };
                 db.OrderItems.Add(item);
                 orderItems.Add(item);
@@ -329,11 +329,11 @@ public static partial class DbSeeder
                 db.Transactions.Add(new TransactionModel
                 {
                     TransactionStatus = "Completed",
-                    Amount            = Math.Round(orderTotal + 5.99m, 2),
-                    TransactionDate   = orderDate.AddMinutes(rng.Next(5, 90)),
-                    DeliveryFee       = 5.99m,
-                    FkOrderId         = order.PkOrderId,
-                    FkContactId       = contact.PkContactId
+                    Amount = Math.Round(orderTotal + 5.99m, 2),
+                    TransactionDate = orderDate.AddMinutes(rng.Next(5, 90)),
+                    DeliveryFee = 5.99m,
+                    FkOrderId = order.PkOrderId,
+                    FkContactId = contact.PkContactId
                 });
             }
             await db.SaveChangesAsync();
@@ -378,15 +378,15 @@ public static partial class DbSeeder
 
             db.ProductRatings.Add(new ProductRatingModel
             {
-                FkProductId        = ratedItem.FkProductId,
+                FkProductId = ratedItem.FkProductId,
                 FkRegisteredUserId = registeredUser.PkRegisteredUserId,
-                FkOrderItemId      = ratedItem.PkOrderItemId,
-                Rating             = starRating,
-                Description        = reviewText,
-                RatedTime          = reviewDate,
-                Approved           = true,
-                IsFlagged          = false,
-                UserId             = identityUser.Id
+                FkOrderItemId = ratedItem.PkOrderItemId,
+                Rating = starRating,
+                Description = reviewText,
+                RatedTime = reviewDate,
+                Approved = true,
+                IsFlagged = false,
+                UserId = identityUser.Id
             });
             await db.SaveChangesAsync();
         }

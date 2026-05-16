@@ -42,7 +42,7 @@ namespace ELKH.ViewModels
         [Required(ErrorMessage = "Phone number is required")]
         [Phone(ErrorMessage = "Please enter a valid phone number")]
         [Display(Name = "Phone Number")]
-        [RegularExpression(@"^\+?1?\s*\(?([0-9]{3})\)?[-.\s]?([0-9]{3})[-.\s]?([0-9]{4})$", 
+        [RegularExpression(@"^\+?1?\s*\(?([0-9]{3})\)?[-.\s]?([0-9]{3})[-.\s]?([0-9]{4})$",
             ErrorMessage = "Please enter a valid North American phone number (e.g., (604) 555-1234)")]
         public string PhoneNumber { get; set; } = string.Empty;
 
@@ -74,7 +74,7 @@ namespace ELKH.ViewModels
         /// </summary>
         [Required(ErrorMessage = "Postal code is required")]
         [Display(Name = "Postal Code")]
-        [RegularExpression(@"^[A-Za-z]\d[A-Za-z][ -]?\d[A-Za-z]\d$", 
+        [RegularExpression(@"^[A-Za-z]\d[A-Za-z][ -]?\d[A-Za-z]\d$",
             ErrorMessage = "Please enter a valid Canadian postal code (e.g., V6B 1A1)")]
         public string PostalCode { get; set; } = string.Empty;
 
@@ -104,13 +104,13 @@ namespace ELKH.ViewModels
         public bool SubscribeToNewsletter { get; set; } = false;
 
         /// <summary>
-        /// Optional: Guest wants to create account after checkout
+        /// Reserved for a future post-checkout registration handoff. Inline account creation is not currently completed during guest checkout.
         /// </summary>
         [Display(Name = "Create an account to track my order and save my information")]
         public bool CreateAccount { get; set; } = false;
 
         /// <summary>
-        /// Password for account creation (only if CreateAccount is true)
+        /// Reserved password field for a future post-checkout registration handoff.
         /// </summary>
         [Display(Name = "Password")]
         [DataType(DataType.Password)]
@@ -118,7 +118,7 @@ namespace ELKH.ViewModels
         public string? Password { get; set; }
 
         /// <summary>
-        /// Confirm password for account creation
+        /// Reserved confirmation field for a future post-checkout registration handoff.
         /// </summary>
         [Display(Name = "Confirm Password")]
         [DataType(DataType.Password)]
@@ -141,7 +141,7 @@ namespace ELKH.ViewModels
         public decimal Tax { get; set; }
 
         /// <summary>
-        /// Shipping cost ($5.99 or free over $50)
+        /// Shipping cost based on the selected method, with free Standard shipping on orders of $50 or more.
         /// </summary>
         public decimal ShippingCost { get; set; }
 

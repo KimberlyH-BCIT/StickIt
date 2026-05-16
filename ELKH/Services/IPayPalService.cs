@@ -7,12 +7,6 @@ namespace ELKH.Services;
 /// </summary>
 public interface IPayPalService
 {
-    /// <summary>Creates a PayPal order and returns its PayPal-assigned ID.</summary>
-    Task<string> CreateOrderAsync(decimal total, string currency);
-
-    /// <summary>Captures (completes) a previously created PayPal order.</summary>
-    Task CaptureOrderAsync(string paypalOrderId);
-
     /// <summary>
     /// Verifies a PayPal checkout order and returns the captured payment details used to trust the payment server-side.
     /// </summary>

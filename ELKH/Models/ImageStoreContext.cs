@@ -15,7 +15,7 @@ public partial class ImageStoreContext : DbContext
     {
     }
 
-    public virtual DbSet<ImageModel> Images { get; set; }
+    public virtual DbSet<ImageModel> Images { get; set; } = null!;
 
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)

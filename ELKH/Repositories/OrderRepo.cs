@@ -42,9 +42,6 @@ public class OrderRepo : IOrderRepo
         return order;
     }
 
-    /// <summary>
-    /// UPDATED: Parameter 'status' changed from string to OrderStatus Enum.
-    /// </summary>
     public async Task<bool> UpdateStatusAsync(int orderId, OrderStatus status)
     {
         try
@@ -52,7 +49,6 @@ public class OrderRepo : IOrderRepo
             var order = await _context.Orders.FindAsync(orderId);
             if (order is null) return false;
 
-            // FIXED: Assigning Enum directly instead of string
             order.OrderStatus = status;
             await _context.SaveChangesAsync();
             return true;

@@ -1,7 +1,7 @@
-using Microsoft.AspNetCore.Authorization;
-using Microsoft.AspNetCore.Mvc;
 using ELKH.Models;
 using ELKH.Services;
+using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc;
 
 namespace ELKH.Controllers.Base;
 
@@ -87,7 +87,7 @@ public abstract class AdminControllerBase : Controller
     protected async Task LogAdminActionAsync(string action, string details = "")
     {
         var adminEmail = User.Identity?.Name ?? "Unknown";
-        
+
         try
         {
             var auditEntry = new AuditEntryModel

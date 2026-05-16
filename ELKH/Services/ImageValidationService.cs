@@ -152,7 +152,7 @@ public class ImageValidationService
             if (!ValidateMagicBytes(header, extension))
             {
                 result.Errors.Add($"File signature does not match expected format for {extension} files. The file may be corrupted or disguised as an image.");
-                _logger.LogWarning("Magic byte validation failed for file {FileName} with extension {Extension}", 
+                _logger.LogWarning("Magic byte validation failed for file {FileName} with extension {Extension}",
                     file.FileName, extension);
                 return result;
             }

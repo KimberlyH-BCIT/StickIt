@@ -1,7 +1,7 @@
+using ELKH.Models; // Ensure Models is included for Enums
 using ELKH.Repositories;
 using ELKH.Services;
 using ELKH.ViewModels;
-using ELKH.Models; // Ensure Models is included for Enums
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Logging;

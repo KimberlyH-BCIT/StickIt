@@ -66,9 +66,9 @@ namespace ELKH.Controllers
             {
                 var userId = registered.PkRegisteredUserId;
 
-                var dashboard          = await UserService.GetDashboardDataAsync(userId);
-                vm.WishlistCount       = dashboard.WishlistCount;
-                vm.WishlistSection     = dashboard.Wishlist;
+                var dashboard = await UserService.GetDashboardDataAsync(userId);
+                vm.WishlistCount = dashboard.WishlistCount;
+                vm.WishlistSection = dashboard.Wishlist;
                 vm.ActiveOrdersSection = dashboard.ActiveOrders;
                 vm.OrderHistorySection = dashboard.OrderHistory;
             }
@@ -90,9 +90,9 @@ namespace ELKH.Controllers
                     ? new UserProfileVM { PkEmail = email }
                     : new UserProfileVM
                     {
-                        PkEmail   = profile.PkEmail,
+                        PkEmail = profile.PkEmail,
                         FirstName = profile.FirstName,
-                        LastName  = profile.LastName,
+                        LastName = profile.LastName,
                         HasAvatar = profile.AvatarData is not null
                     }
             };
@@ -103,16 +103,16 @@ namespace ELKH.Controllers
                 var addresses = await _contactRepository.GetAllByUserIdAsync(userId.Value);
                 vm.Addresses = addresses.Select(a => new ContactDetailVM
                 {
-                    ContactId   = a.PkContactId,
-                    FirstName   = a.FirstName,
-                    LastName    = a.LastName,
+                    ContactId = a.PkContactId,
+                    FirstName = a.FirstName,
+                    LastName = a.LastName,
                     PhoneNumber = a.PhoneNumber,
-                    Street      = a.Street,
-                    City        = a.City,
-                    Province    = a.Province,
-                    PostCode    = a.PostCode,
-                    Country     = a.Country,
-                    IsDefault   = a.IsDefault
+                    Street = a.Street,
+                    City = a.City,
+                    Province = a.Province,
+                    PostCode = a.PostCode,
+                    Country = a.Country,
+                    IsDefault = a.IsDefault
                 }).ToList();
             }
 
@@ -135,16 +135,16 @@ namespace ELKH.Controllers
                     var addresses = await _contactRepository.GetAllByUserIdAsync(reloadId.Value);
                     vm.Addresses = addresses.Select(a => new ContactDetailVM
                     {
-                        ContactId   = a.PkContactId,
-                        FirstName   = a.FirstName,
-                        LastName    = a.LastName,
+                        ContactId = a.PkContactId,
+                        FirstName = a.FirstName,
+                        LastName = a.LastName,
                         PhoneNumber = a.PhoneNumber,
-                        Street      = a.Street,
-                        City        = a.City,
-                        Province    = a.Province,
-                        PostCode    = a.PostCode,
-                        Country     = a.Country,
-                        IsDefault   = a.IsDefault
+                        Street = a.Street,
+                        City = a.City,
+                        Province = a.Province,
+                        PostCode = a.PostCode,
+                        Country = a.Country,
+                        IsDefault = a.IsDefault
                     }).ToList();
                 }
                 return View(vm);
@@ -156,16 +156,16 @@ namespace ELKH.Controllers
             {
                 var newProfile = new UserProfileModel
                 {
-                    PkEmail   = email,
+                    PkEmail = email,
                     FirstName = vm.Profile.FirstName,
-                    LastName  = vm.Profile.LastName
+                    LastName = vm.Profile.LastName
                 };
                 await _profileRepository.AddAndSaveAsync(newProfile);
             }
             else
             {
                 existing.FirstName = vm.Profile.FirstName;
-                existing.LastName  = vm.Profile.LastName;
+                existing.LastName = vm.Profile.LastName;
                 await _profileRepository.UpdateAndSaveAsync(existing);
             }
 
@@ -245,17 +245,17 @@ namespace ELKH.Controllers
             {
                 var newProfile = new UserProfileModel
                 {
-                    PkEmail        = email,
-                    FirstName      = string.Empty,
-                    LastName       = string.Empty,
-                    AvatarData     = bytes,
+                    PkEmail = email,
+                    FirstName = string.Empty,
+                    LastName = string.Empty,
+                    AvatarData = bytes,
                     AvatarMimeType = file.ContentType
                 };
                 await _profileRepository.AddAndSaveAsync(newProfile);
             }
             else
             {
-                existing.AvatarData     = bytes;
+                existing.AvatarData = bytes;
                 existing.AvatarMimeType = file.ContentType;
                 await _profileRepository.UpdateAndSaveAsync(existing);
             }
@@ -276,7 +276,7 @@ namespace ELKH.Controllers
             var existing = _profileRepository.GetById(email);
             if (existing is not null && existing.AvatarData is not null)
             {
-                existing.AvatarData     = null;
+                existing.AvatarData = null;
                 existing.AvatarMimeType = null;
                 await _profileRepository.UpdateAndSaveAsync(existing);
                 await _logRepository.LogActivityAsync(email, "AvatarRemoved", "Removed profile picture");
@@ -331,7 +331,7 @@ namespace ELKH.Controllers
                 return Challenge();
 
             var addresses = await _contactRepository.GetAllByUserIdAsync(userId.Value);
-            
+
             var viewModels = addresses.Select(a => new ContactDetailVM
             {
                 ContactId = a.PkContactId,
@@ -601,10 +601,10 @@ namespace ELKH.Controllers
                 .Take(30)
                 .Select(l => new UserLogVM
                 {
-                    LogInTime      = l.LogInTime,
-                    LogOutTime     = l.LogOutTime,
-                    Abandoned      = l.Abandoned,
-                    ActivityType   = l.ActivityType,
+                    LogInTime = l.LogInTime,
+                    LogOutTime = l.LogOutTime,
+                    Abandoned = l.Abandoned,
+                    ActivityType = l.ActivityType,
                     ActivityDetail = l.ActivityDetail
                 })
                 .ToList();
@@ -626,16 +626,16 @@ namespace ELKH.Controllers
             IEnumerable<UserRatingVM> vms = sort switch
             {
                 "purchase_asc" => ratings.OrderBy(r => r.PurchaseDate),
-                "name_asc"     => ratings.OrderBy(r => r.ProductName, StringComparer.OrdinalIgnoreCase),
-                "name_desc"    => ratings.OrderByDescending(r => r.ProductName, StringComparer.OrdinalIgnoreCase),
-                "rating_high"  => ratings.OrderByDescending(r => r.Rating),
-                "rating_low"   => ratings.OrderBy(r => r.Rating),
-                _              => ratings.OrderByDescending(r => r.PurchaseDate)
+                "name_asc" => ratings.OrderBy(r => r.ProductName, StringComparer.OrdinalIgnoreCase),
+                "name_desc" => ratings.OrderByDescending(r => r.ProductName, StringComparer.OrdinalIgnoreCase),
+                "rating_high" => ratings.OrderByDescending(r => r.Rating),
+                "rating_low" => ratings.OrderBy(r => r.Rating),
+                _ => ratings.OrderByDescending(r => r.PurchaseDate)
             };
 
             return View(new MyRatingsVM
             {
-                Ratings     = vms.ToList(),
+                Ratings = vms.ToList(),
                 CurrentSort = sort,
                 ProductsToReview = productsToReview
             });
@@ -740,5 +740,5 @@ namespace ELKH.Controllers
 
         #endregion
 
-            }
-        }
+    }
+}

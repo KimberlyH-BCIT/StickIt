@@ -42,6 +42,7 @@ namespace ELKH.Services
         /// <param name="userId">Primary key of the user whose wishlist to retrieve.</param>
         /// <param name="page">1-based page index.</param>
         /// <param name="sort">Sort key: <c>"date_asc"</c>, <c>"on_sale"</c>, <c>"most_popular"</c>, or default (date descending).</param>
+        /// <param name="ct">Cancellation token to cancel the wishlist retrieval operation.</param>
         Task<WishlistSectionVM> GetWishlistSectionAsync(int userId, int page, string sort, CancellationToken ct = default);
 
         /// <summary>
@@ -51,6 +52,7 @@ namespace ELKH.Services
         /// <param name="page">1-based page index.</param>
         /// <param name="sort">Sort key: <c>"date_asc"</c>, <c>"on_sale"</c>, <c>"most_popular"</c>, or default (date descending).</param>
         /// <param name="activeOnly"><see langword="true"/> to return in-progress orders; <see langword="false"/> for order history.</param>
+        /// <param name="ct">Cancellation token to cancel the order section retrieval.</param>
         Task<OrderSectionVM> GetOrderSectionAsync(int userId, int page, string sort, bool activeOnly, CancellationToken ct = default);
 
         /// <summary>

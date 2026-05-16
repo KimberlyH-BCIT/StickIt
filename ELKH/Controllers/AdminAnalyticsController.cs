@@ -1,9 +1,9 @@
+using System.Globalization;
 using ELKH.Controllers.Base;
 using ELKH.Data;
 using ELKH.ViewModels;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
-using System.Globalization;
 
 namespace ELKH.Controllers;
 
@@ -13,6 +13,14 @@ namespace ELKH.Controllers;
 /// </summary>
 /// <remarks>
 /// Keeps analytics and reporting behavior isolated from the broader admin workflows.
+/// 
+/// <para><strong>Table of Contents:</strong></para>
+/// <list type="number">
+/// <item>Section 1: Controller Setup &amp; Dependencies</item>
+/// <item>Section 2: Dashboard Analytics</item>
+/// <item>Section 3: Sales Analytics</item>
+/// <item>Section 4: Product Analytics</item>
+/// </list>
 /// 
 /// <para><strong>Responsibilities:</strong></para>
 /// <list type="bullet">

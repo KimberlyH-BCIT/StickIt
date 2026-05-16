@@ -13,7 +13,7 @@ public record CartItemVM
     public int Quantity { get; set; }
     public string? ImageUrl { get; set; }
 
-    public decimal LineTotal { get; set; }  
+    public decimal LineTotal { get; set; }
 }
 
 /// <summary>

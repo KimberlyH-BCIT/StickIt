@@ -1,3 +1,4 @@
+using System.Globalization;
 using ELKH.Data;
 using ELKH.Models;
 using ELKH.Repositories;
@@ -10,7 +11,6 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Caching.Memory;
 using Microsoft.Extensions.Logging;
-using System.Globalization;
 
 namespace ELKH.Controllers
 {
@@ -33,6 +33,8 @@ namespace ELKH.Controllers
         private readonly ILogger<AdminController> _logger;
         private readonly IFuzzyReindexService _reindexService;
         private readonly UserManager<IdentityUser> _userManager;
+        private readonly IAccountDetailsService _accountDetailsService;
+        private readonly IAdminUserListService _adminUserListService;
 
         public AdminController(
             IRoleRepo roleRepo,
@@ -40,7 +42,9 @@ namespace ELKH.Controllers
             IMemoryCache cache,
             ILogger<AdminController> logger,
             IFuzzyReindexService reindexService,
-            UserManager<IdentityUser> userManager)
+            UserManager<IdentityUser> userManager,
+            IAccountDetailsService accountDetailsService,
+            IAdminUserListService adminUserListService)
         {
             _roleRepo = roleRepo;
             _context = context;
@@ -48,6 +52,8 @@ namespace ELKH.Controllers
             _logger = logger;
             _reindexService = reindexService;
             _userManager = userManager;
+            _accountDetailsService = accountDetailsService;
+            _adminUserListService = adminUserListService;
         }
 
         #endregion
@@ -64,14 +70,14 @@ namespace ELKH.Controllers
         public async Task<IActionResult> Index()
         {
             var now = DateTime.UtcNow;
-            var weekAgo  = now.AddDays(-7);
+            var weekAgo = now.AddDays(-7);
             var monthAgo = now.AddDays(-30);
 
             var vm = new SalesVM
             {
-                WeeklyTotalOrders  = await _context.Orders.CountAsync(o => o.CreatedAt >= weekAgo),
+                WeeklyTotalOrders = await _context.Orders.CountAsync(o => o.CreatedAt >= weekAgo),
                 MonthlyTotalOrders = await _context.Orders.CountAsync(o => o.CreatedAt >= monthAgo),
-                StockUpCount   = await _context.Products.CountAsync(p => p.StockQuantity > 100),
+                StockUpCount = await _context.Products.CountAsync(p => p.StockQuantity > 100),
                 StockDownCount = await _context.Products.CountAsync(p => p.StockQuantity <= 100),
             };
 
@@ -81,7 +87,7 @@ namespace ELKH.Controllers
                 .Select(oi => new
                 {
                     oi.FkProductId,
-                    ProductName  = oi.Product == null ? "Unknown" : oi.Product.Name,
+                    ProductName = oi.Product == null ? "Unknown" : oi.Product.Name,
                     ProductPrice = oi.Product == null ? 0m : oi.Product.Price,
                     oi.Quantity
                 })
@@ -92,8 +98,8 @@ namespace ELKH.Controllers
                 .Select(g => new TopProductVM
                 {
                     ProductName = g.Key.ProductName,
-                    UnitsSold   = g.Sum(oi => oi.Quantity),
-                    Revenue     = g.Sum(oi => oi.Quantity * g.Key.ProductPrice)
+                    UnitsSold = g.Sum(oi => oi.Quantity),
+                    Revenue = g.Sum(oi => oi.Quantity * g.Key.ProductPrice)
                 })
                 .OrderByDescending(p => p.UnitsSold)
                 .Take(5)
@@ -266,16 +272,16 @@ namespace ELKH.Controllers
                 var roles = await _userManager.GetRolesAsync(user);
                 userList.Add(new UserListVM
                 {
-                    Id    = user.Id,
+                    Id = user.Id,
                     Email = user.Email ?? string.Empty,
                     Roles = roles.ToList()
                 });
             }
 
             ViewBag.CurrentPage = page;
-            ViewBag.TotalPages  = (int)Math.Ceiling((double)totalUsers / pageSize);
-            ViewBag.Search      = search;
-            ViewBag.RoleFilter  = roleFilter;
+            ViewBag.TotalPages = (int)Math.Ceiling((double)totalUsers / pageSize);
+            ViewBag.Search = search;
+            ViewBag.RoleFilter = roleFilter;
 
             return View(userList);
         }
@@ -290,50 +296,8 @@ namespace ELKH.Controllers
         [HttpGet]
         public async Task<IActionResult> AccountDetails(string id)
         {
-            if (string.IsNullOrEmpty(id))
-            {
-                return NotFound();
-            }
-
-            var user = await _userManager.FindByIdAsync(id);
-            if (user == null) return NotFound();
-
-            var roles = await _userManager.GetRolesAsync(user);
-
-            // Resolve the application-side RegisteredUser by email to access contact details
-            // Note: Uses email as the join key rather than Identity GUID for consistency
-            var registeredUser = await _context.RegisteredUsers
-                .FirstOrDefaultAsync(r => r.Email == user.Email);
-            var contact = registeredUser is null
-                ? null
-                : await _context.ContactDetails
-                    .FirstOrDefaultAsync(c => c.FkRegisteredUserId == registeredUser.PkRegisteredUserId);
-
-            var vm = new AccountDetailsVM
-            {
-                User = new UserListVM
-                {
-                    Id = user.Id,
-                    Name = user.UserName ?? "",
-                    Email = user.Email ?? "",
-                    Roles = roles.ToList()
-                },
-                Contact = contact == null ? null : new ContactDetailVM
-                {
-                    ContactId = contact.PkContactId,
-                    FirstName = contact.FirstName,
-                    LastName = contact.LastName,
-                    PhoneNumber = contact.PhoneNumber,
-                    Street = contact.Street,
-                    City = contact.City,
-                    Province = contact.Province,
-                    PostCode = contact.PostCode,
-                    Country = contact.Country,
-                    IsDefault = contact.IsDefault
-                }
-            };
-
-            return View(vm);
+            var vm = await _accountDetailsService.BuildAsync(id);
+            return vm == null ? NotFound() : View(vm);
         }
 
         /// <summary>

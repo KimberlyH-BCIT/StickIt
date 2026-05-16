@@ -11,7 +11,7 @@ namespace ELKH.Repositories
     /// </summary>
     public class RegisteredUserLogRepo : RepositoryBase<UserLogModel, int>, IRegisteredUserLogRepo
     {
-        public RegisteredUserLogRepo(ApplicationDbContext context, ILogger<RegisteredUserLogRepo> logger) 
+        public RegisteredUserLogRepo(ApplicationDbContext context, ILogger<RegisteredUserLogRepo> logger)
             : base(context, logger)
         {
         }
@@ -122,9 +122,9 @@ namespace ELKH.Repositories
 
             var entry = new UserLogModel
             {
-                FkEmail        = email,
-                LogInTime      = DateTime.UtcNow,
-                ActivityType   = activityType,
+                FkEmail = email,
+                LogInTime = DateTime.UtcNow,
+                ActivityType = activityType,
                 ActivityDetail = detail
             };
 

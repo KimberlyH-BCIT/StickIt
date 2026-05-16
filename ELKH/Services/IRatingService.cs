@@ -44,6 +44,7 @@ namespace ELKH.Services
         /// <param name="rating">Star value between 1 and 5 inclusive.</param>
         /// <param name="description">Optional review text.</param>
         /// <param name="userId">Primary key of the submitting user.</param>
+        /// <param name="ct">Cancellation token to abort the create rating operation.</param>
         /// <returns>
         /// <see cref="RatingOperationResult"/> with <c>Success = true</c> and the product ID on success,
         /// or <c>Success = false</c> with a human-readable rejection message.

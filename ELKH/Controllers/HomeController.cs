@@ -32,6 +32,7 @@ namespace ELKH.Controllers
         /// Displays the main landing page with featured content and customer reviews.
         /// </summary>
         /// <returns>Homepage view with store reviews in ViewBag</returns>
+        [Microsoft.AspNetCore.OutputCaching.OutputCache(PolicyName = "ProductList")]
         public async Task<IActionResult> Index()
         {
             // Fetch approved store reviews for homepage carousel
@@ -41,70 +42,49 @@ namespace ELKH.Controllers
             return View();
         }
 
-        /// <summary>
-        /// Displays the privacy policy page.
-        /// </summary>
+        [ResponseCache(Duration = 3600, Location = ResponseCacheLocation.Any, VaryByHeader = "Accept-Encoding")]
         public IActionResult Privacy()
         {
             return View();
         }
 
-        /// <summary>
-        /// Displays the contact information page.
-        /// </summary>
+        [ResponseCache(Duration = 3600, Location = ResponseCacheLocation.Any, VaryByHeader = "Accept-Encoding")]
         public IActionResult Contact()
         {
             return View();
         }
 
-        /// <summary>
-        /// Displays the frequently asked questions page.
-        /// </summary>
+        [ResponseCache(Duration = 3600, Location = ResponseCacheLocation.Any, VaryByHeader = "Accept-Encoding")]
         public IActionResult FAQ()
         {
             return View();
         }
 
-        /// <summary>
-        /// Displays the shipping information and policies page.
-        /// </summary>
+        [ResponseCache(Duration = 3600, Location = ResponseCacheLocation.Any, VaryByHeader = "Accept-Encoding")]
         public IActionResult Shipping()
         {
             return View();
         }
 
-        /// <summary>
-        /// Displays the returns and refunds policy page.
-        /// </summary>
+        [ResponseCache(Duration = 3600, Location = ResponseCacheLocation.Any, VaryByHeader = "Accept-Encoding")]
         public IActionResult Returns()
         {
             return View();
         }
 
-        /// <summary>
-        /// Displays the about us page with company information.
-        /// </summary>
+        [ResponseCache(Duration = 3600, Location = ResponseCacheLocation.Any, VaryByHeader = "Accept-Encoding")]
         public IActionResult About()
         {
             return View();
         }
 
-        /// <summary>
-        /// Demo page showcasing image optimization, lazy loading, and Kawaii UI features
-        /// </summary>
-        public IActionResult ImageDemo()
-        {
-            return View();
-        }
-
-        /// <summary>
-        /// Displays the terms of service page.
-        /// </summary>
+        [ResponseCache(Duration = 3600, Location = ResponseCacheLocation.Any, VaryByHeader = "Accept-Encoding")]
         public IActionResult Terms()
         {
             return View();
         }
 
+        [ResponseCache(Duration = 3600, Location = ResponseCacheLocation.Any, VaryByHeader = "Accept-Encoding")]
         public IActionResult Accessibility()
         {
             return View();

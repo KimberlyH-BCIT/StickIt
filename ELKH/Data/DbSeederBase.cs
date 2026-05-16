@@ -1,7 +1,7 @@
-using ELKH.Models;
-using Microsoft.AspNetCore.Identity;
 using System.Globalization;
 using System.Text;
+using ELKH.Models;
+using Microsoft.AspNetCore.Identity;
 
 namespace ELKH.Data;
 
@@ -9,6 +9,14 @@ namespace ELKH.Data;
 /// Base class for database seeding operations providing common utilities and orchestration.
 /// </summary>
 /// <remarks>
+/// <para><strong>Table of Contents:</strong></para>
+/// <list type="number">
+/// <item>Section 1: Shared Utilities &amp; Common Infrastructure</item>
+/// <item>Section 2: Product Factory &amp; Data Generation</item>
+/// <item>Section 3: String Normalization &amp; Search Optimization</item>
+/// <item>Section 4: Main Orchestration &amp; Error Handling</item>
+/// </list>
+/// 
 /// Provides shared helpers used by the partial seeder files.
 /// </remarks>
 public static partial class DbSeeder
@@ -49,21 +57,21 @@ public static partial class DbSeeder
         string tags = "",
         bool isBestSeller = false,
         bool isTrending = false) => new()
-    {
-        Name             = name,
-        NameNormalized   = Normalize(name),
-        Description      = description,
-        Price            = price,
-        DiscountPercent  = discountPercent,
-        StockQuantity    = stock,
-        IsActive         = true,
-        DateAdded        = GenerateRandomDate(),
-        IsBestSeller     = isBestSeller,
-        IsTrending       = isTrending,
-        FkCategoryId     = category.PkCategoryId,
-        Category         = category,
-        Tags             = tags
-    };
+        {
+            Name = name,
+            NameNormalized = Normalize(name),
+            Description = description,
+            Price = price,
+            DiscountPercent = discountPercent,
+            StockQuantity = stock,
+            IsActive = true,
+            DateAdded = GenerateRandomDate(),
+            IsBestSeller = isBestSeller,
+            IsTrending = isTrending,
+            FkCategoryId = category.PkCategoryId,
+            Category = category,
+            Tags = tags
+        };
 
     /// <summary>
     /// Generates a random date between 2 years ago and now, with higher probability
@@ -172,13 +180,13 @@ public static partial class DbSeeder
 
             // Step 1: Core product catalog
             await SeedProductsAsync(db);
-            
+
             // Step 2: Administrative users and roles
             await SeedUsersAndRolesAsync(db, userManager, roleManager, configuration, wwwRootPath, allowDefaultElevatedCredentials);
-            
+
             // Step 3: Demo customers with orders and contact details
             await SeedCustomersAndOrdersAsync(db, userManager, wwwRootPath);
-            
+
             // Step 4: Store reviews and ratings
             await SeedStoreReviewsAsync(db, userManager);
         }

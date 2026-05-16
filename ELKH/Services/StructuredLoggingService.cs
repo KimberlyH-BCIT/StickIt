@@ -1,9 +1,9 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using ELKH.Middleware;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Logging;
-using ELKH.Middleware;
 
 namespace ELKH.Services;
 
@@ -16,22 +16,22 @@ public interface IStructuredLoggingService
     /// Logs a user action with structured data and correlation ID
     /// </summary>
     void LogUserAction(string action, string userId, object? additionalData = null);
-    
+
     /// <summary>
     /// Logs a system event with structured data
     /// </summary>
     void LogSystemEvent(string eventType, string description, object? additionalData = null);
-    
+
     /// <summary>
     /// Logs a performance metric with timing information
     /// </summary>
     void LogPerformanceMetric(string operation, TimeSpan duration, object? additionalData = null);
-    
+
     /// <summary>
     /// Logs a business event with rich context
     /// </summary>
     void LogBusinessEvent(string eventName, string category, object? data = null);
-    
+
     /// <summary>
     /// Logs an error with full context and correlation ID
     /// </summary>
@@ -76,7 +76,7 @@ public class StructuredLoggingService : IStructuredLoggingService
         }
 
         using var scope = _logger.BeginScope(logData);
-        
+
         _logger.LogInformation("User action: {Action} by user {UserId}",
             action, userId);
     }
@@ -100,7 +100,7 @@ public class StructuredLoggingService : IStructuredLoggingService
         }
 
         using var scope = _logger.BeginScope(logData);
-        
+
         _logger.LogInformation("System event: {EventType} - {Description}",
             eventType, description);
     }
@@ -123,9 +123,9 @@ public class StructuredLoggingService : IStructuredLoggingService
         }
 
         using var scope = _logger.BeginScope(logData);
-        
+
         var logLevel = duration.TotalMilliseconds > 5000 ? LogLevel.Warning : LogLevel.Information;
-        
+
         _logger.Log(logLevel, "Performance: {Operation} completed in {DurationMs}ms",
             operation, duration.TotalMilliseconds);
     }
@@ -150,7 +150,7 @@ public class StructuredLoggingService : IStructuredLoggingService
         }
 
         using var scope = _logger.BeginScope(logData);
-        
+
         _logger.LogInformation("Business event: {Category}.{EventName}",
             category, eventName);
     }
@@ -176,7 +176,7 @@ public class StructuredLoggingService : IStructuredLoggingService
         }
 
         using var scope = _logger.BeginScope(logData);
-        
+
         _logger.LogError(exception, "Error in {Context}: {ExceptionMessage}",
             context, exception.Message);
     }

@@ -11,13 +11,11 @@ namespace ELKH.Controllers
     /// </summary>
     public class PromotionsController : Controller
     {
-        private readonly IProductService _productService;
-        private readonly ICouponService _couponService;
+        private readonly ICategoryBrowseService _categoryBrowseService;
 
-        public PromotionsController(IProductService productService, ICouponService couponService)
+        public PromotionsController(ICategoryBrowseService categoryBrowseService)
         {
-            _productService = productService;
-            _couponService = couponService;
+            _categoryBrowseService = categoryBrowseService;
         }
 
         /// <summary>
@@ -30,52 +28,27 @@ namespace ELKH.Controllers
         public async Task<IActionResult> Index(int page = 1, string sort = "discount_high")
         {
             const int pageSize = 12;
+            var result = await _categoryBrowseService.GetPromotionalProductsAsync(page, sort, pageSize);
 
-            // Get all promotional products
-            var allPromotionalProducts = (await _productService.GetPromotionalProductsAsync()).AsEnumerable();
+            ViewBag.Sort = result.Sort;
+            ViewBag.Page = result.Page;
+            ViewBag.TotalPages = result.TotalPages;
+            ViewBag.Total = result.Total;
+            ViewBag.Categories = new SelectList(result.Categories, "PkCategoryId", "CategoryName");
 
-            // Apply sorting with discount-focused options
-            allPromotionalProducts = sort switch
-            {
-                "name_asc" => allPromotionalProducts.OrderBy(p => p.ProductName, StringComparer.OrdinalIgnoreCase),
-                "name_desc" => allPromotionalProducts.OrderByDescending(p => p.ProductName, StringComparer.OrdinalIgnoreCase),
-                "price_low" => allPromotionalProducts.OrderBy(p => p.Price),
-                "price_high" => allPromotionalProducts.OrderByDescending(p => p.Price),
-                "discount_high" => allPromotionalProducts.OrderByDescending(p => p.DiscountPercent).ThenBy(p => p.ProductName),
-                "newest" => allPromotionalProducts.OrderByDescending(p => p.DateAdded),
-                "oldest" => allPromotionalProducts.OrderBy(p => p.DateAdded),
-                _ => allPromotionalProducts.OrderByDescending(p => p.DiscountPercent).ThenBy(p => p.ProductName) // discount_high default
-            };
-
-            var filtered = allPromotionalProducts.ToList();
-            var totalPages = Math.Max(1, (int)Math.Ceiling(filtered.Count / (double)pageSize));
-            page = Math.Clamp(page, 1, totalPages);
-            var pageItems = filtered.Skip((page - 1) * pageSize).Take(pageSize).ToList();
-
-            // Get categories for any additional filtering in the view
-            var categories = await _productService.GetCategoriesAsync();
-
-            ViewBag.Sort = sort;
-            ViewBag.Page = page;
-            ViewBag.TotalPages = totalPages;
-            ViewBag.Total = filtered.Count;
-            ViewBag.Categories = new SelectList(categories, "PkCategoryId", "CategoryName");
-
-            // Prepare ViewModels for partial views
             ViewBag.SortingVM = new ProductSortingVM
             {
-                CurrentSort = sort,
-                // Add promotion-specific sorting options
+                CurrentSort = result.Sort,
                 IsPromotionView = true
             };
 
             ViewBag.PaginationVM = new PaginationVM
             {
-                CurrentPage = page,
-                TotalPages = totalPages
+                CurrentPage = result.Page,
+                TotalPages = result.TotalPages
             };
 
-            return View(pageItems);
+            return View(result.Items);
         }
 
         /// <summary>
@@ -87,25 +60,11 @@ namespace ELKH.Controllers
         [HttpGet]
         public async Task<IActionResult> GetByCategory(int categoryId, string sort = "discount_high")
         {
-            var allPromotionalProducts = (await _productService.GetPromotionalProductsAsync())
-                .Where(p => p.CategoryId == categoryId);
+            var categoryResult = await _categoryBrowseService.GetPromotionalProductsByCategoryAsync(categoryId, 1, sort, int.MaxValue);
+            var result = categoryResult?.Items ?? [];
 
-            // Apply sorting
-            allPromotionalProducts = sort switch
+            return Json(new
             {
-                "name_asc" => allPromotionalProducts.OrderBy(p => p.ProductName, StringComparer.OrdinalIgnoreCase),
-                "name_desc" => allPromotionalProducts.OrderByDescending(p => p.ProductName, StringComparer.OrdinalIgnoreCase),
-                "price_low" => allPromotionalProducts.OrderBy(p => p.Price),
-                "price_high" => allPromotionalProducts.OrderByDescending(p => p.Price),
-                "discount_high" => allPromotionalProducts.OrderByDescending(p => p.DiscountPercent).ThenBy(p => p.ProductName),
-                "newest" => allPromotionalProducts.OrderByDescending(p => p.DateAdded),
-                "oldest" => allPromotionalProducts.OrderBy(p => p.DateAdded),
-                _ => allPromotionalProducts.OrderByDescending(p => p.DiscountPercent).ThenBy(p => p.ProductName)
-            };
-
-            var result = allPromotionalProducts.ToList();
-            
-            return Json(new { 
                 products = result,
                 count = result.Count
             });

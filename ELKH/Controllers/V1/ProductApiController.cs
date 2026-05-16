@@ -1,9 +1,9 @@
+using System.Globalization;
 using Asp.Versioning;
-using Microsoft.AspNetCore.Mvc;
+using ELKH.Models.Api;
 using ELKH.Services;
 using ELKH.ViewModels;
-using ELKH.Models.Api;
-using System.Globalization;
+using Microsoft.AspNetCore.Mvc;
 
 namespace ELKH.Controllers.V1;
 
@@ -12,6 +12,14 @@ namespace ELKH.Controllers.V1;
 /// </summary>
 /// <remarks>
 /// Exposes catalog browsing, product detail, search suggestion, and availability endpoints.
+/// 
+/// <para><strong>Table of Contents:</strong></para>
+/// <list type="number">
+/// <item>Section 1: Controller Setup &amp; Dependencies</item>
+/// <item>Section 2: Product Catalog Operations</item>
+/// <item>Section 3: Single Product Operations</item>
+/// <item>Section 4: Search &amp; Availability Operations</item>
+/// </list>
 /// </remarks>
 [ApiController]
 [ApiVersion("1.0")]

@@ -1,10 +1,10 @@
+using System.Text.Json;
 using ELKH.Data;
 using ELKH.Extensions;
 using ELKH.Models;
 using ELKH.ViewModels;
 using Microsoft.AspNetCore.Http;
 using Microsoft.EntityFrameworkCore;
-using System.Text.Json;
 
 namespace ELKH.Services
 {
@@ -13,6 +13,14 @@ namespace ELKH.Services
     /// Provides cart functionality without requiring authentication.
     /// </summary>
     /// <remarks>
+/// <para><strong>Table of Contents:</strong></para>
+/// <list type="number">
+/// <item>Section 1: Service Setup &amp; Dependencies</item>
+/// <item>Section 2: Cart Item Management</item>
+/// <item>Section 3: Cart Retrieval &amp; Display</item>
+/// <item>Section 4: Session Persistence Helpers</item>
+/// </list>
+/// 
     /// <para><strong>SESSION-BASED CART STRATEGY:</strong></para>
     /// <list type="bullet">
     /// <item>Cart stored in session as JSON (SessionCart key)</item>
@@ -60,7 +68,7 @@ namespace ELKH.Services
         /// <summary>
         /// Gets the current HTTP session
         /// </summary>
-        private ISession Session => _httpContextAccessor.HttpContext?.Session 
+        private ISession Session => _httpContextAccessor.HttpContext?.Session
             ?? throw new InvalidOperationException("Session is not available");
 
         #endregion

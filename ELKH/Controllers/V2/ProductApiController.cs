@@ -1,15 +1,22 @@
+using System.Globalization;
 using Asp.Versioning;
-using Microsoft.AspNetCore.Mvc;
+using ELKH.Models.Api;
 using ELKH.Services;
 using ELKH.ViewModels;
-using ELKH.Models.Api;
-using System.Globalization;
+using Microsoft.AspNetCore.Mvc;
 
 namespace ELKH.Controllers.V2;
 
 /// <summary>
 /// Product catalog API controller for version 2.0.
 /// Adds richer product metadata and rating-aware responses.
+/// 
+/// <para><strong>Table of Contents:</strong></para>
+/// <list type="number">
+/// <item>Section 1: Product Catalog Operations</item>
+/// <item>Section 2: Single Product Operations</item>
+/// <item>Section 3: Search Operations</item>
+/// </list>
 /// </summary>
 [ApiController]
 [ApiVersion("2.0")]
@@ -106,7 +113,7 @@ public class ProductApiController : ControllerBase
                 "price_high" => filtered.OrderByDescending(p => p.Price),
                 "newest" => filtered.OrderByDescending(p => p.DateAdded),
                 "oldest" => filtered.OrderBy(p => p.DateAdded),
-                _ => filtered.OrderBy(p => p.ProductName) 
+                _ => filtered.OrderBy(p => p.ProductName)
             };
 
             // Apply pagination
@@ -309,19 +316,19 @@ public class ApiResponseV2<T>
 {
     public T? Data { get; set; }
     public bool Success { get; set; }
-    public string Message { get; set; }
+    public string Message { get; set; } = string.Empty;
     public string Version { get; set; } = "2.0";
     public DateTime Timestamp { get; set; }
-    public string RequestId { get; set; }
+    public string RequestId { get; set; } = string.Empty;
 }
 
 public class ApiErrorResponseV2
 {
     public bool Success { get; set; }
-    public string Message { get; set; }
-    public string ErrorCode { get; set; }
-    public string Details { get; set; }
+    public string Message { get; set; } = string.Empty;
+    public string ErrorCode { get; set; } = string.Empty;
+    public string Details { get; set; } = string.Empty;
     public string Version { get; set; } = "2.0";
     public DateTime Timestamp { get; set; }
-    public string RequestId { get; set; }
+    public string RequestId { get; set; } = string.Empty;
 }

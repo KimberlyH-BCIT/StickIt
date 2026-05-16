@@ -41,7 +41,7 @@ namespace ELKH.Models
         /// Delivery/shipping status tracking (e.g., "Pending", "Shipped", "In Transit", "Delivered").
         /// Separate from order status to track fulfillment independently.
         /// </summary>
-        [Display(Name ="Delivery Status")]
+        [Display(Name = "Delivery Status")]
         [MaxLength(50)]
         public DeliveryStatus DeliveryStatus { get; set; } = DeliveryStatus.Pending;
 

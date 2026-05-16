@@ -2,6 +2,7 @@ using ELKH.Controllers.Base;
 using ELKH.Data;
 using ELKH.Models;
 using ELKH.Repositories;
+using ELKH.Services;
 using ELKH.ViewModels;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
@@ -17,19 +18,22 @@ public class AdminUserController : AdminControllerBase
 {
     private readonly IRoleRepo _roleRepo;
     private readonly UserManager<IdentityUser> _userManager;
-
-    // CA1861: Constant arrays to avoid repeated allocations
-    private static readonly string[] AllRoles = { "Admin", "Manager", "Staff", "Customer" };
+    private readonly IAccountDetailsService _accountDetailsService;
+        private readonly IAdminUserRoleService _adminUserRoleService;
 
     public AdminUserController(
         IRoleRepo roleRepo,
         ApplicationDbContext context,
         UserManager<IdentityUser> userManager,
+        IAccountDetailsService accountDetailsService,
+            IAdminUserRoleService adminUserRoleService,
         ILogger<AdminUserController> logger)
         : base(context, logger)
     {
         _roleRepo = roleRepo;
         _userManager = userManager;
+        _accountDetailsService = accountDetailsService;
+            _adminUserRoleService = adminUserRoleService;
     }
 
     #region User Listing & Search
@@ -173,75 +177,15 @@ public class AdminUserController : AdminControllerBase
     /// </remarks>
     public async Task<IActionResult> Details(string id)
     {
-        if (string.IsNullOrEmpty(id))
+        var vm = await _accountDetailsService.BuildAsync(id);
+        if (vm == null)
         {
             return NotFound();
         }
 
-        var identityUser = await _userManager.FindByIdAsync(id);
-        if (identityUser == null)
-        {
-            return NotFound();
-        }
+        await LogAdminActionAsync("ViewedUserDetails", $"User: {vm.User.Email}");
 
-        // Get registered user profile
-        var registeredUser = await Context.RegisteredUsers
-            .FirstOrDefaultAsync(ru => ru.Email == identityUser.Email);
-
-        UserProfileModel? profile = null;
-        if (registeredUser != null)
-        {
-            profile = await Context.UserProfiles
-                .FirstOrDefaultAsync(up => up.PkEmail == identityUser.Email);
-        }
-
-        // Get user roles
-        var roles = await _userManager.GetRolesAsync(identityUser);
-
-        // Get recent orders
-        List<OrderModel> recentOrders = new();
-        if (registeredUser != null)
-        {
-            recentOrders = await Context.Orders
-                .Where(o => o.FkRegisteredUserId == registeredUser.PkRegisteredUserId)
-                .OrderByDescending(o => o.CreatedAt)
-                .Take(10)
-                .ToListAsync();
-        }
-
-        // Get contact details
-        ContactDetailModel? contact = null;
-        if (registeredUser != null)
-        {
-            contact = await Context.ContactDetails
-                .FirstOrDefaultAsync(cd => cd.FkRegisteredUserId == registeredUser.PkRegisteredUserId && cd.IsDefault);
-        }
-
-        var vm = new
-        {
-            IdentityUser = identityUser,
-            RegisteredUser = registeredUser,
-            Profile = profile,
-            Roles = roles.ToList(),
-            RecentOrders = recentOrders,
-            Contact = contact == null ? null : new ContactDetailVM
-            {
-                ContactId = contact.PkContactId,
-                FirstName = contact.FirstName,
-                LastName = contact.LastName,
-                PhoneNumber = contact.PhoneNumber,
-                Street = contact.Street,
-                City = contact.City,
-                Province = contact.Province,
-                PostCode = contact.PostCode,
-                Country = contact.Country,
-                IsDefault = contact.IsDefault
-            }
-        };
-
-        await LogAdminActionAsync("ViewedUserDetails", $"User: {identityUser.Email}");
-
-        return View(vm);
+        return View("~/Views/Admin/AccountDetails.cshtml", vm);
     }
 
     #endregion
@@ -291,39 +235,16 @@ public class AdminUserController : AdminControllerBase
     [ValidateAntiForgeryToken]
     public async Task<IActionResult> RemoveRole(string userId, string role)
     {
-        if (string.IsNullOrEmpty(userId) || string.IsNullOrEmpty(role))
+        var result = await _adminUserRoleService.RemoveUserFromRoleByNameAsync(userId, role);
+
+        if (result.Succeeded)
         {
-            SetErrorMessage("Invalid user ID or role");
-            return NotFound();
+            await LogAdminActionAsync("RoleRemoved", $"Removed role '{result.RoleName ?? role}' from user '{result.UserEmail}'");
+            SetSuccessMessage($"Successfully removed {result.RoleName ?? role} role from {result.UserEmail}");
         }
-
-        var user = await _userManager.FindByIdAsync(userId);
-
-        if (user == null)
+        else
         {
-            SetErrorMessage("User not found");
-            return NotFound();
-        }
-
-        try
-        {
-            var result = await _userManager.RemoveFromRoleAsync(user, role);
-
-            if (result.Succeeded)
-            {
-                await LogAdminActionAsync("RoleRemoved", $"Removed role '{role}' from user '{user.Email}'");
-                SetSuccessMessage($"Successfully removed {role} role from {user.Email}");
-            }
-            else
-            {
-                var errors = string.Join(", ", result.Errors.Select(e => e.Description));
-                SetErrorMessage($"Failed to remove role: {errors}");
-            }
-        }
-        catch (Exception ex)
-        {
-            Logger.LogError(ex, "Error removing role {Role} from user {UserId}", role, userId);
-            SetErrorMessage("An error occurred while removing the role");
+            SetErrorMessage($"Failed to remove role: {result.ErrorMessage ?? "Unknown error"}");
         }
 
         return RedirectToAction("Details", new { id = userId });
@@ -371,46 +292,20 @@ public class AdminUserController : AdminControllerBase
     [ValidateAntiForgeryToken]
     public async Task<IActionResult> AddRole(string userId, string role)
     {
-        if (string.IsNullOrEmpty(userId) || string.IsNullOrEmpty(role))
+        var result = await _adminUserRoleService.AddUserToRoleAsync(userId, role);
+
+        if (result.Succeeded)
         {
-            SetErrorMessage("Invalid user ID or role");
-            return NotFound();
+            await LogAdminActionAsync("RoleAdded", $"Added role '{result.RoleName ?? role}' to user '{result.UserEmail}'");
+            SetSuccessMessage($"Successfully added {result.RoleName ?? role} role to {result.UserEmail}");
         }
-
-        var user = await _userManager.FindByIdAsync(userId);
-
-        if (user == null)
+        else if (result.ErrorMessage?.Contains("already has", StringComparison.OrdinalIgnoreCase) == true)
         {
-            SetErrorMessage("User not found");
-            return NotFound();
+            SetWarningMessage(result.ErrorMessage);
         }
-
-        try
+        else
         {
-            // Check if user already has the role
-            if (await _userManager.IsInRoleAsync(user, role))
-            {
-                SetWarningMessage($"User already has the {role} role");
-                return RedirectToAction("Details", new { id = userId });
-            }
-
-            var result = await _userManager.AddToRoleAsync(user, role);
-
-            if (result.Succeeded)
-            {
-                await LogAdminActionAsync("RoleAdded", $"Added role '{role}' to user '{user.Email}'");
-                SetSuccessMessage($"Successfully added {role} role to {user.Email}");
-            }
-            else
-            {
-                var errors = string.Join(", ", result.Errors.Select(e => e.Description));
-                SetErrorMessage($"Failed to add role: {errors}");
-            }
-        }
-        catch (Exception ex)
-        {
-            Logger.LogError(ex, "Error adding role {Role} to user {UserId}", role, userId);
-            SetErrorMessage("An error occurred while adding the role");
+            SetErrorMessage($"Failed to add role: {result.ErrorMessage ?? "Unknown error"}");
         }
 
         return RedirectToAction("Details", new { id = userId });
@@ -424,19 +319,11 @@ public class AdminUserController : AdminControllerBase
     [HttpGet]
     public async Task<IActionResult> AvailableRoles(string id)
     {
-        if (string.IsNullOrEmpty(id))
-        {
-            return Json(new { success = false, message = "Invalid user ID" });
-        }
-
-        var user = await _userManager.FindByIdAsync(id);
-        if (user == null)
+        var availableRoles = await _adminUserRoleService.GetAvailableRolesAsync(id);
+        if (availableRoles == null)
         {
             return Json(new { success = false, message = "User not found" });
         }
-
-        var userRoles = await _userManager.GetRolesAsync(user);
-        var availableRoles = AllRoles.Except(userRoles).ToList();
 
         return Json(new { success = true, roles = availableRoles });
     }
@@ -454,13 +341,19 @@ public class AdminUserController : AdminControllerBase
         try
         {
             var totalUsers = await _userManager.Users.CountAsync();
-            
+
             var roleStats = new Dictionary<string, int>();
 
-            foreach (var role in AllRoles)
+            foreach (var role in _roleRepo.GetAllRoles())
             {
-                var usersInRole = await _userManager.GetUsersInRoleAsync(role);
-                roleStats[role] = usersInRole.Count;
+                var roleName = role.RoleName;
+                if (string.IsNullOrWhiteSpace(roleName))
+                {
+                    continue;
+                }
+
+                var usersInRole = await _userManager.GetUsersInRoleAsync(roleName);
+                roleStats[roleName] = usersInRole.Count;
             }
 
             var recentRegistrations = await Context.RegisteredUsers

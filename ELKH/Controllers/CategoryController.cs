@@ -11,11 +11,11 @@ namespace ELKH.Controllers
     /// </summary>
     public class CategoryController : Controller
     {
-        private readonly IProductService _productService;
+        private readonly ICategoryBrowseService _categoryBrowseService;
 
-        public CategoryController(IProductService productService)
+        public CategoryController(ICategoryBrowseService categoryBrowseService)
         {
-            _productService = productService;
+            _categoryBrowseService = categoryBrowseService;
         }
 
         /// <summary>
@@ -28,83 +28,45 @@ namespace ELKH.Controllers
         [Microsoft.AspNetCore.OutputCaching.OutputCache(PolicyName = "ProductList")]
         public async Task<IActionResult> ByCategory(int id, int page = 1, string sort = "name_asc")
         {
-            const int pageSize = 12;
-
-            // Get all products and filter by category
-            var allProducts = (await _productService.GetAllAsync()).AsEnumerable()
-                .Where(p => p.CategoryId == id);
-
-            // Get category information
-            var categories = await _productService.GetCategoriesAsync();
-            var currentCategory = categories.FirstOrDefault(c => c.PkCategoryId == id);
-            
-            if (currentCategory == null)
+            var result = await _categoryBrowseService.GetProductsByCategoryAsync(id, page, sort);
+            if (result == null || result.CurrentCategory == null)
             {
                 TempData["Message"] = "warning, Category not found.";
                 return RedirectToAction("Index", "Product");
             }
 
-            // Apply sorting
-            allProducts = sort switch
-            {
-                "name_desc" => allProducts.OrderByDescending(p => p.ProductName, StringComparer.OrdinalIgnoreCase),
-                "price_low" => allProducts.OrderBy(p => p.Price),
-                "price_high" => allProducts.OrderByDescending(p => p.Price),
-                "newest" => allProducts.OrderByDescending(p => p.DateAdded),
-                "oldest" => allProducts.OrderBy(p => p.DateAdded),
-                _ => allProducts.OrderBy(p => p.ProductName, StringComparer.OrdinalIgnoreCase) // name_asc
-            };
-
-            var filtered = allProducts.ToList();
-            var totalPages = Math.Max(1, (int)Math.Ceiling(filtered.Count / (double)pageSize));
-            page = Math.Clamp(page, 1, totalPages);
-            var pageItems = filtered.Skip((page - 1) * pageSize).Take(pageSize).ToList();
-
-            // Set ViewBag data for the view
             ViewBag.CategoryId = id;
-            ViewBag.CategoryName = currentCategory.CategoryName;
-            ViewBag.Sort = sort;
-            ViewBag.Page = page;
-            ViewBag.TotalPages = totalPages;
-            ViewBag.Total = filtered.Count;
-            ViewBag.Categories = new SelectList(categories, "PkCategoryId", "CategoryName", id);
-
-            // Prepare ViewModels for partial views
+            ViewBag.CategoryName = result.CurrentCategory.CategoryName;
+            ViewBag.Sort = result.Sort;
+            ViewBag.Page = result.Page;
+            ViewBag.TotalPages = result.TotalPages;
+            ViewBag.Total = result.Total;
+            ViewBag.Categories = new SelectList(result.Categories, "PkCategoryId", "CategoryName", id);
             ViewBag.SortingVM = new ProductSortingVM
             {
                 CategoryId = id,
-                CurrentSort = sort
+                CurrentSort = result.Sort
             };
-
             ViewBag.PaginationVM = new PaginationVM
             {
-                CurrentPage = page,
-                TotalPages = totalPages,
+                CurrentPage = result.Page,
+                TotalPages = result.TotalPages,
                 CategoryId = id
             };
 
-            return View(pageItems);
+            return View(result.Items);
         }
 
         /// <summary>
         /// Displays all available categories for browsing.
         /// </summary>
         /// <returns>Index view with all categories</returns>
+        [Microsoft.AspNetCore.OutputCaching.OutputCache(PolicyName = "ProductList")]
         public async Task<IActionResult> Index()
         {
-            var categories = await _productService.GetCategoriesAsync();
-
-            // Get product count for each category
-            var allProducts = await _productService.GetAllAsync();
-            var categoryProductCounts = categories.Select(category => new
-            {
-                Category = category,
-                ProductCount = allProducts.Count(p => p.CategoryId == category.PkCategoryId)
-            }).ToList();
-
-            ViewBag.CategoryProductCounts = categoryProductCounts;
-
-            return View(categories);
+            var categoryCounts = await _categoryBrowseService.GetCategoryCountsAsync();
+            ViewBag.CategoryProductCounts = categoryCounts;
+            return View(categoryCounts.Select(x => x.Category).ToList());
         }
 
         /// <summary>
@@ -114,67 +76,37 @@ namespace ELKH.Controllers
         /// <param name="page">Page number for pagination (default: 1)</param>
         /// <param name="sort">Sort order with promotion-focused options</param>
         /// <returns>Category promotions view with filtered promotional products</returns>
+        [Microsoft.AspNetCore.OutputCaching.OutputCache(PolicyName = "ProductList")]
         public async Task<IActionResult> Promotions(int id, int page = 1, string sort = "discount_high")
         {
-            const int pageSize = 12;
-
-            // Get promotional products filtered by category
-            var allPromotionalProducts = (await _productService.GetPromotionalProductsAsync())
-                .Where(p => p.CategoryId == id);
-
-            // Get category information
-            var categories = await _productService.GetCategoriesAsync();
-            var currentCategory = categories.FirstOrDefault(c => c.PkCategoryId == id);
-
-            if (currentCategory == null)
+            var result = await _categoryBrowseService.GetPromotionalProductsByCategoryAsync(id, page, sort);
+            if (result == null || result.CurrentCategory == null)
             {
                 TempData["Message"] = "warning, Category not found.";
                 return RedirectToAction("Index", "Promotions");
             }
 
-            // Apply sorting with promotion-focused options
-            allPromotionalProducts = sort switch
-            {
-                "name_desc" => allPromotionalProducts.OrderByDescending(p => p.ProductName, StringComparer.OrdinalIgnoreCase),
-                "price_low" => allPromotionalProducts.OrderBy(p => p.Price),
-                "price_high" => allPromotionalProducts.OrderByDescending(p => p.Price),
-                "discount_high" => allPromotionalProducts.OrderByDescending(p => p.DiscountPercent).ThenBy(p => p.ProductName),
-                "newest" => allPromotionalProducts.OrderByDescending(p => p.DateAdded),
-                "oldest" => allPromotionalProducts.OrderBy(p => p.DateAdded),
-                "name_asc" => allPromotionalProducts.OrderBy(p => p.ProductName, StringComparer.OrdinalIgnoreCase),
-                _ => allPromotionalProducts.OrderByDescending(p => p.DiscountPercent).ThenBy(p => p.ProductName) // discount_high default
-            };
-
-            var filtered = allPromotionalProducts.ToList();
-            var totalPages = Math.Max(1, (int)Math.Ceiling(filtered.Count / (double)pageSize));
-            page = Math.Clamp(page, 1, totalPages);
-            var pageItems = filtered.Skip((page - 1) * pageSize).Take(pageSize).ToList();
-
-            // Set ViewBag data for the view
             ViewBag.CategoryId = id;
-            ViewBag.CategoryName = currentCategory.CategoryName;
-            ViewBag.Sort = sort;
-            ViewBag.Page = page;
-            ViewBag.TotalPages = totalPages;
-            ViewBag.Total = filtered.Count;
-            ViewBag.Categories = new SelectList(categories, "PkCategoryId", "CategoryName", id);
-
-            // Prepare ViewModels for partial views
+            ViewBag.CategoryName = result.CurrentCategory.CategoryName;
+            ViewBag.Sort = result.Sort;
+            ViewBag.Page = result.Page;
+            ViewBag.TotalPages = result.TotalPages;
+            ViewBag.Total = result.Total;
+            ViewBag.Categories = new SelectList(result.Categories, "PkCategoryId", "CategoryName", id);
             ViewBag.SortingVM = new ProductSortingVM
             {
                 CategoryId = id,
-                CurrentSort = sort,
+                CurrentSort = result.Sort,
                 IsPromotionView = true
             };
-
             ViewBag.PaginationVM = new PaginationVM
             {
-                CurrentPage = page,
-                TotalPages = totalPages,
+                CurrentPage = result.Page,
+                TotalPages = result.TotalPages,
                 CategoryId = id
             };
 
-            return View(pageItems);
+            return View(result.Items);
         }
     }
 }

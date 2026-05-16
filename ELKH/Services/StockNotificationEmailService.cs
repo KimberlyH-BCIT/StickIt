@@ -14,6 +14,15 @@ namespace ELKH.Services
     /// Called when inventory is updated and products become available again.
     /// </summary>
     /// <remarks>
+/// <para><strong>Table of Contents:</strong></para>
+/// <list type="number">
+/// <item>Section 1: Service Setup &amp; Dependencies</item>
+/// <item>Section 2: Notification Processing Logic</item>
+/// <item>Section 3: Email Generation &amp; Delivery</item>
+/// <item>Section 4: Notification State Management</item>
+/// <item>Section 5: Error Handling &amp; Resilience</item>
+/// </list>
+/// 
     /// <para><strong>Key Features:</strong></para>
     /// <list type="bullet">
     /// <item>Automated customer notifications when products are restocked</item>
@@ -99,8 +108,8 @@ namespace ELKH.Services
                 var notifications = await db.StockNotifications
                     .Include(sn => sn.RegisteredUser)
                     .Include(sn => sn.Product)
-                    .Where(sn => sn.FkProductId == productId 
-                              && !sn.NotificationSent 
+                    .Where(sn => sn.FkProductId == productId
+                              && !sn.NotificationSent
                               && !sn.IsCancelled)
                     .ToListAsync();
 
@@ -110,7 +119,7 @@ namespace ELKH.Services
                     return;
                 }
 
-                _logger.LogInformation("Processing {Count} stock notifications for product {ProductId}", 
+                _logger.LogInformation("Processing {Count} stock notifications for product {ProductId}",
                     notifications.Count, productId);
 
                 foreach (var notification in notifications)
@@ -129,7 +138,7 @@ namespace ELKH.Services
 
                         if (user?.Email == null || notificationProduct == null)
                         {
-                            _logger.LogWarning("Skipping notification {NotificationId} - missing user or product", 
+                            _logger.LogWarning("Skipping notification {NotificationId} - missing user or product",
                                 notification.PkStockNotificationId);
                             continue;
                         }
@@ -196,7 +205,7 @@ namespace ELKH.Services
                         notification.NotificationSent = true;
                         notification.SentAt = DateTime.UtcNow;
 
-                        _logger.LogInformation("Sent stock notification to {Email} for product {ProductName}", 
+                        _logger.LogInformation("Sent stock notification to {Email} for product {ProductName}",
                             user.Email, notificationProduct.Name);
 
                         #endregion
@@ -209,7 +218,7 @@ namespace ELKH.Services
 
                     catch (Exception ex)
                     {
-                        _logger.LogError(ex, "Failed to send notification {NotificationId}", 
+                        _logger.LogError(ex, "Failed to send notification {NotificationId}",
                             notification.PkStockNotificationId);
                     }
 

@@ -109,6 +109,35 @@ public class CartController : Controller
         return View(cartVM);
     }
 
+    private string? GetAuthenticatedEmailOrRedirect()
+    {
+        var email = User.FindFirst(System.Security.Claims.ClaimTypes.Email)?.Value;
+        if (!string.IsNullOrEmpty(email))
+        {
+            return email;
+        }
+
+        return null;
+    }
+
+    private bool IsAjaxRequest()
+    {
+        return Request.Headers["X-Requested-With"] == "XMLHttpRequest" ||
+               Request.Headers["Accept"].ToString().Contains("application/json");
+    }
+
+    private async Task<int> GetCartCountAsync(string? email)
+    {
+        if (User.Identity?.IsAuthenticated == true)
+        {
+            var cartItems = await _cartService.GetCartItemsAsync(email!);
+            return cartItems.Sum(c => c.Quantity);
+        }
+
+        var guestItems = await _guestCartService.GetCartItemsAsync();
+        return guestItems.Sum(c => c.Quantity);
+    }
+
     #endregion
 
     #region Cart Item Management
@@ -146,32 +175,23 @@ public class CartController : Controller
 
             if (User.Identity?.IsAuthenticated == true)
             {
-                // Authenticated user: add to database cart
-                var email = User.FindFirst(System.Security.Claims.ClaimTypes.Email)?.Value;
+                var email = GetAuthenticatedEmailOrRedirect();
                 if (string.IsNullOrEmpty(email))
                 {
                     return RedirectToAction("Login", "Account", new { area = "Identity" });
                 }
 
                 await _cartService.AddToCartAsync(email, itemId, quantity);
-                var cartItems = await _cartService.GetCartItemsAsync(email);
-                cartCount = cartItems.Sum(c => c.Quantity);
+                cartCount = await GetCartCountAsync(email);
             }
             else
             {
-                // Guest user: add to session cart
                 await _guestCartService.AddToCartAsync(itemId, quantity);
-                var cartItems = await _guestCartService.GetCartItemsAsync();
-                cartCount = cartItems.Sum(c => c.Quantity);
+                cartCount = await GetCartCountAsync(null);
             }
 
-            // Check if this is an AJAX request
-            var isAjax = Request.Headers["X-Requested-With"] == "XMLHttpRequest" ||
-                         Request.Headers["Accept"].ToString().Contains("application/json");
-
-            if (isAjax)
+            if (IsAjaxRequest())
             {
-                // Return JSON for AJAX requests
                 var itemText = quantity == 1 ? "item" : "items";
                 return Json(new
                 {
@@ -182,7 +202,6 @@ public class CartController : Controller
                 });
             }
 
-            // Standard form submission - redirect with TempData message
             TempData["Message"] = $"success,Î“Â£Ã´ Added {quantity} item{(quantity > 1 ? "s" : "")} to your cart!";
 
             if (!string.IsNullOrEmpty(returnUrl) && Url.IsLocalUrl(returnUrl))
@@ -194,11 +213,7 @@ public class CartController : Controller
         }
         catch (InvalidOperationException ex)
         {
-            // Handle out-of-stock and validation errors
-            var isAjax = Request.Headers["X-Requested-With"] == "XMLHttpRequest" ||
-                         Request.Headers["Accept"].ToString().Contains("application/json");
-
-            if (isAjax)
+            if (IsAjaxRequest())
             {
                 return Json(new
                 {
@@ -238,8 +253,7 @@ public class CartController : Controller
 
         if (User.Identity?.IsAuthenticated == true)
         {
-            // Authenticated user: update database cart
-            var email = User.FindFirst(System.Security.Claims.ClaimTypes.Email)?.Value;
+            var email = GetAuthenticatedEmailOrRedirect();
             if (string.IsNullOrEmpty(email))
             {
                 return RedirectToAction("Login", "Account", new { area = "Identity" });
@@ -267,8 +281,7 @@ public class CartController : Controller
     {
         if (User.Identity?.IsAuthenticated == true)
         {
-            // Authenticated user: remove from database cart
-            var email = User.FindFirst(System.Security.Claims.ClaimTypes.Email)?.Value;
+            var email = GetAuthenticatedEmailOrRedirect();
             if (string.IsNullOrEmpty(email))
             {
                 return RedirectToAction("Login", "Account", new { area = "Identity" });
@@ -295,8 +308,7 @@ public class CartController : Controller
     {
         if (User.Identity?.IsAuthenticated == true)
         {
-            // Authenticated user: clear database cart
-            var email = User.FindFirst(System.Security.Claims.ClaimTypes.Email)?.Value;
+            var email = GetAuthenticatedEmailOrRedirect();
             if (string.IsNullOrEmpty(email))
             {
                 return RedirectToAction("Login", "Account", new { area = "Identity" });
@@ -355,7 +367,7 @@ public class CartController : Controller
             return RedirectToAction("Login", "Account");
         }
 
-        var email = User.FindFirst(System.Security.Claims.ClaimTypes.Email)?.Value;
+        var email = GetAuthenticatedEmailOrRedirect();
         if (string.IsNullOrEmpty(email))
         {
             return RedirectToAction("Login", "Account", new { area = "Identity" });
@@ -420,7 +432,7 @@ public class CartController : Controller
             return RedirectToAction("Guest", "Checkout");
         }
 
-        var email = User.FindFirst(System.Security.Claims.ClaimTypes.Email)?.Value;
+        var email = GetAuthenticatedEmailOrRedirect();
         if (string.IsNullOrEmpty(email))
         {
             return RedirectToAction("Login", "Account", new { area = "Identity" });

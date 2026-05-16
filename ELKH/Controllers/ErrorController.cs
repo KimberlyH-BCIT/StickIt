@@ -48,7 +48,7 @@ public class ErrorController(ILogger<ErrorController> logger) : Controller
     {
         logger.LogWarning("HTTP {StatusCode} on {Path}", statusCode, HttpContext.Request.Path);
         ViewBag.StatusCode = statusCode;
-        ViewBag.RequestId  = Activity.Current?.Id ?? HttpContext.TraceIdentifier;
+        ViewBag.RequestId = Activity.Current?.Id ?? HttpContext.TraceIdentifier;
         return View("Error");
     }
 }

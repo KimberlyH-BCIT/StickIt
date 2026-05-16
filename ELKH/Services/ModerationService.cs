@@ -1,13 +1,13 @@
 using System;
 using System.Linq;
+using System.Net;
+using System.Net.Mail;
 using System.Threading.Tasks;
 using ELKH.Data;
 using ELKH.Models;
+using Microsoft.Extensions.Caching.Memory;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
-using Microsoft.Extensions.Caching.Memory;
-using System.Net.Mail;
-using System.Net;
 
 namespace ELKH.Services
 {
@@ -121,6 +121,6 @@ Direct Flag Link: {flagLink}
             return new ModerationResult { Success = true, Message = "Review flagged" };
         }
 
-        
+
     }
 }

@@ -29,4 +29,3 @@ namespace ELKH.Models
         public ProductModel? Product { get; set; }
     }
 }
-    

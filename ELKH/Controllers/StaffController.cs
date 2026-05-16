@@ -40,7 +40,6 @@ namespace ELKH.Controllers
             ViewBag.TotalOrders = orders.Count;
             ViewBag.TodayOrders = orders.Count(o => o.CreatedAt.Date == DateTime.UtcNow.Date);
 
-            // FIXED: Using Enums instead of strings for the counts
             ViewBag.CancelledOrders = orders.Count(o => o.OrderStatus == OrderStatus.Cancelled);
             ViewBag.PendingOrders = orders.Count(o => o.OrderStatus == OrderStatus.Pending);
 
@@ -70,6 +69,7 @@ namespace ELKH.Controllers
         }
 
         [HttpPost]
+        [ValidateAntiForgeryToken]
         public async Task<IActionResult> ApproveReview(int id)
         {
             await _ratingService.ApproveAsync(id);
@@ -77,12 +77,12 @@ namespace ELKH.Controllers
         }
 
         [HttpPost]
+        [ValidateAntiForgeryToken]
         public async Task<IActionResult> DeleteReview(int id)
         {
             var rating = await _ratingService.GetByIdAsync(id);
             if (rating != null)
             {
-                // Fixed: Using FkRegisteredUserId from your ProductRatingModel
                 await _ratingService.DeleteRatingAsync(id, rating.FkRegisteredUserId);
             }
 
@@ -119,6 +119,7 @@ namespace ELKH.Controllers
         // ================= STAFF MESSAGES ACTIONS =================
 
         [HttpPost]
+        [ValidateAntiForgeryToken]
         public async Task<IActionResult> ReplyMessage(int MessageId, string ReplyText)
         {
             if (string.IsNullOrEmpty(ReplyText)) return RedirectToAction("Index");
@@ -138,6 +139,7 @@ namespace ELKH.Controllers
         }
 
         [HttpPost]
+        [ValidateAntiForgeryToken]
         public async Task<IActionResult> MarkMessageAsRead(int id)
         {
             var message = await _context.StaffMessages.FindAsync(id);

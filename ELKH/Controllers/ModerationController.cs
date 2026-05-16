@@ -1,9 +1,9 @@
-using Microsoft.AspNetCore.Mvc;
-using Microsoft.AspNetCore.Authorization;
-using Microsoft.Extensions.Logging;
 using System.Threading.Tasks;
 using ELKH.Services;
 using ELKH.ViewModels;
+using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc;
+using Microsoft.Extensions.Logging;
 
 namespace ELKH.Controllers
 {
@@ -38,8 +38,8 @@ namespace ELKH.Controllers
             var result = await _ratingService.GetRatingsPagedAsync(query);
             return View(new ModerationIndexVM
             {
-                Items      = result.Items,
-                Query      = query,
+                Items = result.Items,
+                Query = query,
                 TotalPages = result.TotalPages
             });
         }

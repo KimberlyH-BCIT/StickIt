@@ -1,8 +1,8 @@
 using MailKit.Net.Smtp;
 using MailKit.Security;
-using MimeKit;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
+using MimeKit;
 
 namespace ELKH.Services
 {
@@ -23,7 +23,7 @@ namespace ELKH.Services
         /// <param name="logger">Logger for delivery diagnostics and graceful skip notifications.</param>
         public SmtpEmailSender(Microsoft.Extensions.Options.IOptions<ELKH.Configuration.EmailOptions> options, ILogger<SmtpEmailSender> logger)
         {
-            _logger  = logger;
+            _logger = logger;
             _options = options.Value;
         }
 
@@ -45,7 +45,7 @@ namespace ELKH.Services
             foreach (var address in to)
                 message.To.Add(MailboxAddress.Parse(address));
             message.Subject = subject;
-            message.Body    = new TextPart("html") { Text = body };
+            message.Body = new TextPart("html") { Text = body };
 
             // Choose the correct socket security based on port convention:
             //   465  → implicit TLS (SslOnConnect)

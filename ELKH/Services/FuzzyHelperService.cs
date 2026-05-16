@@ -1,8 +1,8 @@
 using System;
 using System.Collections.Generic;
 using ELKH.Configuration;
-using Microsoft.Extensions.Options;
 using FuzzySharp;
+using Microsoft.Extensions.Options;
 
 namespace ELKH.Services
 {

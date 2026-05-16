@@ -164,7 +164,6 @@ namespace ELKH.Extensions
                 pattern: "{controller=Home}/{action=Index}/{id?}");
 
             // Convention-based Razor Pages routing
-            app.MapRazorPages();
             app.MapRazorPages()
                .WithStaticAssets();
 

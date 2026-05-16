@@ -1,3 +1,5 @@
+using System.Globalization;
+using System.Linq.Expressions;
 using ELKH.Data;
 using ELKH.Models;
 using ELKH.ViewModels;
@@ -6,8 +8,7 @@ using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Query;
-using System.Globalization;
-using System.Linq.Expressions;
+using Microsoft.Extensions.Caching.Memory;
 
 namespace ELKH.Controllers
 {
@@ -22,14 +23,23 @@ namespace ELKH.Controllers
 
         private readonly ApplicationDbContext _context;
         private readonly UserManager<IdentityUser> _userManager;
+        private readonly IMemoryCache _cache;
+
+        private void InvalidateCatalogCaches()
+        {
+            _cache.Remove("catalog_products_all");
+            _cache.Remove("catalog_products_promotional");
+            _cache.Remove("catalog_categories");
+        }
 
         // CA1861: Constant arrays to avoid repeated allocations
         private static readonly string[] StaffRoles = { "Manager", "Staff", "Admin" };
 
-        public ManagerController(ApplicationDbContext context, UserManager<IdentityUser> userManager)
+        public ManagerController(ApplicationDbContext context, UserManager<IdentityUser> userManager, IMemoryCache cache)
         {
             _context = context;
             _userManager = userManager;
+            _cache = cache;
         }
 
         #endregion
@@ -213,6 +223,7 @@ namespace ELKH.Controllers
 
             p.IsActive = !p.IsActive;
             await _context.SaveChangesAsync();
+            InvalidateCatalogCaches();
 
             TempData["Success"] = $"'{p.Name}' is now {(p.IsActive ? "Active" : "Inactive")}.";
 
@@ -301,6 +312,8 @@ namespace ELKH.Controllers
             product.IsDeleted = true;
             product.IsActive = false;
             await _context.SaveChangesAsync();
+            _cache.Remove("catalog_products_all");
+            _cache.Remove("catalog_products_promotional");
 
             TempData["Success"] = $"'{product.Name}' has been soft-deleted.";
             return RedirectToAction("ListOfProducts");
@@ -320,6 +333,8 @@ namespace ELKH.Controllers
 
             product.IsDeleted = false;
             await _context.SaveChangesAsync();
+            _cache.Remove("catalog_products_all");
+            _cache.Remove("catalog_products_promotional");
 
             TempData["Restored"] = $"'{product.Name}' has been restored.";
             return RedirectToAction("DeletedProducts");
@@ -495,9 +510,9 @@ namespace ELKH.Controllers
 
             // Get all user-role relationships in a single query
             var userRoles = from user in contextUsers
-                           join userRole in contextUserRoles on user.Id equals userRole.UserId
-                           join role in contextRoles on userRole.RoleId equals role.Id
-                           select new { UserId = user.Id, RoleName = role.Name };
+                            join userRole in contextUserRoles on user.Id equals userRole.UserId
+                            join role in contextRoles on userRole.RoleId equals role.Id
+                            select new { UserId = user.Id, RoleName = role.Name };
 
             var userRoleDict = userRoles.ToList()
                 .GroupBy(ur => ur.UserId)
@@ -508,8 +523,8 @@ namespace ELKH.Controllers
             // Process users with pre-loaded roles (no more N+1 queries)
             foreach (var user in allUsers)
             {
-                var roles = userRoleDict.TryGetValue(user.Id, out var userRoleList) 
-                    ? userRoleList 
+                var roles = userRoleDict.TryGetValue(user.Id, out var userRoleList)
+                    ? userRoleList
                     : new List<string>();
 
                 // Include user if they have any staff-related role
@@ -881,7 +896,7 @@ namespace ELKH.Controllers
 
             // Check for duplicate name (excluding current record)
             var existingMethod = await _context.ShippingMethods
-                .FirstOrDefaultAsync(sm => sm.Name.ToLower() == model.Name.ToLower() 
+                .FirstOrDefaultAsync(sm => sm.Name.ToLower() == model.Name.ToLower()
                                           && sm.PkShippingMethodId != model.PkShippingMethodId);
 
             if (existingMethod != null)
@@ -986,8 +1001,9 @@ namespace ELKH.Controllers
 
                 if (Request.Headers["X-Requested-With"] == "XMLHttpRequest")
                 {
-                    return Json(new { 
-                        success = true, 
+                    return Json(new
+                    {
+                        success = true,
                         message = message,
                         isActive = shippingMethod.IsActive,
                         statusText = shippingMethod.IsActive ? "Active" : "Inactive"
@@ -1113,6 +1129,7 @@ namespace ELKH.Controllers
 
             _context.Categories.Add(new CategoryModel { CategoryName = model.CategoryName.Trim() });
             await _context.SaveChangesAsync();
+            InvalidateCatalogCaches();
 
             TempData["Message"] = $"success,Category '{model.CategoryName.Trim()}' created successfully!";
             return RedirectToAction(nameof(Categories));
@@ -1149,6 +1166,7 @@ namespace ELKH.Controllers
 
             category.CategoryName = model.CategoryName.Trim();
             await _context.SaveChangesAsync();
+            InvalidateCatalogCaches();
 
             TempData["Message"] = $"success,Category updated to '{category.CategoryName}'.";
             return RedirectToAction(nameof(Categories));
@@ -1176,6 +1194,7 @@ namespace ELKH.Controllers
 
             _context.Categories.Remove(category);
             await _context.SaveChangesAsync();
+            _cache.Remove("catalog_categories");
 
             TempData["Message"] = $"success,Category '{category.CategoryName}' deleted.";
             return RedirectToAction(nameof(Categories));

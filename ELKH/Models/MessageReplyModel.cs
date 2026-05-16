@@ -12,13 +12,13 @@ namespace ELKH.Models
         public int Id { get; set; }
 
         public int MessageId { get; set; }
-        public StaffMessageModel Message { get; set; }
+        public StaffMessageModel Message { get; set; } = null!;
 
         [Required]
         [MaxLength(500)]
-        public string ReplyText { get; set; }
+        public string ReplyText { get; set; } = string.Empty;
 
-        public string RepliedBy { get; set; }
+        public string RepliedBy { get; set; } = string.Empty;
 
         public DateTime RepliedAt { get; set; } = DateTime.UtcNow;
     }

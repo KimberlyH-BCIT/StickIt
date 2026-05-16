@@ -32,7 +32,7 @@ namespace ELKH.Models
         /// Navigation property to the product in the wishlist.
         /// </summary>
         public ProductModel Product { get; set; } = null!;
-        
+
         /// <summary>
         /// Timestamp when the product was added to the wishlist.
         /// </summary>

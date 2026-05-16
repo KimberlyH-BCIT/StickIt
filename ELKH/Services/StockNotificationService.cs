@@ -32,9 +32,9 @@ namespace ELKH.Services
             {
                 // Check if notification request already exists (including cancelled ones)
                 var existing = await _db.StockNotifications
-                    .FirstOrDefaultAsync(sn => sn.FkRegisteredUserId == userId 
-                                            && sn.FkProductId == productId 
-                                            && !sn.IsCancelled 
+                    .FirstOrDefaultAsync(sn => sn.FkRegisteredUserId == userId
+                                            && sn.FkProductId == productId
+                                            && !sn.IsCancelled
                                             && !sn.NotificationSent, ct);
 
                 if (existing != null)
@@ -70,9 +70,9 @@ namespace ELKH.Services
         public async Task<bool> HasPendingNotificationAsync(int userId, int productId, CancellationToken ct = default)
         {
             return await _db.StockNotifications
-                .AnyAsync(sn => sn.FkRegisteredUserId == userId 
-                             && sn.FkProductId == productId 
-                             && !sn.IsCancelled 
+                .AnyAsync(sn => sn.FkRegisteredUserId == userId
+                             && sn.FkProductId == productId
+                             && !sn.IsCancelled
                              && !sn.NotificationSent, ct);
         }
 
@@ -82,8 +82,8 @@ namespace ELKH.Services
             return await _db.StockNotifications
                 .Include(sn => sn.RegisteredUser)
                 .Include(sn => sn.Product)
-                .Where(sn => sn.FkProductId == productId 
-                          && !sn.NotificationSent 
+                .Where(sn => sn.FkProductId == productId
+                          && !sn.NotificationSent
                           && !sn.IsCancelled)
                 .ToListAsync(ct);
         }
@@ -97,7 +97,7 @@ namespace ELKH.Services
                 notification.NotificationSent = true;
                 notification.SentAt = DateTime.UtcNow;
                 await _db.SaveChangesAsync(ct);
-                
+
                 _logger.LogInformation("Marked stock notification {NotificationId} as sent", notificationId);
             }
         }
@@ -106,9 +106,9 @@ namespace ELKH.Services
         public async Task<bool> CancelNotificationAsync(int userId, int productId, CancellationToken ct = default)
         {
             var notification = await _db.StockNotifications
-                .FirstOrDefaultAsync(sn => sn.FkRegisteredUserId == userId 
-                                        && sn.FkProductId == productId 
-                                        && !sn.IsCancelled 
+                .FirstOrDefaultAsync(sn => sn.FkRegisteredUserId == userId
+                                        && sn.FkProductId == productId
+                                        && !sn.IsCancelled
                                         && !sn.NotificationSent, ct);
 
             if (notification == null)
@@ -126,8 +126,8 @@ namespace ELKH.Services
         {
             return await _db.StockNotifications
                 .Include(sn => sn.Product)
-                .Where(sn => sn.FkRegisteredUserId == userId 
-                          && !sn.IsCancelled 
+                .Where(sn => sn.FkRegisteredUserId == userId
+                          && !sn.IsCancelled
                           && !sn.NotificationSent)
                 .OrderByDescending(sn => sn.CreatedAt)
                 .ToListAsync(ct);

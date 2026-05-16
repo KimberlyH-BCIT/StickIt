@@ -118,8 +118,8 @@ namespace ELKH.ViewModels
             {
                 if (DeliveryDaysMin == DeliveryDaysMax)
                 {
-                    return DeliveryDaysMin == 1 
-                        ? "1 business day" 
+                    return DeliveryDaysMin == 1
+                        ? "1 business day"
                         : $"{DeliveryDaysMin} business days";
                 }
                 return $"{DeliveryDaysMin}-{DeliveryDaysMax} business days";

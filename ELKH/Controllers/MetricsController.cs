@@ -3,8 +3,8 @@ using System.Text;
 using ELKH.Data;
 using ELKH.Models;
 using ELKH.Services;
-using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 
 namespace ELKH.Controllers
@@ -60,7 +60,7 @@ namespace ELKH.Controllers
             // =====================================================================
             // Reports last run timestamp (Unix seconds) and duration
             // Uses 'gauge' for timing values and 'counter' for run count
-            
+
             if (_reindex.LastRun.HasValue)
             {
                 var lastSec = new DateTimeOffset(_reindex.LastRun.Value).ToUnixTimeSeconds();
