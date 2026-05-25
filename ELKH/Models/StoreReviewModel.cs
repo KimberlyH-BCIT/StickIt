@@ -49,18 +49,18 @@ namespace ELKH.Models
         /// Whether the review is approved and visible to the public.
         /// All reviews require moderation approval before appearing on homepage.
         /// </summary>
-        public bool Approved { get; set; } = false;
+        public bool Approved { get; set; }
 
         /// <summary>
         /// Whether the review is flagged for moderator attention.
         /// </summary>
-        public bool IsFlagged { get; set; } = false;
+        public bool IsFlagged { get; set; }
 
         /// <summary>
         /// Whether the reviewer is a verified buyer (has any completed order).
         /// Calculated at submission time based on user's order history.
         /// </summary>
-        public bool IsVerifiedBuyer { get; set; } = false;
+        public bool IsVerifiedBuyer { get; set; }
 
         /// <summary>
         /// Optional moderator note explaining flags or rejection reasons.
@@ -70,7 +70,7 @@ namespace ELKH.Models
         /// <summary>
         /// Whether the review has been soft-deleted.
         /// </summary>
-        public bool IsDeleted { get; set; } = false;
+        public bool IsDeleted { get; set; }
 
         /// <summary>
         /// Timestamp when the review was soft-deleted (if applicable).

@@ -22,8 +22,8 @@ namespace ELKH.Repositories
     /// <typeparam name="TKey">The primary key type</typeparam>
     public abstract class RepositoryBase<TEntity, TKey> where TEntity : class
     {
-        protected readonly ApplicationDbContext Context;
-        protected readonly ILogger Logger;
+        protected ApplicationDbContext Context { get; }
+        protected ILogger Logger { get; }
 
         protected RepositoryBase(ApplicationDbContext context, ILogger logger)
         {
@@ -101,7 +101,10 @@ namespace ELKH.Repositories
             {
                 Context.Set<TEntity>().Add(entity);
                 await Context.SaveChangesAsync();
-                Logger.LogInformation("Added new {EntityType}", typeof(TEntity).Name);
+                if (Logger.IsEnabled(LogLevel.Information))
+                {
+                    Logger.LogInformation("Added new {EntityType}", typeof(TEntity).Name);
+                }
                 return true;
             }
             catch (Exception ex)
@@ -119,7 +122,10 @@ namespace ELKH.Repositories
             {
                 Context.Set<TEntity>().Update(entity);
                 await Context.SaveChangesAsync();
-                Logger.LogInformation("Updated {EntityType}", typeof(TEntity).Name);
+                if (Logger.IsEnabled(LogLevel.Information))
+                {
+                    Logger.LogInformation("Updated {EntityType}", typeof(TEntity).Name);
+                }
                 return true;
             }
             catch (Exception ex)
@@ -137,19 +143,28 @@ namespace ELKH.Repositories
                 var entity = await GetByIdAsync(id);
                 if (entity is null)
                 {
-                    Logger.LogWarning("Cannot delete {EntityType} with ID {Id} - not found", typeof(TEntity).Name, id);
+                    if (Logger.IsEnabled(LogLevel.Warning))
+                    {
+                        Logger.LogWarning("Cannot delete {EntityType} with ID {Id} - not found", typeof(TEntity).Name, id);
+                    }
                     return false;
                 }
 
                 Context.Set<TEntity>().Remove(entity);
                 await Context.SaveChangesAsync();
 
-                Logger.LogInformation("Deleted {EntityType} with ID {Id}", typeof(TEntity).Name, id);
+                if (Logger.IsEnabled(LogLevel.Information))
+                {
+                    Logger.LogInformation("Deleted {EntityType} with ID {Id}", typeof(TEntity).Name, id);
+                }
                 return true;
             }
             catch (Exception ex)
             {
-                Logger.LogError(ex, "Error deleting {EntityType} with ID {Id}", typeof(TEntity).Name, id);
+                if (Logger.IsEnabled(LogLevel.Error))
+                {
+                    Logger.LogError(ex, "Error deleting {EntityType} with ID {Id}", typeof(TEntity).Name, id);
+                }
                 return false;
             }
         }
@@ -165,12 +180,18 @@ namespace ELKH.Repositories
                 Context.Set<TEntity>().Remove(entity);
                 Context.SaveChanges();
 
-                Logger.LogInformation("Deleted {EntityType}", typeof(TEntity).Name);
+                if (Logger.IsEnabled(LogLevel.Information))
+                {
+                    Logger.LogInformation("Deleted {EntityType}", typeof(TEntity).Name);
+                }
                 return true;
             }
             catch (Exception ex)
             {
-                Logger.LogError(ex, "Error deleting {EntityType}", typeof(TEntity).Name);
+                if (Logger.IsEnabled(LogLevel.Error))
+                {
+                    Logger.LogError(ex, "Error deleting {EntityType}", typeof(TEntity).Name);
+                }
                 return false;
             }
         }
@@ -182,12 +203,18 @@ namespace ELKH.Repositories
             {
                 Context.Set<TEntity>().Remove(entity);
                 await Context.SaveChangesAsync();
-                Logger.LogInformation("Deleted {EntityType}", typeof(TEntity).Name);
+                if (Logger.IsEnabled(LogLevel.Information))
+                {
+                    Logger.LogInformation("Deleted {EntityType}", typeof(TEntity).Name);
+                }
                 return true;
             }
             catch (Exception ex)
             {
-                Logger.LogError(ex, "Error deleting {EntityType}", typeof(TEntity).Name);
+                if (Logger.IsEnabled(LogLevel.Error))
+                {
+                    Logger.LogError(ex, "Error deleting {EntityType}", typeof(TEntity).Name);
+                }
                 return false;
             }
         }

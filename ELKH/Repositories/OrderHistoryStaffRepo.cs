@@ -2,6 +2,7 @@ using ELKH.Data;
 using ELKH.Models;
 using ELKH.ViewModels;
 using Microsoft.EntityFrameworkCore;
+using System.Globalization;
 
 namespace ELKH.Repositories
 {
@@ -26,7 +27,7 @@ namespace ELKH.Repositories
 
             if (!string.IsNullOrEmpty(searchString))
             {
-                query = query.Where(o => o.RegisteredUser != null && o.RegisteredUser.Email.Contains(searchString) || o.PkOrderId.ToString().Contains(searchString));
+                query = query.Where(o => o.RegisteredUser != null && o.RegisteredUser.Email.Contains(searchString) || o.PkOrderId.ToString(CultureInfo.InvariantCulture).Contains(searchString));
             }
 
             // FIXED: Comparing Enum to Enum instead of string
@@ -82,10 +83,10 @@ namespace ELKH.Repositories
             }
 
             var query = _context.OrderItems.Include(oi => oi.Product)
-                                           .Include(oi => oi.Order)
-                                           .ThenInclude(o => o.RegisteredUser)
-                                           .Include(oi => oi.Order)
-                                           .ThenInclude(o => o.Transaction)
+                                           .Include(oi => oi.Order!)
+                                           .ThenInclude(o => o.RegisteredUser!)
+                                           .Include(oi => oi.Order!)
+                                           .ThenInclude(o => o.Transaction!)
                                            .Where(oi => oi.FkOrderId == actualOrderId);
 
             if (!string.IsNullOrEmpty(searchString))
@@ -103,18 +104,18 @@ namespace ELKH.Repositories
                                     .ToListAsync())
                         .Select(oi => new OrderDetailsVM
                         {
-                            UserEmail = oi.Order.RegisteredUser?.Email ?? string.Empty,
+                            UserEmail = oi.Order?.RegisteredUser?.Email ?? string.Empty,
                             // Update these mapping based on your RegisteredUserModel fields
                             FirstName = "User",
                             LastName = "Name",
                             Address = "Address placeholder",
-                            OrderId = oi.Order.PkOrderId,
-                            TransactionId = oi.Order.Transaction?.PkTransactionId ?? 0,
-                            DeliveryStatus = oi.Order.DeliveryStatus.ToString(), // Converted to string for VM
+                            OrderId = oi.Order?.PkOrderId ?? 0,
+                            TransactionId = oi.Order?.Transaction?.PkTransactionId ?? 0,
+                            DeliveryStatus = oi.Order?.DeliveryStatus.ToString() ?? string.Empty, // Converted to string for VM
                             ProductName = oi.Product?.Name ?? string.Empty,
                             Quantity = oi.Quantity,
                             UnitPrice = oi.Product?.Price ?? 0,
-                            TotalOrderAmount = oi.Order.TotalAmount
+                            TotalOrderAmount = oi.Order?.TotalAmount ?? 0
                         })
                         .ToList();
 

@@ -35,12 +35,12 @@ namespace ELKH.Models
         /// <summary>
         /// Whether the rating is approved and visible to the public.
         /// </summary>
-        public bool Approved { get; set; } = false;
-        public bool IsRead { get; set; } = false;
+        public bool Approved { get; set; }
+        public bool IsRead { get; set; }
         /// <summary>
         /// Whether the rating is flagged for moderator review.
         /// </summary>
-        public bool IsFlagged { get; set; } = false;
+        public bool IsFlagged { get; set; }
 
         /// <summary>
         /// Optional note left by a moderator explaining why the rating was flagged.
@@ -80,7 +80,7 @@ namespace ELKH.Models
         /// <summary>
         /// Whether the rating has been soft-deleted by the user.
         /// </summary>
-        public bool IsDeleted { get; set; } = false;
+        public bool IsDeleted { get; set; }
 
         /// <summary>
         /// Timestamp when the rating was deleted (if deleted).

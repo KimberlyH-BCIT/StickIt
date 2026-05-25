@@ -86,13 +86,13 @@ namespace ELKH.Models
         /// Indicates if this product is currently trending based on recent sales activity.
         /// Manually set by admins or automatically calculated by analytics.
         /// </summary>
-        public bool IsTrending { get; set; } = false;
+        public bool IsTrending { get; set; }
 
         /// <summary>
         /// Indicates if this product is marked as a best seller.
         /// Can be based on total sales volume or manually curated.
         /// </summary>
-        public bool IsBestSeller { get; set; } = false;
+        public bool IsBestSeller { get; set; }
 
         /// <summary>
         /// Timestamp of when back-in-stock notifications were last sent for this product.
@@ -114,7 +114,7 @@ namespace ELKH.Models
         /// Used for category filtering and display.
         /// </summary>
         public CategoryModel? Category { get; set; }
-        public bool IsDeleted { get; set; } = false;
+        public bool IsDeleted { get; set; }
         /// <summary>
         /// Collection of images associated with this product.
         /// Used for product galleries and thumbnails.

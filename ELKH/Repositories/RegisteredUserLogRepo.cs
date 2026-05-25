@@ -55,7 +55,10 @@ namespace ELKH.Repositories
 
             Context.UserLogs.Add(log);
             await Context.SaveChangesAsync();
-            Logger.LogInformation("Started login session for {Email}", email);
+            if (Logger.IsEnabled(LogLevel.Information))
+            {
+                Logger.LogInformation("Started login session for {Email}", email);
+            }
 
             return log;
         }
@@ -73,7 +76,10 @@ namespace ELKH.Repositories
             try
             {
                 await Context.SaveChangesAsync();
-                Logger.LogInformation("Ended login session {LogId}", pkLogId);
+                if (Logger.IsEnabled(LogLevel.Information))
+                {
+                    Logger.LogInformation("Ended login session {LogId}", pkLogId);
+                }
                 return true;
             }
             catch (Exception ex)
@@ -99,7 +105,10 @@ namespace ELKH.Repositories
             try
             {
                 await Context.SaveChangesAsync();
-                Logger.LogWarning("Closed dangling session for {Email}", email);
+                if (Logger.IsEnabled(LogLevel.Warning))
+                {
+                    Logger.LogWarning("Closed dangling session for {Email}", email);
+                }
                 return true;
             }
             catch (Exception ex)
@@ -130,7 +139,10 @@ namespace ELKH.Repositories
 
             Context.UserLogs.Add(entry);
             await Context.SaveChangesAsync();
-            Logger.LogInformation("Activity logged for {Email}: [{Type}] {Detail}", email, activityType, detail);
+            if (Logger.IsEnabled(LogLevel.Information))
+            {
+                Logger.LogInformation("Activity logged for {Email}: [{Type}] {Detail}", email, activityType, detail);
+            }
         }
     }
 }

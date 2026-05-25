@@ -1,6 +1,8 @@
 using ELKH.Models;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
+using System.Data;
+using System.Data.Common;
 
 namespace ELKH.Data;
 
@@ -29,6 +31,8 @@ public static partial class DbSeeder
 
         var products = await db.Products.AsNoTracking().ToListAsync();
         if (products.Count == 0) return;
+
+        var contactDetailsHasLegacyUserIdColumn = await HasContactDetailsUserIdColumnAsync(db);
 
         var rng = GetRandom();
 
@@ -118,7 +122,7 @@ public static partial class DbSeeder
                 AvatarMimeType = avatarBytes is not null ? "image/png" : null
             });
 
-            await CreateCustomerContactAsync(db, registeredUser, identityUser.Id, firstName, lastName, locations, streetNames, streetSuffixes, rng);
+            await CreateCustomerContactAsync(db, registeredUser, identityUser.Id, firstName, lastName, locations, streetNames, streetSuffixes, rng, contactDetailsHasLegacyUserIdColumn);
 
             await CreateCustomerWishlistAsync(db, registeredUser, products, rng);
 
@@ -137,7 +141,8 @@ public static partial class DbSeeder
         (string City, string Province, char Prefix)[] locations,
         string[] streetNames,
         string[] streetSuffixes,
-        Random rng)
+        Random rng,
+        bool contactDetailsHasLegacyUserIdColumn)
     {
         var loc = locations[rng.Next(locations.Length)];
         var streetNum = rng.Next(1, 9999);
@@ -146,21 +151,68 @@ public static partial class DbSeeder
 
         var postalCode = $"{loc.Prefix}{rng.Next(1, 9)}{(char)('A' + rng.Next(26))} {rng.Next(1, 9)}{(char)('A' + rng.Next(26))}{rng.Next(1, 9)}";
 
-        var contact = new ContactDetailModel
+        if (contactDetailsHasLegacyUserIdColumn)
         {
-            FirstName = firstName,
-            LastName = lastName,
-            PhoneNumber = $"({rng.Next(200, 999)}) {rng.Next(100, 999)}-{rng.Next(1000, 9999)}",
-            Street = $"{streetNum} {streetName} {streetSfx}",
-            City = loc.City,
-            Province = loc.Province,
-            PostCode = postalCode,
-            Country = "Canada",
-            IsDefault = true,
-            FkRegisteredUserId = registeredUser.PkRegisteredUserId
-        };
-        db.ContactDetails.Add(contact);
-        await db.SaveChangesAsync();
+            await db.Database.ExecuteSqlInterpolatedAsync($"""
+                INSERT INTO ContactDetails
+                    (FirstName, LastName, PhoneNumber, Street, City, Province, PostCode, Country, IsDefault, FkRegisteredUserId, UserId)
+                VALUES
+                    ({firstName}, {lastName}, {($"({rng.Next(200, 999)}) {rng.Next(100, 999)}-{rng.Next(1000, 9999)}")}, {($"{streetNum} {streetName} {streetSfx}")}, {loc.City}, {loc.Province}, {postalCode}, {"Canada"}, {true}, {registeredUser.PkRegisteredUserId}, {userId});
+                """);
+        }
+        else
+        {
+            db.ContactDetails.Add(new ContactDetailModel
+            {
+                FirstName = firstName,
+                LastName = lastName,
+                PhoneNumber = $"({rng.Next(200, 999)}) {rng.Next(100, 999)}-{rng.Next(1000, 9999)}",
+                Street = $"{streetNum} {streetName} {streetSfx}",
+                City = loc.City,
+                Province = loc.Province,
+                PostCode = postalCode,
+                Country = "Canada",
+                IsDefault = true,
+                FkRegisteredUserId = registeredUser.PkRegisteredUserId
+            });
+
+            await db.SaveChangesAsync();
+        }
+    }
+
+    private static async Task<bool> HasContactDetailsUserIdColumnAsync(ApplicationDbContext db)
+    {
+        var connection = db.Database.GetDbConnection();
+        var shouldClose = connection.State != ConnectionState.Open;
+
+        if (shouldClose)
+        {
+            await connection.OpenAsync();
+        }
+
+        try
+        {
+            await using var command = connection.CreateCommand();
+            command.CommandText = "PRAGMA table_info(ContactDetails);";
+
+            await using var reader = await command.ExecuteReaderAsync();
+            while (await reader.ReadAsync())
+            {
+                if (string.Equals(reader.GetString(reader.GetOrdinal("name")), "UserId", StringComparison.OrdinalIgnoreCase))
+                {
+                    return true;
+                }
+            }
+
+            return false;
+        }
+        finally
+        {
+            if (shouldClose)
+            {
+                await connection.CloseAsync();
+            }
+        }
     }
 
     private static async Task CreateCustomerWishlistAsync(

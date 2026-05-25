@@ -53,12 +53,18 @@ namespace ELKH.Repositories
 
                 Context.ContactDetails.Add(contact);
                 await Context.SaveChangesAsync();
-                Logger.LogInformation("Added contact detail for user {UserId}", contact.FkRegisteredUserId);
+                if (Logger.IsEnabled(LogLevel.Information))
+                {
+                    Logger.LogInformation("Added contact detail for user {UserId}", contact.FkRegisteredUserId);
+                }
                 return true;
             }
             catch (Exception ex)
             {
-                Logger.LogError(ex, "Error adding contact detail for user {UserId}", contact.FkRegisteredUserId);
+                if (Logger.IsEnabled(LogLevel.Error))
+                {
+                    Logger.LogError(ex, "Error adding contact detail for user {UserId}", contact.FkRegisteredUserId);
+                }
                 return false;
             }
         }
@@ -73,7 +79,10 @@ namespace ELKH.Repositories
                 var existing = await GetByIdAsync(contact.PkContactId);
                 if (existing is null)
                 {
-                    Logger.LogWarning("Cannot update contact {ContactId} - not found", contact.PkContactId);
+                    if (Logger.IsEnabled(LogLevel.Warning))
+                    {
+                        Logger.LogWarning("Cannot update contact {ContactId} - not found", contact.PkContactId);
+                    }
                     return false;
                 }
 
@@ -94,12 +103,18 @@ namespace ELKH.Repositories
                 existing.IsDefault = contact.IsDefault;
 
                 await Context.SaveChangesAsync();
-                Logger.LogInformation("Updated contact detail {ContactId}", contact.PkContactId);
+                if (Logger.IsEnabled(LogLevel.Information))
+                {
+                    Logger.LogInformation("Updated contact detail {ContactId}", contact.PkContactId);
+                }
                 return true;
             }
             catch (Exception ex)
             {
-                Logger.LogError(ex, "Error updating contact detail {ContactId}", contact.PkContactId);
+                if (Logger.IsEnabled(LogLevel.Error))
+                {
+                    Logger.LogError(ex, "Error updating contact detail {ContactId}", contact.PkContactId);
+                }
                 return false;
             }
         }

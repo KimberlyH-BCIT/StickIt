@@ -11,7 +11,7 @@ public class ApiErrorResponse
     /// <summary>
     /// Indicates if the operation was successful (always false for errors).
     /// </summary>
-    public bool Success { get; set; } = false;
+    public bool Success { get; set; }
 
     /// <summary>
     /// Error message describing what went wrong.

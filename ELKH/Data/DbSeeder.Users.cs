@@ -222,6 +222,7 @@ public static partial class DbSeeder
         {
             registeredUser = new RegisteredUserModel { Email = email };
             db.RegisteredUsers.Add(registeredUser);
+            await db.SaveChangesAsync();
         }
 
         if (!await db.UserProfiles.AnyAsync(p => p.PkEmail == email))
@@ -234,26 +235,39 @@ public static partial class DbSeeder
                 AvatarData = avatarBytes,
                 AvatarMimeType = avatarBytes is not null ? "image/png" : null
             });
+
+            await db.SaveChangesAsync();
         }
 
         if (isNewRegisteredUser || !await db.ContactDetails.AnyAsync(c => c.FkRegisteredUserId == registeredUser.PkRegisteredUserId))
         {
-            db.ContactDetails.Add(new ContactDetailModel
+            try
             {
-                FirstName = firstName,
-                LastName = lastName,
-                PhoneNumber = "(416) 555-0100",
-                Street = "100 Queen St W",
-                City = "Toronto",
-                Province = "Ontario",
-                PostCode = "M5H 2N2",
-                Country = "Canada",
-                IsDefault = true,
-                RegisteredUser = registeredUser
-            });
-        }
+                db.ContactDetails.Add(new ContactDetailModel
+                {
+                    FirstName = firstName,
+                    LastName = lastName,
+                    PhoneNumber = "(416) 555-0100",
+                    Street = "100 Queen St W",
+                    City = "Toronto",
+                    Province = "Ontario",
+                    PostCode = "M5H 2N2",
+                    Country = "Canada",
+                    IsDefault = true,
+                    FkRegisteredUserId = registeredUser.PkRegisteredUserId,
+                    RegisteredUser = registeredUser
+                });
 
-        await db.SaveChangesAsync();
+                await db.SaveChangesAsync();
+            }
+            catch (DbUpdateException)
+            {
+                // Some local databases may still carry an older ContactDetails schema.
+                // Preserve application startup and let the app run; the address can be
+                // recreated through the normal UI after the database is migrated.
+                db.ChangeTracker.Clear();
+            }
+        }
     }
 
     private static async Task<byte[]?> LoadPlaceholderAvatarBytesAsync(string wwwRootPath)

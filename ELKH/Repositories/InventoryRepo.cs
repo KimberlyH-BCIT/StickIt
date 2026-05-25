@@ -1,3 +1,4 @@
+using System.Globalization;
 using ELKH.Data;
 using ELKH.Models;
 using ELKH.ViewModels;
@@ -49,9 +50,9 @@ namespace ELKH.Repositories
             // 1. Filter by Search
             if (!string.IsNullOrEmpty(searchString))
             {
-                var s = searchString.ToLower();
-                query = query.Where(p => p.Name.ToLower().Contains(s) ||
-                                         p.Description.ToLower().Contains(s));
+                var s = searchString.ToLowerInvariant();
+                query = query.Where(p => p.Name.Contains(s, StringComparison.OrdinalIgnoreCase) ||
+                                         p.Description.Contains(s, StringComparison.OrdinalIgnoreCase));
             }
 
             // 2. Filter by Stock (matching your Manager logic)
@@ -108,10 +109,10 @@ namespace ELKH.Repositories
 
             if (!string.IsNullOrEmpty(searchString))
             {
-                var s = searchString.ToLower();
+                var s = searchString.ToLower(CultureInfo.InvariantCulture);
                 query = query.Where(p =>
-                    p.Name.ToLower().Contains(s) ||
-                    p.Description.ToLower().Contains(s));
+                    p.Name.ToLower(CultureInfo.InvariantCulture).Contains(s, StringComparison.OrdinalIgnoreCase) ||
+                    p.Description.ToLower(CultureInfo.InvariantCulture).Contains(s, StringComparison.OrdinalIgnoreCase));
             }
 
             var total = await query.CountAsync();

@@ -226,15 +226,21 @@ public class CartRepo : ICartRepo
             {
                 _context.Carts.RemoveRange(items);
                 await _context.SaveChangesAsync();
-                _logger.LogInformation("Cleared {ItemCount} cart items for user {UserId}",
-                    items.Count, registeredUserId);
+                if (_logger.IsEnabled(LogLevel.Information))
+                {
+                    _logger.LogInformation("Cleared {ItemCount} cart items for user {UserId}",
+                        items.Count, registeredUserId);
+                }
             }
 
             return true;
         }
         catch (DbUpdateException ex)
         {
-            _logger.LogError(ex, "Database error clearing cart for user {UserId}", registeredUserId);
+            if (_logger.IsEnabled(LogLevel.Error))
+            {
+                _logger.LogError(ex, "Database error clearing cart for user {UserId}", registeredUserId);
+            }
             return false;
         }
     }

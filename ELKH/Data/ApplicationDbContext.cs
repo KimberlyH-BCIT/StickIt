@@ -119,7 +119,7 @@ public class ApplicationDbContext : IdentityDbContext
     /// <summary>
     /// Configures entity relationships, indexes, and table mappings for the e-commerce application.
     /// </summary>
-    /// <param name="modelBuilder">The builder being used to construct the model for this context.</param>
+    /// <param name="builder">The builder being used to construct the model for this context.</param>
     /// <remarks>
     /// This method defines the complete data model structure including:
     /// • Relationship cardinalities and foreign key constraints
@@ -137,10 +137,11 @@ public class ApplicationDbContext : IdentityDbContext
     /// • Strategic foreign key indexes minimize join operation overhead
     /// • Efficient junction table configuration for many-to-many relationships
     /// </remarks>
-    protected override void OnModelCreating(ModelBuilder modelBuilder)
+    protected override void OnModelCreating(ModelBuilder builder)
     {
         // Initialize base Identity configuration (AspNetUsers, AspNetRoles, etc.)
-        base.OnModelCreating(modelBuilder);
+        base.OnModelCreating(builder);
+        var modelBuilder = builder;
 
         #region Core Relationship Configuration
 

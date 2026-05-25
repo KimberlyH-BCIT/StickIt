@@ -47,7 +47,7 @@ namespace ELKH.Models
         /// Whether the notification has been sent to the user.
         /// Set to true after email is dispatched.
         /// </summary>
-        public bool NotificationSent { get; set; } = false;
+        public bool NotificationSent { get; set; }
 
         /// <summary>
         /// Date and time when the notification email was sent.
@@ -59,6 +59,6 @@ namespace ELKH.Models
         /// Whether the user has cancelled this notification request.
         /// Allows soft deletion without removing historical data.
         /// </summary>
-        public bool IsCancelled { get; set; } = false;
+        public bool IsCancelled { get; set; }
     }
 }

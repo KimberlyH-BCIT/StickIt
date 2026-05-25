@@ -23,7 +23,7 @@ namespace ELKH.Models
 
         public DateTime SentAt { get; set; } = DateTime.UtcNow;
 
-        public bool IsRead { get; set; } = false;
+        public bool IsRead { get; set; }
 
         public ICollection<MessageReplyModel> Replies { get; set; } = new List<MessageReplyModel>();
     }
