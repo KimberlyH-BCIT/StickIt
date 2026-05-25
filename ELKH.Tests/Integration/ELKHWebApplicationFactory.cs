@@ -15,6 +15,11 @@ using System.Text;
 
 namespace ELKH.Tests.Integration;
 
+// TABLE OF CONTENTS
+// - Host customization
+// - Test service overrides
+// - Database initialization
+
 /// <summary>
 /// Custom web application factory for integration testing with in-memory database.
 /// Provides isolated test environment with proper authentication setup.

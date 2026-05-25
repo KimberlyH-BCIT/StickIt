@@ -9,11 +9,23 @@ using ELKH.Models;
 
 namespace ELKH.Tests.Integration;
 
+// TABLE OF CONTENTS
+// - Guest cart access tests
+// - Guest checkout access tests
+// - Guest payment validation tests
+// - Cart-clearing and validation tests
+
 /// <summary>
 /// Integration tests for guest checkout functionality.
 /// Tests the complete end-to-end flow from adding to cart to order confirmation.
 /// Uses current model schemas and WebApplicationFactory for real HTTP testing.
 /// </summary>
+/// <remarks>
+/// 1. Guest cart access tests
+/// 2. Guest checkout access tests
+/// 3. Guest payment validation tests
+/// 4. Cart-clearing and validation tests
+/// </remarks>
 [Collection("Integration")]
 public class GuestCheckoutIntegrationTests : IClassFixture<ELKHWebApplicationFactory>
 {

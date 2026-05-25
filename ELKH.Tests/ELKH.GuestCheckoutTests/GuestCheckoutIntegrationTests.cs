@@ -10,6 +10,12 @@ using ELKH.Models;
 
 namespace ELKH.GuestCheckoutTests;
 
+// TABLE OF CONTENTS
+// - Guest cart flow tests
+// - Guest checkout form tests
+// - Antiforgery and pricing tests
+// - Cart clearing and confirmation tests
+
 /// <summary>
 /// Integration tests for guest checkout functionality.
 /// Tests the complete end-to-end flow from adding to cart to order confirmation.

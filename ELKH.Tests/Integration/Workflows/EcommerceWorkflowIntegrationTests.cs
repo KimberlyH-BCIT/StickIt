@@ -14,10 +14,22 @@ using Microsoft.Extensions.Options;
 
 namespace ELKH.Tests.Integration.Workflows;
 
+// TABLE OF CONTENTS
+// - Shopping workflow tests
+// - Search and filter workflow tests
+// - Authentication-protected action tests
+// - Health, error, and static-asset checks
+
 /// <summary>
 /// End-to-end workflow integration tests that test complete user journeys.
 /// These tests simulate real user scenarios from browsing to purchase.
 /// </summary>
+/// <remarks>
+/// 1. Shopping workflow tests
+/// 2. Search and filter workflow tests
+/// 3. Authentication-protected action tests
+/// 4. Health, error, and static-asset checks
+/// </remarks>
 [Collection("Integration")]
 public class EcommerceWorkflowIntegrationTests : IClassFixture<ELKHWebApplicationFactory>
 {

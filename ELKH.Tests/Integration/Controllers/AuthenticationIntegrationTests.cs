@@ -13,10 +13,22 @@ using Microsoft.AspNetCore.Http;
 
 namespace ELKH.Tests.Integration.Controllers;
 
+// TABLE OF CONTENTS
+// - Public page access tests
+// - Protected page redirect tests
+// - Identity page accessibility tests
+// - Security header and CSRF tests
+
 /// <summary>
 /// Integration tests for authentication and authorization flows.
 /// Tests the complete authentication pipeline including login, registration, and protected routes.
 /// </summary>
+/// <remarks>
+/// 1. Public page access tests
+/// 2. Protected page redirect tests
+/// 3. Identity page accessibility tests
+/// 4. Security header and CSRF tests
+/// </remarks>
 [Collection("Integration")]
 public class AuthenticationIntegrationTests : IClassFixture<ELKHWebApplicationFactory>
 {

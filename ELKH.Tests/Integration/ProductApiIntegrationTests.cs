@@ -8,6 +8,21 @@ using ELKH.ViewModels;
 
 namespace ELKH.Tests.Integration;
 
+// TABLE OF CONTENTS
+// - Product listing and pagination tests
+// - Product lookup and availability tests
+// - Search suggestions tests
+// - Public and authenticated page access tests
+
+/// <summary>
+/// Integration tests for the product API endpoints and public page access.
+/// </summary>
+/// <remarks>
+/// 1. Product listing and pagination tests
+/// 2. Product lookup and availability tests
+/// 3. Search suggestions tests
+/// 4. Public and authenticated page access tests
+/// </remarks>
 [Collection("Integration")]
 public class ProductApiIntegrationTests : IClassFixture<ELKHWebApplicationFactory>
 {

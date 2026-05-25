@@ -12,6 +12,13 @@ using ELKH.ViewModels;
 
 namespace ELKH.GuestCheckoutTests;
 
+// TABLE OF CONTENTS
+// - AddToCartAsync tests
+// - UpdateQuantityAsync tests
+// - RemoveFromCartAsync tests
+// - ClearCartAsync tests
+// - Session serialization tests
+
 /// <summary>
 /// Unit tests for GuestCartService - session-based cart for anonymous users.
 /// Tests CRUD operations, cart retrieval, and cart migration functionality.

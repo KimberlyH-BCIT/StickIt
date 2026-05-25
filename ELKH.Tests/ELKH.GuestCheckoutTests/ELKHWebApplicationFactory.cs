@@ -18,10 +18,11 @@ using Microsoft.Extensions.Hosting;
 
 namespace ELKH.GuestCheckoutTests;
 
-/// <summary>
-/// Custom web application factory for integration testing with in-memory database.
-/// Provides isolated test environment with proper authentication setup.
-/// </summary>
+// TABLE OF CONTENTS
+// - Host customization
+// - Test service overrides
+// - Database initialization
+
 public class ELKHWebApplicationFactory : WebApplicationFactory<Program>
 {
     private bool _seeded = false;

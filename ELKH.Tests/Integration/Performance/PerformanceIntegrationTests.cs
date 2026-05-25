@@ -12,10 +12,22 @@ using Microsoft.EntityFrameworkCore;
 
 namespace ELKH.Tests.Integration.Performance;
 
+// TABLE OF CONTENTS
+// - Page response-time tests
+// - Database query performance tests
+// - Search and cache performance tests
+// - Memory and static-asset stability tests
+
 /// <summary>
 /// Performance integration tests to ensure the application meets performance requirements.
 /// These tests validate response times, memory usage, and throughput under various conditions.
 /// </summary>
+/// <remarks>
+/// 1. Page response-time tests
+/// 2. Database query performance tests
+/// 3. Search and cache performance tests
+/// 4. Memory and static-asset stability tests
+/// </remarks>
 [Collection("Integration")]
 public class PerformanceIntegrationTests : IClassFixture<ELKHWebApplicationFactory>
 {

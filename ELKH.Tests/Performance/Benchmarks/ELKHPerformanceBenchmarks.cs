@@ -4,6 +4,12 @@ using System.Text.Json;
 
 namespace ELKH.Tests.Performance.Benchmarks;
 
+// TABLE OF CONTENTS
+// - Benchmark setup
+// - Search benchmarks
+// - Catalog benchmarks
+// - Supporting helpers
+
 /// <summary>
 /// NBomber performance benchmarks for ELKH eCommerce platform.
 /// These tests simulate real-world load scenarios and measure application performance.

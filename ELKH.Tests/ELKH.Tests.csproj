@@ -4,6 +4,7 @@
     <IsPackable>false</IsPackable>
     <IsTestProject>true</IsTestProject>
     <EnableDefaultCompileItems>false</EnableDefaultCompileItems>
+    <Nullable>enable</Nullable>
 
     <!-- Coverage Configuration -->
     <CollectCoverage>true</CollectCoverage>
@@ -18,9 +19,9 @@
 
   <ItemGroup>
     <!-- Core Testing Framework -->
-    <PackageReference Include="Microsoft.NET.Test.Sdk" Version="17.12.0" />
+    <PackageReference Include="Microsoft.NET.Test.Sdk" Version="17.14.1" />
     <PackageReference Include="xunit" Version="2.9.3" />
-    <PackageReference Include="xunit.runner.visualstudio" Version="2.8.2" />
+    <PackageReference Include="xunit.runner.visualstudio" Version="3.1.4" />
 
     <!-- Performance Testing -->
     <PackageReference Include="NBomber" Version="6.0.1" />
@@ -40,7 +41,7 @@
     <PackageReference Include="Microsoft.AspNetCore.Identity.EntityFrameworkCore" Version="10.0.8" />
 
     <!-- Coverage Reporting -->
-    <PackageReference Include="coverlet.collector" Version="6.0.2">
+    <PackageReference Include="coverlet.collector" Version="6.0.4">
       <PrivateAssets>all</PrivateAssets>
       <IncludeAssets>runtime; build; native; contentfiles; analyzers</IncludeAssets>
     </PackageReference>
@@ -52,11 +53,11 @@
 
   <ItemGroup>
     <ProjectReference Include="..\ELKH\ELKH.csproj" />
+    <ProjectReference Include="ELKH.GuestCheckoutTests\ELKH.GuestCheckoutTests.csproj" />
   </ItemGroup>
 
   <ItemGroup>
-    <Compile Include="**\*.cs"
-             Exclude="$(DefaultItemExcludes);$(DefaultExcludesInProjectFolder);bin\**;obj\**;ELKH.GuestCheckoutTests\**;Unit\Controllers\WishlistControllerTests.cs;Performance\PerformanceTests.cs;Performance\Regression\PerformanceRegressionTests.cs;Performance\Benchmarks\ELKHPerformanceBenchmarks.cs" />
+    <Compile Include="**\*.cs" Exclude="$(DefaultItemExcludes);$(DefaultExcludesInProjectFolder);bin\**;obj\**;ELKH.GuestCheckoutTests\**;Unit\Controllers\WishlistControllerTests.cs;Performance\PerformanceTests.cs;Performance\Regression\PerformanceRegressionTests.cs;Performance\Benchmarks\ELKHPerformanceBenchmarks.cs" />
   </ItemGroup>
 
   <ItemGroup>

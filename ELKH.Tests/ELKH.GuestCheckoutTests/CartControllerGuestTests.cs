@@ -13,6 +13,13 @@ using ELKH.ViewModels;
 
 namespace ELKH.GuestCheckoutTests;
 
+// TABLE OF CONTENTS
+// - Index tests
+// - AddToCart tests
+// - Update tests
+// - Remove tests
+// - Clear tests
+
 /// <summary>
 /// Unit tests for CartController guest checkout functionality.
 /// Tests hybrid authentication detection and routing to appropriate cart services.

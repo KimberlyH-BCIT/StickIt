@@ -5,6 +5,12 @@ using FluentAssertions;
 
 namespace ELKH.Tests.Performance.Regression;
 
+// TABLE OF CONTENTS
+// - Response-time regression tests
+// - Cache regression tests
+// - Memory regression tests
+// - Static asset regression tests
+
 /// <summary>
 /// Automated regression testing for performance characteristics.
 /// These tests run as part of CI/CD to detect performance regressions.

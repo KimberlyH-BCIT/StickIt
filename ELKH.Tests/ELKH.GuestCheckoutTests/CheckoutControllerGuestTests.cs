@@ -20,6 +20,12 @@ using ELKH.ViewModels;
 
 namespace ELKH.GuestCheckoutTests;
 
+// TABLE OF CONTENTS
+// - Guest GET tests
+// - Guest payment processing tests
+// - Guest confirmation tests
+// - Helper setup and seed data
+
 /// <summary>
 /// Unit tests for CheckoutController guest checkout functionality.
 /// Tests guest checkout flow, order creation, and confirmation.

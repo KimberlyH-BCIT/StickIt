@@ -12,10 +12,22 @@ using System.Linq;
 
 namespace ELKH.Tests.Integration.Controllers;
 
+// TABLE OF CONTENTS
+// - Product index and search tests
+// - Product details tests
+// - Sorting, filtering, and pagination tests
+// - JSON API and price/availability tests
+
 /// <summary>
 /// Integration tests for Product catalog functionality.
 /// Tests complete product browsing, searching, and viewing workflows.
 /// </summary>
+/// <remarks>
+/// 1. Product index and search tests
+/// 2. Product details tests
+/// 3. Sorting, filtering, and pagination tests
+/// 4. JSON API and price/availability tests
+/// </remarks>
 [Collection("Integration")]
 public class ProductCatalogIntegrationTests : IClassFixture<ELKHWebApplicationFactory>
 {
