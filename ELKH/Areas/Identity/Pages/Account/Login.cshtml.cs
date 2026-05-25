@@ -18,10 +18,16 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
-using static ELKH.Extensions.RateLimitPolicies;
+using ELKH.Constants;
 
 namespace ELKH.Areas.Identity.Pages.Account
 {
+    // TABLE OF CONTENTS
+    // - Login form display
+    // - Login submission
+    // - Two-factor redirect
+    // - Lockout handling
+    // - External login provider display
 
     /// <summary>
     /// Razor Page model for user login with role-based redirects and security features.
@@ -241,7 +247,7 @@ namespace ELKH.Areas.Identity.Pages.Account
         /// <item>reCAPTCHA prevents automated bot attacks</item>
         /// </list>
         /// </remarks>
-        [Microsoft.AspNetCore.RateLimiting.EnableRateLimiting(Auth)]
+        [Microsoft.AspNetCore.RateLimiting.EnableRateLimiting(ELKH.Constants.RateLimitPolicies.Auth)]
         public async Task<IActionResult> OnPostAsync(string returnUrl = null)
         {
             // ==========================================================================

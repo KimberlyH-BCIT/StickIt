@@ -2,6 +2,7 @@ using System.Linq;
 using System.Security.Claims;
 using System.Threading.Tasks;
 using ELKH.Data;
+using ELKH.Constants;
 using ELKH.Extensions;
 using ELKH.Models;
 using ELKH.Repositories;
@@ -10,6 +11,12 @@ using ELKH.ViewModels;
 using Microsoft.AspNetCore.Mvc;
 
 namespace ELKH.Controllers;
+
+// TABLE OF CONTENTS
+// - Cart display
+// - Add/remove/update cart items
+// - Guest cart handling
+// - Quick purchase flow
 
 /// <summary>
 /// Shopping cart management controller for authenticated and guest users.
@@ -164,7 +171,7 @@ public class CartController : Controller
     /// </remarks>
     [HttpPost]
     [ValidateAntiForgeryToken]
-    [Microsoft.AspNetCore.RateLimiting.EnableRateLimiting(ELKH.Extensions.RateLimitPolicies.Cart)]
+    [Microsoft.AspNetCore.RateLimiting.EnableRateLimiting(ELKH.Constants.RateLimitPolicies.Cart)]
     public async Task<IActionResult> AddToCart(int itemId, int quantity, string? returnUrl = null)
     {
         if (quantity <= 0) return BadRequest("Quantity must be positive.");

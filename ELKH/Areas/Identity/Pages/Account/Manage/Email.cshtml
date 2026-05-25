@@ -5,9 +5,11 @@
     ViewData["ActivePage"] = ManageNavPages.Email;
 }
 
-<header class="mb-4">
-    <h2 class="font-heading hierarchy-primary mb-2">@ViewData["Title"]</h2>
-    <p class="hierarchy-secondary mb-0">Review your current email address or switch to a new one.</p>
+<header class="kawaii-hero mb-4" aria-labelledby="manage-email-heading">
+    <h2 id="manage-email-heading" class="kawaii-cloud-title font-heading h3 mb-2">
+        <i class="bi bi-envelope-paper-heart me-2" aria-hidden="true"></i>@ViewData["Title"]
+    </h2>
+    <p class="kawaii-subtitle mb-0">Review your current email address or switch to a new one.</p>
 </header>
 
 <partial name="_StatusMessage" for="StatusMessage" />

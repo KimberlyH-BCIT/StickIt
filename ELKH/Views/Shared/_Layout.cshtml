@@ -91,14 +91,14 @@
     <!-- Open Graph for social sharing -->
     <meta property="og:type" content="website" />
     <meta property="og:title" content="@ViewData["Title"] - StickIt" />
-    <meta property="og:description" content="StickIt is a modern sticker storefront built with ASP.NET Core, Razor Pages, and production-ready eCommerce architecture." />
+    <meta property="og:description" content="StickIt is a sticker storefront built with ASP.NET Core and Razor Pages." />
     <meta property="og:image" content="~/logo-stickit.png" />
     <meta property="og:url" content="@Context.Request.GetDisplayUrl()" />
 
     <!-- Twitter Card -->
     <meta name="twitter:card" content="summary_large_image" />
     <meta name="twitter:title" content="@ViewData["Title"] - StickIt" />
-    <meta name="twitter:description" content="StickIt is a modern sticker storefront built with ASP.NET Core, Razor Pages, and production-ready eCommerce architecture." />
+    <meta name="twitter:description" content="StickIt is a sticker storefront built with ASP.NET Core and Razor Pages." />
     <meta name="twitter:image" content="~/logo-stickit.png" />
 
     <title>@ViewData["Title"] - StickIt</title>
@@ -315,7 +315,7 @@
                     };
         <div class="row">
             <div class="col-12">
-                <div id="globalAlert">
+                <div id="globalAlert" aria-live="polite" aria-atomic="true">
                     @await Html.PartialAsync("_AlertBannerPartial", globalAlertVM)
                 </div>
             </div>

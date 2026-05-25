@@ -253,79 +253,79 @@
                                 </div>
                             </fieldset>
 
-                                            <div class="alert alert-info mt-3 mb-0" role="status" aria-live="polite">
-                                                <i class="bi bi-info-circle me-2" aria-hidden="true"></i>
-                                                <strong>Next step:</strong> Complete your information above, then proceed with secure PayPal payment.
-                                            </div>
-                                        </div>
-                                    </div>
-                                </section>
+                            <div class="alert alert-info mt-3 mb-0" role="status" aria-live="polite">
+                                <i class="bi bi-info-circle me-2" aria-hidden="true"></i>
+                                <strong>Next step:</strong> Complete your information above, then proceed with secure PayPal payment.
+                            </div>
+                        </div>
+                    </div>
+                </section>
 
-                                <!-- Shipping Method Selection Section -->
-                                <section aria-labelledby="shipping-method-section-heading" class="mt-4">
-                                    <div class="card shadow-sm">
-                                        <div class="card-body">
-                                            <h2 id="shipping-method-section-heading" class="fw-bold mb-4 h5">
-                                                <i class="bi bi-truck me-2" aria-hidden="true"></i>
-                                                Shipping Method
-                                            </h2>
+                <!-- Shipping Method Selection Section -->
+                <section aria-labelledby="shipping-method-section-heading" class="mt-4">
+                    <div class="card shadow-sm">
+                        <div class="card-body">
+                            <h2 id="shipping-method-section-heading" class="fw-bold mb-4 h5">
+                                <i class="bi bi-truck me-2" aria-hidden="true"></i>
+                                Shipping Method
+                            </h2>
 
-                                            <input type="hidden" asp-for="SelectedShippingMethodId" id="selectedShippingMethodId" />
+                            <input type="hidden" asp-for="SelectedShippingMethodId" id="selectedShippingMethodId" />
 
-                                            <fieldset>
-                                                <legend class="sr-only">Select shipping method and delivery speed</legend>
+                            <fieldset>
+                                <legend class="sr-only">Select shipping method and delivery speed</legend>
 
-                                                @foreach (var shippingMethod in Model.AvailableShippingMethods)
-                                                {
-                                                    var isSelected = shippingMethod.PkShippingMethodId == Model.SelectedShippingMethodId;
-                                                    var deliveryText = shippingMethod.DeliveryDaysMin == shippingMethod.DeliveryDaysMax 
-                                                        ? $"{shippingMethod.DeliveryDaysMin} business day{(shippingMethod.DeliveryDaysMin == 1 ? "" : "s")}"
-                                                        : $"{shippingMethod.DeliveryDaysMin}-{shippingMethod.DeliveryDaysMax} business days";
+                                @foreach (var shippingMethod in Model.AvailableShippingMethods)
+                                {
+                                    var isSelected = shippingMethod.PkShippingMethodId == Model.SelectedShippingMethodId;
+                                    var deliveryText = shippingMethod.DeliveryDaysMin == shippingMethod.DeliveryDaysMax 
+                                        ? $"{shippingMethod.DeliveryDaysMin} business day{(shippingMethod.DeliveryDaysMin == 1 ? "" : "s")}" 
+                                        : $"{shippingMethod.DeliveryDaysMin}-{shippingMethod.DeliveryDaysMax} business days";
 
-                                                    <div class="form-check shipping-option mb-3 p-3 border rounded" 
-                                                         data-shipping-id="@shippingMethod.PkShippingMethodId"
-                                                         data-base-price="@shippingMethod.BasePrice">
-                                                        <input class="form-check-input shipping-method-radio" 
-                                                               type="radio" 
-                                                               name="ShippingMethod" 
-                                                               value="@shippingMethod.PkShippingMethodId"
-                                                               id="shipping-@shippingMethod.PkShippingMethodId"
-                                                               checked="@isSelected"
-                                                               aria-describedby="shipping-@shippingMethod.PkShippingMethodId-desc" />
+                                    <div class="form-check shipping-option mb-3 p-3 border rounded" 
+                                         data-shipping-id="@shippingMethod.PkShippingMethodId"
+                                         data-base-price="@shippingMethod.BasePrice">
+                                        <input class="form-check-input shipping-method-radio" 
+                                               type="radio" 
+                                               name="ShippingMethod" 
+                                               value="@shippingMethod.PkShippingMethodId"
+                                               id="shipping-@shippingMethod.PkShippingMethodId"
+                                               checked="@isSelected"
+                                               aria-describedby="shipping-@shippingMethod.PkShippingMethodId-desc" />
 
-                                                        <label class="form-check-label w-100 cursor-pointer" for="shipping-@shippingMethod.PkShippingMethodId">
-                                                            <div class="d-flex justify-content-between align-items-start">
-                                                                <div>
-                                                                    <div class="fw-semibold">@shippingMethod.Name</div>
-                                                                    <div class="text-muted small" id="shipping-@shippingMethod.PkShippingMethodId-desc">
-                                                                        @deliveryText
-                                                                        @if (!string.IsNullOrEmpty(shippingMethod.Description))
-                                                                        {
-                                                                            <span> • @shippingMethod.Description</span>
-                                                                        }
-                                                                    </div>
-                                                                </div>
-                                                                <div class="text-end">
-                                                                    <div class="fw-semibold shipping-cost" data-base-price="@shippingMethod.BasePrice">
-                                                                        @shippingMethod.BasePrice.ToString("C")
-                                                                    </div>
-                                                                    <div class="small text-success free-shipping-indicator d-none">
-                                                                        Free!
-                                                                    </div>
-                                                                </div>
-                                                            </div>
-                                                        </label>
+                                        <label class="form-check-label w-100 cursor-pointer" for="shipping-@shippingMethod.PkShippingMethodId">
+                                            <div class="d-flex justify-content-between align-items-start">
+                                                <div>
+                                                    <div class="fw-semibold">@shippingMethod.Name</div>
+                                                    <div class="text-muted small" id="shipping-@shippingMethod.PkShippingMethodId-desc">
+                                                        @deliveryText
+                                                        @if (!string.IsNullOrEmpty(shippingMethod.Description))
+                                                        {
+                                                            <span> • @shippingMethod.Description</span>
+                                                        }
                                                     </div>
-                                                }
-                                            </fieldset>
-
-                                            <div class="alert alert-info mt-3 mb-0" role="status" aria-live="polite">
-                                                <i class="bi bi-info-circle me-2" aria-hidden="true"></i>
-                                                <strong>Free shipping:</strong> Standard shipping is free on orders $50 or more.
+                                                </div>
+                                                <div class="text-end">
+                                                    <div class="fw-semibold shipping-cost" data-base-price="@shippingMethod.BasePrice">
+                                                        @shippingMethod.BasePrice.ToString("C")
+                                                    </div>
+                                                    <div class="small text-success free-shipping-indicator d-none">
+                                                        Free!
+                                                    </div>
+                                                </div>
                                             </div>
-                                        </div>
+                                        </label>
                                     </div>
-                                </section>
+                                }
+                            </fieldset>
+
+                            <div class="alert alert-info mt-3 mb-0" role="status" aria-live="polite">
+                                <i class="bi bi-info-circle me-2" aria-hidden="true"></i>
+                                <strong>Free shipping:</strong> Standard shipping is free on orders $50 or more.
+                            </div>
+                        </div>
+                    </div>
+                </section>
                             </div>
 
             <!-- Order Summary and Payment Section -->

@@ -16,6 +16,12 @@ using Microsoft.Extensions.Logging;
 
 namespace ELKH.Areas.Identity.Pages.Account.Manage
 {
+    // TABLE OF CONTENTS
+    // - Authenticator setup
+    // - QR code generation
+    // - Verification flow
+    // - Recovery code generation
+
 
     /// <summary>
     /// Razor Page model for enabling two-factor authentication (2FA) using TOTP authenticator apps.

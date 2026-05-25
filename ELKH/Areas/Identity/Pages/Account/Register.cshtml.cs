@@ -24,10 +24,16 @@ using Microsoft.AspNetCore.Mvc.RazorPages;
 using Microsoft.AspNetCore.WebUtilities;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
-using static ELKH.Extensions.RateLimitPolicies;
+using ELKH.Constants;
 
 namespace ELKH.Areas.Identity.Pages.Account
 {
+    // TABLE OF CONTENTS
+    // - Registration flow
+    // - Input validation
+    // - Account creation
+    // - Profile seeding
+    // - Email confirmation
 
     /// <summary>
     /// Razor Page model for new user registration with extended profile creation.
@@ -266,7 +272,7 @@ namespace ELKH.Areas.Identity.Pages.Account
         /// <para><strong>Rate Limiting:</strong></para>
         /// Protected by <c>[EnableRateLimiting(Auth)]</c> policy to prevent automated registration attacks.
         /// </remarks>
-        [Microsoft.AspNetCore.RateLimiting.EnableRateLimiting(ELKH.Extensions.RateLimitPolicies.Auth)]
+        [Microsoft.AspNetCore.RateLimiting.EnableRateLimiting(ELKH.Constants.RateLimitPolicies.Auth)]
         public async Task<IActionResult> OnPostAsync(string returnUrl = null)
         {
             const string customerRoleName = "Customer";

@@ -20,6 +20,11 @@ using Microsoft.Extensions.Options;
 
 namespace ELKH.Areas.Identity.Pages.Account
 {
+    // TABLE OF CONTENTS
+    // - OAuth initiation
+    // - OAuth callback handling
+    // - External account confirmation
+    // - External sign-in completion
 
     /// <summary>
     /// Razor Page model for external authentication (OAuth) login flow.

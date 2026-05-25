@@ -3,6 +3,24 @@
     Layout = "~/Views/Shared/_Layout.cshtml";
 }
 
+@await Html.PartialAsync("_HeroBanner", new ELKH.ViewModels.HeroBannerVM
+{
+    Title = "Premium Stickers for You",
+    Subtitle = "Express delivery, premium materials, and clean cuts.",
+    Description = "Get an instant quote and shop our ready-made designs.",
+    CtaText = "Browse the catalog",
+    CtaController = "Product",
+    CtaAction = "Index",
+    ShowSparkles = true,
+    BackgroundTheme = "mint",
+    Features = new List<ELKH.ViewModels.HeroFeatureVM>
+    {
+        new() { Icon = "bi bi-truck", Title = "Fast delivery", Description = "Reliable shipping on every order" },
+        new() { Icon = "bi bi-stars", Title = "Premium finish", Description = "Smooth materials and crisp cuts" },
+        new() { Icon = "bi bi-shield-check", Title = "Secure checkout", Description = "Protected payment and order flow" }
+    }
+})
+
 @section Styles {
     <style>
         /* Accessibility Improvements */
@@ -224,6 +242,27 @@
                 padding-right: 3rem;
             }
         }
+
+        @@media (max-width: 768px) {
+            .kawaii-hero {
+                padding: 1.5rem 1rem;
+            }
+
+            .kawaii-cloud-title,
+            .kawaii-subtitle {
+                text-align: left;
+            }
+
+            .btn-kawaii,
+            .kawaii-card .btn {
+                width: 100%;
+            }
+
+            .review-card article:hover {
+                transform: none !important;
+                box-shadow: none !important;
+            }
+        }
     </style>
 }
 
@@ -298,77 +337,6 @@
 <!-- ║ Kawaii Hero Section - Primary marketing content and call-to-action          ║ -->
 <!-- ================================================================================ -->
 <main id="main-content">
-<header class="kawaii-hero py-5" role="banner">
-    <div class="container-kawaii">
-        <div class="text-center">
-            <div class="kawaii-cloud-title display-title sparkle mb-3">
-                <i class="bi bi-heart-fill me-3" aria-hidden="true" style="color: var(--pink);"></i>
-                Premium Stickers for You
-            </div>
-
-            <div class="kawaii-subtitle mb-5" style="font-size: 1.125rem; max-width: 600px; margin-left: auto; margin-right: auto;">
-                Express delivery, premium materials, and clean cuts.<br>
-                Get an instant quote and shop our ready-made designs.
-            </div>
-
-            <div class="d-flex flex-wrap justify-content-center gap-3 mb-5">
-                <a asp-controller="Product" asp-action="Index" 
-                   class="btn-kawaii btn-primary-kawaii btn-lg px-5 py-3"
-                   style="font-size: 1.125rem; font-weight: 600;"
-                   aria-label="Browse new arrivals - View the latest sticker products">
-                    ✨ New Arrivals
-                </a>
-                <a asp-controller="Product" asp-action="Index" 
-                   class="btn-kawaii btn-secondary-kawaii btn-lg px-5 py-3"
-                   style="font-size: 1.125rem; font-weight: 600;"
-                   aria-label="Browse all sticker products in our catalog">
-                    All Products <i class="bi bi-arrow-right ms-1" aria-hidden="true"></i>
-                </a>
-            </div>
-
-            <div class="kawaii-card surface-mint d-inline-block px-5 py-4 shadow-sm">
-                <div class="d-flex flex-wrap justify-content-center gap-4" role="list" aria-label="Product features" style="font-size: 1rem;">
-                    <div role="listitem" class="hierarchy-secondary d-flex align-items-center">
-                        <i class="bi bi-truck me-2" style="color: var(--purple); font-size: 1.25rem;" aria-hidden="true"></i>
-                        <span style="font-weight: 500;">Fast delivery</span>
-                    </div>
-                    <div role="listitem" class="hierarchy-secondary d-flex align-items-center">
-                        <i class="bi bi-stars me-2" style="color: var(--purple); font-size: 1.25rem;" aria-hidden="true"></i>
-                        <span style="font-weight: 500;">Premium finish</span>
-                    </div>
-                    <div role="listitem" class="hierarchy-secondary d-flex align-items-center">
-                        <i class="bi bi-shield-check me-2" style="color: var(--purple); font-size: 1.25rem;" aria-hidden="true"></i>
-                        <span style="font-weight: 500;">Secure checkout</span>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Trending product showcase -->
-            <div class="mt-5 mb-4">
-                <div class="kawaii-card surface-butter d-inline-block p-4 shadow-sm" style="max-width: 350px;">
-                    <div class="d-flex align-items-center justify-content-between mb-3">
-                        <span class="font-heading" style="font-size: 1.25rem;">Trending 🔥</span>
-                        <span class="kawaii-badge badge-warning px-3 py-1" style="font-size: 0.875rem; font-weight: 600;">Hot</span>
-                    </div>
-                    <div class="rounded-4 overflow-hidden shadow-sm">
-                        <img src="~/Images/StickIt_Logo.jpg"
-                             asp-append-version="true"
-                             alt="StickIt company logo featuring our signature branding - representative of our trending sticker collection"
-                             class="w-100"
-                             style="height:220px; object-fit:cover;" />
-                    </div>
-                    <div class="mt-3">
-                        <div class="hierarchy-secondary" style="font-size: 0.9375rem; margin-bottom: 0.75rem;">Browse the full catalog</div>
-                        <a asp-controller="Product" asp-action="Index" 
-                           class="btn-kawaii btn-secondary-kawaii mt-2 px-4 py-2"
-                           style="font-weight: 500;"
-                           aria-label="Shop now - Browse all sticker products">Shop now</a>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
-</header>
 
 <!-- ================================================================================ -->
 <!-- ║ Kawaii Feature Cards Section - Product categories and promotional content   ║ -->

@@ -1,12 +1,19 @@
 using ELKH.Models;
 using ELKH.ViewModels;
+using ELKH.Constants;
+using ELKH.Data;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
-using static ELKH.Extensions.RateLimitPolicies;
 
 namespace ELKH.Controllers
 {
+    // TABLE OF CONTENTS
+    // - Product browsing
+    // - Product details
+    // - Ratings and reviews
+    // - Admin product actions
+
     /// <summary>
     /// Product catalog management controller.
     /// Handles public product browsing, ratings, and admin product management.
@@ -21,29 +28,34 @@ namespace ELKH.Controllers
     /// - Normalized name indexing for performance
     /// - Autocomplete suggestions via FuzzyHelperService
     /// </remarks>
-    public class ProductController : Controller
+    public class ProductController : AuthenticatedControllerBase
     {
         #region Fields & Constructor
         private readonly ELKH.Services.ISearchService _searchService;
         private readonly ELKH.Services.IProductService _productService;
         private readonly ELKH.Services.IRatingService _ratingService;
-        private readonly ELKH.Services.IUserService _userService;
         private readonly ELKH.Services.IStockNotificationService _stockNotificationService;
 
         public ProductController(
+            ApplicationDbContext db,
             ELKH.Services.ISearchService searchService,
             ELKH.Services.IProductService productService,
             ELKH.Services.IRatingService ratingService,
             ELKH.Services.IUserService userService,
             ELKH.Services.IStockNotificationService stockNotificationService)
+            : base(db, userService)
         {
             _searchService = searchService;
             _productService = productService;
             _ratingService = ratingService;
-            _userService = userService;
             _stockNotificationService = stockNotificationService;
         }
         #endregion
+
+        private static bool IsAjaxRequest(HttpRequest request)
+        {
+            return request.Headers["X-Requested-With"] == "XMLHttpRequest";
+        }
 
         #region Index / Details
         /// <summary>
@@ -51,6 +63,7 @@ namespace ELKH.Controllers
         /// Results are served from the output cache keyed by all query parameters.
         /// </summary>
         // GET: Product/Index?sort=name_asc
+        [AllowAnonymous]
         [Microsoft.AspNetCore.OutputCaching.OutputCache(PolicyName = "ProductList")]
         public async Task<IActionResult> Index(string? search, int? categoryId, string sort = "name_asc")
         {
@@ -73,6 +86,7 @@ namespace ELKH.Controllers
         /// Returns the next batch of product cards for the "Show More" button via AJAX.
         /// </summary>
         [HttpGet]
+        [AllowAnonymous]
         [Microsoft.AspNetCore.OutputCaching.OutputCache(PolicyName = "ProductList")]
         public async Task<IActionResult> LoadMore(string? search, int? categoryId, string sort = "name_asc", int offset = 12)
         {
@@ -95,6 +109,7 @@ namespace ELKH.Controllers
         /// <c>TempData</c> message if no product with <paramref name="id"/> exists.
         /// </returns>
         // GET: Product/Details
+        [AllowAnonymous]
         public async Task<IActionResult> Details(int id, int reviewPage = 1, string reviewSort = "date_new")
         {
             var vm = await _productService.GetByIdAsync(id);
@@ -111,25 +126,21 @@ namespace ELKH.Controllers
 
             // Rating eligibility is only relevant for authenticated users.
             // Unauthenticated visitors can read reviews but cannot submit or edit one.
-            var email = User.Identity?.Name;
-            if (!string.IsNullOrEmpty(email))
+            var user = await GetCurrentUserAsync();
+            if (user != null)
             {
-                var user = await _userService.GetByEmailAsync(email);
-                if (user != null)
-                {
-                    // Eligibility is determined by whether the user has a fulfilled order item
-                    // for this product that has not already been used to submit a rating.
-                    var eligibility = await _ratingService.GetRatingEligibilityAsync(id, user.PkRegisteredUserId);
-                    ViewBag.EligibleOrderItems = eligibility.EligibleItems;
+                // Eligibility is determined by whether the user has a fulfilled order item
+                // for this product that has not already been used to submit a rating.
+                var eligibility = await _ratingService.GetRatingEligibilityAsync(id, user.PkRegisteredUserId);
+                ViewBag.EligibleOrderItems = eligibility.EligibleItems;
 
-                    if (eligibility.ExistingRating != null)
-                    {
-                        // The user has already rated this product - populate ViewBag so the
-                        // view renders the edit/delete controls instead of the submission form.
-                        ViewBag.UserRating = eligibility.ExistingRating;
-                        ViewBag.UserAlreadyRated = true;
-                        ViewBag.UserRatingId = eligibility.ExistingRating.PkRatingId;
-                    }
+                if (eligibility.ExistingRating != null)
+                {
+                    // The user has already rated this product - populate ViewBag so the
+                    // view renders the edit/delete controls instead of the submission form.
+                    ViewBag.UserRating = eligibility.ExistingRating;
+                    ViewBag.UserAlreadyRated = true;
+                    ViewBag.UserRatingId = eligibility.ExistingRating.PkRatingId;
                 }
             }
 
@@ -146,6 +157,7 @@ namespace ELKH.Controllers
         /// and <c>effective</c> (final payable amount). Returns <see cref="NotFoundResult"/>
         /// if no product with <paramref name="id"/> exists.
         /// </returns>
+        [AllowAnonymous]
         [HttpGet]
         public async Task<IActionResult> GetPrice(int id)
         {
@@ -186,12 +198,7 @@ namespace ELKH.Controllers
 
             // Challenge() redirects unauthenticated users to the login page.
             // This guard is a safety net; [Authorize] should already block anonymous access.
-            var email = User.Identity?.Name;
-            if (string.IsNullOrEmpty(email)) return Challenge();
-
-            // Forbid() returns HTTP 403: the user is authenticated but their registered
-            // user profile could not be resolved, so rating permissions cannot be granted.
-            var user = await _userService.GetByEmailAsync(email);
+            var user = await GetCurrentUserAsync();
             if (user is null) return Forbid();
 
             var result = await _ratingService.CreateRatingAsync(productId, orderItemId, rating, description, user.PkRegisteredUserId);
@@ -227,10 +234,7 @@ namespace ELKH.Controllers
             if (rating < 1 || rating > 5) return BadRequest("Rating must be between 1 and 5");
             if (description?.Length > 2000) return BadRequest("Description must be 2000 characters or fewer");
 
-            var email = User.Identity?.Name;
-            if (string.IsNullOrEmpty(email)) return Challenge();
-
-            var user = await _userService.GetByEmailAsync(email);
+            var user = await GetCurrentUserAsync();
             if (user is null) return Forbid();
 
             var result = await _ratingService.EditRatingAsync(ratingId, rating, description, user.PkRegisteredUserId);
@@ -242,7 +246,7 @@ namespace ELKH.Controllers
 
             // Dual-response: AJAX callers (e.g. inline edit forms) receive a JSON payload;
             // standard form submissions get a TempData message and a redirect.
-            if (Request.Headers["X-Requested-With"] == "XMLHttpRequest")
+            if (IsAjaxRequest(Request))
                 return Json(new { success = result.Success, message = result.Message });
 
             TempData["Message"] = result.Success
@@ -271,10 +275,7 @@ namespace ELKH.Controllers
         [Authorize]
         public async Task<IActionResult> DeleteRating(int ratingId)
         {
-            var email = User.Identity?.Name;
-            if (string.IsNullOrEmpty(email)) return Challenge();
-
-            var user = await _userService.GetByEmailAsync(email);
+            var user = await GetCurrentUserAsync();
             if (user is null) return Forbid();
 
             var result = await _ratingService.DeleteRatingAsync(ratingId, user.PkRegisteredUserId);
@@ -284,7 +285,7 @@ namespace ELKH.Controllers
 
             // Dual-response: AJAX callers receive a JSON payload for inline UI updates;
             // standard form submissions get a TempData message and a redirect.
-            if (Request.Headers["X-Requested-With"] == "XMLHttpRequest")
+            if (IsAjaxRequest(Request))
                 return Json(new { success = result.Success, message = result.Message });
 
             TempData["Message"] = result.Success
@@ -306,8 +307,9 @@ namespace ELKH.Controllers
         /// Returns an empty array if <paramref name="q"/> is null or whitespace.
         /// </returns>
         // GET: /Product/SearchNames?q=term
+        [AllowAnonymous]
         [HttpGet]
-        [Microsoft.AspNetCore.RateLimiting.EnableRateLimiting(Search)]
+        [Microsoft.AspNetCore.RateLimiting.EnableRateLimiting(ELKH.Constants.RateLimitPolicies.Search)]
         public async Task<IActionResult> SearchNames(string q)
         {
             if (string.IsNullOrWhiteSpace(q)) return Json(Array.Empty<object>());
@@ -517,10 +519,7 @@ namespace ELKH.Controllers
         [Authorize]
         public async Task<IActionResult> NotifyStock(int productId, string? returnUrl)
         {
-            var email = User.Identity?.Name;
-            if (string.IsNullOrEmpty(email)) return Challenge();
-
-            var user = await _userService.GetByEmailAsync(email);
+            var user = await GetCurrentUserAsync();
             if (user is null) return Forbid();
 
             var success = await _stockNotificationService.RequestNotificationAsync(user.PkRegisteredUserId, productId);

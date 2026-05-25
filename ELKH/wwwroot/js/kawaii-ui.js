@@ -29,6 +29,9 @@ document.addEventListener("DOMContentLoaded", () => {
     initAddToCartFeedback();
     initSearchClear();
     initPasswordToggle();
+    if (!respectsReducedMotion()) {
+        initKawaiiInteractions();
+    }
 });
 
 function initTabs() {
@@ -96,19 +99,14 @@ function initPasswordToggle() {
     toggleButtons.forEach(button => {
         button.addEventListener('click', function(e) {
             e.preventDefault();
-            const inputId = this.getAttribute('onclick').match(/togglePassword\('([^']+)'/)[1];
-            const input = document.getElementById(inputId);
-            const icon = this.querySelector('i');
+            const onclick = this.getAttribute('onclick') || '';
+            const match = onclick.match(/togglePassword\('([^']+)'/);
 
-            if (input.type === 'password') {
-                input.type = 'text';
-                icon.className = 'bi bi-eye-slash';
-                this.setAttribute('aria-label', 'Hide password');
-            } else {
-                input.type = 'password';
-                icon.className = 'bi bi-eye';
-                this.setAttribute('aria-label', 'Show password');
+            if (!match) {
+                return;
             }
+
+            togglePassword(match[1], this);
         });
     });
 }
@@ -140,6 +138,10 @@ function togglePassword(inputId, button) {
     const input = document.getElementById(inputId);
     const icon = button.querySelector('i');
 
+    if (!input || !icon) {
+        return;
+    }
+
     if (input.type === 'password') {
         input.type = 'text';
         icon.className = 'bi bi-eye-slash';
@@ -151,19 +153,15 @@ function togglePassword(inputId, button) {
     }
 }
 
-// Enhanced kawaii interactions
 function initKawaiiInteractions() {
-    // Sparkle effect for buttons with sparkle class
     const sparkleButtons = document.querySelectorAll('.sparkle');
 
     sparkleButtons.forEach(button => {
         button.addEventListener('click', function(e) {
-            // Create sparkle effect
             createSparkleEffect(e.target);
         });
     });
 
-    // Glow effects for glow-on-hover elements
     const glowElements = document.querySelectorAll('.glow-on-hover, .glow-pink, .glow-mint');
 
     glowElements.forEach(element => {
@@ -172,7 +170,6 @@ function initKawaiiInteractions() {
         });
     });
 
-    // Kawaii card hover effects
     const kawaiiCards = document.querySelectorAll('.kawaii-card');
 
     kawaiiCards.forEach(card => {
@@ -187,7 +184,6 @@ function initKawaiiInteractions() {
 }
 
 function createSparkleEffect(element) {
-    // Create a simple sparkle animation
     const sparkle = document.createElement('span');
     sparkle.textContent = '✨';
     sparkle.style.position = 'absolute';
@@ -209,25 +205,10 @@ function createSparkleEffect(element) {
     }, 1000);
 }
 
-// Reduced motion support
 function respectsReducedMotion() {
     return window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 }
 
-// Initialize all kawaii interactions on DOM content loaded
-document.addEventListener("DOMContentLoaded", () => {
-    initTabs();
-    initToggleChips();
-    initAddToCartFeedback();
-    initSearchClear();
-    initPasswordToggle();
-
-    if (!respectsReducedMotion()) {
-        initKawaiiInteractions();
-    }
-});
-
-// Add sparkle animation to CSS if not already present
 if (!document.querySelector('#sparkle-animation-style')) {
     const style = document.createElement('style');
     style.id = 'sparkle-animation-style';

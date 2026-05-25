@@ -1,11 +1,16 @@
-using System.Security.Cryptography;
-using System.Text;
+using ELKH.Constants;
 using ELKH.Extensions;
 using ELKH.Services;
 using ELKH.Models;
 using Microsoft.EntityFrameworkCore;
 
 namespace ELKH.Controllers;
+
+// TABLE OF CONTENTS
+// - Authenticated checkout
+// - Guest checkout
+// - Payment verification
+// - Order confirmation
 
 /// <summary>
 /// Handles the multi-step checkout flow for both authenticated and guest users:
@@ -52,14 +57,16 @@ public class CheckoutController : Controller
         _logger = logger;
     }
 
+    private string? GetCurrentUserEmail()
+    {
+        return User.FindFirstValue(ClaimTypes.Email) ?? User.Identity?.Name;
+    }
+
     [Authorize]
     [HttpGet]
     public async Task<IActionResult> Index()
     {
-        // ===================================================================
-        // STEP 1: Authenticate and validate user
-        // ===================================================================
-        var email = User.FindFirstValue(ClaimTypes.Email) ?? User.Identity?.Name;
+        var email = GetCurrentUserEmail();
         if (string.IsNullOrWhiteSpace(email))
             return RedirectToPage("/Account/Login", new { area = "Identity" });
 
@@ -88,7 +95,7 @@ public class CheckoutController : Controller
     {
         if (!ModelState.IsValid)
         {
-            var emailForRepopulate = User.FindFirstValue(ClaimTypes.Email) ?? User.Identity?.Name;
+            var emailForRepopulate = GetCurrentUserEmail();
             if (!string.IsNullOrWhiteSpace(emailForRepopulate))
             {
                 await _checkoutOrchestrationService.PopulateCheckoutAsync(vm, emailForRepopulate);
@@ -97,7 +104,7 @@ public class CheckoutController : Controller
             return View("Index", vm);
         }
 
-        var email = User.FindFirstValue(ClaimTypes.Email) ?? User.Identity?.Name;
+        var email = GetCurrentUserEmail();
         if (string.IsNullOrWhiteSpace(email))
             return RedirectToPage("/Account/Login", new { area = "Identity" });
 
@@ -229,13 +236,7 @@ public class CheckoutController : Controller
             return RedirectToAction("Index", "Home");
         }
 
-        var tokenHash = HashGuestAccessToken(token);
-
-        var order = await _db.Orders
-            .Include(o => o.ContactDetail)
-            .Include(o => o.OrderItems)
-                .ThenInclude(oi => oi.Product)
-            .FirstOrDefaultAsync(o => o.GuestAccessTokenHash == tokenHash && o.FkRegisteredUserId == null);
+        var order = await _checkoutOrchestrationService.GetGuestOrderByAccessTokenAsync(token);
 
         if (order == null)
         {
@@ -257,11 +258,6 @@ public class CheckoutController : Controller
         }
 
         return View(order);
-    }
-
-    private static string HashGuestAccessToken(string token)
-    {
-        return Convert.ToBase64String(SHA256.HashData(Encoding.UTF8.GetBytes(token)));
     }
 
     #endregion
