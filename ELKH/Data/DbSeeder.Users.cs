@@ -4,10 +4,11 @@ using Microsoft.EntityFrameworkCore;
 
 namespace ELKH.Data;
 
-/// <summary>
-/// Database seeding operations for user accounts and role management.
-/// Handles creation of administrative accounts, roles, and security setup.
-/// </summary>
+// TABLE OF CONTENTS
+// - Default user seeding
+// - Role seeding
+// - Demo account seeding
+
 public static partial class DbSeeder
 {
     #region Users & Roles Seeding
@@ -248,8 +249,7 @@ public static partial class DbSeeder
                 PostCode = "M5H 2N2",
                 Country = "Canada",
                 IsDefault = true,
-                RegisteredUser = registeredUser,
-                UserId = identityUser.Id
+                RegisteredUser = registeredUser
             });
         }
 

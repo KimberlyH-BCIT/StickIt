@@ -92,7 +92,6 @@ namespace ELKH.Repositories
                 existing.PostCode = contact.PostCode;
                 existing.Country = contact.Country;
                 existing.IsDefault = contact.IsDefault;
-                existing.UserId = contact.UserId;
 
                 await Context.SaveChangesAsync();
                 Logger.LogInformation("Updated contact detail {ContactId}", contact.PkContactId);

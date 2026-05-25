@@ -8,6 +8,12 @@ using Microsoft.AspNetCore.Mvc;
 
 namespace ELKH.Controllers;
 
+// TABLE OF CONTENTS
+// - Address listing
+// - Create address
+// - Edit address
+// - Delete address
+
 /// <summary>
 /// Controller responsible for user address book and contact detail management.
 /// Handles CRUD operations for shipping and billing addresses.
@@ -117,8 +123,7 @@ public class UserAddressController : UserControllerBase
             PostCode = vm.PostCode,
             Country = vm.Country,
             IsDefault = vm.IsDefault,
-            FkRegisteredUserId = userId.Value,
-            UserId = identityUserId
+            FkRegisteredUserId = userId.Value
         };
 
         bool success = await _contactRepository.AddAndSaveAsync(contact);
@@ -221,8 +226,7 @@ public class UserAddressController : UserControllerBase
             PostCode = vm.PostCode,
             Country = vm.Country,
             IsDefault = vm.IsDefault,
-            FkRegisteredUserId = userId.Value,
-            UserId = identityUserId
+            FkRegisteredUserId = userId.Value
         };
 
         bool success = await _contactRepository.UpdateAndSaveAsync(contact);

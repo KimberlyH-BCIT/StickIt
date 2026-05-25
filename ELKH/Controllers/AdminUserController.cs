@@ -10,27 +10,30 @@ using Microsoft.EntityFrameworkCore;
 
 namespace ELKH.Controllers;
 
+// TABLE OF CONTENTS
+// - User listing
+// - Account details
+// - Role assignment
+// - User management actions
+
 /// <summary>
 /// Admin controller responsible for user account management and role administration.
 /// Handles user listing, account details, and role assignments.
 /// </summary>
 public class AdminUserController : AdminControllerBase
 {
-    private readonly IRoleRepo _roleRepo;
     private readonly UserManager<IdentityUser> _userManager;
     private readonly IAccountDetailsService _accountDetailsService;
-        private readonly IAdminUserRoleService _adminUserRoleService;
+    private readonly IAdminUserRoleService _adminUserRoleService;
 
     public AdminUserController(
-        IRoleRepo roleRepo,
         ApplicationDbContext context,
         UserManager<IdentityUser> userManager,
         IAccountDetailsService accountDetailsService,
-            IAdminUserRoleService adminUserRoleService,
+        IAdminUserRoleService adminUserRoleService,
         ILogger<AdminUserController> logger)
         : base(context, logger)
     {
-        _roleRepo = roleRepo;
         _userManager = userManager;
         _accountDetailsService = accountDetailsService;
             _adminUserRoleService = adminUserRoleService;
@@ -77,16 +80,13 @@ public class AdminUserController : AdminControllerBase
     {
         const int pageSize = 5;
 
-        // Build candidate set using server-side filtering
         IList<IdentityUser> candidates;
         bool hasRoleFilter = !string.IsNullOrEmpty(roleFilter) && roleFilter != "All";
 
         if (hasRoleFilter)
         {
-            // Single query: returns only users in the specified role
             candidates = await _userManager.GetUsersInRoleAsync(roleFilter);
 
-            // Apply email search in-memory on the (already filtered) role-member list
             if (!string.IsNullOrEmpty(search))
             {
                 candidates = candidates
@@ -96,7 +96,6 @@ public class AdminUserController : AdminControllerBase
         }
         else
         {
-            // Push email filter to database to avoid loading all users into memory
             IQueryable<IdentityUser> query = _userManager.Users;
             if (!string.IsNullOrEmpty(search))
                 query = query.Where(u => u.Email != null && u.Email.Contains(search));
@@ -106,13 +105,11 @@ public class AdminUserController : AdminControllerBase
 
         int totalUsers = candidates.Count;
 
-        // Materialize only the current page before per-user role lookups
         var pageUsers = candidates
             .Skip((page - 1) * pageSize)
             .Take(pageSize)
             .ToList();
 
-        // Fetch roles only for the paged users (â‰¤ pageSize lookups)
         var userList = new List<UserListVM>(pageUsers.Count);
         foreach (var user in pageUsers)
         {
@@ -344,9 +341,9 @@ public class AdminUserController : AdminControllerBase
 
             var roleStats = new Dictionary<string, int>();
 
-            foreach (var role in _roleRepo.GetAllRoles())
+            foreach (var role in Context.Roles)
             {
-                var roleName = role.RoleName;
+                var roleName = role.Name;
                 if (string.IsNullOrWhiteSpace(roleName))
                 {
                     continue;

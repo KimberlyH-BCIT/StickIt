@@ -82,6 +82,5 @@ namespace ELKH.Models
 
         // Relationship with Order
         public ICollection<OrderModel> Orders { get; set; } = new List<OrderModel>();
-        public string UserId { get; set; } = string.Empty;
     }
 }

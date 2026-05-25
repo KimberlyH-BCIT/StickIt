@@ -4,6 +4,16 @@ using Microsoft.Extensions.Logging;
 
 namespace ELKH.Repositories
 {
+    // ╔══════════════════════════════════════════════════════════════════════════════╗
+    // ║ RepositoryBase - TABLE OF CONTENTS                                          ║
+    // ╚══════════════════════════════════════════════════════════════════════════════╝
+    //
+    // OVERVIEW: Shared repository base for async and sync CRUD helpers.
+    // TABLE OF CONTENTS:
+    // - Read operations
+    // - Write staging operations
+    // - Persisted write operations
+
     /// <summary>
     /// Base repository providing common CRUD operations for entities.
     /// All write operations are async-only to avoid blocking thread-pool threads.

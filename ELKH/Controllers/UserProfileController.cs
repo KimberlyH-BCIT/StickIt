@@ -7,6 +7,12 @@ using Microsoft.AspNetCore.Mvc;
 
 namespace ELKH.Controllers;
 
+// TABLE OF CONTENTS
+// - Profile details
+// - Profile update
+// - Avatar upload
+// - Activity sections
+
 /// <summary>
 /// Controller responsible for user profile management operations including
 /// dashboard, profile editing, avatar upload, and user activity sections.

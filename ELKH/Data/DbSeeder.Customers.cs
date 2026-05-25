@@ -4,50 +4,16 @@ using Microsoft.EntityFrameworkCore;
 
 namespace ELKH.Data;
 
-/// <summary>
-/// Database seeding operations for demo customers, orders, and related business data.
-/// Handles creation of customer profiles, contact details, wishlists, orders, and product reviews.
-/// </summary>
+// TABLE OF CONTENTS
+// - Customer and order seeding
+// - Contact creation
+// - Wishlist creation
+// - Order creation
+// - Review creation
+// - Review text pool
+
 public static partial class DbSeeder
 {
-    #region Customer & Order Seeding
-
-    /// <summary>
-    /// Seeds 50 demo customer accounts with realistic profiles, contact details,
-    /// order histories, wishlists, and product reviews.
-    /// Fully idempotent-skipped if any @home.com users already exist.
-    /// </summary>
-    /// <param name="db">Database context for creating customer-related entities.</param>
-    /// <param name="userManager">ASP.NET Core Identity UserManager for creating customer accounts.</param>
-    /// <param name="wwwRootPath">
-    /// Web root path for loading the shared placeholder avatar (images/placeholder.png).
-    /// </param>
-    /// <remarks>
-    /// <para><strong>Generated Data Includes:</strong></para>
-    /// <list type="bullet">
-    /// <item><strong>Accounts:</strong> 50 IdentityUser + RegisteredUserModel + UserProfileModel</item>
-    /// <item><strong>Credentials:</strong> Email format: firstname.lastnameN@home.com, Password: Demo@2025!##</item>
-    /// <item><strong>Contact Details:</strong> Realistic Canadian addresses with proper postal codes</item>
-    /// <item><strong>Wishlists:</strong> 2-4 random products per customer</item>
-    /// <item><strong>Orders:</strong> 1-3 orders per customer with realistic status distribution</item>
-    /// <item><strong>Reviews:</strong> Weighted ratings skewed toward 4-5 stars</item>
-    /// </list>
-    ///
-    /// <para><strong>Data Pools:</strong></para>
-    /// Uses predefined arrays of first names, last names, Canadian cities/provinces,
-    /// street names, and review text templates for realistic variation.
-    ///
-    /// <para><strong>Postal Code Generation:</strong></para>
-    /// Canadian format (A1A 1A1) with region-appropriate FSA prefixes:
-    /// M/K/L/N (Ontario), H/G (Quebec), V (BC), T (Alberta), R (Manitoba), S (Saskatchewan),
-    /// B (Nova Scotia), E (New Brunswick), C (PEI), A (Newfoundland).
-    ///
-    /// <para><strong>Order Status Distribution (Weighted):</strong></para>
-    /// 40% Delivered, 30% Shipped, 20% Processing, 10% Pending.
-    ///
-    /// <para><strong>Review Rating Distribution (Weighted):</strong></para>
-    /// Skewed toward 4-5 stars using weighted pool [1, 2, 3, 3, 4, 4, 4, 5, 5, 5].
-    /// </remarks>
     public static async Task SeedCustomersAndOrdersAsync(
         ApplicationDbContext db,
         UserManager<IdentityUser> userManager,
@@ -56,7 +22,6 @@ public static partial class DbSeeder
         if (await db.RegisteredUsers.AnyAsync(u => u.Email.EndsWith("@home.com")))
             return;
 
-        // Load the shared placeholder avatar once.
         var avatarPath = Path.Combine(wwwRootPath, "images", "placeholder.png");
         byte[]? avatarBytes = File.Exists(avatarPath)
             ? await File.ReadAllBytesAsync(avatarPath)
@@ -66,11 +31,6 @@ public static partial class DbSeeder
         if (products.Count == 0) return;
 
         var rng = GetRandom();
-
-        // ======================================================================
-        // â•‘ Data Pools for Realistic Customer Generation                       â•‘
-        // â•‘ Predefined arrays for names, locations, and review content.        â•‘
-        // ======================================================================
 
         string[] firstNames =
         [
@@ -88,11 +48,10 @@ public static partial class DbSeeder
             "Jackson","White","Harris","Thompson","Garcia","Moore","Robinson","Clark","Rodriguez",
             "Lewis","Lee","Walker","Hall","Young","Allen","King","Wright","Scott","Green","Baker",
             "Adams","Nelson","Carter","Mitchell","Perez","Roberts","Turner","Phillips","Campbell",
-            "Parker","Evans","Edwards","Collins","Stewart","Sanchez","Morris","Rogers","Reed",
+            "Parker","EvANS","Edwards","Collins","Stewart","Sanchez","Morris","Rogers","Reed",
             "Cook","Morgan","Bell"
         ];
 
-        // city, province, postal prefix
         (string City, string Province, char Prefix)[] locations =
         [
             ("Toronto",            "Ontario",                      'M'),
@@ -124,20 +83,9 @@ public static partial class DbSeeder
             "Poplar","Cherry","Larch","Fir","Sycamore","Hazel","Beech","Alder","Rowan","Hawthorn"
         ];
 
-        // ======================================================================
-        // â•‘ Review Content Pool for Product Ratings                            â•‘
-        // â•‘ Range from 5-star excellent to 1-star poor with realistic text.    â•‘
-        // ======================================================================
         var reviewTextsByRating = GetReviewTextPool();
 
-        // Weighted star ratings: realistic e-commerce distribution
-        // 50% 5-star, 25% 4-star, 15% 3-star, 7% 2-star, 3% 1-star
         int[] starPool = [5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 4, 4, 4, 4, 4, 3, 3, 3, 2, 2, 1];
-
-        // ======================================================================
-        // â•‘ Generate 50 Demo Customers                                         â•‘
-        // â•‘ Create complete customer profiles with orders and reviews.         â•‘
-        // ======================================================================
 
         for (int i = 0; i < 50; i++)
         {
@@ -146,7 +94,6 @@ public static partial class DbSeeder
             var email = $"{firstName.ToLowerInvariant()}.{lastName.ToLowerInvariant()}{i + 1}@home.com";
             var password = $"Demo@2025!{(i + 1):D2}";
 
-            // 1. Identity user (email pre-confirmed so the account is usable immediately).
             var identityUser = new IdentityUser
             {
                 UserName = email,
@@ -156,15 +103,12 @@ public static partial class DbSeeder
             var result = await userManager.CreateAsync(identityUser, password);
             if (!result.Succeeded) continue;
 
-            // Assign Customer role to all seeded customer accounts
             await userManager.AddToRoleAsync(identityUser, "Customer");
 
-            // 2. RegisteredUserModel
             var registeredUser = new RegisteredUserModel { Email = email };
             db.RegisteredUsers.Add(registeredUser);
             await db.SaveChangesAsync();
 
-            // 3. UserProfileModel - placeholder avatar
             db.UserProfiles.Add(new UserProfileModel
             {
                 PkEmail = email,
@@ -174,26 +118,16 @@ public static partial class DbSeeder
                 AvatarMimeType = avatarBytes is not null ? "image/png" : null
             });
 
-            // 4. Default contact / shipping address
             await CreateCustomerContactAsync(db, registeredUser, identityUser.Id, firstName, lastName, locations, streetNames, streetSuffixes, rng);
 
-            // 5. Wishlist with 2-4 random products
             await CreateCustomerWishlistAsync(db, registeredUser, products, rng);
 
-            // 6. Orders with items, transactions, and reviews
             await CreateCustomerOrdersAsync(db, userManager, registeredUser, products, starPool, reviewTextsByRating, rng);
 
             await db.SaveChangesAsync();
         }
     }
 
-    #endregion
-
-    #region Customer Creation Helper Methods
-
-    /// <summary>
-    /// Creates a default contact/shipping address for a customer with realistic Canadian data.
-    /// </summary>
     private static async Task CreateCustomerContactAsync(
         ApplicationDbContext db,
         RegisteredUserModel registeredUser,
@@ -210,8 +144,6 @@ public static partial class DbSeeder
         var streetName = streetNames[rng.Next(streetNames.Length)];
         var streetSfx = streetSuffixes[rng.Next(streetSuffixes.Length)];
 
-        // Canadian postal code format: A1A 1A1
-        // loc.Prefix supplies the FSA letter (first character, region-specific).
         var postalCode = $"{loc.Prefix}{rng.Next(1, 9)}{(char)('A' + rng.Next(26))} {rng.Next(1, 9)}{(char)('A' + rng.Next(26))}{rng.Next(1, 9)}";
 
         var contact = new ContactDetailModel
@@ -225,16 +157,12 @@ public static partial class DbSeeder
             PostCode = postalCode,
             Country = "Canada",
             IsDefault = true,
-            FkRegisteredUserId = registeredUser.PkRegisteredUserId,
-            UserId = userId
+            FkRegisteredUserId = registeredUser.PkRegisteredUserId
         };
         db.ContactDetails.Add(contact);
         await db.SaveChangesAsync();
     }
 
-    /// <summary>
-    /// Creates a wishlist with 2-4 random products for a customer.
-    /// </summary>
     private static async Task CreateCustomerWishlistAsync(
         ApplicationDbContext db,
         RegisteredUserModel registeredUser,
@@ -257,9 +185,6 @@ public static partial class DbSeeder
         }
     }
 
-    /// <summary>
-    /// Creates 1-3 orders per customer with realistic status distribution, items, transactions, and reviews.
-    /// </summary>
     private static async Task CreateCustomerOrdersAsync(
         ApplicationDbContext db,
         UserManager<IdentityUser> userManager,
@@ -276,7 +201,6 @@ public static partial class DbSeeder
         {
             var orderDate = DateTime.UtcNow.AddDays(-rng.Next(1, 400));
 
-            // Weight order statuses: ~40 % delivered, ~30 % shipped, ~20 % processing, ~10 % pending
             int roll = rng.Next(10);
             var (orderStatus, deliveryStatus) = roll switch
             {
@@ -323,7 +247,6 @@ public static partial class DbSeeder
 
             order.TotalAmount = Math.Round(orderTotal, 2);
 
-            // Transaction for fulfilled orders
             if (orderStatus is OrderStatus.Shipped)
             {
                 db.Transactions.Add(new TransactionModel
@@ -338,7 +261,6 @@ public static partial class DbSeeder
             }
             await db.SaveChangesAsync();
 
-            // Review for one item from delivered/shipped orders (~66% chance per order)
             if (orderStatus is OrderStatus.Shipped && rng.Next(3) > 0)
             {
                 await CreateProductReviewAsync(db, userManager, registeredUser, orderItems, starPool, reviewTextsByRating, orderDate, rng);
@@ -346,9 +268,6 @@ public static partial class DbSeeder
         }
     }
 
-    /// <summary>
-    /// Creates a product review for a random item from a customer's order.
-    /// </summary>
     private static async Task CreateProductReviewAsync(
         ApplicationDbContext db,
         UserManager<IdentityUser> userManager,
@@ -365,14 +284,12 @@ public static partial class DbSeeder
         var reviewText = textsForRating[rng.Next(textsForRating.Length)];
         var reviewDate = orderDate.AddDays(rng.Next(2, 21));
 
-        // Guard: one rating per order item per user
         bool alreadyRated = await db.ProductRatings.AnyAsync(r =>
             r.FkOrderItemId == ratedItem.PkOrderItemId &&
             r.FkRegisteredUserId == registeredUser.PkRegisteredUserId);
 
         if (!alreadyRated)
         {
-            // Look up the Identity UserId by email
             var identityUser = await userManager.FindByEmailAsync(registeredUser.Email);
             if (identityUser == null) return;
 
@@ -392,11 +309,6 @@ public static partial class DbSeeder
         }
     }
 
-    /// <summary>
-    /// Gets the pool of review texts for product ratings, keyed by star rating (1-5).
-    /// Each rating level has its own set of appropriate review texts.
-    /// Empty strings represent star-only ratings with no written review.
-    /// </summary>
     private static Dictionary<int, string[]> GetReviewTextPool() => new()
     {
         [5] =
@@ -488,5 +400,4 @@ public static partial class DbSeeder
         ]
     };
 
-    #endregion
 }

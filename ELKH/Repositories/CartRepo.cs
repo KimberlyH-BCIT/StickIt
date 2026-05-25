@@ -5,6 +5,17 @@ using Microsoft.Extensions.Logging;
 
 namespace ELKH.Repositories;
 
+// ╔════════════════════════════════════════════════════════════════════════════════════╗
+// ║ CartRepo - TABLE OF CONTENTS                                                     ║
+// ╚════════════════════════════════════════════════════════════════════════════════════╝
+//
+// OVERVIEW: User-scoped cart repository with read, update, and cleanup operations.
+// TABLE OF CONTENTS:
+// - Cart retrieval operations
+// - Cart item lookup operations
+// - Cart write operations
+// - Bulk cart maintenance
+
 /// <summary>
 /// Repository for shopping cart data operations with user-scoped cart management.
 /// 

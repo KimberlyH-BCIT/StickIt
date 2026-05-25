@@ -4,6 +4,15 @@ using Microsoft.EntityFrameworkCore;
 
 namespace ELKH.Repositories;
 
+/// <summary>
+/// Repository for order persistence and retrieval operations.
+/// </summary>
+// TABLE OF CONTENTS
+// - Read
+// - Write
+// - Delete
+// - SaveChanges
+
 public class OrderRepo : IOrderRepo
 {
     #region Fields & Constructor

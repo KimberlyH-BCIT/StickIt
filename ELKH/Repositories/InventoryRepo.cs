@@ -6,6 +6,18 @@ using Microsoft.EntityFrameworkCore;
 
 namespace ELKH.Repositories
 {
+    // ╔══════════════════════════════════════════════════════════════════════════════╗
+    // ║ InventoryRepo - TABLE OF CONTENTS                                           ║
+    // ╚══════════════════════════════════════════════════════════════════════════════╝
+    //
+    // OVERVIEW: Inventory management repository for catalog, stock, and media flows.
+    // TABLE OF CONTENTS:
+    // - Catalog queries
+    // - Stock adjustments
+    // - Image upload and deletion
+    // - Category retrieval
+    // - Review removal
+
     /// <summary>
     /// Repository implementation for inventory management operations.
     /// Handles product listing, stock adjustments, image upload/deletion,

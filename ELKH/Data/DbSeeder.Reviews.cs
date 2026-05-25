@@ -4,6 +4,10 @@ using Microsoft.EntityFrameworkCore;
 
 namespace ELKH.Data;
 
+// TABLE OF CONTENTS
+// - Review seeding
+// - Rating seeding
+
 /// <summary>
 /// Database seeding operations for store reviews and testimonials.
 /// Handles creation of featured homepage reviews from verified buyers.

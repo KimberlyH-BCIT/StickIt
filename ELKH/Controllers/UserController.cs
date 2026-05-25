@@ -8,6 +8,12 @@ using Microsoft.Extensions.Logging;
 
 namespace ELKH.Controllers
 {
+    // TABLE OF CONTENTS
+    // - Dashboard
+    // - Profile editing
+    // - Address management
+    // - Review history
+
     /// <summary>
     /// Controller responsible for user account related operations: profile management,
     /// address book CRUD and login history. All actions require an authenticated user.
@@ -52,12 +58,7 @@ namespace ELKH.Controllers
 
             var vm = new UserDashboardVM
             {
-                Profile = profileEntity is null ? null : new UserProfileVM
-                {
-                    PkEmail = profileEntity.PkEmail,
-                    FirstName = profileEntity.FirstName,
-                    LastName = profileEntity.LastName
-                }
+                Profile = UserControllerMappingHelpers.MapProfile(profileEntity)
             };
 
             var registered = await GetCurrentUserAsync();
@@ -86,34 +87,14 @@ namespace ELKH.Controllers
 
             var vm = new UserProfilePageVM
             {
-                Profile = profile is null
-                    ? new UserProfileVM { PkEmail = email }
-                    : new UserProfileVM
-                    {
-                        PkEmail = profile.PkEmail,
-                        FirstName = profile.FirstName,
-                        LastName = profile.LastName,
-                        HasAvatar = profile.AvatarData is not null
-                    }
+                Profile = UserControllerMappingHelpers.MapProfilePage(profile, email)
             };
 
             var userId = await GetCurrentUserIdAsync();
             if (userId.HasValue)
             {
                 var addresses = await _contactRepository.GetAllByUserIdAsync(userId.Value);
-                vm.Addresses = addresses.Select(a => new ContactDetailVM
-                {
-                    ContactId = a.PkContactId,
-                    FirstName = a.FirstName,
-                    LastName = a.LastName,
-                    PhoneNumber = a.PhoneNumber,
-                    Street = a.Street,
-                    City = a.City,
-                    Province = a.Province,
-                    PostCode = a.PostCode,
-                    Country = a.Country,
-                    IsDefault = a.IsDefault
-                }).ToList();
+                vm.Addresses = UserControllerMappingHelpers.MapContactDetails(addresses);
             }
 
             return View(vm);
@@ -133,19 +114,7 @@ namespace ELKH.Controllers
                 if (reloadId.HasValue)
                 {
                     var addresses = await _contactRepository.GetAllByUserIdAsync(reloadId.Value);
-                    vm.Addresses = addresses.Select(a => new ContactDetailVM
-                    {
-                        ContactId = a.PkContactId,
-                        FirstName = a.FirstName,
-                        LastName = a.LastName,
-                        PhoneNumber = a.PhoneNumber,
-                        Street = a.Street,
-                        City = a.City,
-                        Province = a.Province,
-                        PostCode = a.PostCode,
-                        Country = a.Country,
-                        IsDefault = a.IsDefault
-                    }).ToList();
+                vm.Addresses = UserControllerMappingHelpers.MapContactDetails(addresses);
                 }
                 return View(vm);
             }
@@ -354,7 +323,7 @@ namespace ELKH.Controllers
         {
             var vm = new ContactDetailVM
             {
-                Country = "Canada", // Default
+                Country = "Canada",
                 IsDefault = false
             };
             return View(vm);
@@ -416,19 +385,7 @@ namespace ELKH.Controllers
                 return RedirectToAction(nameof(Addresses));
             }
 
-            var vm = new ContactDetailVM
-            {
-                ContactId = contact.PkContactId,
-                FirstName = contact.FirstName,
-                LastName = contact.LastName,
-                PhoneNumber = contact.PhoneNumber,
-                Street = contact.Street,
-                City = contact.City,
-                Province = contact.Province,
-                PostCode = contact.PostCode,
-                Country = contact.Country,
-                IsDefault = contact.IsDefault
-            };
+            var vm = UserControllerMappingHelpers.MapContactDetail(contact);
 
             return View(vm);
         }
@@ -501,19 +458,7 @@ namespace ELKH.Controllers
                 return RedirectToAction(nameof(Addresses));
             }
 
-            var vm = new ContactDetailVM
-            {
-                ContactId = contact.PkContactId,
-                FirstName = contact.FirstName,
-                LastName = contact.LastName,
-                PhoneNumber = contact.PhoneNumber,
-                Street = contact.Street,
-                City = contact.City,
-                Province = contact.Province,
-                PostCode = contact.PostCode,
-                Country = contact.Country,
-                IsDefault = contact.IsDefault
-            };
+            var vm = UserControllerMappingHelpers.MapContactDetail(contact);
 
             return View(vm);
         }

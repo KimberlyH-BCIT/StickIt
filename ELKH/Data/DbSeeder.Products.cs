@@ -2,6 +2,11 @@ using ELKH.Models;
 
 namespace ELKH.Data;
 
+// TABLE OF CONTENTS
+// - Category seeding
+// - Product seeding
+// - Image seeding
+
 /// <summary>
 /// Product seed data partial class containing 416 sticker products across 11 themed categories.
 /// This file is part of the database seeding strategy used during application initialization.
@@ -467,21 +472,6 @@ public static partial class DbSeeder
             P("Grateful Heart Sticker", "Heart with grateful text.", 2.49m, 0, 200, thanks, "thanksgiving,grateful,heart,text"),
             P("Family Gathering Sticker", "Family around dinner table.", 3.99m, 0, 150, thanks, "thanksgiving,family,gathering,together"),
             P("Pecan Pie Sticker", "Slice of pecan pie.", 2.99m, 10, 175, thanks, "thanksgiving,pie,pecan,dessert"),
-
-            // ==============================================================
-            // MISCELLANEOUS (11 products)
-            // ==============================================================
-            P("Rainbow Pride Sticker", "Colorful rainbow pride arc.", 2.49m, 0, 240, misc, "miscellaneous,rainbow,pride,lgbtq"),
-            P("Retro Sunset Sticker", "80s style sunset stripes.", 2.99m, 15, 220, misc, "miscellaneous,retro,sunset,80s"),
-            P("Peace Sign Sticker", "Hand peace sign symbol.", 2.49m, 0, 235, misc, "miscellaneous,peace,sign,hand"),
-            P("Music Note Sticker", "Black music note symbol.", 1.99m, 0, 250, misc, "miscellaneous,music,note,symbol"),
-            P("Lightning Flash Sticker", "Yellow lightning bolt.", 2.49m, 10, 230, misc, "miscellaneous,lightning,flash,bolt"),
-            P("Moon Phases Sticker", "Lunar phase cycle.", 2.99m, 0, 210, misc, "miscellaneous,moon,phases,lunar"),
-            P("Compass Rose Sticker", "Vintage compass design.", 2.49m, 0, 225, misc, "miscellaneous,compass,rose,navigation"),
-            P("Om Symbol Sticker", "Sacred Om meditation symbol.", 2.99m, 15, 200, misc, "miscellaneous,om,meditation,spiritual"),
-            P("Yin Yang Sticker", "Black and white balance symbol.", 2.49m, 0, 220, misc, "miscellaneous,yin-yang,balance,symbol"),
-            P("Infinity Symbol Sticker", "Gold infinity loop.", 2.99m, 0, 0, misc, "miscellaneous,infinity,loop,symbol"),
-            P("Good Vibes Sticker", "Good vibes only text.", 2.49m, 10, 230, misc, "miscellaneous,good-vibes,positive,text"),
         };
     }
 }
