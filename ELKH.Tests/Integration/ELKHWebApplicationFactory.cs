@@ -81,7 +81,7 @@ public class ELKHWebApplicationFactory : WebApplicationFactory<Program>
 
         builder.ConfigureAppConfiguration((context, config) =>
         {
-            config.AddInMemoryCollection(new Dictionary<string, string>
+            config.AddInMemoryCollection(new Dictionary<string, string?>
             {
                 { "Seed:AllowDefaultElevatedCredentials", "true" }
             });

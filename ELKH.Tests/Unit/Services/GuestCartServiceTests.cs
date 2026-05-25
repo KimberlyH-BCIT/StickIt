@@ -58,7 +58,11 @@ public class GuestCartServiceTests : IDisposable
             .Returns((string key, out byte[] value) =>
             {
                 var exists = _sessionStorage.TryGetValue(key, out var result);
-                value = result!;
+                value = Array.Empty<byte>();
+                if (exists && result is not null)
+                {
+                    value = result;
+                }
                 return exists;
             });
         _mockSession.Setup(s => s.Remove(It.IsAny<string>()))

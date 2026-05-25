@@ -294,7 +294,7 @@ public class CartControllerGuestTests
 
         value.Should().NotBeNull();
         // Check that response contains success and cartCount properties
-        value.GetType().GetProperty("success")!.GetValue(value).Should().Be(true);
+        value!.GetType().GetProperty("success")!.GetValue(value).Should().Be(true);
         value.GetType().GetProperty("cartCount")!.GetValue(value).Should().Be(2);
     }
 

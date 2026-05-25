@@ -133,7 +133,7 @@ public class ManagerControllerTests
         // Setup ASP.NET Core Identity UserManager with required dependencies
         var userStore = new Mock<IUserStore<IdentityUser>>();
         _mockUserManager = new Mock<UserManager<IdentityUser>>(
-            userStore.Object, null, null, null, null, null, null, null, null);
+            userStore.Object, null!, null!, null!, null!, null!, null!, null!, null!);
         _cache = new MemoryCache(new MemoryCacheOptions());
 
         #endregion

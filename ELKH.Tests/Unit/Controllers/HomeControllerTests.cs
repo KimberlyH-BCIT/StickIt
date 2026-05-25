@@ -123,6 +123,6 @@ public class HomeControllerTests
 
     private sealed class NullRequestIdentifierFeature : IHttpRequestIdentifierFeature
     {
-        public string? TraceIdentifier { get; set; }
+        public string TraceIdentifier { get; set; } = string.Empty;
     }
 }

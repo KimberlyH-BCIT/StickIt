@@ -87,7 +87,7 @@ public abstract class BaseTest : IDisposable
     protected static ClaimsPrincipal CreateMockUser(
         string userId = "test-user-id",
         string email = "test@example.com",
-        string[] roles = null)
+        string[]? roles = null)
     {
         var claims = new List<Claim>
         {
@@ -111,7 +111,7 @@ public abstract class BaseTest : IDisposable
     /// <summary>
     /// Creates a mock HttpContext with authentication
     /// </summary>
-    protected static HttpContext CreateMockHttpContext(ClaimsPrincipal user = null)
+    protected static HttpContext CreateMockHttpContext(ClaimsPrincipal? user = null)
     {
         var context = new DefaultHttpContext();
         context.User = user ?? CreateMockUser();
@@ -121,7 +121,7 @@ public abstract class BaseTest : IDisposable
     /// <summary>
     /// Sets up a controller with mock HttpContext and user authentication
     /// </summary>
-    protected static T SetupControllerWithAuth<T>(T controller, ClaimsPrincipal user = null)
+    protected static T SetupControllerWithAuth<T>(T controller, ClaimsPrincipal? user = null)
         where T : ControllerBase
     {
         var httpContext = CreateMockHttpContext(user);
@@ -143,7 +143,7 @@ public abstract class BaseTest : IDisposable
     {
         var store = new Mock<IUserStore<IdentityUser>>();
         return new Mock<UserManager<IdentityUser>>(
-            store.Object, null, null, null, null, null, null, null, null);
+            store.Object, null!, null!, null!, null!, null!, null!, null!, null!);
     }
 
     /// <summary>
@@ -153,7 +153,7 @@ public abstract class BaseTest : IDisposable
     {
         var store = new Mock<IRoleStore<IdentityRole>>();
         return new Mock<RoleManager<IdentityRole>>(
-            store.Object, null, null, null, null);
+            store.Object, null!, null!, null!, null!);
     }
 
     /// <summary>
@@ -270,8 +270,8 @@ public abstract class BaseTest : IDisposable
                 level,
                 It.IsAny<EventId>(),
                 It.IsAny<It.IsAnyType>(),
-                It.IsAny<Exception>(),
-                It.IsAny<Func<It.IsAnyType, Exception, string>>()),
+                It.IsAny<Exception?>(),
+                It.IsAny<Func<It.IsAnyType, Exception?, string>>()),
             times);
     }
 
