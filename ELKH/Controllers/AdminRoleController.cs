@@ -2,12 +2,17 @@ using ELKH.Repositories;
 using ELKH.Services;
 using ELKH.ViewModels;
 using Microsoft.AspNetCore.Authorization;
-using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 
 namespace ELKH.Controllers
 {
+    // TABLE OF CONTENTS
+    // - Role listing
+    // - Role creation and editing
+    // - Role deletion
+    // - User role assignment
+
     /// <summary>
     /// Admin controller for ASP.NET Core Identity role management.
     /// Provides CRUD operations for roles and role-assignment for individual users.
@@ -350,7 +355,6 @@ namespace ELKH.Controllers
             }
             catch
             {
-                // Catch unexpected errors (DB connectivity, concurrency conflicts)
                 TempData["Error"] = "An unexpected error occurred while deleting the role.";
                 return RedirectToAction("ListRoles");
             }

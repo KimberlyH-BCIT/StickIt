@@ -1,5 +1,6 @@
 using System.Globalization;
 using ELKH.Data;
+using ELKH.Constants;
 using ELKH.Models;
 using ELKH.Repositories;
 using ELKH.Services;
@@ -14,20 +15,27 @@ using Microsoft.Extensions.Logging;
 
 namespace ELKH.Controllers
 {
+    // TABLE OF CONTENTS
+    // - Fields & constructor
+    // - Dashboard & analytics
+    // - Sales management
+    // - User administration
+    // - Inventory and product maintenance
+    // - Messaging and moderation
+    // - Reports and exports
+    // - Search index maintenance
+    // - Utility helpers
+
     /// <summary>
     /// Administrative controller for system management, user administration,
     /// sales analytics, and search index maintenance.
     /// All actions require the Admin role for access.
     /// </summary>
-    /// - Sales analytics fetches data in bulk and processes in-memory
-    /// - Cache operations include error handling to prevent service disruption
-    /// </remarks>
     [Authorize(Roles = "Admin")]
     public class AdminController : Controller
     {
         #region Fields & Constructor
 
-        private readonly IRoleRepo _roleRepo;
         private readonly ApplicationDbContext _context;
         private readonly IMemoryCache _cache;
         private readonly ILogger<AdminController> _logger;
@@ -37,7 +45,6 @@ namespace ELKH.Controllers
         private readonly IAdminUserListService _adminUserListService;
 
         public AdminController(
-            IRoleRepo roleRepo,
             ApplicationDbContext context,
             IMemoryCache cache,
             ILogger<AdminController> logger,
@@ -46,7 +53,6 @@ namespace ELKH.Controllers
             IAccountDetailsService accountDetailsService,
             IAdminUserListService adminUserListService)
         {
-            _roleRepo = roleRepo;
             _context = context;
             _cache = cache;
             _logger = logger;
@@ -81,7 +87,6 @@ namespace ELKH.Controllers
                 StockDownCount = await _context.Products.CountAsync(p => p.StockQuantity <= 100),
             };
 
-            // Top 5 products for dashboard widget - Group by product and aggregate sales
             var orderItems = await _context.OrderItems
                 .Include(oi => oi.Product)
                 .Select(oi => new
@@ -123,8 +128,6 @@ namespace ELKH.Controllers
             var monthStart = new DateTime(now.Year, now.Month, 1);
             var yearStart = now.AddMonths(-11).Date;
 
-            // Fetch all transactions for the analysis period
-            // Note: Materializing to memory first enables decimal Sum() with SQLite
             var allTransactions = await _context.Transactions
                 .Where(t => t.TransactionDate >= yearStart)
                 .Select(t => new { t.TransactionDate, t.Amount })
@@ -133,14 +136,12 @@ namespace ELKH.Controllers
             var weeklyTx = allTransactions.Where(t => t.TransactionDate.Date >= weekStart).ToList();
             var monthlyTx = allTransactions.Where(t => t.TransactionDate >= monthStart).ToList();
 
-            // â”€â”€ Summary card metrics â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
             decimal weeklyGross = weeklyTx.Count > 0 ? weeklyTx.Sum(t => t.Amount) : 0m;
             decimal monthlyGross = monthlyTx.Count > 0 ? monthlyTx.Sum(t => t.Amount) : 0m;
             int weeklyOrders = weeklyTx.Count;
             int monthlyOrders = monthlyTx.Count;
             int totalOrders = await _context.Orders.CountAsync();
 
-            // â”€â”€ Weekly chart data: last 7 days â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
             var weeklyLabels = new List<string>();
             var weeklySalesData = new List<decimal>();
 
@@ -152,7 +153,6 @@ namespace ELKH.Controllers
                 weeklySalesData.Add(dayTx.Count > 0 ? dayTx.Sum(t => t.Amount) : 0m);
             }
 
-            // â”€â”€ Monthly chart data: last 12 months â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
             var monthlyLabels = new List<string>();
             var monthlySalesData = new List<decimal>();
 
@@ -167,7 +167,6 @@ namespace ELKH.Controllers
                 monthlySalesData.Add(monthTx.Count > 0 ? monthTx.Sum(t => t.Amount) : 0m);
             }
 
-            // â”€â”€ Top 5 products by revenue â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
             var orderItems = await _context.OrderItems
                 .Include(oi => oi.Product)
                 .Select(oi => new
@@ -236,10 +235,8 @@ namespace ELKH.Controllers
 
             if (hasRoleFilter)
             {
-                // Single query: returns only users in the specified role
                 candidates = await _userManager.GetUsersInRoleAsync(roleFilter);
 
-                // Apply email search in-memory on the (already filtered) role-member list
                 if (!string.IsNullOrEmpty(search))
                 {
                     candidates = candidates
@@ -249,7 +246,6 @@ namespace ELKH.Controllers
             }
             else
             {
-                // Push email filter to database to avoid loading all users into memory
                 IQueryable<IdentityUser> query = _userManager.Users;
                 if (!string.IsNullOrEmpty(search))
                     query = query.Where(u => u.Email != null && u.Email.Contains(search));
@@ -342,44 +338,20 @@ namespace ELKH.Controllers
         /// <returns>JSON result with success status</returns>
         [HttpPost]
         [ValidateAntiForgeryToken]
-        [Microsoft.AspNetCore.RateLimiting.EnableRateLimiting(ELKH.Extensions.RateLimitPolicies.Admin)]
+        [Microsoft.AspNetCore.RateLimiting.EnableRateLimiting(ELKH.Constants.RateLimitPolicies.Admin)]
         public async Task<IActionResult> ReindexFTS([FromBody] ReindexPayload? payload)
         {
             string reason = payload?.Reason ?? string.Empty;
 
-            // Step 1: Rebuild ProductFTS from Products table (SQLite FTS5)
             var sql = @"INSERT INTO ProductFTS(rowid, Name, PkProductId)
 SELECT PkProductId, Name, PkProductId FROM Products
 WHERE PkProductId NOT IN (SELECT rowid FROM ProductFTS);
 ";
             await _context.Database.ExecuteSqlRawAsync(sql);
 
-            // Step 2: Record audit entry for compliance tracking
-            try
-            {
-                var audit = new AuditEntryModel
-                {
-                    Action = "ReindexFTS",
-                    Actor = User.Identity?.Name ?? "unknown",
-                    Timestamp = DateTime.UtcNow,
-                    AffectedKeysCount = 0,
-                    Details = "Reindexed ProductFTS table",
-                    Reason = reason
-                };
-                _context.Add(audit);
-                await _context.SaveChangesAsync();
-            }
-            catch { /* Ignore audit failures - don't block the operation */ }
+            await TryWriteReindexAuditEntryAsync(reason);
 
-            // Step 3: Trigger background service immediate reindex
-            try
-            {
-                if (_reindexService != null)
-                {
-                    await _reindexService.ReindexOnce();
-                }
-            }
-            catch { /* Background service failures are logged internally */ }
+            await TryRunReindexServiceAsync();
 
             return Ok(new { success = true });
         }
@@ -435,29 +407,15 @@ WHERE PkProductId NOT IN (SELECT rowid FROM ProductFTS);
                     .Select(a => a.Timestamp)
                     .FirstOrDefault();
 
-                // Include background service metrics if available
-                DateTime? lastRun = null;
-                TimeSpan? lastDuration = null;
-                try
-                {
-                    if (_reindexService != null)
-                    {
-                        lastRun = _reindexService.LastRun;
-                        lastDuration = _reindexService.LastDuration;
-                    }
-                }
-                catch (Exception ex)
-                {
-                    _logger.LogWarning(ex, "Could not read reindex service metrics");
-                }
+                var snapshot = GetReindexServiceSnapshot();
 
                 return Json(new
                 {
                     success = true,
                     keys = count,
                     lastClear = lastClear == default ? (DateTime?)null : lastClear,
-                    lastRun,
-                    lastDuration
+                    lastRun = snapshot.LastRun,
+                    lastDuration = snapshot.LastDuration
                 });
             }
             catch (Exception ex)
@@ -480,10 +438,9 @@ WHERE PkProductId NOT IN (SELECT rowid FROM ProductFTS);
         /// <returns>JSON result with the number of cache entries cleared</returns>
         [HttpPost]
         [ValidateAntiForgeryToken]
-        [Microsoft.AspNetCore.RateLimiting.EnableRateLimiting(ELKH.Extensions.RateLimitPolicies.Admin)]
+        [Microsoft.AspNetCore.RateLimiting.EnableRateLimiting(ELKH.Constants.RateLimitPolicies.Admin)]
         public async Task<IActionResult> ClearFuzzyCache([FromBody] ClearCachePayload payload)
         {
-            // Step 1: Validate reason is provided (required for audit trail)
             if (string.IsNullOrWhiteSpace(payload?.Reason))
             {
                 return BadRequest(new { success = false, message = "Reason is required" });
@@ -491,20 +448,17 @@ WHERE PkProductId NOT IN (SELECT rowid FROM ProductFTS);
 
             var reason = payload.Reason;
 
-            // Step 2: Load persisted cache keys and clear them from memory
             var keys = _context.CachedFuzzyKeys.ToList();
             var registryCount = 0;
 
             if (keys.Count > 0)
             {
-                // Remove each key from IMemoryCache
                 foreach (var k in keys)
                 {
                     try { _cache.Remove(k.CacheKey); } catch { /* Ignore individual removal failures */ }
                 }
                 registryCount = keys.Count;
 
-                // Step 3: Remove persisted registry entries
                 try
                 {
                     _context.CachedFuzzyKeys.RemoveRange(keys);
@@ -515,34 +469,99 @@ WHERE PkProductId NOT IN (SELECT rowid FROM ProductFTS);
                     _logger.LogWarning(ex, "Failed to persist CachedFuzzyKey removal for {Count} keys", keys.Count);
                 }
 
-                // Step 4: Log for monitoring and diagnostics
                 _logger.LogInformation(
                     "Admin {Admin} cleared {Count} fuzzy cache entries",
                     User.Identity?.Name ?? "unknown",
                     registryCount);
 
-                // Step 5: Persist audit entry for compliance
-                try
-                {
-                    var audit = new AuditEntryModel
-                    {
-                        Action = "ClearFuzzyCache",
-                        Actor = User.Identity?.Name ?? "unknown",
-                        Timestamp = DateTime.UtcNow,
-                        AffectedKeysCount = registryCount,
-                        Details = string.Join(',', keys.Select(k => k.CacheKey)),
-                        Reason = reason
-                    };
-                    _context.Add(audit);
-                    await _context.SaveChangesAsync();
-                }
-                catch (Exception ex)
-                {
-                    _logger.LogWarning(ex, "Failed to persist ClearFuzzyCache audit entry");
-                }
+                await TryWriteCacheClearAuditEntryAsync(keys, registryCount, reason);
             }
 
             return Ok(new { success = true, cleared = registryCount });
+        }
+
+        private async Task TryWriteReindexAuditEntryAsync(string reason)
+        {
+            try
+            {
+                var audit = new AuditEntryModel
+                {
+                    Action = "ReindexFTS",
+                    Actor = User.Identity?.Name ?? "unknown",
+                    Timestamp = DateTime.UtcNow,
+                    AffectedKeysCount = 0,
+                    Details = "Reindexed ProductFTS table",
+                    Reason = reason
+                };
+
+                _context.Add(audit);
+                await _context.SaveChangesAsync();
+            }
+            catch (Exception ex)
+            {
+                _logger.LogWarning(ex, "Failed to persist ReindexFTS audit entry");
+            }
+        }
+
+        private async Task TryRunReindexServiceAsync()
+        {
+            try
+            {
+                if (_reindexService != null)
+                {
+                    await _reindexService.ReindexOnce();
+                }
+            }
+            catch (Exception ex)
+            {
+                _logger.LogWarning(ex, "Background reindex service failed");
+            }
+        }
+
+        private ReindexServiceSnapshot GetReindexServiceSnapshot()
+        {
+            try
+            {
+                if (_reindexService == null)
+                {
+                    return ReindexServiceSnapshot.Unavailable;
+                }
+
+                return new ReindexServiceSnapshot(_reindexService.LastRun, _reindexService.LastDuration);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogWarning(ex, "Could not read reindex service metrics");
+                return ReindexServiceSnapshot.Unavailable;
+            }
+        }
+
+        private async Task TryWriteCacheClearAuditEntryAsync(IReadOnlyCollection<CachedFuzzyKeyModel> keys, int registryCount, string reason)
+        {
+            try
+            {
+                var audit = new AuditEntryModel
+                {
+                    Action = "ClearFuzzyCache",
+                    Actor = User.Identity?.Name ?? "unknown",
+                    Timestamp = DateTime.UtcNow,
+                    AffectedKeysCount = registryCount,
+                    Details = string.Join(',', keys.Select(k => k.CacheKey)),
+                    Reason = reason
+                };
+
+                _context.Add(audit);
+                await _context.SaveChangesAsync();
+            }
+            catch (Exception ex)
+            {
+                _logger.LogWarning(ex, "Failed to persist ClearFuzzyCache audit entry");
+            }
+        }
+
+        private sealed record ReindexServiceSnapshot(DateTime? LastRun, TimeSpan? LastDuration)
+        {
+            public static ReindexServiceSnapshot Unavailable { get; } = new(null, null);
         }
 
         #endregion

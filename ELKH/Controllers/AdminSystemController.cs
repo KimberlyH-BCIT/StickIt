@@ -1,12 +1,18 @@
 using ELKH.Controllers.Base;
 using ELKH.Data;
 using ELKH.Models;
+using ELKH.Constants;
 using ELKH.Services;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Caching.Memory;
 
 namespace ELKH.Controllers;
+
+// TABLE OF CONTENTS
+// - Search index management
+// - Cache management
+// - Health and system operations
 
 /// <summary>
 /// Admin controller responsible for system management, cache operations, and search indexing.
@@ -43,52 +49,20 @@ public class AdminSystemController : AdminControllerBase
     /// </remarks>
     [HttpPost]
     [ValidateAntiForgeryToken]
-    [Microsoft.AspNetCore.RateLimiting.EnableRateLimiting(ELKH.Extensions.RateLimitPolicies.Admin)]
+    [Microsoft.AspNetCore.RateLimiting.EnableRateLimiting(RateLimitPolicies.Admin)]
     public async Task<IActionResult> ReindexSearch([FromBody] ReindexPayload? payload)
     {
         try
         {
             string reason = payload?.Reason ?? string.Empty;
-
-            // Step 1: Rebuild ProductFTS from Products table (SQLite FTS5)
             var sql = @"INSERT INTO ProductFTS(rowid, Name, PkProductId)
         SELECT PkProductId, Name, PkProductId FROM Products
         WHERE PkProductId NOT IN (SELECT rowid FROM ProductFTS);";
 
             await Context.Database.ExecuteSqlRawAsync(sql);
 
-            // Step 2: Record audit entry for compliance tracking
-            try
-            {
-                var audit = new AuditEntryModel
-                {
-                    Action = "ReindexFTS",
-                    Actor = User.Identity?.Name ?? "unknown",
-                    Timestamp = DateTime.UtcNow,
-                    AffectedKeysCount = 0,
-                    Details = "Reindexed ProductFTS table",
-                    Reason = reason
-                };
-                Context.Add(audit);
-                await Context.SaveChangesAsync();
-            }
-            catch (Exception ex)
-            {
-                Logger.LogWarning(ex, "Failed to persist ReindexFTS audit entry");
-            }
-
-            // Step 3: Trigger background service immediate reindex
-            try
-            {
-                if (_reindexService != null)
-                {
-                    await _reindexService.ReindexOnce();
-                }
-            }
-            catch (Exception ex)
-            {
-                Logger.LogWarning(ex, "Background reindex service failed");
-            }
+            await TryWriteAuditEntryAsync("ReindexFTS", "Reindexed ProductFTS table", 0, reason);
+            await TryReindexSearchServiceAsync();
 
             await LogAdminActionAsync("ReindexSearch", $"Reason: {reason}");
 
@@ -109,29 +83,11 @@ public class AdminSystemController : AdminControllerBase
     {
         try
         {
-            // Get search index metrics
             var totalProducts = await Context.Products.CountAsync();
             var indexedProducts = await Context.Database
                 .ExecuteSqlRawAsync("SELECT COUNT(*) FROM ProductFTS");
 
-            // Get background service metrics if available
-            DateTime? lastRun = null;
-            TimeSpan? lastDuration = null;
-            bool serviceRunning = false;
-
-            try
-            {
-                if (_reindexService != null)
-                {
-                    lastRun = _reindexService.LastRun;
-                    lastDuration = _reindexService.LastDuration;
-                    serviceRunning = true;
-                }
-            }
-            catch (Exception ex)
-            {
-                Logger.LogWarning(ex, "Could not read reindex service metrics");
-            }
+            var serviceSnapshot = GetReindexServiceSnapshot();
 
             return Json(new
             {
@@ -141,9 +97,9 @@ public class AdminSystemController : AdminControllerBase
                 indexCoverage = totalProducts > 0 ? (double)indexedProducts / totalProducts : 0.0,
                 backgroundService = new
                 {
-                    running = serviceRunning,
-                    lastRun,
-                    lastDuration = lastDuration?.TotalMilliseconds
+                    running = serviceSnapshot.Running,
+                    lastRun = serviceSnapshot.LastRun,
+                    lastDuration = serviceSnapshot.LastDuration?.TotalMilliseconds
                 }
             });
         }
@@ -166,31 +122,13 @@ public class AdminSystemController : AdminControllerBase
     {
         try
         {
-            // Get fuzzy cache key count from registry
             var count = await Context.CachedFuzzyKeys.CountAsync();
-
-            // Find the last cache clear operation
             var lastClear = await Context.AuditEntries
                 .Where(a => a.Action == "ClearFuzzyCache")
                 .OrderByDescending(a => a.Timestamp)
                 .Select(a => a.Timestamp)
                 .FirstOrDefaultAsync();
-
-            // Include background service metrics if available
-            DateTime? lastRun = null;
-            TimeSpan? lastDuration = null;
-            try
-            {
-                if (_reindexService != null)
-                {
-                    lastRun = _reindexService.LastRun;
-                    lastDuration = _reindexService.LastDuration;
-                }
-            }
-            catch (Exception ex)
-            {
-                Logger.LogWarning(ex, "Could not read reindex service metrics");
-            }
+            var serviceSnapshot = GetReindexServiceSnapshot();
 
             return Json(new
             {
@@ -199,8 +137,8 @@ public class AdminSystemController : AdminControllerBase
                 lastClear = lastClear == default ? (DateTime?)null : lastClear,
                 backgroundService = new
                 {
-                    lastRun,
-                    lastDuration = lastDuration?.TotalMilliseconds
+                    lastRun = serviceSnapshot.LastRun,
+                    lastDuration = serviceSnapshot.LastDuration?.TotalMilliseconds
                 }
             });
         }
@@ -226,26 +164,22 @@ public class AdminSystemController : AdminControllerBase
     /// </remarks>
     [HttpPost]
     [ValidateAntiForgeryToken]
-    [Microsoft.AspNetCore.RateLimiting.EnableRateLimiting(ELKH.Extensions.RateLimitPolicies.Admin)]
+    [Microsoft.AspNetCore.RateLimiting.EnableRateLimiting(RateLimitPolicies.Admin)]
     public async Task<IActionResult> ClearCache([FromBody] ClearCachePayload payload)
     {
         try
         {
-            // Step 1: Validate reason is provided (required for audit trail)
             if (string.IsNullOrWhiteSpace(payload?.Reason))
             {
                 return BadRequest(new { success = false, message = "Reason is required for cache clearing operations" });
             }
 
             var reason = payload.Reason;
-
-            // Step 2: Load persisted cache keys and clear them from memory
             var keys = await Context.CachedFuzzyKeys.ToListAsync();
             var registryCount = 0;
 
             if (keys.Any())
             {
-                // Remove each key from IMemoryCache
                 foreach (var k in keys)
                 {
                     try
@@ -259,7 +193,6 @@ public class AdminSystemController : AdminControllerBase
                 }
                 registryCount = keys.Count;
 
-                // Step 3: Remove persisted registry entries
                 try
                 {
                     Context.CachedFuzzyKeys.RemoveRange(keys);
@@ -270,32 +203,13 @@ public class AdminSystemController : AdminControllerBase
                     Logger.LogWarning(ex, "Failed to persist CachedFuzzyKey removal for {Count} keys", keys.Count);
                 }
 
-                // Step 4: Log for monitoring and diagnostics
                 Logger.LogInformation(
                     "Admin {Admin} cleared {Count} fuzzy cache entries. Reason: {Reason}",
                     User.Identity?.Name ?? "unknown",
                     registryCount,
                     reason);
 
-                // Step 5: Persist audit entry for compliance
-                try
-                {
-                    var audit = new AuditEntryModel
-                    {
-                        Action = "ClearFuzzyCache",
-                        Actor = User.Identity?.Name ?? "unknown",
-                        Timestamp = DateTime.UtcNow,
-                        AffectedKeysCount = registryCount,
-                        Details = $"Cleared {registryCount} cache entries",
-                        Reason = reason
-                    };
-                    Context.Add(audit);
-                    await Context.SaveChangesAsync();
-                }
-                catch (Exception ex)
-                {
-                    Logger.LogWarning(ex, "Failed to persist ClearFuzzyCache audit entry");
-                }
+                await TryWriteAuditEntryAsync("ClearFuzzyCache", $"Cleared {registryCount} cache entries", registryCount, reason);
             }
 
             await LogAdminActionAsync("ClearedCache", $"Cleared {registryCount} entries. Reason: {reason}");
@@ -437,7 +351,6 @@ public class AdminSystemController : AdminControllerBase
         try
         {
             var totalProducts = await Context.Products.CountAsync();
-            // Note: In a real implementation, you'd check the FTS table count
 
             return new
             {
@@ -451,6 +364,64 @@ public class AdminSystemController : AdminControllerBase
             Logger.LogWarning(ex, "Search health check failed");
             return new { status = "Error", message = ex.Message };
         }
+    }
+
+    private async Task TryWriteAuditEntryAsync(string action, string details, int affectedKeysCount, string reason)
+    {
+        try
+        {
+            var audit = new AuditEntryModel
+            {
+                Action = action,
+                Actor = User.Identity?.Name ?? "unknown",
+                Timestamp = DateTime.UtcNow,
+                AffectedKeysCount = affectedKeysCount,
+                Details = details,
+                Reason = reason
+            };
+
+            Context.Add(audit);
+            await Context.SaveChangesAsync();
+        }
+        catch (Exception ex)
+        {
+            Logger.LogWarning(ex, "Failed to persist {Action} audit entry", action);
+        }
+    }
+
+    private async Task TryReindexSearchServiceAsync()
+    {
+        try
+        {
+            if (_reindexService != null)
+            {
+                await _reindexService.ReindexOnce();
+            }
+        }
+        catch (Exception ex)
+        {
+            Logger.LogWarning(ex, "Background reindex service failed");
+        }
+    }
+
+    private ReindexServiceSnapshot GetReindexServiceSnapshot()
+    {
+        try
+        {
+            return _reindexService is null
+                ? ReindexServiceSnapshot.NotAvailable
+                : new ReindexServiceSnapshot(true, _reindexService.LastRun, _reindexService.LastDuration);
+        }
+        catch (Exception ex)
+        {
+            Logger.LogWarning(ex, "Could not read reindex service metrics");
+            return ReindexServiceSnapshot.NotAvailable;
+        }
+    }
+
+    private sealed record ReindexServiceSnapshot(bool Running, DateTime? LastRun, TimeSpan? LastDuration)
+    {
+        public static ReindexServiceSnapshot NotAvailable { get; } = new(false, null, null);
     }
 
     #endregion

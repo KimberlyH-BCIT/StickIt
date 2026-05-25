@@ -12,6 +12,12 @@ using Microsoft.Extensions.Caching.Memory;
 
 namespace ELKH.Controllers
 {
+    // TABLE OF CONTENTS
+    // - Product management
+    // - Order management
+    // - Inventory oversight
+    // - Catalog cache invalidation
+
     /// <summary>
     /// Manager controller for operational oversight and product/order management.
     /// Accessible to users with Admin or Manager roles.

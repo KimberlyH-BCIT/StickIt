@@ -55,12 +55,6 @@ namespace ELKH.Controllers
         {
             var sb = new StringBuilder();
 
-            // =====================================================================
-            // Fuzzy Reindex Timing and Run Count Metrics
-            // =====================================================================
-            // Reports last run timestamp (Unix seconds) and duration
-            // Uses 'gauge' for timing values and 'counter' for run count
-
             if (_reindex.LastRun.HasValue)
             {
                 var lastSec = new DateTimeOffset(_reindex.LastRun.Value).ToUnixTimeSeconds();
@@ -80,11 +74,13 @@ namespace ELKH.Controllers
             sb.AppendLine("# TYPE fuzzy_reindex_run_count counter");
             sb.AppendLine(CultureInfo.InvariantCulture, $"fuzzy_reindex_run_count {_reindex.RunCount}");
 
-            // =====================================================================
-            // Database-Backed Counts
-            // =====================================================================
-            // Access database in fault-tolerant manner
-            // Metrics endpoints should not propagate DB exceptions
+            await AppendSuggestionCountAsync(sb);
+
+            return Content(sb.ToString(), "text/plain; version=0.0.4");
+        }
+
+        private async Task AppendSuggestionCountAsync(StringBuilder sb)
+        {
             try
             {
                 var suggestionCount = await _db.FuzzySuggestions.CountAsync();
@@ -94,12 +90,8 @@ namespace ELKH.Controllers
             }
             catch
             {
-                // Intentionally swallow exceptions: metrics should be best-effort
-                // Prometheus scraper will detect missing metrics via staleness
+                _ = sb;
             }
-
-            // Return as text/plain with Prometheus exposition format version header
-            return Content(sb.ToString(), "text/plain; version=0.0.4");
         }
     }
 }
