@@ -1,5 +1,15 @@
 namespace ELKH.Services;
 
+// ╔════════════════════════════════════════════════════════════════════════════════════╗
+// ║ SearchService - TABLE OF CONTENTS                                                ║
+// ╚════════════════════════════════════════════════════════════════════════════════════╝
+//
+// OVERVIEW: Multi-tier product search with cache, FTS, and fuzzy fallback paths.
+// TABLE OF CONTENTS:
+// - SearchNames
+// - Normalization helpers
+// - FTS and fuzzy fallback helpers
+
 /// <summary>
 /// Service for fuzzy product search with multi-tier fallback strategy.
 /// Provides fast autocomplete and search results using precomputed suggestions, FTS, and fuzzy matching.
@@ -80,15 +90,24 @@ public class SearchService : ISearchService
         // ─────────────────────────────────────────────────────────────
         // Strip quote characters that would break the FTS5 MATCH syntax before normalizing.
         var token = q.Trim().Replace('"', ' ').Replace('\'', ' ');
-        var normQ = NormalizeName(token);
+        var normQ = SearchTextNormalizer.NormalizeQuery(token);
 
         // ─────────────────────────────────────────────────────────────
         // TIER 1: Cache lookup
         // Return immediately for repeated identical queries within the 5-minute window.
         // ─────────────────────────────────────────────────────────────
         var cacheKey = $"search_{normQ}";
+        var topResults = _searchOptions?.Value?.Fuzzy?.TopResults ?? 10;
+        var candidateLimit = _searchOptions?.Value?.Fuzzy?.CandidateLimit ?? 200;
         if (_cache.TryGetValue(cacheKey, out var cachedObj) && cachedObj is List<SearchResultDto> cached)
             return cached;
+
+        void CacheResults(List<SearchResultDto> results)
+        {
+            using var entry = _cache.CreateEntry(cacheKey);
+            entry.Value = results;
+            entry.SlidingExpiration = TimeSpan.FromMinutes(5);
+        }
 
         // ─────────────────────────────────────────────────────────────
         // TIER 2: Precomputed suggestions
@@ -97,9 +116,10 @@ public class SearchService : ISearchService
         // to tag, FTS, and fuzzy-search strategies.
         // ─────────────────────────────────────────────────────────────
         var pre = await _db.FuzzySuggestions
+            .AsNoTracking()
             .Where(f => f.NameNormalized.Contains(normQ))
             .OrderBy(f => f.Name)
-            .Take(_searchOptions?.Value?.Fuzzy?.TopResults ?? 10)
+            .Take(topResults)
             .Select(f => new SearchResultDto
             {
                 Id = f.PkProductId,
@@ -111,14 +131,7 @@ public class SearchService : ISearchService
 
         if (pre.Count > 0)
         {
-            // CreateEntry + manual property assignment is used instead of the IMemoryCache.Set
-            // extension method to avoid a dependency on the Microsoft.Extensions.Caching.Memory
-            // extension package that may not be available in all test environments.
-            using (var entry = _cache.CreateEntry(cacheKey))
-            {
-                entry.Value = pre;
-                entry.SlidingExpiration = TimeSpan.FromMinutes(5);
-            }
+            CacheResults(pre);
             return pre;
         }
 
@@ -128,9 +141,10 @@ public class SearchService : ISearchService
         // Provides additional discovery path for category/keyword searches.
         // ─────────────────────────────────────────────────────────────
         var tagMatches = await _db.Products
-            .Where(p => p.Tags.Contains(normQ) && p.IsActive)
+            .AsNoTracking()
+            .Where(p => p.Tags != null && p.Tags.Contains(normQ) && p.IsActive)
             .OrderBy(p => p.Name)
-            .Take(_searchOptions?.Value?.Fuzzy?.TopResults ?? 10)
+            .Take(topResults)
             .Select(p => new SearchResultDto
             {
                 Id = p.PkProductId,
@@ -142,11 +156,7 @@ public class SearchService : ISearchService
 
         if (tagMatches.Count > 0)
         {
-            using (var entry = _cache.CreateEntry(cacheKey))
-            {
-                entry.Value = tagMatches;
-                entry.SlidingExpiration = TimeSpan.FromMinutes(5);
-            }
+            CacheResults(tagMatches);
             return tagMatches;
         }
 
@@ -195,11 +205,7 @@ LIMIT 10;";
 
             if (results.Count > 0)
             {
-                using (var entry = _cache.CreateEntry(cacheKey))
-                {
-                    entry.Value = results;
-                    entry.SlidingExpiration = TimeSpan.FromMinutes(5);
-                }
+                CacheResults(results);
                 return results;
             }
         }
@@ -212,6 +218,7 @@ LIMIT 10;";
         // ─────────────────────────────────────────────────────────────
         var normQuery = normQ;
         var prefix = normQuery.Length >= 3 ? normQuery.Substring(0, 3) : normQuery;
+        var searchTokens = token.Split(new[] { ' ' }, StringSplitOptions.RemoveEmptyEntries);
 
         // Pre-filter candidates using prefix, start-with, or tag matching
         var candidates = await _db.Products
@@ -227,7 +234,7 @@ LIMIT 10;";
             .Where(p => p.NameNormalized.Contains(prefix) ||
                        p.NameNormalized.StartsWith(normQuery) ||
                        p.Tags.Contains(normQuery))
-            .Take(_searchOptions?.Value?.Fuzzy?.CandidateLimit ?? 200)
+            .Take(candidateLimit)
             .ToListAsync();
 
         // Score candidates with TokenSetRatio (handles word-order variation) and take the top results.
@@ -253,8 +260,7 @@ LIMIT 10;";
         {
             // Compute character-level match positions so the client can render
             // bold highlight spans without any additional string parsing.
-            var tokens = token.Split(new[] { ' ' }, StringSplitOptions.RemoveEmptyEntries);
-            var positions = _fuzzyHelper.FindBestMatchPositions(tokens, x.Name ?? string.Empty);
+            var positions = _fuzzyHelper.FindBestMatchPositions(searchTokens, x.Name ?? string.Empty);
 
             var dto = new SearchResultDto
             {
@@ -268,11 +274,7 @@ LIMIT 10;";
         }
 
         // Cache the fuzzy results as well
-        using (var entry = _cache.CreateEntry(cacheKey))
-        {
-            entry.Value = resultList;
-            entry.SlidingExpiration = TimeSpan.FromMinutes(5);
-        }
+        CacheResults(resultList);
         return resultList;
     }
 

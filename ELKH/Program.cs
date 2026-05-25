@@ -16,6 +16,12 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Filters;
 using Microsoft.EntityFrameworkCore;
 
+// TABLE OF CONTENTS
+// - Startup configuration
+// - Database and Identity setup
+// - Health checks and monitoring
+// - Localization and middleware pipeline
+
 var builder = WebApplication.CreateBuilder(args);
 
 builder.Logging.ClearProviders();

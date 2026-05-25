@@ -2,6 +2,9 @@ using ELKH.ViewModels;
 
 namespace ELKH.Services;
 
+/// <summary>
+/// Coordinates role listing, assignment, and deletion workflows for the admin area.
+/// </summary>
 public interface IAdminRoleOrchestrationService
 {
     Task<List<RoleVM>> GetRolesAsync(CancellationToken ct = default);

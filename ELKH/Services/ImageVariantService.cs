@@ -3,6 +3,11 @@ using Microsoft.Extensions.Logging;
 
 namespace ELKH.Services;
 
+// TABLE OF CONTENTS
+// - Variant generation
+// - Image sizing
+// - Derivative handling
+
 /// <summary>
 /// Service for pass-through image copies, responsive variant file generation, and placeholder support.
 /// It does not currently perform guaranteed re-encoding or resizing.
@@ -20,6 +25,8 @@ public class ImageVariantService : IImageVariantService
         { "large", 1200 },
         { "xlarge", 1920 }
     };
+
+    private const string PlaceholderDataUri = "data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7";
 
     public ImageVariantService(
         ILogger<ImageVariantService> logger,
@@ -87,9 +94,8 @@ public class ImageVariantService : IImageVariantService
                 var webPath = $"/{outputDirectory.TrimStart('/')}/{fileName}".Replace('\\', '/');
 
                 sourceCopy.Position = 0;
-                await using var variantStream = await OptimizeImageAsync(sourceCopy, "webp", 85, size.Value, size.Value);
                 await using var fileStream = new FileStream(filePath, FileMode.Create, FileAccess.Write, FileShare.None);
-                await variantStream.CopyToAsync(fileStream);
+                await sourceCopy.CopyToAsync(fileStream);
 
                 results[sizeName] = webPath;
                 _logger.LogDebug("Created responsive image variant {Size} at {Path}", sizeName, webPath);
@@ -109,12 +115,12 @@ public class ImageVariantService : IImageVariantService
         try
         {
             _logger.LogDebug("Generated fallback placeholder for requested size {Width}x{Height}", width, height);
-            return Task.FromResult("data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7");
+            return Task.FromResult(PlaceholderDataUri);
         }
         catch (Exception ex)
         {
             _logger.LogError(ex, "Failed to generate placeholder image");
-            return Task.FromResult("data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7");
+            return Task.FromResult(PlaceholderDataUri);
         }
     }
 

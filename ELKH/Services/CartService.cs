@@ -2,6 +2,18 @@ using ELKH.Extensions;
 
 namespace ELKH.Services;
 
+// ╔════════════════════════════════════════════════════════════════════════════════════╗
+// ║ CartService - TABLE OF CONTENTS                                                  ║
+// ╚════════════════════════════════════════════════════════════════════════════════════╝
+//
+// OVERVIEW: Shopping cart and order-placement service with inventory validation.
+// TABLE OF CONTENTS:
+// - ClearCartAsync
+// - AddToCartAsync
+// - BuyNowAsync
+// - PlaceOrderAsync
+// - Helper validation and totals logic
+
 /// <summary>
 /// Service for managing shopping cart operations and order placement.
 /// Handles cart item management, inventory validation, and order processing with atomic transactions.

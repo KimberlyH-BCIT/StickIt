@@ -4,6 +4,16 @@ using System.Text;
 
 namespace ELKH.Services;
 
+// ╔════════════════════════════════════════════════════════════════════════════════════╗
+// ║ PayPalService - TABLE OF CONTENTS                                                ║
+// ╚════════════════════════════════════════════════════════════════════════════════════╝
+//
+// OVERVIEW: PayPal token acquisition and server-side capture verification.
+// TABLE OF CONTENTS:
+// - Access token retrieval
+// - Captured order verification
+// - Helper parsing and validation
+
 /// <summary>
 /// PayPal integration service providing token management and server-side payment verification through PayPal's REST API.
 /// </summary>

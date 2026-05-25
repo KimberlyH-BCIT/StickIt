@@ -2,6 +2,17 @@ using System.Globalization;
 
 namespace ELKH.Services;
 
+// ╔════════════════════════════════════════════════════════════════════════════════════╗
+// ║ RatingService - TABLE OF CONTENTS                                                ║
+// ╚════════════════════════════════════════════════════════════════════════════════════╝
+//
+// OVERVIEW: Product rating and review queries, pagination, and approval workflows.
+// TABLE OF CONTENTS:
+// - Rating queries
+// - Paged rating retrieval
+// - Individual rating operations
+// - User rating summaries
+
 /// <summary>
 /// Service for managing product ratings and reviews.
 /// Provides operations for querying, retrieving, and approving customer ratings.

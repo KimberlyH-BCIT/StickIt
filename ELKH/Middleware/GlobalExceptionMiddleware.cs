@@ -7,8 +7,13 @@ using Microsoft.ApplicationInsights.DataContracts;
 
 namespace ELKH.Middleware;
 
+// TABLE OF CONTENTS
+// - Middleware invocation
+// - Exception logging
+// - Error response generation
+
 /// <summary>
-/// Global exception handling middleware for centralized error processing, logging, and user-friendly error responses.
+/// Middleware that catches unhandled exceptions and returns standardized error responses.
 /// 
 /// This middleware provides comprehensive exception handling across the entire application pipeline,
 /// ensuring consistent error responses, detailed logging, and integration with monitoring systems.

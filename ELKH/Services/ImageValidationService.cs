@@ -1,5 +1,10 @@
 namespace ELKH.Services;
 
+// TABLE OF CONTENTS
+// - Image validation rules
+// - File type checks
+// - Size checks
+
 /// <summary>
 /// Secure image file validation service with multi-layer security checks.
 /// Provides defense-in-depth against malicious file uploads through:

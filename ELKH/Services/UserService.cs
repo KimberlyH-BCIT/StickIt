@@ -1,22 +1,32 @@
+using ELKH.Configuration;
+using ELKH.Data;
+using ELKH.Models;
+using ELKH.ViewModels;
+using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Caching.Memory;
+using Microsoft.Extensions.Options;
+
 namespace ELKH.Services;
 
-/// <summary>
-/// User service implementation providing user lookups, dashboard data aggregation,
-/// and cached user profile retrieval.
-/// </summary>
-/// Historical orders: Delivered, Cancelled, Refunded, Failed
-/// </remarks>
-/// <param name="db">EF Core context for user, order, and wishlist queries.</param>
-/// <param name="cache">In-memory cache for short-lived email-keyed user lookups.</param>
-/// <param name="cacheOptions">Expiration settings for user cache entries.</param>
-public class UserService(
-    ApplicationDbContext db,
-    IMemoryCache cache,
-    IOptions<ELKH.Configuration.CacheOptions> cacheOptions) : IUserService
+// TABLE OF CONTENTS
+// - User lookup
+// - Dashboard data
+// - Caching helpers
+
+public class UserService : IUserService
 {
     #region Constructor & Dependencies
 
-    private readonly ELKH.Configuration.CacheOptions _cacheOptions = cacheOptions.Value;
+    private readonly ApplicationDbContext db;
+    private readonly IMemoryCache cache;
+    private readonly CacheOptions _cacheOptions;
+
+    public UserService(ApplicationDbContext db, IMemoryCache cache, IOptions<CacheOptions> cacheOptions)
+    {
+        this.db = db;
+        this.cache = cache;
+        _cacheOptions = cacheOptions.Value;
+    }
 
     #endregion
 

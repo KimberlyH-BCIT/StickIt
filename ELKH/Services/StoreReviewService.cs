@@ -9,6 +9,11 @@ using Microsoft.EntityFrameworkCore;
 
 namespace ELKH.Services
 {
+    // TABLE OF CONTENTS
+    // - Review retrieval
+    // - Review filtering
+    // - Review summary helpers
+
     /// <summary>
     /// Service for managing store reviews (reviews about the website/store itself).
     /// Handles submission, retrieval, verified buyer validation, and review updates.

@@ -3,6 +3,11 @@ using Microsoft.Extensions.Options;
 
 namespace ELKH.Services;
 
+// TABLE OF CONTENTS
+// - Configuration validation
+// - Required setting checks
+// - Error reporting
+
 /// <summary>
 /// Validates critical application configuration at startup to fail fast if required
 /// secrets are missing or invalid. Prevents application from starting with incomplete

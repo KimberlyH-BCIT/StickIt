@@ -7,6 +7,18 @@ using Microsoft.Extensions.Logging;
 
 namespace ELKH.Services
 {
+    // ╔══════════════════════════════════════════════════════════════════════════════╗
+    // ║ ProductService - TABLE OF CONTENTS                                           ║
+    // ╚══════════════════════════════════════════════════════════════════════════════╝
+    //
+    // OVERVIEW: Catalog service for product retrieval, paging, search delegation, and caching.
+    // TABLE OF CONTENTS:
+    // - GetAllAsync
+    // - GetPagedCatalogAsync
+    // - SearchNames
+    // - GetByIdAsync
+    // - Create/Update/Delete helpers
+
     /// <summary>
     /// Implementation of <see cref="IProductService"/> backed by EF Core with manual mapping.
     /// Delegates autocomplete-style name search to <see cref="ISearchService"/> and uses
@@ -60,10 +72,10 @@ namespace ELKH.Services
 
             if (!string.IsNullOrWhiteSpace(search))
             {
-                var term = search.Trim();
-                // Catalog filtering currently uses direct Name/Description matching.
-                // It does not route through the fuzzy/FTS suggestion pipeline used by ISearchService.
-                query = query.Where(p => p.Name.Contains(term) || p.Description.Contains(term));
+                var term = SearchTextNormalizer.NormalizeQuery(search);
+                // Catalog filtering now aligns with the normalized search pipeline used by ISearchService.
+                // Description still uses the user's original text because it is free-form copy rather than an indexed field.
+                query = query.Where(p => p.NameNormalized.Contains(term) || p.Tags.Contains(term) || p.Description.Contains(search.Trim()));
             }
 
             if (categoryId.HasValue)
@@ -89,7 +101,7 @@ namespace ELKH.Services
                 .Take(take)
                 .ToListAsync(ct);
 
-            var page = (skip / take) + 1;
+            var page = skip == 0 ? 1 : (skip / take) + 1;
             var totalPages = totalCount == 0 ? 0 : (int)Math.Ceiling(totalCount / (double)take);
 
             return new PagedResult<ProductVM>

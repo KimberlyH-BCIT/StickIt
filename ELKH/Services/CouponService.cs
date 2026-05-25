@@ -1,5 +1,16 @@
 namespace ELKH.Services;
 
+// ╔════════════════════════════════════════════════════════════════════════════════════╗
+// ║ CouponService - TABLE OF CONTENTS                                                ║
+// ╚════════════════════════════════════════════════════════════════════════════════════╝
+//
+// OVERVIEW: Coupon validation, discount calculation, and usage tracking service.
+// TABLE OF CONTENTS:
+// - Validation and application
+// - Usage tracking
+// - Admin operations
+// - Helper methods
+
 /// <summary>
 /// Service for managing discount coupons and promotional campaigns with comprehensive business logic.
 /// </summary>

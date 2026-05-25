@@ -8,6 +8,11 @@ using Microsoft.Extensions.Logging;
 
 namespace ELKH.TagHelpers;
 
+// TABLE OF CONTENTS
+// - Image source resolution
+// - Srcset generation
+// - Lazy loading and sizing
+
 /// <summary>
 /// Tag helper for image variant markup with lazy loading, responsive sizes, and WebP path support.
 /// Automatically generates image markup that prefers pre-generated variants when available:

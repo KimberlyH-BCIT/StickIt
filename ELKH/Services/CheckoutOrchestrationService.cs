@@ -7,6 +7,18 @@ using Microsoft.EntityFrameworkCore;
 
 namespace ELKH.Services;
 
+// ╔════════════════════════════════════════════════════════════════════════════════════╗
+// ║ CheckoutOrchestrationService - TABLE OF CONTENTS                                 ║
+// ╚════════════════════════════════════════════════════════════════════════════════════╝
+//
+// OVERVIEW: Checkout orchestration for cart loading, payment verification, and order creation.
+// TABLE OF CONTENTS:
+// - BuildCheckoutAsync
+// - PopulateCheckoutAsync
+// - ProcessPaymentAsync
+// - ProcessGuestPaymentAsync
+// - Helper methods and verification flow
+
 public sealed class CheckoutOrchestrationService(
     ApplicationDbContext db,
     IUserService userService,
@@ -183,6 +195,22 @@ public sealed class CheckoutOrchestrationService(
             }
             throw;
         }
+    }
+
+    public async Task<OrderModel?> GetGuestOrderByAccessTokenAsync(string token, CancellationToken ct = default)
+    {
+        if (string.IsNullOrWhiteSpace(token))
+        {
+            return null;
+        }
+
+        var tokenHash = HashGuestAccessToken(token);
+
+        return await db.Orders
+            .Include(o => o.ContactDetail)
+            .Include(o => o.OrderItems)
+                .ThenInclude(oi => oi.Product)
+            .FirstOrDefaultAsync(o => o.GuestAccessTokenHash == tokenHash && o.FkRegisteredUserId == null, ct);
     }
 
     public async Task<GuestCheckoutProcessResult> ProcessGuestPaymentAsync(GuestCheckoutVM vm, string expectedCurrency, string requestScheme, string requestHost, CancellationToken ct = default)

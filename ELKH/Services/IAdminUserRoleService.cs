@@ -2,6 +2,9 @@ using Microsoft.AspNetCore.Identity;
 
 namespace ELKH.Services;
 
+/// <summary>
+/// Coordinates admin user role membership workflows.
+/// </summary>
 public interface IAdminUserRoleService
 {
     Task<RoleUsersResult?> GetRoleUsersAsync(string roleId, CancellationToken ct = default);
