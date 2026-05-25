@@ -48,21 +48,17 @@ public class GuestCartServiceTests : IDisposable
         _context = new ApplicationDbContext(options);
 
         // Setup session storage dictionary
-        _sessionStorage = new Dictionary<string, byte[]>();
+        _sessionStorage = [];
 
         // Setup mock session
         _mockSession = new Mock<ISession>();
         _mockSession.Setup(s => s.Set(It.IsAny<string>(), It.IsAny<byte[]>()))
             .Callback<string, byte[]>((key, value) => _sessionStorage[key] = value);
-        _mockSession.Setup(s => s.TryGetValue(It.IsAny<string>(), out It.Ref<byte[]>.IsAny))
-            .Returns((string key, out byte[] value) =>
+        _mockSession.Setup(s => s.TryGetValue(It.IsAny<string>(), out It.Ref<byte[]?>.IsAny))
+            .Returns((string key, out byte[]? value) =>
             {
                 var exists = _sessionStorage.TryGetValue(key, out var result);
-                value = Array.Empty<byte>();
-                if (exists && result is not null)
-                {
-                    value = result;
-                }
+                value = exists && result is not null ? result : [];
                 return exists;
             });
         _mockSession.Setup(s => s.Remove(It.IsAny<string>()))
@@ -90,7 +86,7 @@ public class GuestCartServiceTests : IDisposable
     {
         var products = new List<ProductModel>
         {
-            new ProductModel
+            new()
             {
                 PkProductId = 1,
                 Name = "Test Sticker 1",
@@ -100,7 +96,7 @@ public class GuestCartServiceTests : IDisposable
                 IsActive = true,
                 FkCategoryId = 1
             },
-            new ProductModel
+            new()
             {
                 PkProductId = 2,
                 Name = "Test Sticker 2",
@@ -110,7 +106,7 @@ public class GuestCartServiceTests : IDisposable
                 IsActive = true,
                 FkCategoryId = 1
             },
-            new ProductModel
+            new()
             {
                 PkProductId = 3,
                 Name = "Out of Stock Sticker",
@@ -450,5 +446,6 @@ public class GuestCartServiceTests : IDisposable
     public void Dispose()
     {
         _context?.Dispose();
+        GC.SuppressFinalize(this);
     }
 }

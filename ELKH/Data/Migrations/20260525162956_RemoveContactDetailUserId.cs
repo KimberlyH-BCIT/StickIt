@@ -1,4 +1,4 @@
-using Microsoft.EntityFrameworkCore.Migrations;
+﻿using Microsoft.EntityFrameworkCore.Migrations;
 
 #nullable disable
 
@@ -23,7 +23,7 @@ namespace ELKH.Data.Migrations
                 table: "ContactDetails",
                 type: "TEXT",
                 nullable: false,
-                defaultValue: string.Empty);
+                defaultValue: "");
         }
     }
 }
