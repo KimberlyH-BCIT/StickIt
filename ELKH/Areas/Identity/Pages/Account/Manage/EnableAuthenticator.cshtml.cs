@@ -60,6 +60,8 @@ namespace ELKH.Areas.Identity.Pages.Account.Manage
     /// </remarks>
     public class EnableAuthenticatorModel : PageModel
     {
+        private static readonly CompositeFormat AuthenticatorUriFormatComposite = CompositeFormat.Parse(AuthenticatorUriFormat);
+
         #region Properties & Dependencies
 
         // â”€â”€ ASP.NET Core Identity Services â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
@@ -238,7 +240,10 @@ namespace ELKH.Areas.Identity.Pages.Account.Manage
             // ==========================================================================
             await _userManager.SetTwoFactorEnabledAsync(user, true);
             var userId = await _userManager.GetUserIdAsync(user);
-            _logger.LogInformation("User with ID '{UserId}' has enabled 2FA with an authenticator app.", userId);
+            if (_logger.IsEnabled(LogLevel.Information))
+            {
+                _logger.LogInformation("User with ID '{UserId}' has enabled 2FA with an authenticator app.", userId);
+            }
 
             StatusMessage = "Your authenticator app has been verified.";
 
@@ -300,7 +305,7 @@ namespace ELKH.Areas.Identity.Pages.Account.Manage
         /// </summary>
         /// <param name="unformattedKey">Raw base32-encoded key (no spaces).</param>
         /// <returns>Formatted key with spaces every 4 characters for easier manual entry.</returns>
-        private string FormatKey(string unformattedKey)
+        private static string FormatKey(string unformattedKey)
         {
             var result = new StringBuilder();
             int currentPosition = 0;
@@ -333,7 +338,7 @@ namespace ELKH.Areas.Identity.Pages.Account.Manage
         {
             return string.Format(
                 CultureInfo.InvariantCulture,
-                AuthenticatorUriFormat,
+                AuthenticatorUriFormatComposite,
                 _urlEncoder.Encode("Microsoft.AspNetCore.Identity.UI"),
                 _urlEncoder.Encode(email),
                 unformattedKey);

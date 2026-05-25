@@ -99,9 +99,10 @@
                                         <!-- Quantity Column -->
                                         <td role="gridcell" class="text-center">
                                             @{
-                                                var badgeType = product.Quantity <= 5 ? "sale" : product.Quantity <= 20 ? "hot" : "best";
-                                                var badgeText = product.Quantity.ToString();
-                                                if (product.Quantity <= 5) { badgeText += " ⚠️"; }
+                                                var quantity = product.Quantity ?? 0;
+                                                var badgeType = quantity <= 5 ? "sale" : quantity <= 20 ? "hot" : "best";
+                                                var badgeText = quantity.ToString();
+                                                if (quantity <= 5) { badgeText += " ⚠️"; }
                                             }
                                             <partial name="_Badge" model="@(new ELKH.ViewModels.BadgeVM { Text = badgeText, Type = badgeType })" />
                                         </td>

@@ -36,7 +36,7 @@
                             All
                         </a>
 
-                        @foreach (var role in ViewBag.Roles as List<string>)
+                        @foreach (var role in ViewBag.Roles as List<string> ?? [])
                         {
                             var color = role switch
                             {

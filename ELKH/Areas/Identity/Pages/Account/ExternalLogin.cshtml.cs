@@ -237,7 +237,10 @@ namespace ELKH.Areas.Identity.Pages.Account
             if (result.Succeeded)
             {
                 // User already has linked account - sign in successful
-                _logger.LogInformation("{Name} logged in with {LoginProvider} provider.", info.Principal.Identity.Name, info.LoginProvider);
+                if (_logger.IsEnabled(LogLevel.Information))
+                {
+                    _logger.LogInformation("{Name} logged in with {LoginProvider} provider.", info.Principal.Identity.Name, info.LoginProvider);
+                }
                 return LocalRedirect(returnUrl);
             }
             if (result.IsLockedOut)
@@ -326,7 +329,10 @@ namespace ELKH.Areas.Identity.Pages.Account
                     result = await _userManager.AddLoginAsync(user, info);
                     if (result.Succeeded)
                     {
-                        _logger.LogInformation("User created an account using {Name} provider.", info.LoginProvider);
+                        if (_logger.IsEnabled(LogLevel.Information))
+                        {
+                            _logger.LogInformation("User created an account using {Name} provider.", info.LoginProvider);
+                        }
 
                         // ==============================================================
                         // â•‘ Send Email Confirmation                                    â•‘

@@ -52,9 +52,9 @@
         </section>
 
         <!-- Success/Error Messages -->
-        @if (TempData["Message"] != null)
+        @if (TempData["Message"] is string message)
         {
-            string[] messageParts = TempData["Message"].ToString().Split(',');
+            string[] messageParts = message.Split(',');
             string messageType = messageParts[0];
             string messageText = messageParts.Length > 1 ? messageParts[1] : messageParts[0];
             

@@ -154,7 +154,7 @@
 
                             <tbody>
 
-                                @if (Model.Any())
+                                @if (Model?.Any() == true)
                                 {
                                     foreach (var user in Model)
                                     {

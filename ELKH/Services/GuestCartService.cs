@@ -309,8 +309,7 @@ namespace ELKH.Services
         }
 
         /// <summary>
-        /// <summary>
-        /// Saves cart to session storage
+        /// Saves cart to session storage.
         /// </summary>
         private void SaveCartToSession(List<SessionCartItem> cart)
         {

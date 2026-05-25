@@ -156,7 +156,7 @@ public class UserAddressController : UserControllerBase
         var contact = await _contactRepository.GetByIdAsync(id);
 
         // Security check: ensure user owns this address
-        if (contact is null || contact.FkRegisteredUserId != userId.Value)
+        if (contact is null || userId is null || contact.FkRegisteredUserId != userId.Value)
         {
             SetWarningMessage("Address not found");
             return RedirectToAction(nameof(Index));

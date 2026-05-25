@@ -199,8 +199,11 @@ namespace ELKH.Areas.Identity.Pages.Account
 
             // â”€â”€ Debug Logging â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
             // Verify reCAPTCHA site key is loaded for troubleshooting
-            _logger.LogInformation("ReCAPTCHA SiteKey loaded: {SiteKey}",
-                string.IsNullOrEmpty(ReCaptchaSiteKey) ? "(empty)" : ReCaptchaSiteKey);
+            if (_logger.IsEnabled(LogLevel.Information))
+            {
+                _logger.LogInformation("ReCAPTCHA SiteKey loaded: {SiteKey}",
+                    string.IsNullOrEmpty(ReCaptchaSiteKey) ? "(empty)" : ReCaptchaSiteKey);
+            }
         }
 
         #endregion
@@ -307,12 +310,18 @@ namespace ELKH.Areas.Identity.Pages.Account
                     // â”€â”€ Customer Role Check â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
                     if (await _userManager.IsInRoleAsync(user, "Customer"))
                     {
-                        _logger.LogInformation("User {Email} logged in as Customer.", Input.Email);
+                        if (_logger.IsEnabled(LogLevel.Information))
+                        {
+                            _logger.LogInformation("User {Email} logged in as Customer.", Input.Email);
+                        }
                         return RedirectToAction("Index", "User", new { area = "" });
                     }
 
                     await _signInManager.SignOutAsync();
-                    _logger.LogWarning("User {Email} logged in successfully but has no recognized application role.", Input.Email);
+                    if (_logger.IsEnabled(LogLevel.Warning))
+                    {
+                        _logger.LogWarning("User {Email} logged in successfully but has no recognized application role.", Input.Email);
+                    }
                     ModelState.AddModelError(string.Empty, "Your account does not have an assigned role. Please contact support.");
                     return Page();
                 }

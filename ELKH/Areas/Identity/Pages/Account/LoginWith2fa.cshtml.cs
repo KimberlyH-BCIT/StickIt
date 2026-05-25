@@ -112,17 +112,26 @@ namespace ELKH.Areas.Identity.Pages.Account
 
             if (result.Succeeded)
             {
-                _logger.LogInformation("User with ID '{UserId}' logged in with 2fa.", user.Id);
+                if (_logger.IsEnabled(LogLevel.Information))
+                {
+                    _logger.LogInformation("User with ID '{UserId}' logged in with 2fa.", user.Id);
+                }
                 return LocalRedirect(returnUrl);
             }
             else if (result.IsLockedOut)
             {
-                _logger.LogWarning("User with ID '{UserId}' account locked out.", user.Id);
+                if (_logger.IsEnabled(LogLevel.Warning))
+                {
+                    _logger.LogWarning("User with ID '{UserId}' account locked out.", user.Id);
+                }
                 return RedirectToPage("./Lockout");
             }
             else
             {
-                _logger.LogWarning("Invalid authenticator code entered for user with ID '{UserId}'.", user.Id);
+                if (_logger.IsEnabled(LogLevel.Warning))
+                {
+                    _logger.LogWarning("Invalid authenticator code entered for user with ID '{UserId}'.", user.Id);
+                }
                 ModelState.AddModelError(string.Empty, "Invalid authenticator code.");
                 return Page();
             }

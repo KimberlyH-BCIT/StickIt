@@ -26,7 +26,7 @@ namespace ELKH.Repositories
 
             if (!string.IsNullOrEmpty(searchString))
             {
-                query = query.Where(o => o.RegisteredUser.Email.Contains(searchString) || o.PkOrderId.ToString().Contains(searchString));
+                query = query.Where(o => o.RegisteredUser != null && o.RegisteredUser.Email.Contains(searchString) || o.PkOrderId.ToString().Contains(searchString));
             }
 
             // FIXED: Comparing Enum to Enum instead of string
@@ -46,7 +46,7 @@ namespace ELKH.Repositories
             var vm = orders.Select(o => new OrderDetailsVM
             {
                 OrderId = o.PkOrderId,
-                UserEmail = o.RegisteredUser.Email,
+                UserEmail = o.RegisteredUser?.Email ?? string.Empty,
                 // Ensure OrderDetailsVM.DeliveryStatus is updated to the Enum type or use .ToString()
                 DeliveryStatus = o.DeliveryStatus.ToString()
             }).ToList();
@@ -90,31 +90,33 @@ namespace ELKH.Repositories
 
             if (!string.IsNullOrEmpty(searchString))
             {
-                query = query.Where(oi => oi.Product.Name.Contains(searchString)
-                                    || oi.Product.Description.Contains(searchString));
+                query = query.Where(oi => oi.Product != null
+                                    && oi.Product.Name.Contains(searchString)
+                                    && oi.Product.Description.Contains(searchString));
             }
 
             var totalItems = await query.CountAsync();
 
-            var items = await query.OrderBy(oi => oi.PkOrderItemId)
-                                   .Skip((page - 1) * pageSize)
-                                   .Take(pageSize)
-                                   .Select(oi => new OrderDetailsVM
-                                   {
-                                       UserEmail = oi.Order.RegisteredUser.Email,
-                                       // Update these mapping based on your RegisteredUserModel fields
-                                       FirstName = "User",
-                                       LastName = "Name",
-                                       Address = "Address placeholder",
-                                       OrderId = oi.Order.PkOrderId,
-                                       TransactionId = oi.Order.Transaction.PkTransactionId,
-                                       DeliveryStatus = oi.Order.DeliveryStatus.ToString(), // Converted to string for VM
-                                       ProductName = oi.Product.Name,
-                                       Quantity = oi.Quantity,
-                                       UnitPrice = oi.Product.Price,
-                                       TotalOrderAmount = oi.Order.TotalAmount
-                                   })
-                                   .ToListAsync();
+            var items = (await query.OrderBy(oi => oi.PkOrderItemId)
+                                    .Skip((page - 1) * pageSize)
+                                    .Take(pageSize)
+                                    .ToListAsync())
+                        .Select(oi => new OrderDetailsVM
+                        {
+                            UserEmail = oi.Order.RegisteredUser?.Email ?? string.Empty,
+                            // Update these mapping based on your RegisteredUserModel fields
+                            FirstName = "User",
+                            LastName = "Name",
+                            Address = "Address placeholder",
+                            OrderId = oi.Order.PkOrderId,
+                            TransactionId = oi.Order.Transaction?.PkTransactionId ?? 0,
+                            DeliveryStatus = oi.Order.DeliveryStatus.ToString(), // Converted to string for VM
+                            ProductName = oi.Product?.Name ?? string.Empty,
+                            Quantity = oi.Quantity,
+                            UnitPrice = oi.Product?.Price ?? 0,
+                            TotalOrderAmount = oi.Order.TotalAmount
+                        })
+                        .ToList();
 
             return new PagedResult<OrderDetailsVM>
             {

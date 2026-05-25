@@ -8,6 +8,7 @@ namespace ELKH.HealthChecks;
 /// Health check for SMTP email server connectivity.
 /// Verifies that the application can connect to the configured SMTP server.
 /// </summary>
+/// <remarks>
 /// TIMEOUT:
 /// - Default: 10 seconds
 /// - Configurable via HealthCheckOptions

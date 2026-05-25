@@ -93,12 +93,18 @@ namespace ELKH.Areas.Identity.Pages.Account
 
             if (result.Succeeded)
             {
-                _logger.LogInformation("User with ID '{UserId}' logged in with a recovery code.", user.Id);
+                if (_logger.IsEnabled(LogLevel.Information))
+                {
+                    _logger.LogInformation("User with ID '{UserId}' logged in with a recovery code.", user.Id);
+                }
                 return LocalRedirect(returnUrl ?? Url.Content("~/"));
             }
             if (result.IsLockedOut)
             {
-                _logger.LogWarning("User account locked out.");
+                if (_logger.IsEnabled(LogLevel.Warning))
+                {
+                    _logger.LogWarning("User account locked out.");
+                }
                 return RedirectToPage("./Lockout");
             }
             else

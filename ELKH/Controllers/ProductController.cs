@@ -18,11 +18,12 @@ namespace ELKH.Controllers
     /// Product catalog management controller.
     /// Handles public product browsing, ratings, and admin product management.
     /// </summary>
+    /// <remarks>
     /// Caching strategy:
     /// - Product listings cached for 5 minutes with "products" tag
     /// - Product details cached for 2 minutes with "products" tag
     /// - Cache invalidated on Create/Edit/Delete operations
-    /// 
+    ///
     /// Search functionality:
     /// - Fuzzy matching via SearchService
     /// - Normalized name indexing for performance

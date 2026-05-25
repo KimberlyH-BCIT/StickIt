@@ -4,7 +4,7 @@ using ELKH.ViewModels;
 namespace ELKH.Services
 {
     /// <summary>
-    /// Lightweight manual mapper for ProductModel <-> ProductVM conversions.
+    /// Lightweight manual mapper for ProductModel and ProductVM conversions.
     /// Replaces AutoMapper to avoid version compatibility issues.
     /// </summary>
     public class ProductMapper : IProductMapper

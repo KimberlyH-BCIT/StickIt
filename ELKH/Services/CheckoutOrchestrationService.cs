@@ -307,7 +307,10 @@ public sealed class CheckoutOrchestrationService(
                 var product = await db.Products.FindAsync(new object?[] { item.ProductId }, ct);
                 if (product == null)
                 {
-                    await transaction.RollbackAsync(ct);
+                    if (transaction is not null)
+                    {
+                        await transaction.RollbackAsync(ct);
+                    }
                     return GuestCheckoutProcessResult.Fail("One or more items in your cart are out of stock.");
                 }
 

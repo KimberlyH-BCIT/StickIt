@@ -20,10 +20,6 @@ namespace ELKH.Data;
 /// </remarks>
 public static partial class DbSeeder
 {
-    private static readonly object _placeholderAvatarCacheLock = new();
-    private static string? _cachedPlaceholderAvatarPath;
-    private static byte[]? _cachedPlaceholderAvatarBytes;
-
     #region Test Transaction Seeding
 
     /// <summary>

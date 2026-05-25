@@ -95,7 +95,10 @@ namespace ELKH.Areas.Identity.Pages.Account.Manage
 
             await _signInManager.SignOutAsync();
 
-            _logger.LogInformation("User with ID '{UserId}' deleted themselves.", userId);
+            if (_logger.IsEnabled(LogLevel.Information))
+            {
+                _logger.LogInformation("User with ID '{UserId}' deleted themselves.", userId);
+            }
 
             return Redirect("~/");
         }

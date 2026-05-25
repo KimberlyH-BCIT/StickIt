@@ -4,7 +4,7 @@ using ELKH.ViewModels;
 namespace ELKH.Services
 {
     /// <summary>
-    /// Simple mapper interface for Product domain model <-> view model conversions.
+    /// Simple mapper interface for Product domain model and view model conversions.
     /// Replaces AutoMapper with lightweight manual mapping.
     /// </summary>
     public interface IProductMapper

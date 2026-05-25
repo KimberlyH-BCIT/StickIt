@@ -51,6 +51,11 @@
                         {
                             foreach (var image in Model)
                             {
+                                if (image is null)
+                                {
+                                    continue;
+                                }
+
                                 <tr>
 
                                     <!-- Image -->

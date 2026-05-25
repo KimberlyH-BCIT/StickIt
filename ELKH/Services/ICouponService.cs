@@ -20,7 +20,7 @@ namespace ELKH.Services;
 /// • FreeShipping: Waive shipping costs regardless of order value
 /// • Future: BOGO, category-specific, user-specific promotions
 /// 
-/// SECURITY & FRAUD PREVENTION:
+/// SECURITY &amp; FRAUD PREVENTION:
 /// • Usage limit enforcement to prevent bulk abuse
 /// • Time-based validation to prevent expired coupon usage
 /// • Minimum order value requirements to ensure profitability

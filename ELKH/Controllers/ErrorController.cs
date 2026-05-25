@@ -19,8 +19,6 @@ public class ErrorController(ILogger<ErrorController> logger) : Controller
     /// Logs the originating exception (if any) at Error level.
     /// Never exposes stack traces or internal messages to the client.
     /// </summary>
-    /// Never exposes stack traces or internal messages to the client.
-    /// </summary>
     [Route("/Error")]
     [ResponseCache(Duration = 0, Location = ResponseCacheLocation.None, NoStore = true)]
     public IActionResult Index()

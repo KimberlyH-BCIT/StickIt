@@ -447,6 +447,7 @@ namespace ELKH.Controllers
             if (transaction == null) return NotFound();
 
             var order = transaction.Order;
+            if (order == null) return NotFound();
 
             var vm = new TransactionDetailVM
             {
@@ -494,7 +495,7 @@ namespace ELKH.Controllers
         ///
         /// PERFORMANCE NOTE:
         /// This method has an N+1 query pattern (one query per user for roles).
-        /// Acceptable for staff lists (typically <100 users) but would need
+        /// Acceptable for staff lists (typically fewer than 100 users) but would need
         /// optimization for larger deployments. Consider caching or custom query
         /// if staff count exceeds 500.
         ///
@@ -796,7 +797,7 @@ namespace ELKH.Controllers
                 var shippingMethod = new ELKH.Models.ShippingMethodModel
                 {
                     Name = model.Name.Trim(),
-                    Description = model.Description?.Trim(),
+                    Description = model.Description?.Trim() ?? string.Empty,
                     BasePrice = model.BasePrice,
                     DeliveryDaysMin = model.DeliveryDaysMin,
                     DeliveryDaysMax = model.DeliveryDaysMax,
@@ -812,7 +813,7 @@ namespace ELKH.Controllers
                 TempData["Message"] = "success,Shipping method created successfully!";
                 return RedirectToAction(nameof(ShippingMethods));
             }
-            catch (Exception ex)
+            catch (Exception)
             {
                 // Log error for debugging (implement logging as needed)
                 ModelState.AddModelError("", "An error occurred while creating the shipping method. Please try again.");
@@ -929,7 +930,7 @@ namespace ELKH.Controllers
 
                 // Update properties
                 shippingMethod.Name = model.Name.Trim();
-                shippingMethod.Description = model.Description?.Trim();
+                shippingMethod.Description = model.Description?.Trim() ?? string.Empty;
                 shippingMethod.BasePrice = model.BasePrice;
                 shippingMethod.DeliveryDaysMin = model.DeliveryDaysMin;
                 shippingMethod.DeliveryDaysMax = model.DeliveryDaysMax;
@@ -942,7 +943,7 @@ namespace ELKH.Controllers
                 TempData["Message"] = "success,Shipping method updated successfully!";
                 return RedirectToAction(nameof(ShippingMethods));
             }
-            catch (Exception ex)
+            catch (Exception)
             {
                 // Log error for debugging (implement logging as needed)
                 ModelState.AddModelError("", "An error occurred while updating the shipping method. Please try again.");
@@ -1019,7 +1020,7 @@ namespace ELKH.Controllers
                 TempData["Message"] = $"success,{message}";
                 return RedirectToAction(nameof(ShippingMethods));
             }
-            catch (Exception ex)
+            catch (Exception)
             {
                 var errorMessage = "An error occurred while updating the shipping method status.";
 
@@ -1090,7 +1091,7 @@ namespace ELKH.Controllers
                 TempData["Message"] = $"success,Shipping method '{shippingMethod.Name}' has been deleted successfully.";
                 return RedirectToAction(nameof(ShippingMethods));
             }
-            catch (Exception ex)
+            catch (Exception)
             {
                 TempData["Message"] = "error,An error occurred while deleting the shipping method. Please try again.";
                 return RedirectToAction(nameof(ShippingMethods));
