@@ -7,6 +7,13 @@ using Microsoft.Extensions.Logging;
 
 namespace ELKH.Services;
 
+// TABLE OF CONTENTS
+// - User action logging
+// - System event logging
+// - Performance metrics
+// - Business events
+// - Error logging
+
 /// <summary>
 /// Interface for structured logging service with correlation ID support
 /// </summary>
@@ -77,107 +84,118 @@ public class StructuredLoggingService : IStructuredLoggingService
 
         using var scope = _logger.BeginScope(logData);
 
-        _logger.LogInformation("User action: {Action} by user {UserId}",
-            action, userId);
+        if (_logger.IsEnabled(LogLevel.Information))
+        {
+            _logger.LogInformation("User action: {Action} by user {UserId}",
+                action, userId);
+        }
     }
 
     public void LogSystemEvent(string eventType, string description, object? additionalData = null)
     {
-        var correlationId = _httpContextAccessor.GetCorrelationId();
-
-        var logData = new Dictionary<string, object>
+        if (_logger.IsEnabled(LogLevel.Information))
         {
-            ["EventType"] = eventType,
-            ["Description"] = description,
-            ["Timestamp"] = DateTimeOffset.UtcNow,
-            ["CorrelationId"] = correlationId ?? "System",
-            ["MachineName"] = Environment.MachineName
-        };
+            var correlationId = _httpContextAccessor.GetCorrelationId();
 
-        if (additionalData != null)
-        {
-            logData["AdditionalData"] = additionalData;
+            var logData = new Dictionary<string, object>
+            {
+                ["EventType"] = eventType,
+                ["Description"] = description,
+                ["Timestamp"] = DateTimeOffset.UtcNow,
+                ["CorrelationId"] = correlationId ?? "System",
+                ["MachineName"] = Environment.MachineName
+            };
+
+            if (additionalData != null)
+            {
+                logData["AdditionalData"] = additionalData;
+            }
+
+            using var scope = _logger.BeginScope(logData);
+            _logger.LogInformation("System event: {EventType} - {Description}",
+                eventType, description);
         }
-
-        using var scope = _logger.BeginScope(logData);
-
-        _logger.LogInformation("System event: {EventType} - {Description}",
-            eventType, description);
     }
 
     public void LogPerformanceMetric(string operation, TimeSpan duration, object? additionalData = null)
     {
-        var correlationId = _httpContextAccessor.GetCorrelationId();
-
-        var logData = new Dictionary<string, object>
-        {
-            ["Operation"] = operation,
-            ["DurationMs"] = duration.TotalMilliseconds,
-            ["Timestamp"] = DateTimeOffset.UtcNow,
-            ["CorrelationId"] = correlationId ?? "Unknown"
-        };
-
-        if (additionalData != null)
-        {
-            logData["AdditionalData"] = additionalData;
-        }
-
-        using var scope = _logger.BeginScope(logData);
-
         var logLevel = duration.TotalMilliseconds > 5000 ? LogLevel.Warning : LogLevel.Information;
 
-        _logger.Log(logLevel, "Performance: {Operation} completed in {DurationMs}ms",
-            operation, duration.TotalMilliseconds);
+        if (_logger.IsEnabled(logLevel))
+        {
+            var correlationId = _httpContextAccessor.GetCorrelationId();
+
+            var logData = new Dictionary<string, object>
+            {
+                ["Operation"] = operation,
+                ["DurationMs"] = duration.TotalMilliseconds,
+                ["Timestamp"] = DateTimeOffset.UtcNow,
+                ["CorrelationId"] = correlationId ?? "Unknown"
+            };
+
+            if (additionalData != null)
+            {
+                logData["AdditionalData"] = additionalData;
+            }
+
+            using var scope = _logger.BeginScope(logData);
+            _logger.Log(logLevel, "Performance: {Operation} completed in {DurationMs}ms",
+                operation, duration.TotalMilliseconds);
+        }
     }
 
     public void LogBusinessEvent(string eventName, string category, object? data = null)
     {
-        var correlationId = _httpContextAccessor.GetCorrelationId();
-        var context = _httpContextAccessor.HttpContext;
-
-        var logData = new Dictionary<string, object>
+        if (_logger.IsEnabled(LogLevel.Information))
         {
-            ["EventName"] = eventName,
-            ["Category"] = category,
-            ["Timestamp"] = DateTimeOffset.UtcNow,
-            ["CorrelationId"] = correlationId ?? "Unknown",
-            ["UserId"] = context?.User?.Identity?.Name ?? "Anonymous"
-        };
+            var correlationId = _httpContextAccessor.GetCorrelationId();
+            var context = _httpContextAccessor.HttpContext;
 
-        if (data != null)
-        {
-            logData["EventData"] = data;
+            var logData = new Dictionary<string, object>
+            {
+                ["EventName"] = eventName,
+                ["Category"] = category,
+                ["Timestamp"] = DateTimeOffset.UtcNow,
+                ["CorrelationId"] = correlationId ?? "Unknown",
+                ["UserId"] = context?.User?.Identity?.Name ?? "Anonymous"
+            };
+
+            if (data != null)
+            {
+                logData["EventData"] = data;
+            }
+
+            using var scope = _logger.BeginScope(logData);
+            _logger.LogInformation("Business event: {Category}.{EventName}",
+                category, eventName);
         }
-
-        using var scope = _logger.BeginScope(logData);
-
-        _logger.LogInformation("Business event: {Category}.{EventName}",
-            category, eventName);
     }
 
     public void LogError(Exception exception, string context, object? additionalData = null)
     {
-        var correlationId = _httpContextAccessor.GetCorrelationId();
-        var httpContext = _httpContextAccessor.HttpContext;
-
-        var logData = new Dictionary<string, object>
+        if (_logger.IsEnabled(LogLevel.Error))
         {
-            ["Context"] = context,
-            ["ExceptionType"] = exception.GetType().Name,
-            ["Timestamp"] = DateTimeOffset.UtcNow,
-            ["CorrelationId"] = correlationId ?? "Unknown",
-            ["RequestPath"] = httpContext?.Request.Path.Value ?? "Unknown",
-            ["UserId"] = httpContext?.User?.Identity?.Name ?? "Anonymous"
-        };
+            var correlationId = _httpContextAccessor.GetCorrelationId();
+            var httpContext = _httpContextAccessor.HttpContext;
 
-        if (additionalData != null)
-        {
-            logData["AdditionalData"] = additionalData;
+            var logData = new Dictionary<string, object>
+            {
+                ["Context"] = context,
+                ["ExceptionType"] = exception.GetType().Name,
+                ["Timestamp"] = DateTimeOffset.UtcNow,
+                ["CorrelationId"] = correlationId ?? "Unknown",
+                ["RequestPath"] = httpContext?.Request.Path.Value ?? "Unknown",
+                ["UserId"] = httpContext?.User?.Identity?.Name ?? "Anonymous"
+            };
+
+            if (additionalData != null)
+            {
+                logData["AdditionalData"] = additionalData;
+            }
+
+            using var scope = _logger.BeginScope(logData);
+            _logger.LogError(exception, "Error in {Context}: {ExceptionMessage}",
+                context, exception.Message);
         }
-
-        using var scope = _logger.BeginScope(logData);
-
-        _logger.LogError(exception, "Error in {Context}: {ExceptionMessage}",
-            context, exception.Message);
     }
 }

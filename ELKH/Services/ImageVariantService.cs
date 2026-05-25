@@ -54,18 +54,24 @@ public class ImageVariantService : IImageVariantService
             inputStream.CopyTo(outputStream);
             outputStream.Position = 0;
 
-            _logger.LogDebug(
-                "Returned copied image stream without guaranteed re-encoding from {InputSize}KB to {OutputSize}KB ({Format}, Q{Quality})",
-                inputStream.CanSeek ? inputStream.Length / 1024 : 0,
-                outputStream.Length / 1024,
-                outputFormat,
-                quality);
+            if (_logger.IsEnabled(LogLevel.Debug))
+            {
+                _logger.LogDebug(
+                    "Returned copied image stream without guaranteed re-encoding from {InputSize}KB to {OutputSize}KB ({Format}, Q{Quality})",
+                    inputStream.CanSeek ? inputStream.Length / 1024 : 0,
+                    outputStream.Length / 1024,
+                    outputFormat,
+                    quality);
+            }
 
             return Task.FromResult<Stream>(outputStream);
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Failed to prepare image variant stream with format {Format} and quality {Quality}", outputFormat, quality);
+            if (_logger.IsEnabled(LogLevel.Error))
+            {
+                _logger.LogError(ex, "Failed to prepare image variant stream with format {Format} and quality {Quality}", outputFormat, quality);
+            }
             throw;
         }
     }
@@ -98,14 +104,20 @@ public class ImageVariantService : IImageVariantService
                 await sourceCopy.CopyToAsync(fileStream);
 
                 results[sizeName] = webPath;
-                _logger.LogDebug("Created responsive image variant {Size} at {Path}", sizeName, webPath);
+                if (_logger.IsEnabled(LogLevel.Debug))
+                {
+                    _logger.LogDebug("Created responsive image variant {Size} at {Path}", sizeName, webPath);
+                }
             }
 
             return results;
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Failed to create responsive image variants for {BaseFileName}", baseFileName);
+            if (_logger.IsEnabled(LogLevel.Error))
+            {
+                _logger.LogError(ex, "Failed to create responsive image variants for {BaseFileName}", baseFileName);
+            }
             throw;
         }
     }
@@ -114,12 +126,18 @@ public class ImageVariantService : IImageVariantService
     {
         try
         {
-            _logger.LogDebug("Generated fallback placeholder for requested size {Width}x{Height}", width, height);
+            if (_logger.IsEnabled(LogLevel.Debug))
+            {
+                _logger.LogDebug("Generated fallback placeholder for requested size {Width}x{Height}", width, height);
+            }
             return Task.FromResult(PlaceholderDataUri);
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Failed to generate placeholder image");
+            if (_logger.IsEnabled(LogLevel.Error))
+            {
+                _logger.LogError(ex, "Failed to generate placeholder image");
+            }
             return Task.FromResult(PlaceholderDataUri);
         }
     }
@@ -142,16 +160,25 @@ public class ImageVariantService : IImageVariantService
 
             if (File.Exists(physicalPath))
             {
-                _logger.LogDebug("Using image variant at {OptimizedPath}", optimizedPath);
+                if (_logger.IsEnabled(LogLevel.Debug))
+                {
+                    _logger.LogDebug("Using image variant at {OptimizedPath}", optimizedPath);
+                }
                 return "/" + optimizedPath.TrimStart('/');
             }
 
-            _logger.LogDebug("Image variant not found, using original at {OriginalPath}", originalPath);
+            if (_logger.IsEnabled(LogLevel.Debug))
+            {
+                _logger.LogDebug("Image variant not found, using original at {OriginalPath}", originalPath);
+            }
             return originalPath;
         }
         catch (Exception ex)
         {
-            _logger.LogWarning(ex, "Failed to determine image variant path for {OriginalPath}", originalPath);
+            if (_logger.IsEnabled(LogLevel.Warning))
+            {
+                _logger.LogWarning(ex, "Failed to determine image variant path for {OriginalPath}", originalPath);
+            }
             return originalPath;
         }
     }

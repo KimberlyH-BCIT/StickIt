@@ -12,13 +12,15 @@ namespace ELKH.Controllers.Base;
 [Authorize]
 public abstract class UserControllerBase : AuthenticatedControllerBase
 {
-    protected new readonly IUserService UserService;
+    private readonly IUserService _userService;
+
+    protected new IUserService UserService => _userService;
 
     protected UserControllerBase(
         ELKH.Data.ApplicationDbContext db,
         IUserService userService) : base(db, userService)
     {
-        UserService = userService;
+        _userService = userService;
     }
 
     /// <summary>
@@ -68,15 +70,18 @@ public abstract class UserControllerBase : AuthenticatedControllerBase
 [Authorize(Roles = "Admin")]
 public abstract class AdminControllerBase : Controller
 {
-    protected readonly ELKH.Data.ApplicationDbContext Context;
-    protected readonly ILogger Logger;
+    private readonly ELKH.Data.ApplicationDbContext _context;
+    private readonly ILogger _logger;
+
+    protected ELKH.Data.ApplicationDbContext Context => _context;
+    protected ILogger Logger => _logger;
 
     protected AdminControllerBase(
         ELKH.Data.ApplicationDbContext context,
         ILogger logger)
     {
-        Context = context;
-        Logger = logger;
+        _context = context;
+        _logger = logger;
     }
 
     /// <summary>

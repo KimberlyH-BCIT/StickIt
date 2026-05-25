@@ -24,18 +24,21 @@ namespace ELKH.Controllers;
 /// </remarks>
 public class BaseController : Controller
 {
-    protected readonly ApplicationDbContext _db;
-    protected readonly UserManager<IdentityUser>? _userManager;
+    private readonly ApplicationDbContext _dbContext;
+    private readonly UserManager<IdentityUser>? _userManagerField;
+
+    protected ApplicationDbContext DbContext => _dbContext;
+    protected UserManager<IdentityUser>? UserManager => _userManagerField;
 
     public BaseController(ApplicationDbContext db)
     {
-        _db = db;
+        _dbContext = db;
     }
 
     public BaseController(ApplicationDbContext db, UserManager<IdentityUser> userManager)
     {
-        _db = db;
-        _userManager = userManager;
+        _dbContext = db;
+        _userManagerField = userManager;
     }
 
     public override async Task OnActionExecutionAsync(ActionExecutingContext context, ActionExecutionDelegate next)
@@ -51,11 +54,11 @@ public class BaseController : Controller
 
             if (!string.IsNullOrEmpty(email))
             {
-                var registered = await _db.RegisteredUsers
+                var registered = await DbContext.RegisteredUsers
                     .FirstOrDefaultAsync(u => u.Email == email);
 
                 ViewBag.CartCount = registered is not null
-                    ? await _db.Carts
+                    ? await DbContext.Carts
                         .Where(c => c.FkRegisteredUserId == registered.PkRegisteredUserId)
                         .SumAsync(c => (int?)c.Quantity) ?? 0
                     : 0;

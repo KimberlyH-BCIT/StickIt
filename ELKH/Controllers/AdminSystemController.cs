@@ -178,7 +178,7 @@ public class AdminSystemController : AdminControllerBase
             var keys = await Context.CachedFuzzyKeys.ToListAsync();
             var registryCount = 0;
 
-            if (keys.Any())
+            if (keys.Count > 0)
             {
                 foreach (var k in keys)
                 {
@@ -203,11 +203,14 @@ public class AdminSystemController : AdminControllerBase
                     Logger.LogWarning(ex, "Failed to persist CachedFuzzyKey removal for {Count} keys", keys.Count);
                 }
 
+            if (Logger.IsEnabled(LogLevel.Information))
+            {
                 Logger.LogInformation(
                     "Admin {Admin} cleared {Count} fuzzy cache entries. Reason: {Reason}",
                     User.Identity?.Name ?? "unknown",
                     registryCount,
                     reason);
+            }
 
                 await TryWriteAuditEntryAsync("ClearFuzzyCache", $"Cleared {registryCount} cache entries", registryCount, reason);
             }

@@ -17,7 +17,7 @@ namespace ELKH.Services;
 /// <summary>
 /// PayPal integration service providing token management and server-side payment verification through PayPal's REST API.
 /// </summary>
-public class PayPalService(HttpClient http, IOptions<PayPalOptions> opts, IMemoryCache cache) : IPayPalService
+public class PayPalService(HttpClient http, IOptions<PayPalOptions> opts, IMemoryCache cache) : IPayPalService, IDisposable
 {
     private readonly PayPalOptions _opts = opts.Value;
     private readonly SemaphoreSlim _tokenSemaphore = new(1, 1);
@@ -74,6 +74,12 @@ public class PayPalService(HttpClient http, IOptions<PayPalOptions> opts, IMemor
         {
             _tokenSemaphore.Release();
         }
+    }
+
+    public void Dispose()
+    {
+        _tokenSemaphore.Dispose();
+        GC.SuppressFinalize(this);
     }
 
     public async Task<PayPalVerificationResult> VerifyCapturedOrderAsync(string paypalOrderId, decimal expectedAmount, string expectedCurrency)

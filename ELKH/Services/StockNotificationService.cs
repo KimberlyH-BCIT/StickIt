@@ -39,7 +39,10 @@ namespace ELKH.Services
 
                 if (existing != null)
                 {
-                    _logger.LogInformation("User {UserId} already has pending notification for product {ProductId}", userId, productId);
+                    if (_logger.IsEnabled(LogLevel.Information))
+                    {
+                        _logger.LogInformation("User {UserId} already has pending notification for product {ProductId}", userId, productId);
+                    }
                     return false; // Already exists
                 }
 
@@ -56,12 +59,18 @@ namespace ELKH.Services
                 _db.StockNotifications.Add(notification);
                 await _db.SaveChangesAsync(ct);
 
-                _logger.LogInformation("Created stock notification request for user {UserId}, product {ProductId}", userId, productId);
+                if (_logger.IsEnabled(LogLevel.Information))
+                {
+                    _logger.LogInformation("Created stock notification request for user {UserId}, product {ProductId}", userId, productId);
+                }
                 return true;
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Error creating stock notification for user {UserId}, product {ProductId}", userId, productId);
+                if (_logger.IsEnabled(LogLevel.Error))
+                {
+                    _logger.LogError(ex, "Error creating stock notification for user {UserId}, product {ProductId}", userId, productId);
+                }
                 return false;
             }
         }
@@ -98,7 +107,10 @@ namespace ELKH.Services
                 notification.SentAt = DateTime.UtcNow;
                 await _db.SaveChangesAsync(ct);
 
-                _logger.LogInformation("Marked stock notification {NotificationId} as sent", notificationId);
+                if (_logger.IsEnabled(LogLevel.Information))
+                {
+                    _logger.LogInformation("Marked stock notification {NotificationId} as sent", notificationId);
+                }
             }
         }
 
@@ -117,7 +129,10 @@ namespace ELKH.Services
             notification.IsCancelled = true;
             await _db.SaveChangesAsync(ct);
 
-            _logger.LogInformation("Cancelled stock notification for user {UserId}, product {ProductId}", userId, productId);
+            if (_logger.IsEnabled(LogLevel.Information))
+            {
+                _logger.LogInformation("Cancelled stock notification for user {UserId}, product {ProductId}", userId, productId);
+            }
             return true;
         }
 

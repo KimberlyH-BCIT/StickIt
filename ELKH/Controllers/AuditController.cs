@@ -1,4 +1,5 @@
 using System.Text;
+using System.Globalization;
 using ELKH.Data;
 using ELKH.Models;
 using Microsoft.AspNetCore.Authorization;
@@ -114,7 +115,7 @@ namespace ELKH.Controllers
                 // The "u" format specifier outputs a sortable UTC timestamp (e.g. 2026-01-15 09:30:00Z).
                 foreach (var a in all)
                 {
-                    csv.AppendLine($"\"{a.Timestamp:u}\",\"{a.Actor}\",\"{a.Action}\",\"{a.Reason}\",{a.AffectedKeysCount},\"{a.Details.Replace("\"", "''")}\"");
+                    csv.AppendLine(CultureInfo.InvariantCulture, $"\"{a.Timestamp:u}\",\"{a.Actor}\",\"{a.Action}\",\"{a.Reason}\",{a.AffectedKeysCount},\"{a.Details.Replace("\"", "\"\"")}\"");
                 }
 
                 return File(Encoding.UTF8.GetBytes(csv.ToString()), "text/csv", "audit.csv");

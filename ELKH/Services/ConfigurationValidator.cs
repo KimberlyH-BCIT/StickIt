@@ -148,24 +148,30 @@ public class ConfigurationValidator
             if (isNonProductionValidationEnvironment)
             {
                 // Development: Log warnings but allow startup
-                _logger.LogWarning(
-                    "Configuration validation warnings detected:{NewLine}{Errors}{NewLine}" +
-                    "The application will start with limited functionality. Configure missing values via:{NewLine}" +
-                    "  â€¢ User Secrets: dotnet user-secrets set <Key> <Value>{NewLine}" +
-                    "  â€¢ appsettings.Development.json (for non-secrets){NewLine}" +
-                    "  â€¢ Environment variables",
-                    Environment.NewLine, Environment.NewLine, errorMessage, Environment.NewLine, Environment.NewLine, Environment.NewLine);
+                if (_logger.IsEnabled(LogLevel.Warning))
+                {
+                    _logger.LogWarning(
+                        "Configuration validation warnings detected:{NewLine}{Errors}{NewLine}" +
+                        "The application will start with limited functionality. Configure missing values via:{NewLine}" +
+                        "  â€¢ User Secrets: dotnet user-secrets set <Key> <Value>{NewLine}" +
+                        "  â€¢ appsettings.Development.json (for non-secrets){NewLine}" +
+                        "  â€¢ Environment variables",
+                        Environment.NewLine, Environment.NewLine, errorMessage, Environment.NewLine, Environment.NewLine, Environment.NewLine);
+                }
             }
             else
             {
                 // Production: Fail fast with detailed instructions
-                _logger.LogCritical(
-                    "Critical configuration validation failed:{NewLine}{Errors}{NewLine}" +
-                    "Application startup aborted. Fix configuration errors and restart:{NewLine}" +
-                    "  â€¢ Environment Variables: Set ASPNETCORE_PayPal__ClientId, etc.{NewLine}" +
-                    "  â€¢ Azure Key Vault: Configure in Azure App Service configuration{NewLine}" +
-                    "  â€¢ AWS Secrets Manager: Configure via AWS Systems Manager Parameter Store",
-                    Environment.NewLine, Environment.NewLine, errorMessage, Environment.NewLine, Environment.NewLine, Environment.NewLine);
+                if (_logger.IsEnabled(LogLevel.Critical))
+                {
+                    _logger.LogCritical(
+                        "Critical configuration validation failed:{NewLine}{Errors}{NewLine}" +
+                        "Application startup aborted. Fix configuration errors and restart:{NewLine}" +
+                        "  â€¢ Environment Variables: Set ASPNETCORE_PayPal__ClientId, etc.{NewLine}" +
+                        "  â€¢ Azure Key Vault: Configure in Azure App Service configuration{NewLine}" +
+                        "  â€¢ AWS Secrets Manager: Configure via AWS Systems Manager Parameter Store",
+                        Environment.NewLine, Environment.NewLine, errorMessage, Environment.NewLine, Environment.NewLine, Environment.NewLine);
+                }
 
                 throw new InvalidOperationException(
                     $"Application configuration is invalid. Missing or invalid required settings:{Environment.NewLine}{errorMessage}");

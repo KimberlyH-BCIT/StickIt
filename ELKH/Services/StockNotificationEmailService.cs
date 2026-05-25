@@ -97,9 +97,12 @@ namespace ELKH.Services
                     var hoursSinceLastNotification = (DateTime.UtcNow - product.LastNotificationSent.Value).TotalHours;
                     if (hoursSinceLastNotification < cooldownHours)
                     {
-                        _logger.LogInformation(
-                            "Skipping notifications for product {ProductId} - last sent {Hours:F1} hours ago (cooldown: {Cooldown} hours)",
-                            productId, hoursSinceLastNotification, cooldownHours);
+                        if (_logger.IsEnabled(LogLevel.Information))
+                        {
+                            _logger.LogInformation(
+                                "Skipping notifications for product {ProductId} - last sent {Hours:F1} hours ago (cooldown: {Cooldown} hours)",
+                                productId, hoursSinceLastNotification, cooldownHours);
+                        }
                         return;
                     }
                 }
@@ -113,14 +116,20 @@ namespace ELKH.Services
                               && !sn.IsCancelled)
                     .ToListAsync();
 
-                if (!notifications.Any())
+                if (notifications.Count == 0)
                 {
-                    _logger.LogInformation("No pending notifications for product {ProductId}", productId);
+                    if (_logger.IsEnabled(LogLevel.Information))
+                    {
+                        _logger.LogInformation("No pending notifications for product {ProductId}", productId);
+                    }
                     return;
                 }
 
-                _logger.LogInformation("Processing {Count} stock notifications for product {ProductId}",
-                    notifications.Count, productId);
+                if (_logger.IsEnabled(LogLevel.Information))
+                {
+                    _logger.LogInformation("Processing {Count} stock notifications for product {ProductId}",
+                        notifications.Count, productId);
+                }
 
                 foreach (var notification in notifications)
                 {
@@ -205,8 +214,11 @@ namespace ELKH.Services
                         notification.NotificationSent = true;
                         notification.SentAt = DateTime.UtcNow;
 
-                        _logger.LogInformation("Sent stock notification to {Email} for product {ProductName}",
-                            user.Email, notificationProduct.Name);
+                        if (_logger.IsEnabled(LogLevel.Information))
+                        {
+                            _logger.LogInformation("Sent stock notification to {Email} for product {ProductName}",
+                                user.Email, notificationProduct.Name);
+                        }
 
                         #endregion
                     }
@@ -218,8 +230,11 @@ namespace ELKH.Services
 
                     catch (Exception ex)
                     {
-                        _logger.LogError(ex, "Failed to send notification {NotificationId}",
-                            notification.PkStockNotificationId);
+                        if (_logger.IsEnabled(LogLevel.Error))
+                        {
+                            _logger.LogError(ex, "Failed to send notification {NotificationId}",
+                                notification.PkStockNotificationId);
+                        }
                     }
 
                     #endregion
@@ -229,11 +244,17 @@ namespace ELKH.Services
                 product.LastNotificationSent = DateTime.UtcNow;
 
                 await db.SaveChangesAsync();
-                _logger.LogInformation("Completed processing stock notifications for product {ProductId}", productId);
+                if (_logger.IsEnabled(LogLevel.Information))
+                {
+                    _logger.LogInformation("Completed processing stock notifications for product {ProductId}", productId);
+                }
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Error processing stock notifications for product {ProductId}", productId);
+                if (_logger.IsEnabled(LogLevel.Error))
+                {
+                    _logger.LogError(ex, "Error processing stock notifications for product {ProductId}", productId);
+                }
                 throw;
             }
         }

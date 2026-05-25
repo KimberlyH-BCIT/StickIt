@@ -12,12 +12,14 @@ namespace ELKH.Controllers
     [Authorize]
     public abstract class AuthenticatedControllerBase : BaseController
     {
-        protected readonly IUserService UserService;
+        private readonly IUserService _userService;
+
+        protected IUserService UserService => _userService;
 
         protected AuthenticatedControllerBase(ApplicationDbContext db, IUserService userService)
             : base(db)
         {
-            UserService = userService;
+            _userService = userService;
         }
 
         /// <summary>

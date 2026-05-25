@@ -559,7 +559,7 @@ namespace ELKH.Controllers
                 .OrderBy(c => c.CategoryName)
                 .Select(c => new SelectListItem
                 {
-                    Value = c.PkCategoryId.ToString(),
+                    Value = c.PkCategoryId.ToString(System.Globalization.CultureInfo.InvariantCulture),
                     Text = c.CategoryName,
                     Selected = selectedId.HasValue && c.PkCategoryId == selectedId.Value
                 }).ToList();

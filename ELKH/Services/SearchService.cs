@@ -22,6 +22,7 @@ public class SearchService : ISearchService
     private readonly ELKH.Services.FuzzyHelperService _fuzzyHelper;
     private readonly Microsoft.Extensions.Caching.Memory.IMemoryCache _cache;
     private readonly Microsoft.Extensions.Options.IOptions<ELKH.Configuration.SearchOptions> _searchOptions;
+    private static readonly char[] SearchTokenSeparators = [' '];
 
     /// <summary>
     /// Initializes a new instance of <see cref="SearchService"/>.
@@ -218,7 +219,7 @@ LIMIT 10;";
         // ─────────────────────────────────────────────────────────────
         var normQuery = normQ;
         var prefix = normQuery.Length >= 3 ? normQuery.Substring(0, 3) : normQuery;
-        var searchTokens = token.Split(new[] { ' ' }, StringSplitOptions.RemoveEmptyEntries);
+        var searchTokens = token.Split(SearchTokenSeparators, StringSplitOptions.RemoveEmptyEntries);
 
         // Pre-filter candidates using prefix, start-with, or tag matching
         var candidates = await _db.Products
@@ -301,7 +302,7 @@ LIMIT 10;";
     /// - "CAFÉ" → "cafe"
     /// - "naïve" → "naive"
     /// </remarks>
-    private string NormalizeName(string name)
+    private static string NormalizeName(string name)
     {
         if (string.IsNullOrEmpty(name)) return string.Empty;
 

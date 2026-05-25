@@ -27,7 +27,7 @@ namespace ELKH.Services
             _options = options.Value;
         }
 
-        public async Task SendEmailAsync(string[] to, string subject, string body, string? from = null)
+        public async Task SendEmailAsync(string[] recipients, string subject, string body, string? from = null)
         {
             var host = _options.Host;
             if (string.IsNullOrWhiteSpace(host))
@@ -42,7 +42,7 @@ namespace ELKH.Services
             var fromAddr = from ?? _options.From;
             var message = new MimeMessage();
             message.From.Add(MailboxAddress.Parse(fromAddr));
-            foreach (var address in to)
+            foreach (var address in recipients)
                 message.To.Add(MailboxAddress.Parse(address));
             message.Subject = subject;
             message.Body = new TextPart("html") { Text = body };

@@ -146,7 +146,7 @@ public class OrderController : AuthenticatedControllerBase
         }
 
         order.OrderStatus = ELKH.Models.OrderStatus.Cancelled;
-        await _db.SaveChangesAsync();
+        await DbContext.SaveChangesAsync();
 
         SetSuccessMessage("Your order has been cancelled.");
         return RedirectToAction(nameof(MyHistory));

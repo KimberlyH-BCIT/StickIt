@@ -118,7 +118,10 @@ public sealed class FuzzyReindexService : BackgroundService, IFuzzyReindexServic
                 .Where(name => !string.IsNullOrWhiteSpace(name))
                 .ToListAsync(cancellationToken);
 
-            _logger.LogInformation("Fuzzy reindex pass completed for {ProductCount} product names.", productNames.Count);
+            if (_logger.IsEnabled(LogLevel.Information))
+            {
+                _logger.LogInformation("Fuzzy reindex pass completed for {ProductCount} product names.", productNames.Count);
+            }
         }
         catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
         {
@@ -126,7 +129,10 @@ public sealed class FuzzyReindexService : BackgroundService, IFuzzyReindexServic
         }
         catch (Exception ex)
         {
-            _logger.LogWarning(ex, "Fuzzy reindex pass failed.");
+            if (_logger.IsEnabled(LogLevel.Warning))
+            {
+                _logger.LogWarning(ex, "Fuzzy reindex pass failed.");
+            }
             return;
         }
         finally

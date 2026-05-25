@@ -56,19 +56,22 @@ namespace ELKH.Services
             }
         }
 
-        public async Task SendEmailAsync(string[] to, string subject, string body, string? from = null)
+        public async Task SendEmailAsync(string[] recipients, string subject, string body, string? from = null)
         {
             var fileName = Path.Combine(_directory, $"email_{DateTime.UtcNow:yyyyMMdd_HHmmss_fff}_{Guid.NewGuid()}.eml.txt");
             var sb = new StringBuilder();
             sb.AppendLine(CultureInfo.InvariantCulture, $"From: {from ?? "no-reply@example.com"}");
-            sb.AppendLine(CultureInfo.InvariantCulture, $"To: {string.Join(", ", to)}");
+            sb.AppendLine(CultureInfo.InvariantCulture, $"To: {string.Join(", ", recipients)}");
             sb.AppendLine(CultureInfo.InvariantCulture, $"Subject: {subject}");
             sb.AppendLine(CultureInfo.InvariantCulture, $"Date: {DateTime.UtcNow:O}");
             sb.AppendLine();
             sb.AppendLine(body ?? string.Empty);
 
             await File.WriteAllTextAsync(fileName, sb.ToString());
-            _logger.LogInformation("Saved email to {Path}", fileName);
+            if (_logger.IsEnabled(LogLevel.Information))
+            {
+                _logger.LogInformation("Saved email to {Path}", fileName);
+            }
         }
 
         public Task SendEmailAsync(string email, string subject, string htmlMessage)

@@ -13,6 +13,6 @@ namespace ELKH.Services
         /// Implementations should degrade gracefully when transport is not configured
         /// (e.g., log and return rather than throw).
         /// </summary>
-        Task SendEmailAsync(string[] to, string subject, string body, string? from = null);
+        Task SendEmailAsync(string[] recipients, string subject, string body, string? from = null);
     }
 }

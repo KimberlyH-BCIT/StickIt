@@ -30,8 +30,10 @@ namespace ELKH.Controllers
         /// <summary>
         /// Initializes the role management controller with Identity managers.
         /// </summary>
+        /// <param name="adminRoleService">Orchestration service for role management operations</param>
         /// <param name="userManager">ASP.NET Core Identity user manager for user operations</param>
         /// <param name="roleManager">ASP.NET Core Identity role manager for role CRUD</param>
+        /// <param name="adminUserRoleService">Service for assigning and removing roles from users</param>
         public AdminRoleController(
             IAdminRoleOrchestrationService adminRoleService,
             UserManager<IdentityUser> userManager,

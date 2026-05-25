@@ -432,16 +432,16 @@ namespace ELKH.Controllers
         public async Task<IActionResult> TransactionDetail(int id)
         {
             var transaction = await _context.Transactions
-                .Include(t => t.Order)
-                    .ThenInclude(o => o.RegisteredUser)
-                .Include(t => t.Order)
-                    .ThenInclude(o => o.OrderItems)
-                        .ThenInclude(oi => oi.Product)
-                            .ThenInclude(p => p.Category)
-                .Include(t => t.Order)
-                    .ThenInclude(o => o.OrderItems)
-                        .ThenInclude(oi => oi.Product)
-                            .ThenInclude(p => p.ProductImage)
+                .Include(t => t.Order!)
+                    .ThenInclude(o => o.RegisteredUser!)
+                .Include(t => t.Order!)
+                    .ThenInclude(o => o.OrderItems!)
+                        .ThenInclude(oi => oi.Product!)
+                            .ThenInclude(p => p.Category!)
+                .Include(t => t.Order!)
+                    .ThenInclude(o => o.OrderItems!)
+                        .ThenInclude(oi => oi.Product!)
+                            .ThenInclude(p => p.ProductImage!)
                 .FirstOrDefaultAsync(t => t.PkTransactionId == id);
 
             if (transaction == null) return NotFound();
@@ -777,7 +777,7 @@ namespace ELKH.Controllers
 
             // Check for duplicate name
             var existingMethod = await _context.ShippingMethods
-                .FirstOrDefaultAsync(sm => sm.Name.ToLower(CultureInfo.InvariantCulture) == model.Name.ToLower(CultureInfo.InvariantCulture));
+                .FirstOrDefaultAsync(sm => sm.Name.Equals(model.Name, StringComparison.OrdinalIgnoreCase));
 
             if (existingMethod != null)
             {
@@ -903,7 +903,7 @@ namespace ELKH.Controllers
 
             // Check for duplicate name (excluding current record)
             var existingMethod = await _context.ShippingMethods
-                .FirstOrDefaultAsync(sm => sm.Name.ToLower() == model.Name.ToLower()
+                .FirstOrDefaultAsync(sm => sm.Name.Equals(model.Name, StringComparison.OrdinalIgnoreCase)
                                           && sm.PkShippingMethodId != model.PkShippingMethodId);
 
             if (existingMethod != null)
@@ -1126,7 +1126,7 @@ namespace ELKH.Controllers
             if (!ModelState.IsValid) return View(model);
 
             var existing = await _context.Categories
-                .FirstOrDefaultAsync(c => c.CategoryName.ToLower(CultureInfo.InvariantCulture) == model.CategoryName.ToLower(CultureInfo.InvariantCulture));
+                .FirstOrDefaultAsync(c => c.CategoryName.Equals(model.CategoryName, StringComparison.OrdinalIgnoreCase));
 
             if (existing != null)
             {
@@ -1162,7 +1162,7 @@ namespace ELKH.Controllers
 
             var duplicate = await _context.Categories
                 .FirstOrDefaultAsync(c =>
-                    c.CategoryName.ToLower(CultureInfo.InvariantCulture) == model.CategoryName.ToLower(CultureInfo.InvariantCulture) &&
+                    c.CategoryName.Equals(model.CategoryName, StringComparison.OrdinalIgnoreCase) &&
                     c.PkCategoryId != model.PkCategoryId);
 
             if (duplicate != null)

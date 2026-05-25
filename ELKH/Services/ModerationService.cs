@@ -1,4 +1,5 @@
 using System;
+using System.Globalization;
 using System.Linq;
 using System.Net;
 using System.Net.Mail;
@@ -79,8 +80,8 @@ namespace ELKH.Services
             {
                 // Prepare a helpful notification including direct links into the moderation console.
                 var product = await _db.Products.FindAsync(r.FkProductId);
-                var productName = product?.Name ?? r.FkProductId.ToString();
-                var subject = $"Review flagged for product '{productName}' (Id: {r.PkRatingId})";
+                var productName = product?.Name ?? r.FkProductId.ToString(CultureInfo.InvariantCulture);
+                var subject = string.Format(CultureInfo.InvariantCulture, "Review flagged for product '{0}' (Id: {1})", productName, r.PkRatingId);
 
                 // Security: Get validated base URL from configuration
                 // GetSafeBaseUrl ensures the URL is from trusted config, not user input

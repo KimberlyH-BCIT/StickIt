@@ -40,9 +40,9 @@ public class CartService : ICartService
         _shippingService = shippingService;
     }
 
-    public async Task ClearCartAsync(string userEmail)
+    public async Task ClearCartAsync(string email)
     {
-        var user = await _userService.GetByEmailAsync(userEmail);
+        var user = await _userService.GetByEmailAsync(email);
         if (user == null) return;
 
         var items = await _db.Carts

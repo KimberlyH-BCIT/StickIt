@@ -31,7 +31,10 @@ public class ShippingService : IShippingService
     /// </remarks>
     public async Task<List<ShippingMethodModel>> GetAvailableShippingMethodsAsync()
     {
-        _logger.LogDebug("Fetching available shipping methods");
+        if (_logger.IsEnabled(LogLevel.Debug))
+        {
+            _logger.LogDebug("Fetching available shipping methods");
+        }
 
         var methods = await _context.ShippingMethods
             .Where(sm => sm.IsActive)
@@ -39,7 +42,10 @@ public class ShippingService : IShippingService
             .AsNoTracking()
             .ToListAsync();
 
-        _logger.LogInformation("Retrieved {Count} active shipping methods", methods.Count);
+        if (_logger.IsEnabled(LogLevel.Information))
+        {
+            _logger.LogInformation("Retrieved {Count} active shipping methods", methods.Count);
+        }
         return methods;
     }
 
@@ -82,13 +88,19 @@ public class ShippingService : IShippingService
 
         if (isStandardShipping && meetsThreshold)
         {
-            _logger.LogInformation("Free shipping applied: Cart ${CartSubtotal} >= ${Threshold} with Standard Shipping",
-                cartSubtotal, freeShippingThreshold);
+            if (_logger.IsEnabled(LogLevel.Information))
+            {
+                _logger.LogInformation("Free shipping applied: Cart ${CartSubtotal} >= ${Threshold} with Standard Shipping",
+                    cartSubtotal, freeShippingThreshold);
+            }
             return 0m;
         }
 
-        _logger.LogDebug("Shipping cost: ${ShippingCost} for {ShippingMethod} (Cart: ${CartSubtotal})",
-            shippingMethod.BasePrice, shippingMethod.Name, cartSubtotal);
+        if (_logger.IsEnabled(LogLevel.Debug))
+        {
+            _logger.LogDebug("Shipping cost: ${ShippingCost} for {ShippingMethod} (Cart: ${CartSubtotal})",
+                shippingMethod.BasePrice, shippingMethod.Name, cartSubtotal);
+        }
 
         return shippingMethod.BasePrice;
     }
@@ -104,7 +116,10 @@ public class ShippingService : IShippingService
     /// </remarks>
     public async Task<ShippingMethodModel?> GetShippingMethodByIdAsync(int id)
     {
-        _logger.LogDebug("Fetching shipping method with ID {ShippingMethodId}", id);
+        if (_logger.IsEnabled(LogLevel.Debug))
+        {
+            _logger.LogDebug("Fetching shipping method with ID {ShippingMethodId}", id);
+        }
 
         return await _context.ShippingMethods
             .AsNoTracking()

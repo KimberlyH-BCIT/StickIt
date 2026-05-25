@@ -35,9 +35,9 @@ namespace ELKH.Services
         /// Implementation for the custom IEmailSender interface that supports
         /// multiple recipients and custom from addresses.
         /// </summary>
-        public Task SendEmailAsync(string[] to, string subject, string body, string? from = null)
+        public Task SendEmailAsync(string[] recipients, string subject, string body, string? from = null)
         {
-            return _sender.SendEmailAsync(to, subject, body, from);
+            return _sender.SendEmailAsync(recipients, subject, body, from);
         }
     }
 }

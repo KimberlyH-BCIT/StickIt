@@ -469,10 +469,13 @@ WHERE PkProductId NOT IN (SELECT rowid FROM ProductFTS);
                     _logger.LogWarning(ex, "Failed to persist CachedFuzzyKey removal for {Count} keys", keys.Count);
                 }
 
-                _logger.LogInformation(
-                    "Admin {Admin} cleared {Count} fuzzy cache entries",
-                    User.Identity?.Name ?? "unknown",
-                    registryCount);
+                if (_logger.IsEnabled(LogLevel.Information))
+                {
+                    _logger.LogInformation(
+                        "Admin {Admin} cleared {Count} fuzzy cache entries",
+                        User.Identity?.Name ?? "unknown",
+                        registryCount);
+                }
 
                 await TryWriteCacheClearAuditEntryAsync(keys, registryCount, reason);
             }

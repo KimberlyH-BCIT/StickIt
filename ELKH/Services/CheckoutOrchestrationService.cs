@@ -372,7 +372,7 @@ public sealed class CheckoutOrchestrationService(
         model.Total = model.Subtotal + model.Tax + model.ShippingCost;
     }
 
-    private void ApplyDefaultAddress(CheckoutVM model)
+    private static void ApplyDefaultAddress(CheckoutVM model)
     {
         var defaultAddress = model.SavedAddresses.FirstOrDefault(a => a.IsDefault);
         if (defaultAddress == null)

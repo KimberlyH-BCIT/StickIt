@@ -64,12 +64,18 @@ namespace ELKH.Services
                 _db.StoreReviews.Add(review);
                 await _db.SaveChangesAsync(ct);
 
-                _logger.LogInformation("Store review submitted by user {UserId} (Verified: {IsVerified})", userId, isVerified);
+                if (_logger.IsEnabled(LogLevel.Information))
+                {
+                    _logger.LogInformation("Store review submitted by user {UserId} (Verified: {IsVerified})", userId, isVerified);
+                }
                 return true;
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Error submitting store review for user {UserId}", userId);
+                if (_logger.IsEnabled(LogLevel.Error))
+                {
+                    _logger.LogError(ex, "Error submitting store review for user {UserId}", userId);
+                }
                 return false;
             }
         }
@@ -116,7 +122,10 @@ namespace ELKH.Services
 
                 if (review == null)
                 {
-                    _logger.LogWarning("Review {ReviewId} not found or user {UserId} doesn't own it", reviewId, userId);
+                    if (_logger.IsEnabled(LogLevel.Warning))
+                    {
+                        _logger.LogWarning("Review {ReviewId} not found or user {UserId} doesn't own it", reviewId, userId);
+                    }
                     return false;
                 }
 
@@ -128,12 +137,18 @@ namespace ELKH.Services
 
                 await _db.SaveChangesAsync(ct);
 
-                _logger.LogInformation("Store review {ReviewId} updated by user {UserId}", reviewId, userId);
+                if (_logger.IsEnabled(LogLevel.Information))
+                {
+                    _logger.LogInformation("Store review {ReviewId} updated by user {UserId}", reviewId, userId);
+                }
                 return true;
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Error updating store review {ReviewId} for user {UserId}", reviewId, userId);
+                if (_logger.IsEnabled(LogLevel.Error))
+                {
+                    _logger.LogError(ex, "Error updating store review {ReviewId} for user {UserId}", reviewId, userId);
+                }
                 return false;
             }
         }
@@ -149,7 +164,10 @@ namespace ELKH.Services
 
                 if (review == null)
                 {
-                    _logger.LogWarning("Review {ReviewId} not found or user {UserId} doesn't own it", reviewId, userId);
+                    if (_logger.IsEnabled(LogLevel.Warning))
+                    {
+                        _logger.LogWarning("Review {ReviewId} not found or user {UserId} doesn't own it", reviewId, userId);
+                    }
                     return false;
                 }
 
@@ -157,7 +175,10 @@ namespace ELKH.Services
                 review.DeletedAt = DateTime.UtcNow;
                 await _db.SaveChangesAsync(ct);
 
-                _logger.LogInformation("Store review {ReviewId} soft-deleted by user {UserId}", reviewId, userId);
+                if (_logger.IsEnabled(LogLevel.Information))
+                {
+                    _logger.LogInformation("Store review {ReviewId} soft-deleted by user {UserId}", reviewId, userId);
+                }
                 return true;
             }
             catch (Exception ex)
@@ -191,7 +212,10 @@ namespace ELKH.Services
             review.Approved = true;
             await _db.SaveChangesAsync(ct);
 
-            _logger.LogInformation("Store review {ReviewId} approved", reviewId);
+                if (_logger.IsEnabled(LogLevel.Information))
+                {
+                    _logger.LogInformation("Store review {ReviewId} approved", reviewId);
+                }
             return true;
         }
 
@@ -208,7 +232,10 @@ namespace ELKH.Services
             review.DeletedAt = DateTime.UtcNow;
             await _db.SaveChangesAsync(ct);
 
-            _logger.LogInformation("Store review {ReviewId} admin-deleted", reviewId);
+            if (_logger.IsEnabled(LogLevel.Information))
+            {
+                _logger.LogInformation("Store review {ReviewId} admin-deleted", reviewId);
+            }
             return true;
         }
     }

@@ -35,41 +35,59 @@ public class CouponService(ApplicationDbContext context, ILogger<CouponService> 
 
         if (coupon == null)
         {
-            logger.LogInformation("Coupon validation failed: Code '{CouponCode}' not found", couponCode);
+            if (logger.IsEnabled(LogLevel.Information))
+            {
+                logger.LogInformation("Coupon validation failed: Code '{CouponCode}' not found", couponCode);
+            }
             return null;
         }
 
         // Check if coupon is active
         if (!coupon.IsActive)
         {
-            logger.LogInformation("Coupon validation failed: Code '{CouponCode}' is inactive", couponCode);
+            if (logger.IsEnabled(LogLevel.Information))
+            {
+                logger.LogInformation("Coupon validation failed: Code '{CouponCode}' is inactive", couponCode);
+            }
             return null;
         }
 
         // Check expiration dates
         if (IsExpired(coupon))
         {
-            logger.LogInformation("Coupon validation failed: Code '{CouponCode}' is expired", couponCode);
+            if (logger.IsEnabled(LogLevel.Information))
+            {
+                logger.LogInformation("Coupon validation failed: Code '{CouponCode}' is expired", couponCode);
+            }
             return null;
         }
 
         // Check usage limits
         if (!HasUsageRemaining(coupon))
         {
-            logger.LogInformation("Coupon validation failed: Code '{CouponCode}' usage limit exceeded", couponCode);
+            if (logger.IsEnabled(LogLevel.Information))
+            {
+                logger.LogInformation("Coupon validation failed: Code '{CouponCode}' usage limit exceeded", couponCode);
+            }
             return null;
         }
 
         // Check minimum order value
         if (orderSubtotal < coupon.MinimumOrderValue)
         {
-            logger.LogInformation("Coupon validation failed: Order subtotal {Subtotal:C} is below minimum {MinOrder:C} for coupon '{CouponCode}'",
-                orderSubtotal, coupon.MinimumOrderValue, couponCode);
+            if (logger.IsEnabled(LogLevel.Information))
+            {
+                logger.LogInformation("Coupon validation failed: Order subtotal {Subtotal:C} is below minimum {MinOrder:C} for coupon '{CouponCode}'",
+                    orderSubtotal, coupon.MinimumOrderValue, couponCode);
+            }
             return null;
         }
 
-        logger.LogInformation("Coupon validation successful: Code '{CouponCode}' is valid for order subtotal {Subtotal:C}",
-            couponCode, orderSubtotal);
+        if (logger.IsEnabled(LogLevel.Information))
+        {
+            logger.LogInformation("Coupon validation successful: Code '{CouponCode}' is valid for order subtotal {Subtotal:C}",
+                couponCode, orderSubtotal);
+        }
         return coupon;
     }
 
@@ -93,8 +111,11 @@ public class CouponService(ApplicationDbContext context, ILogger<CouponService> 
                 if (coupon.MaxDiscountAmount.HasValue && discountAmount > coupon.MaxDiscountAmount.Value)
                 {
                     discountAmount = coupon.MaxDiscountAmount.Value;
-                    logger.LogInformation("Percentage discount capped at {MaxDiscount:C} for coupon '{CouponCode}'",
-                        coupon.MaxDiscountAmount.Value, coupon.Code);
+                    if (logger.IsEnabled(LogLevel.Information))
+                    {
+                        logger.LogInformation("Percentage discount capped at {MaxDiscount:C} for coupon '{CouponCode}'",
+                            coupon.MaxDiscountAmount.Value, coupon.Code);
+                    }
                 }
                 break;
 
@@ -109,17 +130,23 @@ public class CouponService(ApplicationDbContext context, ILogger<CouponService> 
                 break;
 
             default:
-                logger.LogWarning("Unknown discount type '{DiscountType}' for coupon '{CouponCode}'",
-                    coupon.DiscountType, coupon.Code);
+                if (logger.IsEnabled(LogLevel.Warning))
+                {
+                    logger.LogWarning("Unknown discount type '{DiscountType}' for coupon '{CouponCode}'",
+                        coupon.DiscountType, coupon.Code);
+                }
                 break;
         }
 
         // Ensure discount doesn't exceed order subtotal + shipping
-        var maxPossibleDiscount = orderSubtotal + (coupon.DiscountType.ToUpperInvariant() == "FREESHIPPING" ? shippingCost : 0);
+        var maxPossibleDiscount = orderSubtotal + (string.Equals(coupon.DiscountType, "FREESHIPPING", StringComparison.OrdinalIgnoreCase) ? shippingCost : 0);
         discountAmount = Math.Min(discountAmount, maxPossibleDiscount);
 
-        logger.LogInformation("Calculated discount amount {DiscountAmount:C} for coupon '{CouponCode}' on order {Subtotal:C}",
-            discountAmount, coupon.Code, orderSubtotal);
+        if (logger.IsEnabled(LogLevel.Information))
+        {
+            logger.LogInformation("Calculated discount amount {DiscountAmount:C} for coupon '{CouponCode}' on order {Subtotal:C}",
+                discountAmount, coupon.Code, orderSubtotal);
+        }
 
         return Math.Max(0, discountAmount); // Ensure non-negative
     }
@@ -156,8 +183,11 @@ public class CouponService(ApplicationDbContext context, ILogger<CouponService> 
 
         await context.SaveChangesAsync();
 
-        logger.LogInformation("Recorded coupon usage: Coupon {CouponId} used in order {OrderId} for discount {DiscountAmount:C}",
-            couponId, orderId, discountAmount);
+        if (logger.IsEnabled(LogLevel.Information))
+        {
+            logger.LogInformation("Recorded coupon usage: Coupon {CouponId} used in order {OrderId} for discount {DiscountAmount:C}",
+                couponId, orderId, discountAmount);
+        }
     }
 
     /// <summary>
@@ -258,8 +288,11 @@ public class CouponService(ApplicationDbContext context, ILogger<CouponService> 
         context.Coupons.Add(coupon);
         await context.SaveChangesAsync();
 
-        logger.LogInformation("Created new coupon: {CouponCode} ({DiscountType}: {DiscountValue})",
-            coupon.Code, coupon.DiscountType, coupon.DiscountValue);
+        if (logger.IsEnabled(LogLevel.Information))
+        {
+            logger.LogInformation("Created new coupon: {CouponCode} ({DiscountType}: {DiscountValue})",
+                coupon.Code, coupon.DiscountType, coupon.DiscountValue);
+        }
 
         return coupon;
     }
@@ -279,7 +312,10 @@ public class CouponService(ApplicationDbContext context, ILogger<CouponService> 
         context.Coupons.Update(coupon);
         await context.SaveChangesAsync();
 
-        logger.LogInformation("Updated coupon: {CouponCode}", coupon.Code);
+        if (logger.IsEnabled(LogLevel.Information))
+        {
+            logger.LogInformation("Updated coupon: {CouponCode}", coupon.Code);
+        }
     }
 
     /// <summary>
@@ -294,7 +330,10 @@ public class CouponService(ApplicationDbContext context, ILogger<CouponService> 
             coupon.UpdatedAt = DateTime.UtcNow;
             await context.SaveChangesAsync();
 
-            logger.LogInformation("Deactivated coupon: {CouponCode}", coupon.Code);
+            if (logger.IsEnabled(LogLevel.Information))
+            {
+                logger.LogInformation("Deactivated coupon: {CouponCode}", coupon.Code);
+            }
         }
     }
 

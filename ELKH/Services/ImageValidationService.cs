@@ -146,7 +146,7 @@ public class ImageValidationService
         {
             using var stream = file.OpenReadStream();
             var header = new byte[8]; // Read first 8 bytes for signature check
-            var bytesRead = await stream.ReadAsync(header, 0, header.Length);
+            var bytesRead = await stream.ReadAsync(header.AsMemory(0, header.Length));
 
             if (bytesRead < header.Length)
             {
@@ -157,8 +157,11 @@ public class ImageValidationService
             if (!ValidateMagicBytes(header, extension))
             {
                 result.Errors.Add($"File signature does not match expected format for {extension} files. The file may be corrupted or disguised as an image.");
-                _logger.LogWarning("Magic byte validation failed for file {FileName} with extension {Extension}",
-                    file.FileName, extension);
+                if (_logger.IsEnabled(LogLevel.Warning))
+                {
+                    _logger.LogWarning("Magic byte validation failed for file {FileName} with extension {Extension}",
+                        file.FileName, extension);
+                }
                 return result;
             }
 
@@ -172,7 +175,10 @@ public class ImageValidationService
             if (!TryReadImageDimensions(stream, extension, out var imageWidth, out var imageHeight))
             {
                 result.Errors.Add("File is not a valid image or is corrupted.");
-                _logger.LogWarning("Failed to read image dimensions from file {FileName}", file.FileName);
+                if (_logger.IsEnabled(LogLevel.Warning))
+                {
+                    _logger.LogWarning("Failed to read image dimensions from file {FileName}", file.FileName);
+                }
                 return result;
             }
 
@@ -188,7 +194,10 @@ public class ImageValidationService
         catch (Exception ex)
         {
             result.Errors.Add("An error occurred while validating the file.");
-            _logger.LogError(ex, "Unexpected error during image validation for file {FileName}", file.FileName);
+            if (_logger.IsEnabled(LogLevel.Error))
+            {
+                _logger.LogError(ex, "Unexpected error during image validation for file {FileName}", file.FileName);
+            }
             return result;
         }
 
@@ -241,7 +250,7 @@ public class ImageValidationService
     /// The method supports multiple signatures per format (e.g., GIF87a and GIF89a)
     /// and performs byte-by-byte comparison for exact matching.
     /// </remarks>
-    private bool ValidateMagicBytes(byte[] fileHeader, string extension)
+    private static bool ValidateMagicBytes(byte[] fileHeader, string extension)
     {
         if (!MagicBytes.TryGetValue(extension, out var signatures))
             return false;
@@ -494,7 +503,7 @@ public class ImageValidationService
     /// <item>"Product@#$%Image" â†’ "ProductImage"</item>
     /// </list>
     /// </remarks>
-    private string SanitizeFileName(string fileName)
+    private static string SanitizeFileName(string fileName)
     {
         if (string.IsNullOrWhiteSpace(fileName))
             return $"image_{Guid.NewGuid():N}";

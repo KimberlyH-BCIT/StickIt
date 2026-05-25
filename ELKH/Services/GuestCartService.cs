@@ -123,7 +123,10 @@ namespace ELKH.Services
             }
 
             SaveCartToSession(cart);
-            _logger.LogInformation("Guest added product {ProductId} (qty: {Quantity}) to session cart", productId, quantity);
+            if (_logger.IsEnabled(LogLevel.Information))
+            {
+                _logger.LogInformation("Guest added product {ProductId} (qty: {Quantity}) to session cart", productId, quantity);
+            }
         }
 
         /// <summary>
@@ -140,7 +143,10 @@ namespace ELKH.Services
             if (item == null)
             {
                 // Item not in cart - this is acceptable, just log and return
-                _logger.LogWarning("Attempted to update quantity for product {ProductId} not in cart", productId);
+                if (_logger.IsEnabled(LogLevel.Warning))
+                {
+                    _logger.LogWarning("Attempted to update quantity for product {ProductId} not in cart", productId);
+                }
                 return;
             }
 
@@ -148,12 +154,18 @@ namespace ELKH.Services
             if (newQuantity == 0)
             {
                 cart.Remove(item);
-                _logger.LogInformation("Guest removed product {ProductId} from cart (quantity set to 0)", productId);
+                if (_logger.IsEnabled(LogLevel.Information))
+                {
+                    _logger.LogInformation("Guest removed product {ProductId} from cart (quantity set to 0)", productId);
+                }
             }
             else
             {
                 item.Quantity = newQuantity;
-                _logger.LogInformation("Guest updated product {ProductId} quantity to {Quantity}", productId, newQuantity);
+                if (_logger.IsEnabled(LogLevel.Information))
+                {
+                    _logger.LogInformation("Guest updated product {ProductId} quantity to {Quantity}", productId, newQuantity);
+                }
             }
 
             SaveCartToSession(cart);
@@ -168,7 +180,10 @@ namespace ELKH.Services
             cart.RemoveAll(i => i.ProductId == productId);
             SaveCartToSession(cart);
 
-            _logger.LogInformation("Guest removed product {ProductId} from session cart", productId);
+            if (_logger.IsEnabled(LogLevel.Information))
+            {
+                _logger.LogInformation("Guest removed product {ProductId} from session cart", productId);
+            }
         }
 
         /// <summary>
@@ -177,7 +192,10 @@ namespace ELKH.Services
         public async Task ClearCartAsync()
         {
             Session.Remove(CART_SESSION_KEY);
-            _logger.LogInformation("Guest cart cleared");
+            if (_logger.IsEnabled(LogLevel.Information))
+            {
+                _logger.LogInformation("Guest cart cleared");
+            }
         }
 
         #endregion
@@ -214,7 +232,10 @@ namespace ELKH.Services
             {
                 if (!products.TryGetValue(item.ProductId, out var product))
                 {
-                    _logger.LogWarning("Product {ProductId} in guest cart not found in database", item.ProductId);
+                    if (_logger.IsEnabled(LogLevel.Warning))
+                    {
+                        _logger.LogWarning("Product {ProductId} in guest cart not found in database", item.ProductId);
+                    }
                     continue;
                 }
 
@@ -261,7 +282,10 @@ namespace ELKH.Services
             if (cart.Count == 0)
                 return;
 
-            _logger.LogInformation("Migrating {Count} items from guest cart to user {Email}", cart.Count, userEmail);
+            if (_logger.IsEnabled(LogLevel.Information))
+            {
+                _logger.LogInformation("Migrating {Count} items from guest cart to user {Email}", cart.Count, userEmail);
+            }
 
             foreach (var item in cart)
             {
@@ -271,7 +295,10 @@ namespace ELKH.Services
                 }
                 catch (Exception ex)
                 {
-                    _logger.LogError(ex, "Failed to migrate cart item {ProductId} for user {Email}", item.ProductId, userEmail);
+                    if (_logger.IsEnabled(LogLevel.Error))
+                    {
+                        _logger.LogError(ex, "Failed to migrate cart item {ProductId} for user {Email}", item.ProductId, userEmail);
+                    }
                 }
             }
 
@@ -303,7 +330,10 @@ namespace ELKH.Services
             }
             catch (JsonException ex)
             {
-                _logger.LogError(ex, "Failed to deserialize guest cart from session");
+                if (_logger.IsEnabled(LogLevel.Error))
+                {
+                    _logger.LogError(ex, "Failed to deserialize guest cart from session");
+                }
                 return new List<SessionCartItem>();
             }
         }
@@ -320,7 +350,7 @@ namespace ELKH.Services
         /// <summary>
         /// Internal class for session cart storage
         /// </summary>
-        private class SessionCartItem
+        private sealed class SessionCartItem
         {
             public int ProductId { get; set; }
             public int Quantity { get; set; }
