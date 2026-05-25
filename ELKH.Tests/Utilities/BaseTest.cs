@@ -14,10 +14,21 @@ using ELKH.Models;
 
 namespace ELKH.Tests.Utilities;
 
+// TABLE OF CONTENTS
+// - Database setup and teardown helpers
+// - Authentication and controller helpers
+// - Identity manager mocks
+// - Test data factory helpers
+
 /// <summary>
-/// Base test class providing common utilities, database setup, and mocking infrastructure
-/// for all test classes in the ELKH test suite.
+/// Base test class providing shared database setup, authentication helpers, and mocking utilities.
 /// </summary>
+/// <remarks>
+/// 1. Database setup and teardown helpers
+/// 2. Authentication and controller helpers
+/// 3. Identity manager mocks
+/// 4. Test data factory helpers
+/// </remarks>
 public abstract class BaseTest : IDisposable
 {
     protected readonly ApplicationDbContext _context;

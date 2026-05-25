@@ -8,6 +8,9 @@ using Xunit;
 
 namespace ELKH.Tests.Unit.Data;
 
+/// <summary>
+/// Unit tests for the user and role seeding guardrails.
+/// </summary>
 public class DbSeederUsersTests : IDisposable
 {
     private readonly string _databaseName = $"DbSeederUsersTests_{Guid.NewGuid():N}";

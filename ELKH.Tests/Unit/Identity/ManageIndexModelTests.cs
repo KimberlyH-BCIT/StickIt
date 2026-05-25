@@ -13,6 +13,9 @@ using Xunit;
 
 namespace ELKH.Tests.Unit.Identity;
 
+/// <summary>
+/// Unit tests for the Identity manage index page model.
+/// </summary>
 public class ManageIndexModelTests
 {
     [Fact]

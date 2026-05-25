@@ -23,6 +23,21 @@ using Xunit;
 
 namespace ELKH.Tests.Unit.Identity;
 
+// TABLE OF CONTENTS
+// - Customer role creation tests
+// - Existing role and role-assignment tests
+// - Failure-path registration tests
+// - Test context and Identity helper setup
+
+/// <summary>
+/// Unit tests for the Identity registration page model.
+/// </summary>
+/// <remarks>
+/// 1. Customer role creation tests
+/// 2. Existing role and role-assignment tests
+/// 3. Failure-path registration tests
+/// 4. Test context and Identity helper setup
+/// </remarks>
 public class RegisterModelTests : IDisposable
 {
     private readonly string _databaseName = $"RegisterModelTests_{Guid.NewGuid():N}";

@@ -10,6 +10,14 @@ using ELKH.ViewModels;
 
 namespace ELKH.Tests.Unit.Services;
 
+// TABLE OF CONTENTS
+// - ProcessPaymentAsync tests
+// - ProcessGuestPaymentAsync tests
+// - Shared checkout setup and defaults
+
+/// <summary>
+/// Unit tests for checkout orchestration and payment processing workflows.
+/// </summary>
 public class CheckoutOrchestrationServiceTests : IDisposable
 {
     private readonly ApplicationDbContext _context;
@@ -163,6 +171,65 @@ public class CheckoutOrchestrationServiceTests : IDisposable
         _mockOrderEmailService.Verify(
             e => e.SendOrderConfirmationAsync("guest@example.com", "Jane", It.IsAny<int>(), It.Is<string>(link => link.Contains("/Checkout/GuestConfirmation?token="))),
             Times.Once);
+    }
+
+    [Fact]
+    public async Task GetGuestOrderByAccessTokenAsync_WithMatchingToken_ShouldReturnGuestOrderWithDetails()
+    {
+        var token = "guest-token-123";
+        var hash = Convert.ToBase64String(System.Security.Cryptography.SHA256.HashData(System.Text.Encoding.UTF8.GetBytes(token)));
+
+        var contact = new ContactDetailModel
+        {
+            PkContactId = 1,
+            FirstName = "Guest",
+            LastName = "Buyer",
+            PhoneNumber = "604-555-0100",
+            Street = "123 Test St",
+            City = "Vancouver",
+            Province = "BC",
+            PostCode = "V6B 1A1",
+            Country = "Canada"
+        };
+
+        var order = new OrderModel
+        {
+            PkOrderId = 42,
+            FkContactId = contact.PkContactId,
+            ContactDetail = contact,
+            GuestAccessTokenHash = hash,
+            FkRegisteredUserId = null,
+            OrderItems = new List<OrderItemModel>
+            {
+                new()
+                {
+                    FkOrderId = 42,
+                    FkProductId = 1,
+                    Product = _context.Products.Single(p => p.PkProductId == 1),
+                    Quantity = 1,
+                    UnitPrice = 15.99m
+                }
+            }
+        };
+
+        _context.ContactDetails.Add(contact);
+        _context.Orders.Add(order);
+        await _context.SaveChangesAsync();
+
+        var result = await _service.GetGuestOrderByAccessTokenAsync(token);
+
+        result.Should().NotBeNull();
+        result!.PkOrderId.Should().Be(42);
+        result.ContactDetail.Should().NotBeNull();
+        result.OrderItems.Should().HaveCount(1);
+    }
+
+    [Fact]
+    public async Task GetGuestOrderByAccessTokenAsync_WithEmptyToken_ShouldReturnNull()
+    {
+        var result = await _service.GetGuestOrderByAccessTokenAsync(string.Empty);
+
+        result.Should().BeNull();
     }
 
     private void ConfigureDefaults()

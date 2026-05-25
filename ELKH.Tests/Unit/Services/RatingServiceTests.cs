@@ -7,6 +7,9 @@ using Xunit;
 
 namespace ELKH.Tests.Unit.Services;
 
+/// <summary>
+/// Unit tests for rating approval and retrieval behavior.
+/// </summary>
 public class RatingServiceTests : IDisposable
 {
     private readonly ApplicationDbContext _context;

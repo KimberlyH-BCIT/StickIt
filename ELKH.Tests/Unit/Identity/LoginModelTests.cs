@@ -18,6 +18,21 @@ using Xunit;
 
 namespace ELKH.Tests.Unit.Identity;
 
+// TABLE OF CONTENTS
+// - Production lockout tests
+// - Development lockout tests
+// - Roleless user tests
+// - Two-factor and lockout redirect tests
+
+/// <summary>
+/// Unit tests for the Identity login page model covering sign-in and lockout behavior.
+/// </summary>
+/// <remarks>
+/// 1. Production lockout tests
+/// 2. Development lockout tests
+/// 3. Roleless user tests
+/// 4. Two-factor and lockout redirect tests
+/// </remarks>
 public class LoginModelTests
 {
     [Fact]
@@ -173,6 +188,35 @@ public class LoginModelTests
 
         var redirect = result.Should().BeOfType<RedirectToPageResult>().Subject;
         redirect.PageName.Should().Be("./Lockout");
+    }
+
+    [Fact]
+    public async Task OnPostAsync_WithInvalidReCaptcha_ShouldReturnPageErrorWithoutPasswordSignIn()
+    {
+        var userManager = CreateMockUserManager();
+        var signInManager = CreateMockSignInManager(userManager.Object);
+        var logger = new Mock<ILogger<LoginModel>>();
+        var recaptcha = new Mock<IReCaptchaService>();
+        recaptcha.Setup(r => r.VerifyAsync(It.IsAny<string>(), It.IsAny<string>())).ReturnsAsync(false);
+        signInManager.Setup(s => s.GetExternalAuthenticationSchemesAsync())
+            .ReturnsAsync(new List<Microsoft.AspNetCore.Authentication.AuthenticationScheme>());
+
+        var environment = new Mock<IWebHostEnvironment>();
+        environment.SetupGet(e => e.EnvironmentName).Returns(Environments.Production);
+
+        var model = CreateModel(signInManager.Object, logger.Object, recaptcha.Object, environment.Object);
+        model.Input = new LoginModel.InputModel
+        {
+            Email = "user@example.com",
+            Password = "password",
+            RememberMe = true
+        };
+
+        var result = await model.OnPostAsync();
+
+        result.Should().BeOfType<PageResult>();
+        signInManager.Verify(s => s.PasswordSignInAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<bool>(), It.IsAny<bool>()), Times.Never);
+        model.ModelState["ReCaptcha"]!.Errors.Should().ContainSingle(error => error.ErrorMessage == "Please complete the reCAPTCHA.");
     }
 
     private static LoginModel CreateModel(

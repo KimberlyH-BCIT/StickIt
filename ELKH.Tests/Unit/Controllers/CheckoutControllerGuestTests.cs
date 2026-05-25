@@ -19,10 +19,22 @@ using ELKH.ViewModels;
 
 namespace ELKH.Tests.Unit.Controllers;
 
+// TABLE OF CONTENTS
+// - Guest GET tests
+// - Guest payment processing tests
+// - Guest confirmation tests
+// - Helper setup and seed data
+
 /// <summary>
 /// Unit tests for CheckoutController guest checkout functionality.
 /// Tests guest checkout flow, order creation, and confirmation.
 /// </summary>
+/// <remarks>
+/// 1. Guest GET tests
+/// 2. Guest payment processing tests
+/// 3. Guest confirmation tests
+/// 4. Helper setup and seed data
+/// </remarks>
 public class CheckoutControllerGuestTests : IDisposable
 {
     private readonly ApplicationDbContext _context;

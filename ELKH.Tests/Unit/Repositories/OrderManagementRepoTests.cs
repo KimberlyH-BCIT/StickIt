@@ -10,6 +10,11 @@ using ELKH.ViewModels;
 
 namespace ELKH.Tests.Unit.Repositories;
 
+// TABLE OF CONTENTS
+// - GetOrders tests
+// - Order detail tests
+// - Tracking tests
+
 /// <summary>
 /// Unit tests for OrderManagementRepo functionality.
 /// Tests order retrieval and management operations with in-memory database.

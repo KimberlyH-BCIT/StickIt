@@ -15,6 +15,19 @@ using Xunit;
 
 namespace ELKH.Tests.Unit.Middleware;
 
+// TABLE OF CONTENTS
+// - Correlation ID middleware tests
+// - Correlation ID extension tests
+// - Global exception middleware tests
+
+/// <summary>
+/// Unit tests covering correlation ID and global exception middleware behavior.
+/// </summary>
+/// <remarks>
+/// 1. Correlation ID middleware tests
+/// 2. Correlation ID extension tests
+/// 3. Global exception middleware tests
+/// </remarks>
 public class MiddlewareCoverageTests
 {
     [Fact]

@@ -16,6 +16,9 @@ using Xunit;
 
 namespace ELKH.Tests.Unit.Controllers;
 
+/// <summary>
+/// Unit tests for wishlist controller actions and Ajax responses.
+/// </summary>
 public class WishlistControllerTests
 {
     private readonly Mock<IWishlistService> _mockWishlistService = new();

@@ -7,10 +7,20 @@ using Microsoft.Extensions.Logging.Abstractions;
 
 namespace ELKH.Tests.Unit.Services
 {
+    // TABLE OF CONTENTS
+    // - GetAvailableShippingMethodsAsync tests
+    // - GetShippingMethodByIdAsync tests
+    // - CalculateShippingCostAsync tests
+
     /// <summary>
     /// Unit tests for ShippingService business logic.
     /// Tests shipping method retrieval, cost calculation, and free shipping threshold rules.
     /// </summary>
+    /// <remarks>
+    /// 1. GetAvailableShippingMethodsAsync tests
+    /// 2. GetShippingMethodByIdAsync tests
+    /// 3. CalculateShippingCostAsync tests
+    /// </remarks>
     public class ShippingServiceTests : IDisposable
     {
         private readonly ApplicationDbContext _context;

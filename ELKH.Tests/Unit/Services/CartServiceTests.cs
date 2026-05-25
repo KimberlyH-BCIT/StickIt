@@ -3,10 +3,22 @@ using Microsoft.Extensions.Logging.Abstractions;
 
 namespace ELKH.Tests.Unit.Services;
 
+// TABLE OF CONTENTS
+// - AddToCartAsync tests
+// - RemoveFromCartAsync tests
+// - GetCartItemsAsync tests
+// - ClearCartAsync tests
+
 /// <summary>
 /// Unit tests for CartService with mocked dependencies.
 /// Tests cart operations including add, remove, and order placement.
 /// </summary>
+/// <remarks>
+/// 1. AddToCartAsync tests
+/// 2. RemoveFromCartAsync tests
+/// 3. GetCartItemsAsync tests
+/// 4. ClearCartAsync tests
+/// </remarks>
 public class CartServiceTests
 {
     private readonly ApplicationDbContext _context;

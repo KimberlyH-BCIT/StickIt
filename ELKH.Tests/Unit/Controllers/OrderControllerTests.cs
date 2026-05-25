@@ -18,10 +18,22 @@ using Microsoft.EntityFrameworkCore;
 
 namespace ELKH.Tests.Unit.Controllers;
 
+// TABLE OF CONTENTS
+// - Index tests
+// - MyHistory tests
+// - Details tests
+// - Helper authentication setup
+
 /// <summary>
 /// Unit tests for OrderController functionality.
 /// Tests order management, history, and tracking operations.
 /// </summary>
+/// <remarks>
+/// 1. Index tests
+/// 2. MyHistory tests
+/// 3. Details tests
+/// 4. Helper authentication setup
+/// </remarks>
 public class OrderControllerTests
 {
     private readonly Mock<IOrderManagementRepo> _mockOrderManagementRepo;

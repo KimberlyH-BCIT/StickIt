@@ -4,10 +4,24 @@ using Microsoft.Extensions.Logging.Abstractions;
 
 namespace ELKH.Tests.Unit.Services;
 
+// TABLE OF CONTENTS
+// - GetAllAsync tests
+// - GetByIdAsync tests
+// - SearchNames tests
+// - CreateAsync tests
+// - UpdateAsync tests
+
 /// <summary>
 /// Unit tests for ProductService with mocked dependencies.
 /// Tests business logic without database dependencies using in-memory database.
 /// </summary>
+/// <remarks>
+/// 1. GetAllAsync tests
+/// 2. GetByIdAsync tests
+/// 3. SearchNames tests
+/// 4. CreateAsync tests
+/// 5. UpdateAsync tests
+/// </remarks>
 public class ProductServiceTests
 {
     private readonly ApplicationDbContext _context;

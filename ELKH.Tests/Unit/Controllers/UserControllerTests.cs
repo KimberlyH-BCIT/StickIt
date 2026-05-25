@@ -18,6 +18,23 @@ using Microsoft.EntityFrameworkCore;
 
 namespace ELKH.Tests.Unit.Controllers;
 
+// TABLE OF CONTENTS
+// - Index tests
+// - EditProfile tests
+// - Addresses tests
+// - AddAddress tests
+// - DeleteAddress tests
+
+/// <summary>
+/// Unit tests for user dashboard and profile management workflows.
+/// </summary>
+/// <remarks>
+/// 1. Index tests
+/// 2. EditProfile tests
+/// 3. Addresses tests
+/// 4. AddAddress tests
+/// 5. DeleteAddress tests
+/// </remarks>
 public class UserControllerTests
 {
     private readonly Mock<IRegisteredUserProfileRepo> _mockUserProfileRepo;

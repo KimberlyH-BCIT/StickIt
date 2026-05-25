@@ -21,6 +21,21 @@ using ELKH.ViewModels;
 
 namespace ELKH.Tests.Unit.Controllers;
 
+// TABLE OF CONTENTS
+// - ProcessPayment validation
+// - ProcessPayment rejection paths
+// - ProcessPayment success paths
+// - Helper setup and seed data
+
+/// <summary>
+/// Unit tests for the checkout controller covering payment and checkout decision paths.
+/// </summary>
+/// <remarks>
+/// 1. ProcessPayment validation tests
+/// 2. ProcessPayment rejection tests
+/// 3. ProcessPayment success and stock handling tests
+/// 4. Helper setup and seed data
+/// </remarks>
 public class CheckoutControllerTests : IDisposable
 {
     private const decimal ExpectedSubtotal = 31.82m;
@@ -109,6 +124,15 @@ public class CheckoutControllerTests : IDisposable
             Times.Never);
         _context.Orders.Should().BeEmpty();
         _context.Transactions.Should().BeEmpty();
+    }
+
+    [Fact]
+    public async Task GuestConfirmation_WithInvalidToken_ShouldRedirectHomeWithError()
+    {
+        var result = await _controller.GuestConfirmation("   ");
+
+        result.Should().BeOfType<RedirectToActionResult>();
+        _controller.TempData["Message"]?.ToString().Should().Be("error,Invalid guest order access link.");
     }
 
     [Fact(Skip = "Covered by CheckoutOrchestrationServiceTests")]

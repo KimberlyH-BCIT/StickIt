@@ -4,7 +4,9 @@ using Microsoft.AspNetCore.Mvc.Controllers;
 using Microsoft.AspNetCore.Mvc.ViewFeatures;
 using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.AspNetCore.Routing;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging.Abstractions;
+using ELKH.Data;
 using System.Reflection;
 using System.Text.Json;
 using ELKH.Services;
@@ -101,9 +103,14 @@ public class ProductControllerTests
         _mockRatingService = new Mock<IRatingService>();
         _mockUserService = new Mock<IUserService>();
         _mockStockNotificationService = new Mock<IStockNotificationService>();
+        var options = new DbContextOptionsBuilder<ApplicationDbContext>()
+            .UseInMemoryDatabase($"ProductControllerTests_{Guid.NewGuid()}")
+            .Options;
+        var context = new ApplicationDbContext(options);
 
         // Create controller instance with all required dependencies
         _controller = new ProductController(
+            context,
             _mockSearchService.Object,
             _mockProductService.Object,
             _mockRatingService.Object,

@@ -9,6 +9,9 @@ using Xunit;
 
 namespace ELKH.Tests.Unit.Services;
 
+/// <summary>
+/// Unit tests for structured logging service behavior.
+/// </summary>
 public class StructuredLoggingServiceTests
 {
     [Fact]

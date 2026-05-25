@@ -12,10 +12,24 @@ using ELKH.ViewModels;
 
 namespace ELKH.Tests.Unit.Services;
 
+// TABLE OF CONTENTS
+// - AddToCartAsync tests
+// - UpdateQuantityAsync tests
+// - RemoveFromCartAsync tests
+// - ClearCartAsync tests
+// - Session serialization tests
+
 /// <summary>
 /// Unit tests for GuestCartService - session-based cart for anonymous users.
 /// Tests CRUD operations, cart retrieval, and cart migration functionality.
 /// </summary>
+/// <remarks>
+/// 1. AddToCartAsync tests
+/// 2. UpdateQuantityAsync tests
+/// 3. RemoveFromCartAsync tests
+/// 4. ClearCartAsync tests
+/// 5. Session serialization tests
+/// </remarks>
 public class GuestCartServiceTests : IDisposable
 {
     private readonly ApplicationDbContext _context;

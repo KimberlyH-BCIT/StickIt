@@ -15,6 +15,23 @@ using Xunit;
 
 namespace ELKH.Tests.Unit.Controllers;
 
+// TABLE OF CONTENTS
+// - Index
+// - AddToCart
+// - Update
+// - Remove
+// - Clear
+
+/// <summary>
+/// Unit tests for the cart controller covering authenticated and guest cart flows.
+/// </summary>
+/// <remarks>
+/// 1. Index tests
+/// 2. AddToCart tests
+/// 3. Update tests
+/// 4. Remove tests
+/// 5. Clear tests
+/// </remarks>
 public class CartControllerTests
 {
     private readonly Mock<ICartService> _mockCartService = new();

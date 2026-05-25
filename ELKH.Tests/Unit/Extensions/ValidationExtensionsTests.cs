@@ -6,6 +6,14 @@ using Xunit;
 
 namespace ELKH.Tests.Unit.Extensions;
 
+/// <summary>
+/// Unit tests for validation extension helpers.
+/// </summary>
+/// <remarks>
+/// 1. IsValidQuantity tests
+/// 2. IsInStock tests
+/// 3. HasDiscount tests
+/// </remarks>
 public class ValidationExtensionsTests
 {
     [Fact]
