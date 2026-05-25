@@ -35,6 +35,7 @@ TestResults/
 *.coverage
 *.coveragexml
 coverage*/
+!ELKH.Tests/Coverage/
 
 # Logs and temporary files
 *.log
@@ -50,6 +51,8 @@ temp/
 node_modules/
 bower_components/
 dist/
+!ELKH/wwwroot/lib/**/dist/
+!ELKH/wwwroot/lib/**/dist/**
 .webpack/
 
 # Playwright
@@ -133,7 +136,11 @@ docs/supplementalDocs/
 docs/internal/CURRENT_VALIDATION.md
 docs/internal/DOCUMENTATION-REORGANIZATION-SUMMARY.md
 docs/internal/KAWAII-UI-COMPONENTS.md
+docs/internal/*.md
 docs/internal/analysis/
 docs/internal/audits/
+docs/internal/archive/
 .localdata/
 !.localdata/.gitkeep
+/setup-team-git-config.ps1
+/validate-team-setup.ps1
