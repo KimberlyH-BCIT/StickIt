@@ -65,7 +65,7 @@ namespace ELKH.ViewModels
         /// <summary>
         /// Whether this button is currently active/selected
         /// </summary>
-        public bool IsActive { get; set; } = false;
+        public bool IsActive { get; set; }
 
         /// <summary>
         /// Controller for link buttons

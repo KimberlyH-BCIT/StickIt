@@ -77,7 +77,7 @@
                                               class="d-inline">
 
                                             <input type="hidden" name="productId" value="@ViewBag.ProductId" />
-                                            <input type="hidden" name="imageId" value="@image.ImageId" />
+                                            <input type="hidden" name="imageId" value="@(image?.ImageId ?? 0)" />
 
                                             <button type="submit"
                                                     class="btn-kawaii btn-outline-kawaii btn-sm radius-pill">

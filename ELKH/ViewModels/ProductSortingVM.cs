@@ -8,6 +8,6 @@ namespace ELKH.ViewModels
         public string? Search { get; set; }
         public int? CategoryId { get; set; }
         public string CurrentSort { get; set; } = "name_asc";
-        public bool IsPromotionView { get; set; } = false;
+        public bool IsPromotionView { get; set; }
     }
 }

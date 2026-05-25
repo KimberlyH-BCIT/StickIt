@@ -61,18 +61,24 @@ public class CorrelationIdMiddleware
 
         try
         {
-            _logger.LogInformation("Processing request {Method} {Path}",
-                context.Request.Method, context.Request.Path);
+            if (_logger.IsEnabled(LogLevel.Information))
+            {
+                _logger.LogInformation("Processing request {Method} {Path}",
+                    context.Request.Method, context.Request.Path);
+            }
 
             await _next(context);
 
             stopwatch.Stop();
 
-            _logger.LogInformation("Completed request {Method} {Path} with status {StatusCode} in {Duration}ms",
-                context.Request.Method,
-                context.Request.Path,
-                context.Response.StatusCode,
-                stopwatch.ElapsedMilliseconds);
+            if (_logger.IsEnabled(LogLevel.Information))
+            {
+                _logger.LogInformation("Completed request {Method} {Path} with status {StatusCode} in {Duration}ms",
+                    context.Request.Method,
+                    context.Request.Path,
+                    context.Response.StatusCode,
+                    stopwatch.ElapsedMilliseconds);
+            }
         }
         catch (Exception ex)
         {

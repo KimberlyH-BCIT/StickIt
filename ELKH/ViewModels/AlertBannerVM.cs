@@ -44,7 +44,7 @@ namespace ELKH.ViewModels
         /// <summary>
         /// Whether the alert can be dismissed
         /// </summary>
-        public bool Dismissible { get; set; } = false;
+        public bool Dismissible { get; set; }
 
         /// <summary>
         /// Additional CSS classes

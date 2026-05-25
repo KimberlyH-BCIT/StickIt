@@ -107,7 +107,7 @@ namespace ELKH.ViewModels
         /// <summary>
         /// Whether this is the currently active sort column
         /// </summary>
-        public bool IsActiveSortColumn { get; set; } = false;
+        public bool IsActiveSortColumn { get; set; }
 
         /// <summary>
         /// Sort direction for active column ("asc" or "desc")

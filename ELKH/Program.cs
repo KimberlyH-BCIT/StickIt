@@ -24,6 +24,20 @@ using Microsoft.EntityFrameworkCore;
 
 var builder = WebApplication.CreateBuilder(args);
 
+var healthCheckTags = new[] { "db", "sql", "ready" };
+var payPalHealthCheckTags = new[] { "external", "payment", "live" };
+var emailHealthCheckTags = new[] { "external", "smtp", "live" };
+var responseCompressionMimeTypes = new[]
+{
+    "text/plain",
+    "text/html",
+    "text/css",
+    "application/javascript",
+    "application/json",
+    "application/xml"
+};
+var searchResultsVaryByQueryKeys = new[] { "q", "query", "limit" };
+
 builder.Logging.ClearProviders();
 builder.Logging.AddConsole();
 builder.Logging.AddDebug();
@@ -46,19 +60,19 @@ builder.Services.AddHealthChecks()
     .AddDbContextCheck<ApplicationDbContext>(
         name: "database",
         failureStatus: Microsoft.Extensions.Diagnostics.HealthChecks.HealthStatus.Unhealthy,
-        tags: new[] { "db", "sql", "ready" })
+        tags: healthCheckTags)
     .AddDbContextCheck<ImageStoreContext>(
         name: "imagestore",
         failureStatus: Microsoft.Extensions.Diagnostics.HealthChecks.HealthStatus.Unhealthy,
-        tags: new[] { "db", "sql", "ready" })
+        tags: healthCheckTags)
     .AddCheck<ELKH.HealthChecks.PayPalHealthCheck>(
         name: "paypal",
         failureStatus: Microsoft.Extensions.Diagnostics.HealthChecks.HealthStatus.Degraded,
-        tags: new[] { "external", "payment", "live" })
+        tags: payPalHealthCheckTags)
     .AddCheck<ELKH.HealthChecks.EmailHealthCheck>(
         name: "email",
         failureStatus: Microsoft.Extensions.Diagnostics.HealthChecks.HealthStatus.Degraded,
-        tags: new[] { "external", "smtp", "live" });
+        tags: emailHealthCheckTags);
 
 // Add Swagger/OpenAPI documentation
 builder.Services.AddSwaggerDocumentation();
@@ -157,15 +171,7 @@ builder.Services.AddAntiforgery(options =>
 builder.Services.AddResponseCompression(options =>
 {
     options.EnableForHttps = true;
-    options.MimeTypes = new[]
-    {
-        "text/plain",
-        "text/html",
-        "text/css",
-        "application/javascript",
-        "application/json",
-        "application/xml"
-    };
+    options.MimeTypes = responseCompressionMimeTypes;
 });
 
 builder.Services.AddMemoryCache();
@@ -198,7 +204,7 @@ builder.Services.Configure<MvcOptions>(options =>
         Duration = 180, // 3 minutes
         Location = ResponseCacheLocation.Any,
         VaryByHeader = "Accept,Accept-Encoding",
-        VaryByQueryKeys = new[] { "q", "query", "limit" }
+        VaryByQueryKeys = searchResultsVaryByQueryKeys
     });
 });
 

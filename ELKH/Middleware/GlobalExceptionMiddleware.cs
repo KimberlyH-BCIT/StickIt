@@ -123,7 +123,7 @@ public class GlobalExceptionMiddleware
         await context.Response.WriteAsync(CreateHtmlErrorPage(response));
     }
 
-    private ErrorResponse CreateErrorResponse(Exception exception, string correlationId, bool isDevelopment)
+    private static ErrorResponse CreateErrorResponse(Exception exception, string correlationId, bool isDevelopment)
     {
         return exception switch
         {
@@ -218,7 +218,7 @@ public class GlobalExceptionMiddleware
         return $"<!DOCTYPE html><html lang=\"en\"><head><meta charset=\"utf-8\"><meta name=\"viewport\" content=\"width=device-width, initial-scale=1\"><title>{title}</title></head><body><main><h1>{title}</h1><p>{message}</p><p>Request ID: <code>{correlationId}</code></p></main></body></html>";
     }
 
-    private SeverityLevel GetSeverityLevel(Exception exception)
+    private static SeverityLevel GetSeverityLevel(Exception exception)
     {
         return exception switch
         {
@@ -232,7 +232,7 @@ public class GlobalExceptionMiddleware
         };
     }
 
-    private string CategorizeException(Exception exception)
+    private static string CategorizeException(Exception exception)
     {
         return exception switch
         {
@@ -246,7 +246,7 @@ public class GlobalExceptionMiddleware
         };
     }
 
-    private string GetClientIpAddress(HttpContext context)
+    private static string GetClientIpAddress(HttpContext context)
     {
         return context.Connection.RemoteIpAddress?.ToString() ?? "Unknown";
     }

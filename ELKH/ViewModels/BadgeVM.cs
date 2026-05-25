@@ -39,7 +39,7 @@ namespace ELKH.ViewModels
         /// <summary>
         /// Whether the badge is clickable/interactive
         /// </summary>
-        public bool IsClickable { get; set; } = false;
+        public bool IsClickable { get; set; }
 
         /// <summary>
         /// URL for clickable badges

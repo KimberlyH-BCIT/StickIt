@@ -163,11 +163,17 @@ public class OptimizedImageTagHelper : TagHelper
             // Add decoding attribute for better performance
             output.Attributes.SetAttribute("decoding", "async");
 
-            _logger.LogDebug("Generated optimized image markup for {Src}", Src);
+            if (_logger.IsEnabled(LogLevel.Debug))
+            {
+                _logger.LogDebug("Generated optimized image markup for {Src}", Src);
+            }
         }
         catch (Exception ex)
         {
-            _logger.LogWarning(ex, "Failed to process optimized image for {Src}", Src);
+            if (_logger.IsEnabled(LogLevel.Warning))
+            {
+                _logger.LogWarning(ex, "Failed to process optimized image for {Src}", Src);
+            }
 
             // Fallback to standard image
             output.Attributes.SetAttribute("src", Src);
@@ -208,7 +214,10 @@ public class OptimizedImageTagHelper : TagHelper
         }
         catch (Exception ex)
         {
-            _logger.LogDebug(ex, "Failed to build responsive srcset for {Src}", originalSrc);
+            if (_logger.IsEnabled(LogLevel.Debug))
+            {
+                _logger.LogDebug(ex, "Failed to build responsive srcset for {Src}", originalSrc);
+            }
             return string.Empty;
         }
     }
@@ -250,7 +259,7 @@ public class OptimizedImageTagHelper : TagHelper
         }
     }
 
-    private string GetPlaceholderSrc()
+    private static string GetPlaceholderSrc()
     {
         // Return a tiny transparent pixel as default placeholder
         return "data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7";
