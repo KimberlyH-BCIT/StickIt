@@ -148,26 +148,7 @@
             }
         </div>
 
-        <!-- Stock status -->
-        @if (Model.IsLowStock)
-        {
-            <div class="stock-info surface-butter p-2 rounded mb-3">
-                <small class="text-purple">
-                    <i class="bi bi-exclamation-triangle me-1" aria-hidden="true"></i>
-                    Low stock: <strong>@(Model.StockQuantity ?? 0) left</strong>
-                </small>
-            </div>
-        }
-        else if (!Model.IsInStock)
-        {
-            <div class="stock-info bg-light p-2 rounded mb-3">
-                <small class="text-danger">
-                    <i class="bi bi-x-circle me-1" aria-hidden="true"></i>
-                    <strong>Out of Stock</strong>
-                </small>
-            </div>
-        }
-    </div>
+        </div>
 
     <!-- Product actions -->
     <div class="product-actions">
@@ -182,7 +163,7 @@
         }
         else
         {
-            <button class="btn-kawaii btn-outline-kawaii w-100" disabled>
+            <button class="btn-kawaii btn-outline-kawaii w-100 out-of-stock-btn" disabled>
                 <i class="bi bi-cart-x me-2" aria-hidden="true"></i>
                 Out of Stock
             </button>

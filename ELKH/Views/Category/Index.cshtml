@@ -13,6 +13,11 @@
 }
 
 <header class="kawaii-hero" role="banner">
+    <!-- Skip Links for Keyboard Navigation -->
+    <nav class="skip-links sr-only-focusable" aria-label="Skip navigation">
+        <a href="#category-listing" class="skip-link btn-kawaii btn-secondary-kawaii">Skip to categories</a>
+    </nav>
+
     <div class="container-kawaii">
         <div class="text-center">
             <h1 class="kawaii-cloud-title display-title sparkle">
@@ -29,7 +34,7 @@
 <main role="main" aria-label="Product categories" class="container-kawaii">
     @if (categoryProductCounts != null && categoryProductCounts.Any())
     {
-        <div class="row g-4">
+        <div class="row g-4" id="category-listing">
             @foreach (var item in categoryProductCounts)
             {
                 var category = item.Category as ELKH.Models.CategoryModel;

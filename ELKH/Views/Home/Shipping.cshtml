@@ -2,13 +2,18 @@
     ViewData["Title"] = "Shipping Information";
 }
 
+<!-- Skip Links for Keyboard Navigation -->
+<nav class="skip-links sr-only-focusable" aria-label="Skip navigation">
+    <a href="#shipping-options" class="skip-link btn-kawaii btn-secondary-kawaii">Skip to shipping options</a>
+</nav>
+
 <div class="container my-5">
     <div class="row justify-content-center">
         <div class="col-lg-8">
             <h1 class="mb-4">@ViewData["Title"]</h1>
-            
+
             <div class="card shadow-sm mb-4">
-                <div class="card-body p-4">
+                <div class="card-body p-4" id="shipping-options">
                     <h5 class="card-title mb-3">Shipping Options</h5>
                     <div class="table-responsive">
                         <table class="table">

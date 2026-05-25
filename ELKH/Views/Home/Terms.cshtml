@@ -2,9 +2,14 @@
     ViewData["Title"] = "Terms of Service";
 }
 
+<!-- Skip Links for Keyboard Navigation -->
+<nav class="skip-links sr-only-focusable" aria-label="Skip navigation">
+    <a href="#terms-content" class="skip-link btn-kawaii btn-secondary-kawaii">Skip to terms</a>
+</nav>
+
 <div class="container my-5">
     <div class="row justify-content-center">
-        <div class="col-lg-8">
+        <div class="col-lg-8" id="terms-content">
             <h1 class="mb-4">@ViewData["Title"]</h1>
             
             <p class="text-muted">Last Updated: @DateTime.Now.ToString("MMMM dd, yyyy")</p>

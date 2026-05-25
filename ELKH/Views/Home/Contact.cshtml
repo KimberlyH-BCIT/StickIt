@@ -2,6 +2,12 @@
     ViewData["Title"] = "Contact Us";
 }
 
+<!-- Skip Links for Keyboard Navigation -->
+<nav class="skip-links sr-only-focusable" aria-label="Skip navigation">
+    <a href="#contact-info" class="skip-link btn-kawaii btn-secondary-kawaii">Skip to contact information</a>
+    <a href="#contact-form-heading" class="skip-link btn-kawaii btn-secondary-kawaii">Skip to contact form</a>
+</nav>
+
 <div class="container my-5">
     <div class="row justify-content-center">
         <div class="col-lg-8">
@@ -11,7 +17,7 @@
             </header>
 
             <div class="kawaii-card surface-lavender mb-4">
-                <div class="card-body p-4">
+                <div class="card-body p-4" id="contact-info">
                     <h2 class="font-heading mb-3">Get in Touch</h2>
                     <p class="hierarchy-secondary">Have questions or need assistance? We're here to help!</p>
 
@@ -36,41 +42,73 @@
                 </div>
             </div>
 
+            <!-- Form Instructions (AAA Enhancement) -->
+            <div class="alert alert-info alert-dismissible fade show" role="status">
+                <i class="bi bi-info-circle me-2" aria-hidden="true"></i>
+                <strong>Form Help:</strong> All fields are required. We'll never share your email address. Review your message before sending.
+            </div>
+
             <div class="kawaii-card">
                 <div class="card-body p-4">
                     <h2 id="contact-form-heading" class="font-heading mb-3">Send us a message</h2>
-                    <form aria-labelledby="contact-form-heading" novalidate>
+                    <form id="contactForm" aria-labelledby="contact-form-heading" method="post" novalidate>
                         <div class="mb-3">
                             <label for="contactName" class="form-label fw-semibold">
                                 <span class="required-indicator" aria-label="Required field">*</span> Name
                             </label>
-                            <input type="text" class="input-kawaii" id="contactName" required aria-required="true" aria-describedby="name-help" autocomplete="name">
-                            <small id="name-help" class="form-text hierarchy-tertiary">Enter your full name</small>
+                            <input type="text" class="input-kawaii" id="contactName" name="name" required aria-required="true" aria-describedby="name-help" autocomplete="name" placeholder="John Doe" minlength="2" maxlength="100">
+                            <small id="name-help" class="form-text hierarchy-tertiary">Enter your full name (2-100 characters)</small>
                         </div>
                         <div class="mb-3">
                             <label for="contactEmail" class="form-label fw-semibold">
                                 <span class="required-indicator" aria-label="Required field">*</span> Email
                             </label>
-                            <input type="email" class="input-kawaii" id="contactEmail" required aria-required="true" aria-describedby="email-help" autocomplete="email" inputmode="email">
-                            <small id="email-help" class="form-text hierarchy-tertiary">We'll reply to this address</small>
+                            <input type="email" class="input-kawaii" id="contactEmail" name="email" required aria-required="true" aria-describedby="email-help" autocomplete="email" inputmode="email" placeholder="you@example.com" maxlength="100">
+                            <small id="email-help" class="form-text hierarchy-tertiary">Format: your@email.com - We'll reply to this address</small>
                         </div>
                         <div class="mb-3">
                             <label for="contactSubject" class="form-label fw-semibold">
                                 <span class="required-indicator" aria-label="Required field">*</span> Subject
                             </label>
-                            <input type="text" class="input-kawaii" id="contactSubject" required aria-required="true" aria-describedby="subject-help">
-                            <small id="subject-help" class="form-text hierarchy-tertiary">Brief description of your inquiry</small>
+                            <input type="text" class="input-kawaii" id="contactSubject" name="subject" required aria-required="true" aria-describedby="subject-help" placeholder="e.g., Question about stickers" minlength="3" maxlength="100">
+                            <small id="subject-help" class="form-text hierarchy-tertiary">Brief description (3-100 characters). Examples: "Question about shipping", "Bulk order inquiry"</small>
                         </div>
                         <div class="mb-3">
                             <label for="contactMessage" class="form-label fw-semibold">
                                 <span class="required-indicator" aria-label="Required field">*</span> Message
                             </label>
-                            <textarea class="input-kawaii" id="contactMessage" rows="5" required aria-required="true" aria-describedby="message-help"></textarea>
-                            <small id="message-help" class="form-text hierarchy-tertiary">Detailed message (minimum 10 characters)</small>
+                            <textarea class="input-kawaii" id="contactMessage" name="message" rows="5" required aria-required="true" aria-describedby="message-help message-count" placeholder="Tell us more about your inquiry..." minlength="10" maxlength="2000"></textarea>
+                            <small id="message-help" class="form-text hierarchy-tertiary">Your detailed message (10-2000 characters)</small>
+                            <small id="message-count" class="form-text hierarchy-tertiary d-block mt-1">
+                                <span id="message-length">0</span>/2000 characters
+                            </small>
                         </div>
-                        <button type="submit" class="btn-kawaii btn-primary-kawaii sparkle" aria-describedby="contact-submit-help">
-                            <i class="bi bi-send me-1" aria-hidden="true"></i>Send Message
-                        </button>
+
+                        <!-- Privacy Notice (AAA Enhancement) -->
+                        <div class="alert alert-light border mb-3" role="region">
+                            <small class="hierarchy-secondary">
+                                <i class="bi bi-shield-check me-1" aria-hidden="true"></i>
+                                <strong>Privacy:</strong> Your information will never be shared with third parties and is used only to respond to your inquiry.
+                            </small>
+                        </div>
+
+                        <!-- Confirmation Checkbox (AAA Enhancement - Error Prevention) -->
+                        <div class="mb-3 form-check">
+                            <input type="checkbox" class="form-check-input" id="confirmSend" aria-describedby="confirm-help" required>
+                            <label class="form-check-label" for="confirmSend">
+                                <span class="required-indicator" aria-label="Required field">*</span> I've reviewed my message and confirm it's ready to send
+                            </label>
+                            <small id="confirm-help" class="form-text hierarchy-tertiary d-block">This helps prevent accidental sends</small>
+                        </div>
+
+                        <div class="d-flex gap-2 mt-4">
+                            <button type="submit" class="btn-kawaii btn-primary-kawaii sparkle">
+                                <i class="bi bi-send me-1" aria-hidden="true"></i>Send Message
+                            </button>
+                            <button type="reset" class="btn btn-outline-secondary">
+                                <i class="bi bi-arrow-clockwise me-1" aria-hidden="true"></i>Clear Form
+                            </button>
+                        </div>
                         <small id="contact-submit-help" class="form-text hierarchy-tertiary d-block mt-2">We typically respond within 24-48 hours</small>
                     </form>
                 </div>
@@ -78,3 +116,6 @@
         </div>
     </div>
 </div>
+
+<!-- AAA Form Enhancements Script -->
+<script src="~/js/form-validation.js"></script>

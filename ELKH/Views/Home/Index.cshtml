@@ -661,6 +661,24 @@
             const maxIndex = allReviews.length - 3;  // Maximum starting index (ensures 3 items always visible)
 
             // ===============================================================================
+            // ║ Fisher-Yates Shuffle Algorithm - Randomize Review Order                   ║
+            // ===============================================================================
+            function shuffleArray(array) {
+                const shuffled = [...array]; // Create a copy to avoid mutating original
+                for (let i = shuffled.length - 1; i > 0; i--) {
+                    const j = Math.floor(Math.random() * (i + 1));
+                    [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
+                }
+                return shuffled;
+            }
+
+            // Shuffle reviews on page load for randomized carousel display
+            const shuffledReviews = shuffleArray(allReviews);
+            allReviews.length = 0; // Clear the original array
+            allReviews.push(...shuffledReviews); // Repopulate with shuffled order
+            currentStartIndex = 0; // Reset to start with shuffled reviews
+
+            // ===============================================================================
             // ║ Accessibility Enhancement Functions                                       ║
             // ===============================================================================
 

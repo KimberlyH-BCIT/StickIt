@@ -2,13 +2,19 @@
     ViewData["Title"] = "Returns & Refunds";
 }
 
+<!-- Skip Links for Keyboard Navigation -->
+<nav class="skip-links sr-only-focusable" aria-label="Skip navigation">
+    <a href="#return-policy" class="skip-link btn-kawaii btn-secondary-kawaii">Skip to return policy</a>
+    <a href="#how-to-return" class="skip-link btn-kawaii btn-secondary-kawaii">Skip to how to return</a>
+</nav>
+
 <div class="container my-5">
     <div class="row justify-content-center">
         <div class="col-lg-8">
             <h1 class="mb-4">@ViewData["Title"]</h1>
             
             <div class="card shadow-sm mb-4">
-                <div class="card-body p-4">
+                <div class="card-body p-4" id="return-policy">
                     <h5 class="card-title mb-3">Return Policy</h5>
                     <p>We want you to love your stickers! If you're not completely satisfied, we offer a 30-day return policy from the date of delivery.</p>
                     
@@ -23,7 +29,7 @@
             </div>
 
             <div class="card shadow-sm mb-4">
-                <div class="card-body p-4">
+                <div class="card-body p-4" id="how-to-return">
                     <h5 class="card-title mb-3">How to Return an Item</h5>
                     <ol class="mb-0">
                         <li class="mb-2">

@@ -25,11 +25,12 @@ public static partial class DbSeeder
     /// <param name="userManager">ASP.NET Core Identity UserManager for creating reviewer accounts.</param>
     /// <remarks>
     /// <para><strong>Featured Reviews:</strong></para>
-    /// Seeds 3 verified buyer testimonials with 5-star ratings:
+    /// Seeds 4 verified buyer testimonials with 5-star ratings:
     /// <list type="bullet">
     /// <item>Lovedeep - "Great quality and super fast!"</item>
     /// <item>Evan - "I'm loving it!"</item>
     /// <item>Kimberly - "Durable and looks stunning!"</item>
+    /// <item>Harry - "Amazing craftsmanship!"</item>
     /// </list>
     ///
     /// <para><strong>Verified Buyer Status:</strong></para>
@@ -47,7 +48,7 @@ public static partial class DbSeeder
         // ======================================================================
         // Only skip if our specific seed reviewer accounts already exist.
         // A blanket AnyAsync() would block re-seeding whenever a user has submitted any review.
-        var seedEmails = new[] { "lovedeep@storereview.com", "evan@storereview.com", "kimberly@storereview.com" };
+        var seedEmails = new[] { "lovedeep@storereview.com", "evan@storereview.com", "kimberly@storereview.com", "harry@storereview.com" };
         if (await db.RegisteredUsers.AnyAsync(u => seedEmails.Contains(u.Email)))
         {
             return; // Seed reviews already exist
@@ -88,6 +89,16 @@ public static partial class DbSeeder
                 Description = "The premium quality is evident from the moment you hold these stickers. Scratch-resistant, waterproof, and the colors pop beautifully. Customer service was also excellent. Five stars!",
                 Rating = 5,
                 CreatedAt = DateTime.UtcNow.AddDays(-3)
+            },
+            new
+            {
+                Email = "harry@storereview.com",
+                FirstName = "Harry",
+                LastName = "Thompson",
+                Title = "Amazing craftsmanship!",
+                Description = "I've been ordering stickers from various shops for years, and these are by far the best quality I've ever seen. The attention to detail is exceptional, and the stickers are built to last. Best purchase I've made this year!",
+                Rating = 5,
+                CreatedAt = DateTime.UtcNow.AddDays(-1)
             }
         };
 
