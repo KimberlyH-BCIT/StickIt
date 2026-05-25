@@ -11,7 +11,7 @@ It is not a formal certification report. Instead, it collects:
 
 ## Accessibility target
 
-The project is aiming for **WCAG 2.1 Level AA** patterns in the customer-facing experience, and the codebase already shows implemented accessibility patterns, but this repository does not currently include a full third-party audit package or committed axe/Lighthouse artifacts proving complete conformance.
+The project documents **WCAG 2.1 Level AA** patterns in the customer-facing experience, and the codebase already shows implemented accessibility patterns, but this repository does not currently include a full third-party audit package or committed axe/Lighthouse artifacts proving complete conformance.
 
 What is evidenced in the repo today:
 - semantic layout and skip links
@@ -23,6 +23,17 @@ What is still missing as portfolio evidence:
 - committed screenshots of axe or Lighthouse results
 - screen-reader test notes tied to specific builds
 - a concise pass/fail checklist captured after a real UI review session
+
+## Evidence snapshot
+
+- **Reviewed branch**: `chore/portfolio-polish`
+- **Snapshot date**: 2026-05-25
+- **Validation state**: shared layout alerts announce through a polite live region, and the repository documents implemented accessibility patterns rather than certifying full WCAG conformance.
+- **Evidence to add next**: committed axe and Lighthouse output for the storefront shell, plus a short screen-reader note for navigation, cart, checkout, and Identity pages.
+
+## Current cleanup note
+
+The shared UI already uses landmarked navigation, skip links, and atomic alert messaging. Keep future accessibility claims tied to a dated audit artifact or a measured test run rather than leaving them as standing promises.
 
 ---
 

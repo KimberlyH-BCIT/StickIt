@@ -22,6 +22,13 @@ The `ELKH.Tests` project currently enforces a conservative `15%` floor for both 
 - **Validated paths**: homepage, product catalog, search, cache behavior, health checks, static assets, and memory stability under load
 - **Profiler result**: startup/test-host initialization is the dominant cost, so optimization work should be justified by a measured payoff before changing production code
 
+## Evidence status
+- The suite has a dated local validation snapshot and coverage artifacts in `ELKH.Tests/Coverage`.
+- Search/catalog/image improvements are implemented, and this branch currently includes a performance evidence note at `docs/evidence/performance-benchmark-evidence.md`; the raw benchmark export is still the next artifact to capture.
+- Accessibility evidence is also represented in this branch by `docs/evidence/accessibility-audit-evidence.md`; the raw axe/Lighthouse export is still the next artifact to capture.
+- Recent validation kept the ProductController base-class refactor green, normalized the guest checkout markup, and verified the responsive home-page breakpoint without adding new raw evidence artifacts.
+- Keep screenshots and any demo GIFs in a separate committed artifact before presenting them as finished proof.
+
 ## Running Tests with Coverage
 
 ### Basic Coverage Collection
@@ -105,6 +112,11 @@ dotnet test --filter Category=Performance --collect:"Code Coverage" --diag ./Tes
 - Application Insights is only enabled when a connection string is configured; local and test runs are expected to work without it.
 - Keep performance claims tied to the audited test run or profiler output instead of projecting unmeasured improvements.
 
+### What is still not evidenced in this branch
+- raw benchmark output for search/catalog/image work
+- axe/Lighthouse raw exports
+- screenshots or GIFs for the portfolio README
+
 ## Coverage Exclusions
 
 ### Auto-Generated Code
@@ -161,11 +173,12 @@ protected override void SeedDatabase()
     file: ./TestResults/**/coverage.cobertura.xml
 ```
 
-### Current suite state
-- **Observed local validation date**: 2026-05-14
+## Current suite state
+- **Observed local validation date**: 2026-05-25
 - **Solution-level total across both test projects**: 378 tests executed, 0 failed, 378 passed
 - **Main test-project run**: 306 tests executed, 0 failed, 306 passed
 - **Guest checkout regression run**: 72 tests executed, 0 failed, 72 passed
+- **Latest implementation update**: shared hero usage on the home page and controller/search cleanup are now in the branch and compile cleanly
 - **Verification commands used for this snapshot**:
 
 ```bash
@@ -176,29 +189,35 @@ dotnet test ELKH.Tests\ELKH.GuestCheckoutTests\ELKH.GuestCheckoutTests.csproj --
 
 Prefer linking a CI job or artifact when refreshing this section for future portfolio evidence.
 
+### Validation snapshot notes
+- Treat the counts above as the last dated local snapshot in this branch.
+- Refresh the snapshot after any meaningful change that affects controllers, Identity, checkout, or shared UI behavior.
+
 ## Test Organization Best Practices
 
 ### Test File Structure
 ```
 ELKH.Tests/
-├── Controllers/
-│   ├── ProductControllerTests.cs
-│   ├── CartControllerTests.cs
-│   └── AdminControllerTests.cs
-├── Services/
-│   ├── UserServiceTests.cs
-│   ├── SearchServiceTests.cs
-│   └── ImageOptimizationServiceTests.cs
-├── BusinessLogic/
-│   ├── BusinessLogicValidationTests.cs
-│   └── InventoryManagementTests.cs
+├── Basic/
+│   └── InfrastructureTests.cs
+├── ELKH.GuestCheckoutTests/
 ├── Integration/
-│   ├── UserWorkflowIntegrationTests.cs
-│   └── AdminWorkflowIntegrationTests.cs
+│   ├── Controllers/
+│   ├── Performance/
+│   └── Workflows/
+├── Performance/
+│   └── Config/
+├── Unit/
+│   ├── Controllers/
+│   ├── Data/
+│   ├── Extensions/
+│   ├── Identity/
+│   ├── Middleware/
+│   ├── Repositories/
+│   └── Services/
 └── Utilities/
     ├── BaseTest.cs
-    ├── TestDataFactory.cs
-    └── MockHelpers.cs
+    └── TestDataFactory.cs
 ```
 
 ### Test Naming Conventions
@@ -248,7 +267,7 @@ execution.Should().BeLessThan(TimeSpan.FromSeconds(5)); // CI timeout
 ### Debugging Tests
 ```bash
 # Debug specific test
-dotnet test --filter "FullyQualifiedName=ELKH.Tests.Services.UserServiceTests.GetByEmailAsync_WithValidEmail_ShouldReturnUser"
+dotnet test --filter "FullyQualifiedName=ELKH.Tests.Unit.Services.UserServiceTests.GetByEmailAsync_WithValidEmail_ShouldReturnUser"
 
 # Run with detailed logging
 dotnet test --logger console --verbosity diagnostic
@@ -257,7 +276,7 @@ dotnet test --logger console --verbosity diagnostic
 ## Metrics and Reporting
 
 ### Coverage Metrics
-- **Current measured coverage**: 47.79% line, 16.35% branch
+- **Latest recorded coverage baseline**: 48.46% line, 23.52% branch
 - **Configured coverage threshold**: 15% minimum for line and branch coverage
 - **Trend Analysis**: Track coverage over time using saved Cobertura artifacts
 - **Hotspot Identification**: Focus on high-complexity, low-coverage areas
@@ -275,11 +294,11 @@ dotnet test --logger console --verbosity diagnostic
 
 ## Next Steps
 
-1. **Stabilize failing integration tests**: Fix route/fixture mismatches such as Product API and cart/auth scenarios
+1. **Refresh the dated validation snapshot**: Re-run the strongest branch validation after the next meaningful code change
 2. **Expand high-risk workflow tests**: Continue payment, authorization, guest token, and inventory invariants
-3. **Raise measured coverage honestly**: Improve service/controller coverage and regenerate the Cobertura baseline
-4. **Add E2E Tests**: Playwright-based browser testing
-5. **Security Testing**: Add deeper admin and CSRF regression coverage
+3. **Raise measured coverage honestly**: Improve unit and integration coverage, then regenerate the Cobertura baseline
+4. **Add UI-level evidence carefully**: Introduce Playwright or similar browser coverage when there is time to maintain it
+5. **Deepen security-focused regression coverage**: Add more admin, authorization, and CSRF-focused scenarios
 
 ---
 

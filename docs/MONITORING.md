@@ -1,10 +1,12 @@
 # 📊 ELKH Monitoring & Maintenance Guide
 
-This guide covers the comprehensive monitoring, alerting, and maintenance procedures for ELKH, including Application Insights integration, Prometheus metrics, and troubleshooting workflows.
+This guide collects monitoring, observability, and maintenance notes for ELKH, including the branch's current `/health` path plus reference material for Application Insights, Prometheus-style metrics, and troubleshooting workflows.
+
+Current branch validation is narrower than the full monitoring story below: the branch currently uses `/health`, conditional Application Insights, and the existing test/performance evidence described in the test README. Treat the Prometheus/Grafana material in this document as optional future infrastructure unless those components are explicitly enabled in your environment.
 
 ## 🎯 Monitoring Overview
 
-### Monitoring Stack
+### Monitoring scope
 ```mermaid
 graph TB
     subgraph "Application Layer"
@@ -47,16 +49,16 @@ graph TB
     App --> Logs
 ```
 
-### Key Monitoring Components
-- **Application Insights** - Microsoft's APM solution for .NET applications
-- **Prometheus** - Time-series monitoring and alerting toolkit
-- **Grafana** - Visualization and dashboard platform
-- **Custom Telemetry Processors** - Business-specific metrics collection
-- **Health Checks** - Application and dependency health monitoring
+### Documented monitoring components
+- **Application Insights** - conditional telemetry path when configured
+- **Prometheus** - reference time-series monitoring option
+- **Grafana** - reference visualization option paired with Prometheus-style metrics
+- **Custom Telemetry Processors** - business-specific telemetry examples
+- **Health Checks** - current branch-level runtime health signal
 
-## 🔍 Application Insights Configuration
+## 🔍 Application Insights reference configuration
 
-### Setup and Configuration
+### Example setup and configuration
 ```csharp
 // Program.cs - Application Insights setup
 builder.Services.AddApplicationInsightsTelemetry(options =>
@@ -151,9 +153,9 @@ customEvents
 | render timechart
 ```
 
-## 🏗️ Prometheus Configuration
+## 🏗️ Prometheus reference configuration
 
-### Prometheus Server Setup
+### Example Prometheus server setup
 ```yaml
 # monitoring/prometheus/prometheus.yml
 global:

@@ -41,6 +41,8 @@ This repo still needs real product screenshots before it is presentation-ready. 
 
 The current UI split is intentional: MVC controllers and views power the storefront and admin flows, while Razor Pages are used primarily for Identity and account-management screens.
 
+Recent branch validation also cleaned up the product-controller base-class refactor, normalized the guest checkout markup, and added a mobile-friendly home-page breakpoint without changing the documented evidence gaps.
+
 ### Screenshots and demo assets to capture
 
 | Surface | Planned asset | Why it matters |
@@ -141,8 +143,8 @@ That makes it possible to capture portfolio screenshots that look curated instea
 
 ## Technical decisions worth noticing
 
-### 1. Razor-first app with layered organization
-The workspace contains Razor Pages support, MVC controllers, services, repositories, and EF Core-backed models. The project is not trying to be a microservices system; it is a layered monolith designed to be understandable in one repo.
+### 1. Mixed MVC + Razor Pages app with layered organization
+The workspace contains Razor Pages support, MVC controllers, services, repositories, and EF Core-backed models. The app uses Razor Pages primarily for Identity/account management and MVC for most storefront and admin flows. It is a layered monolith designed to stay understandable in one repo.
 
 ### 2. SQLite for the local happy path
 I kept the supported local path simple. You can run the app with SQLite and the seeded data without provisioning a full external stack.
@@ -154,7 +156,7 @@ A major part of the portfolio hardening work was stabilizing the integration sui
 Customer-facing visual polish lives mainly in `kawaii-theme.css`, while `site.css` holds site-level utilities, accessibility helpers, and compatibility styling.
 
 ### 5. Optional infrastructure, not mandatory local complexity
-Monitoring, deployment, and cloud-oriented docs exist, but the supported local path is intentionally much smaller than the full aspirational infrastructure story.
+Monitoring, deployment, and cloud-oriented docs exist, but the supported local path is intentionally smaller than the broader reference material in `docs/`.
 
 ## Accessibility receipts
 
@@ -167,11 +169,23 @@ I do not want to leave accessibility at the level of “WCAG compliant” market
 - Reduced-motion and focus-visible styling support in the theme and site CSS
 
 What is still missing for a stronger portfolio presentation:
-- committed axe or Lighthouse screenshots/results
+- axe or Lighthouse screenshots/results
 - a short keyboard-only walkthrough GIF
 - mobile screenshots showing touch target sizing and responsive layout behavior
 
 Accessibility notes and references: [docs/ACCESSIBILITY.md](docs/ACCESSIBILITY.md)
+
+## Evidence snapshot
+
+Current branch evidence is dated and intentionally narrow:
+- validation snapshot: the last clean baseline is still useful, but the most recent cleanup run surfaced failures in guest checkout and product catalog integration coverage and needs a follow-up refresh
+- docs validation: the repository includes a documentation validation script, but I did not re-run it in this pass
+- deployment readiness: the branch still validates `/health` and conditional Application Insights in the documented path, but the broader validation snapshot should be refreshed before treating the branch as current proof
+- implementation update: the home page now uses the shared `_HeroBanner` partial, and checkout/product flows now use small helpers instead of repeating user-branching and cache-writes
+- performance evidence: the branch still needs a benchmark artifact; keep the raw export and a short interpretation note together when that evidence is captured
+- accessibility evidence: the branch still needs axe/Lighthouse output plus a brief review checklist or note that ties the results to a real validation run
+
+The remaining missing portfolio artifacts are still the same: raw benchmark output, screenshots, and a short GIF.
 
 ## Architecture at a glance
 
@@ -200,9 +214,9 @@ Run the full test project:
 dotnet test ELKH.Tests/ELKH.Tests.csproj
 ```
 
-Current validated integration state on this branch:
-- full integration suite passing (`91/91`)
-- targeted catalog + product API integration slice passing (`34/34`)
+Current validation state on this branch:
+- the latest cleanup pass surfaced failures in guest checkout and product catalog integration tests, so the previous passing snapshots should be treated as historical until the affected flows are re-verified
+- targeted follow-up validation should be run after the failing flows are fixed
 
 Latest verification commands used on this branch:
 
@@ -217,14 +231,15 @@ There is also coverage and reporting infrastructure in the repo, but this README
 
 This is a portfolio project, not a production deployment blueprint.
 
-Intentionally not production-ready or not fully finished:
-- real payment and external-service integrations should be treated as demo and development paths unless fully configured
-- seeded demo credentials are suitable for local use only
-- real UI screenshots, responsive captures, and a short demo GIF still need to be committed
-- some docs describe optional or aspirational infrastructure beyond the supported local happy path
-- local SQLite is the easiest supported run path, but not a claim of production-scale persistence strategy
+Current documented evidence and constraints:
+- payment and external-service integrations were validated locally and should still be treated as environment-dependent until live credentials and monitoring are in place
+- seeded demo credentials remain local-only
+- dated UI screenshots, responsive captures, and a short demo GIF are still not committed
+- some docs still describe optional infrastructure beyond the currently demonstrated branch scope
+- local SQLite remains the easiest supported run path for development; it is not a claim of production-scale persistence strategy
 - vendor and dev-tool browser warnings, for example CSS Hot Reload skips, may appear during local development and are not app defects
-- no committed axe/Lighthouse audit artifacts are in the repo yet
+- axe/Lighthouse audit artifacts are still pending
+- benchmark artifacts for search/catalog/image work are still pending even though the implementation changes are in place
 
 ## Roadmap / future improvements
 
@@ -235,7 +250,8 @@ Intentionally not production-ready or not fully finished:
 - improve coverage on high-value business logic and critical UI flows
 - continue trimming documentation that reads more enterprise platform than portfolio project
 - document a cleaner production-readiness checklist separating current reality from future work
-- add committed accessibility audit artifacts such as axe or Lighthouse captures
+- add accessibility audit artifacts such as axe or Lighthouse captures
+- record the next validation snapshot after the next meaningful change
 
 ## Detailed docs
 

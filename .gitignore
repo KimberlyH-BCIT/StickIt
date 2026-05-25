@@ -132,6 +132,8 @@ $RECYCLE.BIN/
 
 # Repository-specific
 .gitignore.backup
+.github/copilot-instructions.md
+docs/development/
 docs/supplementalDocs/
 docs/internal/CURRENT_VALIDATION.md
 docs/internal/DOCUMENTATION-REORGANIZATION-SUMMARY.md
@@ -144,3 +146,4 @@ docs/internal/archive/
 !.localdata/.gitkeep
 /setup-team-git-config.ps1
 /validate-team-setup.ps1
+/.github/copilot-instructions.md

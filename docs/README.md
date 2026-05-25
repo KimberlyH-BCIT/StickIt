@@ -100,6 +100,15 @@ Some guides describe:
 - optional infrastructure or deployment ideas
 - implementation intent that may still be evolving
 
+The branch-validated baseline is narrower than the broader documentation set:
+- `/health` is the validated startup check used in this branch
+- Application Insights is conditional on configuration
+- the current test snapshot is dated and should be refreshed with CI evidence when the next meaningful change lands
+- search/catalog/image performance claims should stay tied to benchmark artifacts, not just implementation intent
+- the portfolio-facing README is intentionally honest about missing screenshots, GIFs, and accessibility artifacts instead of implying they already exist
+- branch evidence notes currently live in `docs/evidence/` for performance and accessibility so the repo has a clear place to point reviewers while raw artifacts are still being collected
+- the latest validation pass also kept the ProductController refactor green and cleaned up guest-checkout and home-page presentation details without altering the current evidence gap
+
 ## Current verification snapshot
 
 Observed local validation on `2026-05-14` for this branch:
@@ -112,7 +121,14 @@ This is a dated branch snapshot, not a standing guarantee. Prefer a CI-generated
 Current branch notes:
 - The validated observability path is `/health` with Application Insights enabled only when configured.
 - The latest cleanup pass removed redundant setup comments and one repeated category lookup in the seeding path.
+- The latest implementation pass also moved the home page onto the shared hero partial and removed repeated user/cache branching in checkout and search paths.
 - Use the targeted integration/performance tests as the branch’s strongest validation evidence until a fresh CI run is recorded.
+
+### Missing evidence to keep visible
+
+- committed accessibility audit exports
+- screenshot/GIF portfolio assets
+- committed benchmark output for the search/catalog/image improvements
 
 ### Documentation standards
 - **Format**: Markdown with consistent structure and styling
@@ -153,7 +169,7 @@ When the code changes, the related docs should be updated too, especially for:
 **Contents**:
 - XML documentation standards and patterns
 - Table of Contents requirements for large files
-- Enterprise-grade documentation templates
+- Documentation templates
 - Consistency standards and style enforcement
 
 ### 📊 [Documentation Overview](development/DOCUMENTATION-README.md)
@@ -218,4 +234,4 @@ When the code changes, the related docs should be updated too, especially for:
 
 ## Status
 
-Last updated for the current portfolio branch. Treat this index as a map to the detailed docs, not as a claim of exhaustive or enterprise-grade coverage in every area.
+Last updated for the current portfolio branch. Treat this index as a map to the detailed docs, not as a claim of exhaustive coverage in every area.

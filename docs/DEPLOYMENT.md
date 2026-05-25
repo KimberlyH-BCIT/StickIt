@@ -1,17 +1,17 @@
 # 🚀 StickIt Deployment Guide
 
-This guide covers deployment options for StickIt, from local development to production deployment on Azure with Docker containerization. The repository still uses `ELKH` as the internal project folder and assembly name.
+This guide collects deployment notes for StickIt, from the supported local development path to reference cloud and container configurations. The repository still uses `ELKH` as the internal project folder and assembly name.
 
 ## 📋 Deployment Overview
 
-### Available Deployment Options
-- **🏠 Local Development** - Direct dotnet run with SQLite
-- **🐳 Docker Development** - Containerized local environment
-- **☁️ Azure App Service** - PaaS deployment with Azure SQL
-- **🏗️ Azure Container Instances** - Containerized cloud deployment
-- **⚙️ Kubernetes** - Orchestrated container deployment
+### Current scope of this guide
+- **🏠 Local Development** - supported direct `dotnet run` path with SQLite
+- **🐳 Docker Development** - supported containerized local workflow
+- **☁️ Azure App Service** - reference deployment notes that need environment-specific validation
+- **🏗️ Azure Container Instances** - reference container deployment notes
+- **⚙️ Kubernetes** - reference orchestration notes, not a validated branch path
 
-### Architecture Deployment Strategy
+### Reference deployment paths
 ```mermaid
 graph TB
     subgraph "Development"
@@ -149,9 +149,9 @@ services:
           path: ./ELKH/ELKH.csproj
 ```
 
-### Production Docker Deployment
+### Production-oriented Docker reference
 
-#### Multi-stage Dockerfile
+#### Multi-stage Dockerfile example
 ```dockerfile
 # Dockerfile (optimized)
 # Build stage
@@ -743,7 +743,8 @@ jobs:
 ### Validated branch readiness
 - The branch currently validates startup with the `/health` endpoint and integration tests rather than separate readiness and liveness routes.
 - Application Insights is conditional on configuration in `Program.cs`; local and test hosts are expected to run without it.
-- Performance validation in this branch is driven by the existing test suites and the audited baseline noted in `ELKH.Tests/README.md`.
+- Performance validation in this branch is driven by the existing test suites and the audited baseline noted in `ELKH.Tests/README.md`, but committed benchmark artifacts for the search/catalog/image work are still pending.
+- Production deployment wiring is still intentionally lightweight here; treat this guide as a branch-validated path, not a fully hardened release blueprint.
 
 ## 📋 Deployment Checklist
 
@@ -756,6 +757,7 @@ jobs:
 - [ ] Monitoring dashboards ready
 - [ ] Rollback plan prepared
 - [ ] Audited performance baseline captured for the current branch
+- [ ] Benchmark artifact committed for the current search/catalog/image evidence gap
 
 ### Post-Deployment
 - [ ] Application health verified
