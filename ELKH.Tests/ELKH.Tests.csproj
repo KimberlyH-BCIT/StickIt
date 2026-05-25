@@ -1,4 +1,4 @@
-<Project Sdk="Microsoft.NET.Sdk">
+﻿<Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
     <TargetFramework>net10.0</TargetFramework>
     <IsPackable>false</IsPackable>
@@ -53,15 +53,15 @@
 
   <ItemGroup>
     <ProjectReference Include="..\ELKH\ELKH.csproj" />
-    <ProjectReference Include="ELKH.GuestCheckoutTests\ELKH.GuestCheckoutTests.csproj" />
   </ItemGroup>
 
   <ItemGroup>
-    <Compile Include="**\*.cs" Exclude="$(DefaultItemExcludes);$(DefaultExcludesInProjectFolder);bin\**;obj\**;ELKH.GuestCheckoutTests\**;Unit\Controllers\WishlistControllerTests.cs;Performance\PerformanceTests.cs;Performance\Regression\PerformanceRegressionTests.cs;Performance\Benchmarks\ELKHPerformanceBenchmarks.cs" />
+    <Compile Include="**\*.cs" Exclude="$(DefaultItemExcludes);$(DefaultExcludesInProjectFolder);bin\**;obj\**;Unit\Controllers\WishlistControllerTests.cs;Performance\PerformanceTests.cs;Performance\Regression\PerformanceRegressionTests.cs;Performance\Benchmarks\ELKHPerformanceBenchmarks.cs" />
   </ItemGroup>
 
   <ItemGroup>
     <None Include="Performance\**\*.json" CopyToOutputDirectory="PreserveNewest" />
     <None Include="Performance\**\*.yml" CopyToOutputDirectory="PreserveNewest" />
   </ItemGroup>
+
 </Project>

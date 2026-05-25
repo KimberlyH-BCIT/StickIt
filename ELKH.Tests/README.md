@@ -184,7 +184,6 @@ protected override void SeedDatabase()
 ```bash
 dotnet test ELKH.slnx --no-restore -p:Threshold=0 --logger "console;verbosity=minimal"
 dotnet test ELKH.Tests\ELKH.Tests.csproj --no-restore -p:Threshold=0 --logger "console;verbosity=minimal"
-dotnet test ELKH.Tests\ELKH.GuestCheckoutTests\ELKH.GuestCheckoutTests.csproj --no-restore -p:Threshold=0 --logger "console;verbosity=minimal"
 ```
 
 Prefer linking a CI job or artifact when refreshing this section for future portfolio evidence.
@@ -200,7 +199,6 @@ Prefer linking a CI job or artifact when refreshing this section for future port
 ELKH.Tests/
 ├── Basic/
 │   └── InfrastructureTests.cs
-├── ELKH.GuestCheckoutTests/
 ├── Integration/
 │   ├── Controllers/
 │   ├── Performance/

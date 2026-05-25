@@ -114,7 +114,7 @@ The branch-validated baseline is narrower than the broader documentation set:
 Observed local validation on `2026-05-14` for this branch:
 - solution-level totals from the two test projects below: `378/378` passing
 - main test project: `306/306` passing via `dotnet test ELKH.Tests\\ELKH.Tests.csproj --no-restore -p:Threshold=0 --logger "console;verbosity=minimal"`
-- guest checkout regression suite: `72/72` passing via `dotnet test ELKH.Tests\\ELKH.GuestCheckoutTests\\ELKH.GuestCheckoutTests.csproj --no-restore -p:Threshold=0 --logger "console;verbosity=minimal"`
+- guest checkout regression suite: `72/72` passing via `dotnet test ELKH.Tests\\ELKH.Tests.csproj --no-restore -p:Threshold=0 --logger "console;verbosity=minimal"`
 
 This is a dated branch snapshot, not a standing guarantee. Prefer a CI-generated run record when publishing fresh validation evidence.
 
