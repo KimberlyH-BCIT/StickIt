@@ -486,7 +486,7 @@ $RECYCLE.BIN/
 # API documentation
 api-docs/
 
-# Code metrics reports
+# Code metrics reports 
 metrics-report/
 
 # =====================================================================
